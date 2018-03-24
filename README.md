@@ -36,3 +36,7 @@ together.
 1. Mouse and keyboard input.
 1. Cross-platform terminal based output.
 1. Unit testing framework for simple and readable tests of dashboard elements.
+
+# High-Level design
+
+See the [design document](doc/design.md).

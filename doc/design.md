@@ -57,9 +57,74 @@ with the container API when placing the widgets onto the dashboard.
 
 ### Terminal
 
-The terminal provides raw access to the output
+The terminal provides access to the input and output.
+
+It allows to:
+
+- Set values and attributes of cells on a back buffer representing a 2-D
+  canvas.
+- Flush the content of the back buffer to the output.
+- Manipulate the cursor position and visibility.
+- Read input events (keyboard, mouse, terminal resize, etc...).
+
+The terminal buffers input events until they are read by the client. The buffer
+is bound, if the client isn't picking up events fast enough, new events are
+dropped and a message is logged.
 
 ### Infrastructure
+
+The infrastructure handles terminal setup, input events and manages containers.
+
+#### Keyboard and mouse input
+
+The raw keyboard and mouse events received from the terminal are pre-processed
+by the infrastructure. The pre-processing involves recognizing keyboard
+shortcuts (i.e. Key combination). The infrastructure recognizes globally
+configurable keyboard shortcuts that are processed by the infrastructure. All
+other keyboard and mouse events are forwarded to the currently focused widget.
+
+#### Input focus
+
+The infrastructure tracks focus. Only the focused widget receives keyboard and
+mouse events. Focus can be changed using mouse or global keyboard shortcuts.
+The focused widget is highlighted on the dashboard.
+
+#### Containers
+
+The container provides a way of splitting the dashboard down to smaller
+elements where individual widgets can be placed. Each container can be split to
+multiple sub containers. A container contains either a sub container or a
+widget.
+
+Container is responsible for coordinate translation. Each widget receives a
+virtual canvas it can draw on. Each of these canvases starts at coordinates
+image.Point{0, 0}. The parent container translates coordinates from the virtual
+canvas to the real terminal. The container therefore enforces limits for widgets.
+
+Containers can be styled with borders and other options.
+
+#### Flushing the terminal
+
+All widgets indirectly write to the back buffer of the terminal implementation. The changes
+to the back buffer only become visible when the infrastructure flushes its content.
+
+Widgets cannot force a flush, but they can indicate that a flush is desired.
+The infrastructure throttles the amount of times this happens.
+
+#### Terminal resizing
+
+The terminal resize events are processed by the infrastructure. Each widget
+indicates its desired and minimum size for its canvas when registering with its
+parent container.
+
+The parent container in turn informs the widget what is the actual size of its
+canvas. The infrastructure guarantees that the actual size won't ever be
+smaller than the advertised minimum and guarantees that the size will keep the
+aspect ration requested by the widget.
+
+When the size of terminal changes, the infrastructure resizes all containers
+according to the rules outlined above, asks all widgets to redraw their
+canvases and flushes to the back buffer to the terminal.
 
 ### Widgets
 
@@ -70,14 +135,6 @@ The terminal provides raw access to the output
 The Terminal API is an interface private to the terminal dashboard library. Its
 primary purpose is to act as a shim layer over different terminal
 implementations.
-
-The API allows to:
-
-- Set values and attributes of cells on a back buffer representing a 2-D
-  canvas.
-- Flush the content of the back buffer to the output.
-- Manipulate the cursor position and visibility.
-- Read input events (keyboard, mouse, terminal resize, etc...).
 
 The following outlines the terminal API:
 
@@ -172,14 +229,7 @@ Date        | Author | Description
 
 ## Notes (work in progress)
 
-- container styling, borders.
-- coordinates translation for widgets.
-- library to parse events and identify known keyboard shortcuts.
 - widget API (creation, options, updating displayed status, reading inputs).
 - infra API for widgets.
 - widget registration options (subscribe to input / events).
 - testing framework (fake terminal and test helper functions).
-- container and splits (layout management).
-- buffer sync managed by infra.
-- focus of keyboard and mouse (follow mouse / click).
-- registration for system-wide events (like quit shortcuts).

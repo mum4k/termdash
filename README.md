@@ -42,3 +42,16 @@ together.
 # High-Level design
 
 See the [design document](doc/design.md).
+
+# Project status
+
+- [x] High-Level Design.
+- [ ] Submit the APIs.
+- [ ] Implement the terminal layer.
+- [ ] Implement the container.
+- [ ] Implement the input event pre-processing.
+- [ ] Implement the infrastructure layer.
+- [ ] Implement unit test helpers.
+- [ ] Implement the first widget.
+- [ ] Documentation and tooling for widget development.
+- [ ] Launch and iterate.

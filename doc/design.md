@@ -24,22 +24,22 @@ other containers.
 
 The terminal dashboard consists of the following layers:
 
-- Display.
+- Terminal.
 - Infrastructure.
 - Widgets.
 
-The **display layer** abstracts the display implementation. A real terminal
-implementation is used in production when displaying on the terminal. A fake
+The **terminal layer** abstracts the terminal implementation. A real terminal
+implementation is used in production when displaying data to the user. A fake
 terminal implementation is used in widget unit tests and system tests. Other
-implementations are possible, e.g. Image export. The display layer is private,
-neither the users of this library nor the widgets interact with the display
+implementations are possible, e.g. Image export. The terminal layer is private,
+neither the users of this library nor the widgets interact with the terminal
 directly.
 
 The **infrastructure layer** is responsible for container management, tracking
 of keyboard and mouse focus and handling external events like resizing of the
-display. The infrastructure layer also decides when to flush the buffer and
+terminal. The infrastructure layer also decides when to flush the buffer and
 refresh the screen. I.e. The widgets update content of a back buffer and the
-infrastructure decides when it is synchronized to the display.
+infrastructure decides when it is synchronized to the terminal.
 
 The **widgets layer** contains the implementations of individual widgets. Each
 widget receives a canvas from the container on which it presents its content to
@@ -55,7 +55,9 @@ with the container API when placing the widgets onto the dashboard.
 
 ## Detailed design
 
-### Display
+### Terminal
+
+The terminal provides raw access to the output
 
 ### Infrastructure
 
@@ -63,10 +65,10 @@ with the container API when placing the widgets onto the dashboard.
 
 ## APIs
 
-### Display API
+### Terminal API
 
-The Display API is an interface private to the terminal dashboard library. Its
-primary purpose is to act as a shim layer over different display
+The Terminal API is an interface private to the terminal dashboard library. Its
+primary purpose is to act as a shim layer over different terminal
 implementations.
 
 The API allows to:
@@ -75,21 +77,21 @@ The API allows to:
   canvas.
 - Flush the content of the back buffer to the output.
 - Manipulate the cursor position and visibility.
-- Read input events (keyboard, mouse, display resize, etc...).
+- Read input events (keyboard, mouse, terminal resize, etc...).
 
-The following outlines the display API:
+The following outlines the terminal API:
 
 ```go
-// Display abstracts an implementation of a 2-D display.
-// A display consists of a number of cells.
-type Display interface {
-  // Size returns the display width and height in cells.
+// Terminal abstracts an implementation of a 2-D terminal.
+// A terminal consists of a number of cells.
+type Terminal interface {
+  // Size returns the terminal width and height in cells.
   Size() image.Point
 
   // Clear clears the content of the internal back buffer, resetting all cells
   // to their default content and attributes.
   Clear() error
-  // Flush flushes the internal back buffer to the display.
+  // Flush flushes the internal back buffer to the terminal.
   Flush() error
 
   // SetCursor sets the position of the cursor.
@@ -126,20 +128,20 @@ type Keyboard struct {
 
 func (*Keyboard) isEvent() {}
 
-// DisplayResize is the event used when the display was resized.
+// Resize is the event used when the terminal was resized.
 // Implements Event.
-type DisplayResize struct {
-  // Size is the new size of the display.
+type Resize struct {
+  // Size is the new size of the terminal.
   Size image.Point
 }
 
-func (*DisplayResize) isEvent() {}
+func (*Resize) isEvent() {}
 
 // Mouse is the event used when the mouse is moved or a mouse button is
 // pressed.
 // Implements Event.
 type Mouse struct {
-  // Position of the mouse on the display.
+  // Position of the mouse on the terminal.
   Position() image.Point
   // Button identifies the pressed button if any.
   Button MouseButton
@@ -176,7 +178,7 @@ Date        | Author | Description
 - widget API (creation, options, updating displayed status, reading inputs).
 - infra API for widgets.
 - widget registration options (subscribe to input / events).
-- testing framework (fake display and test helper functions).
+- testing framework (fake terminal and test helper functions).
 - container and splits (layout management).
 - buffer sync managed by infra.
 - focus of keyboard and mouse (follow mouse / click).

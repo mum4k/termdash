@@ -128,6 +128,16 @@ canvases and flushes to the back buffer to the terminal.
 
 ### Widgets
 
+Users of the terminal dashboard construct the widgets directly. Therefore each
+widget can define its own options and API for setting values (e.g. The
+displayed percentage on a progress bar). The users then create the desired
+container splits and place each widget into a dedicated container.
+
+Each widget receives a canvas from the parent container, the widget can draw
+anything on the canvas as long as it stays within the limits. Helper libraries
+are developed that allow placement and drawing of common elements like lines or
+geometrical shapes.
+
 ## APIs
 
 ### Terminal API
@@ -210,6 +220,59 @@ func (*Mouse) isEvent() {}
 ### Container API
 
 ### Widget API
+
+Each widget must implement the following API. All widget implementations must
+be thread-safe since the calls that update the displayed values come in
+concurrently with requests and events from the infrastructure.
+
+```go
+// Canvas is where a widget draws its output for display on the terminal.
+type Canvas struct {}
+
+// Size returns the size of the 2-D canvas given to the widget.
+func (c *Canvas) Size() image.Point {}
+
+// Clear clears all the content on the canvas.
+func (c *Canvas) Clear() {}
+
+// FlushDesired provides a hint to the infrastructure that the canvas was changed and should be flushed to the terminal.
+func (c *Canvas) FlushDesired()
+
+// SetCell sets the value of the specified cell on the canvas.
+// Use the options to specify which attributes to modify, if an attribute
+// option isn't specified, the attribute retains its previous value.
+func (c *Canvas) SetCell(p image.Point, r rune, opts ...CellOption)
+
+// Widget is a single widget on the dashboard.
+type Widget interface {
+  // Draw executes the widget, when called the widget should draw on the
+  // canvas. The widget can assume that the canvas content wasn't modified
+  // since the last call, i.e. if the widget doesn't need to change anything in
+  // the output, this can be a no-op.
+  Draw(canvas *Canvas) error
+
+  // Redraw is called when the widget must redraw all of its content because
+  // the previous canvas was invalidated. The widget must not assume that
+  // anything on the canvas remained the same, including its size.
+  Redraw(canvas *Canvas) error
+
+  // Keyboard is called when the widget is focused on the dashboard and a key
+  // shortcut the widget registered for was pressed. Only called if the widget
+  // registered for keyboard events.
+  Keyboard(s Shortcut) error
+
+  // Mouse is called when the widget is focused on the dashboard and a mouse
+  // event happens on its canvas. Only called if the widget registered for mouse
+  // events.
+  Mouse(m *Mouse) error
+
+  // Options returns registration options for the widget.
+  // This is how the widget indicates to the infrastructure whether it is
+  // interested in keyboard or mouse shortcuts, what is its minimum canvas
+  // size, etc.
+  Options() *WidgetOptions
+}
+```
 
 ## Project information
 

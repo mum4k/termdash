@@ -219,6 +219,24 @@ func (*Mouse) isEvent() {}
 
 ### Container API
 
+The container API is used to split the terminal and place the widgets. Each
+container can be split to two sub containers or have a widget placed into it.
+A container can be split either horizontally or vertically.
+
+The containers further accept styling options and alignment options. The
+following indicates how the container API will be used.
+
+```go
+func main() {
+  w := mywidget.New(widgetOptions)
+  t := terminal.New(terminalOptions)
+  
+  t.VerticalSplit()
+    .Left(AlignCenter(), WithWidget(w))
+    .Right(SolidBorder())
+}
+```
+
 ### Widget API
 
 Each widget must implement the following API. All widget implementations must
@@ -235,13 +253,14 @@ func (c *Canvas) Size() image.Point {}
 // Clear clears all the content on the canvas.
 func (c *Canvas) Clear() {}
 
-// FlushDesired provides a hint to the infrastructure that the canvas was changed and should be flushed to the terminal.
-func (c *Canvas) FlushDesired()
+// FlushDesired provides a hint to the infrastructure that the canvas was
+// changed and should be flushed to the terminal.
+func (c *Canvas) FlushDesired() {}
 
 // SetCell sets the value of the specified cell on the canvas.
 // Use the options to specify which attributes to modify, if an attribute
 // option isn't specified, the attribute retains its previous value.
-func (c *Canvas) SetCell(p image.Point, r rune, opts ...CellOption)
+func (c *Canvas) SetCell(p image.Point, r rune, opts ...CellOption) {}
 
 // Widget is a single widget on the dashboard.
 type Widget interface {
@@ -274,25 +293,16 @@ type Widget interface {
 }
 ```
 
-## Project information
-
-## Caveats
-
 ## Testing plan
 
-## Work estimates
+Unit test helpers are provided with the terminal dashboard library, these include:
 
-## Future improvements
+- A fake implementation of the terminal API.
+- Unit test comparison helpers to verify the content of the fake terminal.
+- Visualization tools to display differences between the expected and the actual.
 
 ## Document history
 
 Date        | Author | Description
 ------------|--------|---------------
 24-Mar-2018 | mum4k  | Initial draft.
-
-## Notes (work in progress)
-
-- widget API (creation, options, updating displayed status, reading inputs).
-- infra API for widgets.
-- widget registration options (subscribe to input / events).
-- testing framework (fake terminal and test helper functions).

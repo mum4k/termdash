@@ -49,7 +49,9 @@ events, which are then forwarded from the infrastructure layer.
 The user interacts with the widget API when constructing individual widgets and
 with the container API when placing the widgets onto the dashboard.
 
-![hld](hld.png "High-Level Design")
+<p align="center">
+  <img src="hld.png" width="50%">
+</p>
 
 ## Detailed design
 
@@ -109,7 +111,7 @@ type Display interface {
 The **Event()** method returns the next input event. Different input event
 types are defined as follows.
 
-```
+```go
 // Event represents an input event.
 type Event interface {
   isEvent()

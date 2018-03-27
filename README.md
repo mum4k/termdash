@@ -46,7 +46,7 @@ See the [design document](doc/design.md).
 # Project status
 
 - [x] High-Level Design.
-- [ ] Submit the APIs.
+- [x] Submit the APIs.
 - [ ] Implement the terminal layer.
 - [ ] Implement the container.
 - [ ] Implement the input event pre-processing.

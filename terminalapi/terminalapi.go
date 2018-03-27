@@ -14,9 +14,10 @@ type Terminal interface {
 	// Size returns the terminal width and height in cells.
 	Size() image.Point
 
-	// Clear clears the content of the internal back buffer, resetting all cells
-	// to their default content and attributes.
-	Clear() error
+	// Clear clears the content of the internal back buffer, resetting all
+	// cells to their default content and attributes. Sets the provided options
+	// on all the cell.
+	Clear(opts ...cell.Option) error
 	// Flush flushes the internal back buffer to the terminal.
 	Flush() error
 

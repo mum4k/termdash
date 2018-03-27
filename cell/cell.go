@@ -17,6 +17,15 @@ type Options struct {
 	BgColor Color
 }
 
+// NewOptions returns a new Options instance after applying the provided options.
+func NewOptions(opts ...Option) *Options {
+	o := &Options{}
+	for _, opt := range opts {
+		opt.set(o)
+	}
+	return o
+}
+
 // option implements Option.
 type option func(*Options)
 

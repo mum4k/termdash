@@ -108,9 +108,6 @@ Containers can be styled with borders and other options.
 All widgets indirectly write to the back buffer of the terminal implementation. The changes
 to the back buffer only become visible when the infrastructure flushes its content.
 
-Widgets cannot force a flush, but they can indicate that a flush is desired.
-The infrastructure throttles the amount of times this happens.
-
 #### Terminal resizing
 
 The terminal resize events are processed by the infrastructure. Each widget

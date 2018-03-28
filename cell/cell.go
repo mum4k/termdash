@@ -5,6 +5,11 @@ A cell is the smallest point on the terminal.
 */
 package cell
 
+import (
+	"fmt"
+	"image"
+)
+
 // Option is used to provide options for cells on a 2-D terminal.
 type Option interface {
 	// set sets the provided option.
@@ -24,6 +29,67 @@ func NewOptions(opts ...Option) *Options {
 		opt.set(o)
 	}
 	return o
+}
+
+// Cell represents a single cell on the terminal.
+type Cell struct {
+	// Rune is the rune stored in the cell.
+	Rune rune
+
+	// Opts are the cell options.
+	Opts *Options
+}
+
+// New returns a new cell.
+func New(r rune, opts ...Option) *Cell {
+	return &Cell{
+		Rune: r,
+		Opts: NewOptions(opts...),
+	}
+}
+
+// Apply applies the provided options to the cell.
+func (c *Cell) Apply(opts ...Option) {
+	for _, opt := range opts {
+		opt.set(c.Opts)
+	}
+}
+
+// Buffer is a 2-D buffer of cells.
+// The axes increase right and down.
+type Buffer [][]*Cell
+
+// NewBuffer returns a new Buffer of the provided size.
+func NewBuffer(size image.Point) (Buffer, error) {
+	if size.X <= 0 {
+		return nil, fmt.Errorf("invalid buffer width (size.X): %d, must be a positive number", size.X)
+	}
+	if size.Y <= 0 {
+		return nil, fmt.Errorf("invalid buffer height (size.Y): %d, must be a positive number", size.Y)
+	}
+
+	b := make([][]*Cell, size.X)
+	for col := range b {
+		b[col] = make([]*Cell, size.Y)
+		for row := range b[col] {
+			b[col][row] = New(0)
+		}
+	}
+	return b, nil
+}
+
+// Size returns the size of the buffer.
+func (b Buffer) Size() image.Point {
+	return image.Point{
+		len(b),
+		len(b[0]),
+	}
+}
+
+// Area returns the area that is covered by this buffer.
+func (b Buffer) Area() image.Rectangle {
+	s := b.Size()
+	return image.Rect(0, 0, s.X-1, s.Y-1)
 }
 
 // option implements Option.

@@ -7,31 +7,46 @@ import "github.com/mum4k/termdash/widget"
 // Option is used to provide options.
 type Option interface {
 	// set sets the provided option.
-	set(*Container)
+	set(*options)
 }
 
-// options stores the provided options.
-type options struct{}
+// options stores the options provided to the container.
+type options struct {
+	// split identifies how is this container split.
+	split splitType
+
+	// widget is the widget in the container.
+	// A container can have either two sub containers (left and right) or a
+	// widget. But not both.
+	widget widget.Widget
+
+	// Alignment of the widget if present.
+	hAlign hAlignType
+	vAlign vAlignType
+
+	// border is the border around the container.
+	border borderType
+}
 
 // option implements Option.
-type option func(*Container)
+type option func(*options)
 
 // set implements Option.set.
-func (o option) set(c *Container) {
-	o(c)
+func (o option) set(opts *options) {
+	o(opts)
 }
 
 // PlaceWidget places the provided widget into the container.
 func PlaceWidget(w widget.Widget) Option {
-	return option(func(c *Container) {
-		c.widget = w
+	return option(func(opts *options) {
+		opts.widget = w
 	})
 }
 
 // SplitHorizontal configures the container for a horizontal split.
 func SplitHorizontal() Option {
-	return option(func(c *Container) {
-		c.split = splitTypeHorizontal
+	return option(func(opts *options) {
+		opts.split = splitTypeHorizontal
 	})
 }
 
@@ -39,8 +54,8 @@ func SplitHorizontal() Option {
 // This is the default split type if neither if SplitHorizontal() or
 // SplitVertical() is specified.
 func SplitVertical() Option {
-	return option(func(c *Container) {
-		c.split = splitTypeVertical
+	return option(func(opts *options) {
+		opts.split = splitTypeVertical
 	})
 }
 
@@ -48,8 +63,8 @@ func SplitVertical() Option {
 // container along the horizontal axis. Has no effect if the container contains
 // no widget. This is the default horizontal alignment if no other is specified.
 func HorizontalAlignLeft() Option {
-	return option(func(c *Container) {
-		c.hAlign = hAlignTypeLeft
+	return option(func(opts *options) {
+		opts.hAlign = hAlignTypeLeft
 	})
 }
 
@@ -57,8 +72,8 @@ func HorizontalAlignLeft() Option {
 // container along the horizontal axis. Has no effect if the container contains
 // no widget.
 func HorizontalAlignCenter() Option {
-	return option(func(c *Container) {
-		c.hAlign = hAlignTypeCenter
+	return option(func(opts *options) {
+		opts.hAlign = hAlignTypeCenter
 	})
 }
 
@@ -66,8 +81,8 @@ func HorizontalAlignCenter() Option {
 // container along the horizontal axis. Has no effect if the container contains
 // no widget.
 func HorizontalAlignRight() Option {
-	return option(func(c *Container) {
-		c.hAlign = hAlignTypeRight
+	return option(func(opts *options) {
+		opts.hAlign = hAlignTypeRight
 	})
 }
 
@@ -75,8 +90,8 @@ func HorizontalAlignRight() Option {
 // container along the vertical axis. Has no effect if the container contains
 // no widget. This is the default vertical alignment if no other is specified.
 func VerticalAlignTop() Option {
-	return option(func(c *Container) {
-		c.vAlign = vAlignTypeTop
+	return option(func(opts *options) {
+		opts.vAlign = vAlignTypeTop
 	})
 }
 
@@ -84,8 +99,8 @@ func VerticalAlignTop() Option {
 // container along the vertical axis. Has no effect if the container contains
 // no widget.
 func VerticalAlignMiddle() Option {
-	return option(func(c *Container) {
-		c.vAlign = vAlignTypeMiddle
+	return option(func(opts *options) {
+		opts.vAlign = vAlignTypeMiddle
 	})
 }
 
@@ -93,8 +108,24 @@ func VerticalAlignMiddle() Option {
 // container along the vertical axis. Has no effect if the container contains
 // no widget.
 func VerticalAlignBottom() Option {
-	return option(func(c *Container) {
-		c.vAlign = vAlignTypeBottom
+	return option(func(opts *options) {
+		opts.vAlign = vAlignTypeBottom
+	})
+}
+
+// BorderNone configures the container to have no border.
+// This is the default if none of the Border options is specified.
+func BorderNone() Option {
+	return option(func(opts *options) {
+		opts.border = borderTypeNone
+	})
+}
+
+// BorderSolid configures the container to have a border made with a solid
+// line.
+func BorderSolid() Option {
+	return option(func(opts *options) {
+		opts.border = borderTypeSolid
 	})
 }
 
@@ -166,4 +197,26 @@ const (
 	vAlignTypeTop vAlignType = iota
 	vAlignTypeMiddle
 	vAlignTypeBottom
+)
+
+// borderType represents
+type borderType int
+
+// String implements fmt.Stringer()
+func (bt borderType) String() string {
+	if n, ok := borderTypeNames[bt]; ok {
+		return n
+	}
+	return "borderTypeUnknown"
+}
+
+// borderTypeNames maps borderType values to human readable names.
+var borderTypeNames = map[borderType]string{
+	borderTypeNone:  "borderTypeNone",
+	borderTypeSolid: "borderTypeSolid",
+}
+
+const (
+	borderTypeNone borderType = iota
+	borderTypeSolid
 )

@@ -13,17 +13,16 @@ type Options struct {
 }
 
 // Widget is a single widget on the dashboard.
+// Implementations must be thread safe.
 type Widget interface {
-	// Draw executes the widget, when called the widget should draw on the
-	// canvas. The widget can assume that the canvas content wasn't modified
-	// since the last call, i.e. if the widget doesn't need to change anything in
-	// the output, this can be a no-op.
+	// When the infrastructure calls Draw(), the widget must block on the call
+	// until it finishes drawing onto the provided canvas. When given the
+	// canvas, the widget must first determine its size by calling
+	// Canvas.Size(), then limit all its drawing to this area.
+	//
+	// The widget must not assume that the size of the canvas or its content
+	// remains the same between calls.
 	Draw(canvas *canvas.Canvas) error
-
-	// Redraw is called when the widget must redraw all of its content because
-	// the previous canvas was invalidated. The widget must not assume that
-	// anything on the canvas remained the same, including its size.
-	Redraw(canvas *canvas.Canvas) error
 
 	// Keyboard is called when the widget is focused on the dashboard and a key
 	// shortcut the widget registered for was pressed. Only called if the widget

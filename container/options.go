@@ -2,7 +2,10 @@ package container
 
 // options.go defines container options.
 
-import "github.com/mum4k/termdash/widget"
+import (
+	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/widget"
+)
 
 // Option is used to provide options.
 type Option interface {
@@ -25,7 +28,7 @@ type options struct {
 	vAlign vAlignType
 
 	// border is the border around the container.
-	border borderType
+	border draw.LineStyle
 }
 
 // option implements Option.
@@ -113,19 +116,10 @@ func VerticalAlignBottom() Option {
 	})
 }
 
-// BorderNone configures the container to have no border.
-// This is the default if none of the Border options is specified.
-func BorderNone() Option {
+// Border configures the container to have a border of the specified style.
+func Border(ls draw.LineStyle) Option {
 	return option(func(opts *options) {
-		opts.border = borderTypeNone
-	})
-}
-
-// BorderSolid configures the container to have a border made with a solid
-// line.
-func BorderSolid() Option {
-	return option(func(opts *options) {
-		opts.border = borderTypeSolid
+		opts.border = ls
 	})
 }
 
@@ -197,26 +191,4 @@ const (
 	vAlignTypeTop vAlignType = iota
 	vAlignTypeMiddle
 	vAlignTypeBottom
-)
-
-// borderType represents
-type borderType int
-
-// String implements fmt.Stringer()
-func (bt borderType) String() string {
-	if n, ok := borderTypeNames[bt]; ok {
-		return n
-	}
-	return "borderTypeUnknown"
-}
-
-// borderTypeNames maps borderType values to human readable names.
-var borderTypeNames = map[borderType]string{
-	borderTypeNone:  "borderTypeNone",
-	borderTypeSolid: "borderTypeSolid",
-}
-
-const (
-	borderTypeNone borderType = iota
-	borderTypeSolid
 )

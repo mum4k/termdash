@@ -2,6 +2,7 @@
 package faketerm
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -53,6 +54,25 @@ func New(size image.Point, opts ...Option) (*Terminal, error) {
 // BackBuffer returns the back buffer of the fake terminal.
 func (t *Terminal) BackBuffer() cell.Buffer {
 	return t.buffer
+}
+
+// String prints out the buffer into a string.
+// TODO(mum4k): Support printing of options.
+// Implements fmt.Stringer.
+func (t *Terminal) String() string {
+	size := t.Size()
+	var b bytes.Buffer
+	for row := 0; row < size.Y; row++ {
+		for col := 0; col < size.X; col++ {
+			r := t.buffer[col][row].Rune
+			if r == 0 {
+				r = ' '
+			}
+			b.WriteRune(r)
+		}
+		b.WriteRune('\n')
+	}
+	return b.String()
 }
 
 // Implements terminalapi.Terminal.Size.

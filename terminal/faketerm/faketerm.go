@@ -8,6 +8,7 @@ import (
 	"image"
 	"log"
 
+	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminalapi"
 )
@@ -49,6 +50,11 @@ func New(size image.Point, opts ...Option) (*Terminal, error) {
 	return t, nil
 }
 
+// BackBuffer returns the back buffer of the fake terminal.
+func (t *Terminal) BackBuffer() cell.Buffer {
+	return t.buffer
+}
+
 // Implements terminalapi.Terminal.Size.
 func (t *Terminal) Size() image.Point {
 	return t.buffer.Size()
@@ -81,8 +87,12 @@ func (t *Terminal) HideCursor() {
 
 // Implements terminalapi.Terminal.SetCell.
 func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
-	if area := t.buffer.Area(); !p.In(area) {
-		return fmt.Errorf("cell at point %+v falls out of the terminal area %+v", p, area)
+	ar, err := area.FromSize(t.buffer.Size())
+	if err != nil {
+		return err
+	}
+	if !p.In(ar) {
+		return fmt.Errorf("cell at point %+v falls out of the terminal area %+v", p, ar)
 	}
 
 	cell := t.buffer[p.X][p.Y]

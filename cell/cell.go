@@ -22,6 +22,11 @@ type Options struct {
 	BgColor Color
 }
 
+// set allows existing options to be passed as an option.
+func (o *Options) set(other *Options) {
+	*other = *o
+}
+
 // NewOptions returns a new Options instance after applying the provided options.
 func NewOptions(opts ...Option) *Options {
 	o := &Options{}
@@ -84,12 +89,6 @@ func (b Buffer) Size() image.Point {
 		len(b),
 		len(b[0]),
 	}
-}
-
-// Area returns the area that is covered by this buffer.
-func (b Buffer) Area() image.Rectangle {
-	s := b.Size()
-	return image.Rect(0, 0, s.X-1, s.Y-1)
 }
 
 // option implements Option.

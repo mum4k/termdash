@@ -94,6 +94,23 @@ func TestNew(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "passing full Options overwrites existing",
+			r:    'X',
+			opts: []Option{
+				&Options{
+					FgColor: ColorBlack,
+					BgColor: ColorBlue,
+				},
+			},
+			want: Cell{
+				Rune: 'X',
+				Opts: &Options{
+					FgColor: ColorBlack,
+					BgColor: ColorBlue,
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -232,45 +249,6 @@ func TestBufferSize(t *testing.T) {
 			got := b.Size()
 			if diff := pretty.Compare(size, got); diff != "" {
 				t.Errorf("Size => unexpected diff (-want, +got):\n%s", diff)
-			}
-		})
-	}
-}
-
-func TestBufferArea(t *testing.T) {
-	tests := []struct {
-		desc string
-		size image.Point
-		want image.Rectangle
-	}{
-		{
-			desc: "single cell buffer",
-			size: image.Point{1, 1},
-			want: image.Rectangle{
-				Min: image.Point{0, 0},
-				Max: image.Point{0, 0},
-			},
-		},
-		{
-			desc: "rectangular buffer",
-			size: image.Point{3, 4},
-			want: image.Rectangle{
-				Min: image.Point{0, 0},
-				Max: image.Point{2, 3},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			b, err := NewBuffer(tc.size)
-			if err != nil {
-				t.Fatalf("NewBuffer => unexpected error: %v", err)
-			}
-
-			got := b.Area()
-			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("Area => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

@@ -27,6 +27,8 @@ func Example() {
 	).Root().Second( // Bottom half of the terminal.
 		PlaceWidget( /* widget = */ nil),
 	).Root()
+	// TODO(mum4k): Don't require .Root() at the end.
+	// TODO(mum4k): Allow splits on different ratios.
 }
 
 func TestParentAndRoot(t *testing.T) {

@@ -8,6 +8,7 @@ canvases assigned to the placed widgets.
 package container
 
 import (
+	"errors"
 	"fmt"
 	"image"
 
@@ -203,22 +204,24 @@ func (c *Container) draw() error {
 
 // Draw draws this container and all of its sub containers.
 func (c *Container) Draw() error {
-	// TODO(mum4k): Handle resize or split to area too small.
-	// TODO(mum4k): Propagate error.
-	// TODO(mum4k): Don't require .Root() at the end.
-	drawTree(c)
+	var errStr string
+	drawTree(c, &errStr)
+	if errStr != "" {
+		return errors.New(errStr)
+	}
 	return nil
 }
 
 // drawTree implements pre-order BST walk through the containers and draws each
 // visited container.
-func drawTree(c *Container) {
-	if c == nil {
+func drawTree(c *Container, errStr *string) {
+	if c == nil || *errStr != "" {
 		return
 	}
 	if err := c.draw(); err != nil {
-		panic(err)
+		*errStr = err.Error()
+		return
 	}
-	drawTree(c.first)
-	drawTree(c.second)
+	drawTree(c.first, errStr)
+	drawTree(c.second, errStr)
 }

@@ -102,3 +102,128 @@ func TestFromSize(t *testing.T) {
 		})
 	}
 }
+
+func TestHSplit(t *testing.T) {
+	tests := []struct {
+		desc  string
+		area  image.Rectangle
+		want1 image.Rectangle
+		want2 image.Rectangle
+	}{
+		{
+			desc:  "zero area to begin with",
+			area:  image.ZR,
+			want1: image.ZR,
+			want2: image.ZR,
+		},
+		{
+			desc:  "splitting results in zero height area",
+			area:  image.Rect(1, 1, 2, 2),
+			want1: image.ZR,
+			want2: image.ZR,
+		},
+		{
+			desc:  "splits area with even height",
+			area:  image.Rect(1, 1, 3, 3),
+			want1: image.Rect(1, 1, 3, 2),
+			want2: image.Rect(1, 2, 3, 3),
+		},
+		{
+			desc:  "splits area with odd height",
+			area:  image.Rect(1, 1, 4, 4),
+			want1: image.Rect(1, 1, 4, 2),
+			want2: image.Rect(1, 2, 4, 4),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got1, got2 := HSplit(tc.area)
+			if diff := pretty.Compare(tc.want1, got1); diff != "" {
+				t.Errorf("HSplit => first value unexpected diff (-want, +got):\n%s", diff)
+			}
+			if diff := pretty.Compare(tc.want2, got2); diff != "" {
+				t.Errorf("HSplit => second value unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestVSplit(t *testing.T) {
+	tests := []struct {
+		desc  string
+		area  image.Rectangle
+		want1 image.Rectangle
+		want2 image.Rectangle
+	}{
+		{
+			desc:  "zero area to begin with",
+			area:  image.ZR,
+			want1: image.ZR,
+			want2: image.ZR,
+		},
+		{
+			desc:  "splitting results in zero width area",
+			area:  image.Rect(1, 1, 2, 2),
+			want1: image.ZR,
+			want2: image.ZR,
+		},
+		{
+			desc:  "splits area with even width",
+			area:  image.Rect(1, 1, 3, 3),
+			want1: image.Rect(1, 1, 2, 3),
+			want2: image.Rect(2, 1, 3, 3),
+		},
+		{
+			desc:  "splits area with odd width",
+			area:  image.Rect(1, 1, 4, 4),
+			want1: image.Rect(1, 1, 2, 4),
+			want2: image.Rect(2, 1, 4, 4),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got1, got2 := VSplit(tc.area)
+			if diff := pretty.Compare(tc.want1, got1); diff != "" {
+				t.Errorf("VSplit => first value unexpected diff (-want, +got):\n%s", diff)
+			}
+			if diff := pretty.Compare(tc.want2, got2); diff != "" {
+				t.Errorf("VSplit => second value unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestExcludeBorder(t *testing.T) {
+	tests := []struct {
+		desc string
+		area image.Rectangle
+		want image.Rectangle
+	}{
+		{
+			desc: "zero area to begin with",
+			area: image.ZR,
+			want: image.ZR,
+		},
+		{
+			desc: "excluding results in zero area",
+			area: image.Rect(1, 1, 2, 2),
+			want: image.ZR,
+		},
+		{
+			desc: "excludes border",
+			area: image.Rect(1, 1, 4, 5),
+			want: image.Rect(2, 2, 3, 4),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := ExcludeBorder(tc.area)
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("ExcludeBorder => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}

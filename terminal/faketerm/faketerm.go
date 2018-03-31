@@ -51,13 +51,22 @@ func New(size image.Point, opts ...Option) (*Terminal, error) {
 	return t, nil
 }
 
+// MustNew is like New, but panics on all errors.
+func MustNew(size image.Point, opts ...Option) *Terminal {
+	ft, err := New(size, opts...)
+	if err != nil {
+		log.Fatalf("New => unexpected error: %v", err)
+	}
+	return ft
+}
+
 // BackBuffer returns the back buffer of the fake terminal.
 func (t *Terminal) BackBuffer() cell.Buffer {
 	return t.buffer
 }
 
 // String prints out the buffer into a string.
-// TODO(mum4k): Support printing of options.
+// This includes the cell runes only, cell options are ignored.
 // Implements fmt.Stringer.
 func (t *Terminal) String() string {
 	size := t.Size()

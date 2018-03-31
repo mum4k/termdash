@@ -43,7 +43,7 @@ var lineStyleNames = map[LineStyle]string{
 }
 
 const (
-	lineStyleUnknown LineStyle = iota
+	LineStyleNone LineStyle = iota
 	LineStyleLight
 )
 

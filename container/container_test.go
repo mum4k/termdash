@@ -277,6 +277,7 @@ func TestDraw(t *testing.T) {
 				return ft
 			},
 		},
+		// TODO(mum4k): Tests where widget removes children and vice versa.
 	}
 
 	for _, tc := range tests {

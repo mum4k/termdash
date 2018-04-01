@@ -1,6 +1,7 @@
 package terminalapi
 
 import (
+	"errors"
 	"image"
 
 	"github.com/mum4k/termdash/keyboard"
@@ -46,3 +47,16 @@ type Mouse struct {
 }
 
 func (*Mouse) isEvent() {}
+
+// Error is an event indicating an error while processing input.
+type Error string
+
+func (*Error) isEvent() {}
+
+// Error returns the error that occurred.
+func (e *Error) Error() error {
+	if e == nil || *e == "" {
+		return nil
+	}
+	return errors.New(e)
+}

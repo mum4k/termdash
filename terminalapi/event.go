@@ -58,5 +58,5 @@ func (e *Error) Error() error {
 	if e == nil || *e == "" {
 		return nil
 	}
-	return errors.New(e)
+	return errors.New(string(*e))
 }

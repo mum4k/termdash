@@ -38,7 +38,7 @@ func TestBox(t *testing.T) {
 			desc:    "unsupported line style",
 			canvas:  image.Rect(0, 0, 4, 4),
 			box:     image.Rect(0, 0, 2, 2),
-			ls:      lineStyleUnknown,
+			ls:      LineStyle(-1),
 			wantErr: true,
 		},
 		{

@@ -13,55 +13,34 @@ import (
 
 // Example demonstrates how to use the Container API.
 func Example() {
-	New( // Create the root container.
+	New(
 		/* terminal = */ nil,
-		SplitHorizontal(),
-	).First( // This is the top half part of the terminal.
-		SplitVertical(),
-	).First( // Left side on the top.
-		VerticalAlignTop(),
-		PlaceWidget( /* widget = */ nil),
-	).Parent().Second( // Right side on the top.
-		HorizontalAlignRight(),
-		PlaceWidget( /* widget = */ nil),
-	).Root().Second( // Bottom half of the terminal.
-		PlaceWidget( /* widget = */ nil),
-	).Root()
-	// TODO(mum4k): Don't require .Root() at the end.
+		SplitVertical(
+			Left(
+				SplitHorizontal(
+					Top(
+						Border(draw.LineStyleLight),
+					),
+					Bottom(
+						SplitHorizontal(
+							Top(
+								Border(draw.LineStyleLight),
+							),
+							Bottom(
+								Border(draw.LineStyleLight),
+							),
+						),
+					),
+				),
+			),
+			Right(
+				Border(draw.LineStyleLight),
+			),
+		),
+	)
+
 	// TODO(mum4k): Allow splits on different ratios.
-}
-
-func TestParentAndRoot(t *testing.T) {
-	ft := faketerm.MustNew(image.Point{1, 1})
-	tests := []struct {
-		desc      string
-		container *Container
-		// Arg is the container defined above.
-		want func(c *Container) *Container
-	}{
-		{
-			desc:      "root container has no parent",
-			container: New(ft),
-			want: func(c *Container) *Container {
-				return nil
-			},
-		},
-		{
-			desc:      "returns the parent",
-			container: New(ft).First(),
-			want: func(c *Container) *Container {
-				return c.Root()
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			if got := tc.container.Parent(); got != tc.want(tc.container) {
-				t.Errorf("Parent => unexpected container\n  got: %v\n want: %v", got, tc.want)
-			}
-		})
-	}
+	// TODO(mum4k): Include an example with a widget.
 }
 
 // mustCanvas returns a new canvas or panics.
@@ -95,145 +74,166 @@ func TestDraw(t *testing.T) {
 		want      func(size image.Point) *faketerm.Terminal
 		wantErr   bool
 	}{
-		//		{
-		//			desc:     "empty container",
-		//			termSize: image.Point{10, 10},
-		//			container: func(ft *faketerm.Terminal) *Container {
-		//				return New(ft)
-		//			},
-		//			want: func(size image.Point) *faketerm.Terminal {
-		//				return faketerm.MustNew(size)
-		//			},
-		//		},
-		//		{
-		//			desc:     "container with a border",
-		//			termSize: image.Point{10, 10},
-		//			container: func(ft *faketerm.Terminal) *Container {
-		//				return New(
-		//					ft,
-		//					Border(draw.LineStyleLight),
-		//				)
-		//			},
-		//			want: func(size image.Point) *faketerm.Terminal {
-		//				ft := faketerm.MustNew(size)
-		//				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-		//				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
-		//				mustApply(cvs, ft)
-		//				return ft
-		//			},
-		//		},
-		//		{
-		//			desc:     "horizontal split, children have borders",
-		//			termSize: image.Point{10, 10},
-		//			container: func(ft *faketerm.Terminal) *Container {
-		//				return New(
-		//					ft,
-		//					SplitHorizontal(),
-		//				).First(
-		//					Border(draw.LineStyleLight),
-		//				).Root().Second(
-		//					Border(draw.LineStyleLight),
-		//				).Root()
-		//			},
-		//			want: func(size image.Point) *faketerm.Terminal {
-		//				ft := faketerm.MustNew(size)
-		//				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-		//				mustBox(cvs, image.Rect(0, 0, 10, 5), draw.LineStyleLight)
-		//				mustBox(cvs, image.Rect(0, 5, 10, 10), draw.LineStyleLight)
-		//				mustApply(cvs, ft)
-		//				return ft
-		//			},
-		//		},
-		//		{
-		//			desc:     "horizontal split, parent and children have borders",
-		//			termSize: image.Point{10, 10},
-		//			container: func(ft *faketerm.Terminal) *Container {
-		//				return New(
-		//					ft,
-		//					SplitHorizontal(),
-		//					Border(draw.LineStyleLight),
-		//				).First(
-		//					Border(draw.LineStyleLight),
-		//				).Root().Second(
-		//					Border(draw.LineStyleLight),
-		//				).Root()
-		//			},
-		//			want: func(size image.Point) *faketerm.Terminal {
-		//				ft := faketerm.MustNew(size)
-		//				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-		//				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
-		//				mustBox(cvs, image.Rect(1, 1, 9, 5), draw.LineStyleLight)
-		//				mustBox(cvs, image.Rect(1, 5, 9, 9), draw.LineStyleLight)
-		//				mustApply(cvs, ft)
-		//				return ft
-		//			},
-		//		},
-		//		{
-		//			desc:     "vertical split, children have borders",
-		//			termSize: image.Point{10, 10},
-		//			container: func(ft *faketerm.Terminal) *Container {
-		//				return New(
-		//					ft,
-		//					SplitVertical(),
-		//				).First(
-		//					Border(draw.LineStyleLight),
-		//				).Root().Second(
-		//					Border(draw.LineStyleLight),
-		//				).Root()
-		//			},
-		//			want: func(size image.Point) *faketerm.Terminal {
-		//				ft := faketerm.MustNew(size)
-		//				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-		//				mustBox(cvs, image.Rect(0, 0, 5, 10), draw.LineStyleLight)
-		//				mustBox(cvs, image.Rect(5, 0, 10, 10), draw.LineStyleLight)
-		//				mustApply(cvs, ft)
-		//				return ft
-		//			},
-		//		},
-		//		{
-		//			desc:     "vertical split, parent and children have borders",
-		//			termSize: image.Point{10, 10},
-		//			container: func(ft *faketerm.Terminal) *Container {
-		//				return New(
-		//					ft,
-		//					SplitVertical(),
-		//					Border(draw.LineStyleLight),
-		//				).First(
-		//					Border(draw.LineStyleLight),
-		//				).Root().Second(
-		//					Border(draw.LineStyleLight),
-		//				).Root()
-		//			},
-		//			want: func(size image.Point) *faketerm.Terminal {
-		//				ft := faketerm.MustNew(size)
-		//				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-		//				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
-		//				mustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
-		//				mustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
-		//				mustApply(cvs, ft)
-		//				return ft
-		//			},
-		//		},
+		{
+			desc:     "empty container",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(ft)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "container with a border",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
+				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				mustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "horizontal split, children have borders",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
+				mustBox(cvs, image.Rect(0, 0, 10, 5), draw.LineStyleLight)
+				mustBox(cvs, image.Rect(0, 5, 10, 10), draw.LineStyleLight)
+				mustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "horizontal split, parent and children have borders",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
+				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				mustBox(cvs, image.Rect(1, 1, 9, 5), draw.LineStyleLight)
+				mustBox(cvs, image.Rect(1, 5, 9, 9), draw.LineStyleLight)
+				mustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "vertical split, children have borders",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
+				mustBox(cvs, image.Rect(0, 0, 5, 10), draw.LineStyleLight)
+				mustBox(cvs, image.Rect(5, 0, 10, 10), draw.LineStyleLight)
+				mustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "vertical split, parent and children have borders",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
+				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				mustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
+				mustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
+				mustApply(cvs, ft)
+				return ft
+			},
+		},
 		{
 			desc:     "multi level split",
 			termSize: image.Point{10, 11},
 			container: func(ft *faketerm.Terminal) *Container {
 				return New(
 					ft,
-					SplitVertical(),
-				).First(
-					SplitHorizontal(),
-				).First(
-					Border(draw.LineStyleLight),
-				).Parent().Second(
-					SplitHorizontal(),
-				).First(
-					Border(draw.LineStyleLight),
-				).Parent().Second(
-					Border(draw.LineStyleLight),
-				).Root().Second(
-					Border(draw.LineStyleLight),
-				).Root()
+					SplitVertical(
+						Left(
+							SplitHorizontal(
+								Top(
+									Border(draw.LineStyleLight),
+								),
+								Bottom(
+									SplitHorizontal(
+										Top(
+											Border(draw.LineStyleLight),
+										),
+										Bottom(
+											Border(draw.LineStyleLight),
+										),
+									),
+								),
+							),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+					),
+				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -252,16 +252,22 @@ func TestDraw(t *testing.T) {
 			container: func(ft *faketerm.Terminal) *Container {
 				return New(
 					ft,
-					SplitHorizontal(),
-				).First(
-					Border(draw.LineStyleLight),
-				).Parent().Second(
-					SplitHorizontal(),
-				).First(
-					Border(draw.LineStyleLight),
-				).Parent().Second(
-					Border(draw.LineStyleLight),
-				).Root()
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							SplitHorizontal(
+								Top(
+									Border(draw.LineStyleLight),
+								),
+								Bottom(
+									Border(draw.LineStyleLight),
+								),
+							),
+						),
+					),
+				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

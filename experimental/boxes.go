@@ -18,20 +18,29 @@ func main() {
 
 	c := container.New(
 		t,
-		container.SplitVertical(),
-	).First(
-		container.SplitHorizontal(),
-	).First(
-		container.Border(draw.LineStyleLight),
-	).Parent().Second(
-		container.SplitHorizontal(),
-	).First(
-		container.Border(draw.LineStyleLight),
-	).Parent().Second(
-		container.Border(draw.LineStyleLight),
-	).Root().Second(
-		container.Border(draw.LineStyleLight),
-	).Root()
+		container.SplitVertical(
+			container.Left(
+				container.SplitHorizontal(
+					container.Top(
+						container.Border(draw.LineStyleLight),
+					),
+					container.Bottom(
+						container.SplitHorizontal(
+							container.Top(
+								container.Border(draw.LineStyleLight),
+							),
+							container.Bottom(
+								container.Border(draw.LineStyleLight),
+							),
+						),
+					),
+				),
+			),
+			container.Right(
+				container.Border(draw.LineStyleLight),
+			),
+		),
+	)
 
 	if err := c.Draw(); err != nil {
 		panic(err)
@@ -40,5 +49,5 @@ func main() {
 	if err := t.Flush(); err != nil {
 		panic(err)
 	}
-	time.Sleep(30 * time.Second)
+	time.Sleep(3 * time.Second)
 }

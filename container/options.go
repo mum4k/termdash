@@ -7,10 +7,17 @@ import (
 	"github.com/mum4k/termdash/widget"
 )
 
-// Option is used to provide options.
+// applyOptions applies the options to the container.
+func applyOptions(c *Container, opts ...Option) {
+	for _, opt := range opts {
+		opt.set(c)
+	}
+}
+
+// Option is used to provide options to a container.
 type Option interface {
 	// set sets the provided option.
-	set(*options)
+	set(*Container)
 }
 
 // options stores the options provided to the container.
@@ -32,33 +39,45 @@ type options struct {
 }
 
 // option implements Option.
-type option func(*options)
+type option func(*Container)
 
 // set implements Option.set.
-func (o option) set(opts *options) {
-	o(opts)
+func (o option) set(c *Container) {
+	o(c)
+}
+
+// SplitVertical splits the container along the vertical axis into two sub
+// containers. The use of this option removes any widget placed at this
+// container, containers with sub containers cannot contain widgets.
+func SplitVertical(l LeftOption, r RightOption) Option {
+	return option(func(c *Container) {
+		c.opts.split = splitTypeVertical
+		c.opts.widget = nil
+		applyOptions(c.createFirst(), l.lOpts()...)
+		applyOptions(c.createSecond(), r.rOpts()...)
+	})
+}
+
+// SplitHorizontal splits the container along the horizontal axis into two sub
+// containers. The use of this option removes any widget placed at this
+// container, containers with sub containers cannot contain widgets.
+func SplitHorizontal(t TopOption, b BottomOption) Option {
+	return option(func(c *Container) {
+		c.opts.split = splitTypeHorizontal
+		c.opts.widget = nil
+		applyOptions(c.createFirst(), t.tOpts()...)
+		applyOptions(c.createSecond(), b.bOpts()...)
+	})
 }
 
 // PlaceWidget places the provided widget into the container.
+// The use of this option removes any sub containers. Containers with sub
+// containers cannot have widgets.
 func PlaceWidget(w widget.Widget) Option {
-	return option(func(opts *options) {
-		opts.widget = w
-	})
-}
-
-// SplitHorizontal configures the container for a horizontal split.
-func SplitHorizontal() Option {
-	return option(func(opts *options) {
-		opts.split = splitTypeHorizontal
-	})
-}
-
-// SplitVertical configures the container for a vertical split.
-// This is the default split type if neither if SplitHorizontal() or
-// SplitVertical() is specified.
-func SplitVertical() Option {
-	return option(func(opts *options) {
-		opts.split = splitTypeVertical
+	return option(func(c *Container) {
+		c.opts.widget = w
+		c.first = nil
+		c.second = nil
 	})
 }
 
@@ -66,8 +85,8 @@ func SplitVertical() Option {
 // container along the horizontal axis. Has no effect if the container contains
 // no widget. This is the default horizontal alignment if no other is specified.
 func HorizontalAlignLeft() Option {
-	return option(func(opts *options) {
-		opts.hAlign = hAlignTypeLeft
+	return option(func(c *Container) {
+		c.opts.hAlign = hAlignTypeLeft
 	})
 }
 
@@ -75,8 +94,8 @@ func HorizontalAlignLeft() Option {
 // container along the horizontal axis. Has no effect if the container contains
 // no widget.
 func HorizontalAlignCenter() Option {
-	return option(func(opts *options) {
-		opts.hAlign = hAlignTypeCenter
+	return option(func(c *Container) {
+		c.opts.hAlign = hAlignTypeCenter
 	})
 }
 
@@ -84,8 +103,8 @@ func HorizontalAlignCenter() Option {
 // container along the horizontal axis. Has no effect if the container contains
 // no widget.
 func HorizontalAlignRight() Option {
-	return option(func(opts *options) {
-		opts.hAlign = hAlignTypeRight
+	return option(func(c *Container) {
+		c.opts.hAlign = hAlignTypeRight
 	})
 }
 
@@ -93,8 +112,8 @@ func HorizontalAlignRight() Option {
 // container along the vertical axis. Has no effect if the container contains
 // no widget. This is the default vertical alignment if no other is specified.
 func VerticalAlignTop() Option {
-	return option(func(opts *options) {
-		opts.vAlign = vAlignTypeTop
+	return option(func(c *Container) {
+		c.opts.vAlign = vAlignTypeTop
 	})
 }
 
@@ -102,8 +121,8 @@ func VerticalAlignTop() Option {
 // container along the vertical axis. Has no effect if the container contains
 // no widget.
 func VerticalAlignMiddle() Option {
-	return option(func(opts *options) {
-		opts.vAlign = vAlignTypeMiddle
+	return option(func(c *Container) {
+		c.opts.vAlign = vAlignTypeMiddle
 	})
 }
 
@@ -111,15 +130,15 @@ func VerticalAlignMiddle() Option {
 // container along the vertical axis. Has no effect if the container contains
 // no widget.
 func VerticalAlignBottom() Option {
-	return option(func(opts *options) {
-		opts.vAlign = vAlignTypeBottom
+	return option(func(c *Container) {
+		c.opts.vAlign = vAlignTypeBottom
 	})
 }
 
 // Border configures the container to have a border of the specified style.
 func Border(ls draw.LineStyle) Option {
-	return option(func(opts *options) {
-		opts.border = ls
+	return option(func(c *Container) {
+		c.opts.border = ls
 	})
 }
 
@@ -192,3 +211,103 @@ const (
 	vAlignTypeMiddle
 	vAlignTypeBottom
 )
+
+// LeftOption is used to provide options to the left sub container after a
+// vertical split of the parent.
+type LeftOption interface {
+	// lOpts returns the options.
+	lOpts() []Option
+}
+
+// leftOption implements LeftOption.
+type leftOption func() []Option
+
+// lOpts implements LeftOption.lOpts.
+func (lo leftOption) lOpts() []Option {
+	if lo == nil {
+		return nil
+	}
+	return lo()
+}
+
+// Left applies options to the left sub container after a vertical split of the parent.
+func Left(opts ...Option) LeftOption {
+	return leftOption(func() []Option {
+		return opts
+	})
+}
+
+// RightOption is used to provide options to the right sub container after a
+// vertical split of the parent.
+type RightOption interface {
+	// rOpts returns the options.
+	rOpts() []Option
+}
+
+// rightOption implements RightOption.
+type rightOption func() []Option
+
+// rOpts implements RightOption.rOpts.
+func (lo rightOption) rOpts() []Option {
+	if lo == nil {
+		return nil
+	}
+	return lo()
+}
+
+// Right applies options to the right sub container after a vertical split of the parent.
+func Right(opts ...Option) RightOption {
+	return rightOption(func() []Option {
+		return opts
+	})
+}
+
+// TopOption is used to provide options to the top sub container after a
+// horizontal split of the parent.
+type TopOption interface {
+	// tOpts returns the options.
+	tOpts() []Option
+}
+
+// topOption implements TopOption.
+type topOption func() []Option
+
+// tOpts implements TopOption.tOpts.
+func (lo topOption) tOpts() []Option {
+	if lo == nil {
+		return nil
+	}
+	return lo()
+}
+
+// Top applies options to the top sub container after a horizontal split of the parent.
+func Top(opts ...Option) TopOption {
+	return topOption(func() []Option {
+		return opts
+	})
+}
+
+// BottomOption is used to provide options to the bottom sub container after a
+// horizontal split of the parent.
+type BottomOption interface {
+	// bOpts returns the options.
+	bOpts() []Option
+}
+
+// bottomOption implements BottomOption.
+type bottomOption func() []Option
+
+// bOpts implements BottomOption.bOpts.
+func (lo bottomOption) bOpts() []Option {
+	if lo == nil {
+		return nil
+	}
+	return lo()
+}
+
+// Bottom applies options to the bottom sub container after a horizontal split of the parent.
+func Bottom(opts ...Option) BottomOption {
+	return bottomOption(func() []Option {
+		return opts
+	})
+}

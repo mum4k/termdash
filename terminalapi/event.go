@@ -51,6 +51,12 @@ func (*Mouse) isEvent() {}
 // Error is an event indicating an error while processing input.
 type Error string
 
+// NewError returns a new Error event.
+func NewError(e string) *Error {
+	err := Error(e)
+	return &err
+}
+
 func (*Error) isEvent() {}
 
 // Error returns the error that occurred.

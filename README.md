@@ -13,7 +13,7 @@ rewrite you ask?
 
 # Design goals
 
-This effort is focused on good software design and maintainability. By a good
+This effort is focused on good software design and maintainability. By good
 design I mean:
 
 1. Write readable, well documented code.

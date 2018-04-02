@@ -45,7 +45,7 @@ func New() *Unbound {
 	return u
 }
 
-// wake periodically wakes up a goroutine waiting at Pull() so it can
+// wake periodically wakes up all goroutines waiting at Pull() so they can
 // check if the context expired.
 func (u *Unbound) wake() {
 	const spinTime = 250 * time.Millisecond
@@ -54,7 +54,7 @@ func (u *Unbound) wake() {
 	for {
 		select {
 		case <-t.C:
-			u.cond.Signal()
+			u.cond.Broadcast()
 		case <-u.done:
 			return
 		}

@@ -14,7 +14,7 @@ rewrite you ask?
 # Design goals
 
 This effort is focused on good software design and maintainability. By a good
-software I mean:
+design I mean:
 
 1. Write readable, well documented code.
 1. Only beautiful, simple APIs, no exposed concurrency, channels, internals, etc.
@@ -47,11 +47,13 @@ See the [design document](doc/design.md).
 
 - [x] High-Level Design.
 - [x] Submit the APIs.
-- [ ] Implement the terminal layer.
-- [ ] Implement the container.
+- [x] Implement the terminal layer.
+- [x] Implement unit test helpers.
+- [x] Implement the container.
 - [ ] Implement the input event pre-processing.
 - [ ] Implement the infrastructure layer.
-- [ ] Implement unit test helpers.
+- [ ] Add support for tracking mouse and keyboard focus.
 - [ ] Implement the first widget.
 - [ ] Documentation and tooling for widget development.
 - [ ] Launch and iterate.
+- [ ] Implement support for other than 50% ratios when splitting containers.

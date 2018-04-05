@@ -3,6 +3,7 @@ package container
 // options.go defines container options.
 
 import (
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/widget"
 )
@@ -36,6 +37,8 @@ type options struct {
 
 	// border is the border around the container.
 	border draw.LineStyle
+	// borderColor is the color used for the border.
+	borderColor cell.Color
 }
 
 // option implements Option.
@@ -139,6 +142,13 @@ func VerticalAlignBottom() Option {
 func Border(ls draw.LineStyle) Option {
 	return option(func(c *Container) {
 		c.opts.border = ls
+	})
+}
+
+// BorderColor sets the color of the border.
+func BorderColor(color cell.Color) Option {
+	return option(func(c *Container) {
+		c.opts.borderColor = color
 	})
 }
 

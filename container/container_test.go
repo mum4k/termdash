@@ -277,6 +277,29 @@ func TestDraw(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:     "sets border color",
+			termSize: image.Point{4, 4},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					BorderColor(cell.ColorRed),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := mustCanvas(image.Rect(0, 0, 4, 4))
+				mustBox(
+					cvs,
+					image.Rect(0, 0, 4, 4),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorRed),
+				)
+				mustApply(cvs, ft)
+				return ft
+			},
+		},
 		// TODO(mum4k): Tests where widget removes children and vice versa.
 	}
 

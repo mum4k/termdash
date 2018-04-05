@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -54,6 +55,7 @@ func main() {
 							),
 							container.Bottom(
 								container.Border(draw.LineStyleLight),
+								container.BorderColor(cell.ColorYellow),
 							),
 						),
 					),

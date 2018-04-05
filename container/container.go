@@ -14,6 +14,7 @@ import (
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminalapi"
 )
@@ -126,7 +127,7 @@ func (c *Container) draw() error {
 		if err != nil {
 			return err
 		}
-		if err := draw.Box(cvs, ar, c.opts.border); err != nil {
+		if err := draw.Box(cvs, ar, c.opts.border, cell.FgColor(c.opts.borderColor)); err != nil {
 			return err
 		}
 	}

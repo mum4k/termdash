@@ -27,7 +27,7 @@ type Widget interface {
 	// Keyboard is called when the widget is focused on the dashboard and a key
 	// shortcut the widget registered for was pressed. Only called if the widget
 	// registered for keyboard events.
-	Keyboard(s *keyboard.Shortcut) error
+	Keyboard(s *keyboard.Key) error
 
 	// Mouse is called when the widget is focused on the dashboard and a mouse
 	// event happens on its canvas. Only called if the widget registered for mouse

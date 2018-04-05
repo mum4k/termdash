@@ -7,7 +7,7 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminalapi"
-	termbox "github.com/nsf/termbox-go"
+	tbx "github.com/nsf/termbox-go"
 )
 
 // Option is used to provide options.
@@ -43,7 +43,7 @@ type Terminal struct {
 // New returns a new termbox based Terminal.
 // Call Close() when the terminal isn't required anymore.
 func New(opts ...Option) (*Terminal, error) {
-	if err := termbox.Init(); err != nil {
+	if err := tbx.Init(); err != nil {
 		return nil, err
 	}
 
@@ -56,13 +56,13 @@ func New(opts ...Option) (*Terminal, error) {
 	if err != nil {
 		return nil, err
 	}
-	termbox.SetOutputMode(om)
+	tbx.SetOutputMode(om)
 	return t, nil
 }
 
 // Implements terminalapi.Terminal.Size.
 func (t *Terminal) Size() image.Point {
-	w, h := termbox.Size()
+	w, h := tbx.Size()
 	return image.Point{w, h}
 }
 
@@ -78,22 +78,22 @@ func (t *Terminal) Clear(opts ...cell.Option) error {
 	if err != nil {
 		return err
 	}
-	return termbox.Clear(fg, bg)
+	return tbx.Clear(fg, bg)
 }
 
 // Implements terminalapi.Terminal.Flush.
 func (t *Terminal) Flush() error {
-	return termbox.Flush()
+	return tbx.Flush()
 }
 
 // Implements terminalapi.Terminal.SetCursor.
 func (t *Terminal) SetCursor(p image.Point) {
-	termbox.SetCursor(p.X, p.Y)
+	tbx.SetCursor(p.X, p.Y)
 }
 
 // Implements terminalapi.Terminal.HideCursor.
 func (t *Terminal) HideCursor() {
-	termbox.HideCursor()
+	tbx.HideCursor()
 }
 
 // Implements terminalapi.Terminal.SetCell.
@@ -108,7 +108,7 @@ func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	if err != nil {
 		return err
 	}
-	termbox.SetCell(p.X, p.Y, r, fg, bg)
+	tbx.SetCell(p.X, p.Y, r, fg, bg)
 	return nil
 }
 
@@ -120,5 +120,5 @@ func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 // Closes the terminal, should be called when the terminal isn't required
 // anymore to return the screen to a sane state.
 func (t *Terminal) Close() {
-	termbox.Close()
+	tbx.Close()
 }

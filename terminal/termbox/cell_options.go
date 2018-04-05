@@ -6,41 +6,41 @@ import (
 	"fmt"
 
 	"github.com/mum4k/termdash/cell"
-	termbox "github.com/nsf/termbox-go"
+	tbx "github.com/nsf/termbox-go"
 )
 
 // cellColor converts termdash cell color to the termbox format.
-func cellColor(c cell.Color) (termbox.Attribute, error) {
+func cellColor(c cell.Color) (tbx.Attribute, error) {
 	switch c {
 	case cell.ColorDefault:
-		return termbox.ColorDefault, nil
+		return tbx.ColorDefault, nil
 	case cell.ColorBlack:
-		return termbox.ColorBlack, nil
+		return tbx.ColorBlack, nil
 	case cell.ColorRed:
-		return termbox.ColorRed, nil
+		return tbx.ColorRed, nil
 	case cell.ColorGreen:
-		return termbox.ColorGreen, nil
+		return tbx.ColorGreen, nil
 	case cell.ColorYellow:
-		return termbox.ColorYellow, nil
+		return tbx.ColorYellow, nil
 	case cell.ColorBlue:
-		return termbox.ColorBlue, nil
+		return tbx.ColorBlue, nil
 	case cell.ColorMagenta:
-		return termbox.ColorMagenta, nil
+		return tbx.ColorMagenta, nil
 	case cell.ColorCyan:
-		return termbox.ColorCyan, nil
+		return tbx.ColorCyan, nil
 	case cell.ColorWhite:
-		return termbox.ColorWhite, nil
+		return tbx.ColorWhite, nil
 	default:
 		return 0, fmt.Errorf("don't know how to convert cell color %v to the termbox format", c)
 	}
 }
 
 // cellOptsToFg converts the cell options to the termbox foreground attribute.
-func cellOptsToFg(opts *cell.Options) (termbox.Attribute, error) {
+func cellOptsToFg(opts *cell.Options) (tbx.Attribute, error) {
 	return cellColor(opts.FgColor)
 }
 
 // cellOptsToBg converts the cell options to the termbox background attribute.
-func cellOptsToBg(opts *cell.Options) (termbox.Attribute, error) {
+func cellOptsToBg(opts *cell.Options) (tbx.Attribute, error) {
 	return cellColor(opts.BgColor)
 }

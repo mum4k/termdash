@@ -2,6 +2,7 @@ package terminalapi
 
 import (
 	"errors"
+	"fmt"
 	"image"
 
 	"github.com/mum4k/termdash/keyboard"
@@ -18,11 +19,8 @@ type Event interface {
 // Keyboard is the event used when a key is pressed.
 // Implements terminalapi.Event.
 type Keyboard struct {
-	// Key identifies the pressed key.
-	// The rune either has a negative int32 value equal to one of the
-	// keyboard.Button values or a positive int32 value for all other Unicode
-	// byte sequences.
-	Key keyboard.Button
+	// Key is the pressed key.
+	Key keyboard.Key
 }
 
 func (*Keyboard) isEvent() {}
@@ -57,6 +55,12 @@ func NewError(e string) *Error {
 	return &err
 }
 
+// NewErrorf returns a new Error event, arguments are similar to fmt.Sprintf.
+func NewErrorf(format string, args ...interface{}) *Error {
+	err := Error(fmt.Sprintf(format, args...))
+	return &err
+}
+
 func (*Error) isEvent() {}
 
 // Error returns the error that occurred.
@@ -65,4 +69,9 @@ func (e *Error) Error() error {
 		return nil
 	}
 	return errors.New(string(*e))
+}
+
+// String implements fmt.Stringer.
+func (e Error) String() string {
+	return string(e)
 }

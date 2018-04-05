@@ -14,7 +14,7 @@ import (
 	tbx "github.com/nsf/termbox-go"
 )
 
-func TestToTermdashEvent(t *testing.T) {
+func TestToTermdashEvents(t *testing.T) {
 	tests := []struct {
 		desc  string
 		event tbx.Event
@@ -121,9 +121,9 @@ func TestToTermdashEvent(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := toTermdashEvent(tc.event)
+			got := toTermdashEvents(tc.event)
 			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("toTermdashEvent => unexpected diff (-want, +got):\n%s", diff)
+				t.Errorf("toTermdashEvents => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}
@@ -149,14 +149,14 @@ func TestMouseButtons(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("key:%v want:%v", tc.key, tc.want), func(t *testing.T) {
 
-			evs := toTermdashEvent(tbx.Event{Type: tbx.EventMouse, Key: tc.key})
+			evs := toTermdashEvents(tbx.Event{Type: tbx.EventMouse, Key: tc.key})
 			if got, want := len(evs), 1; got != want {
-				t.Fatalf("toTermdashEvent => got %d events, want %d", got, want)
+				t.Fatalf("toTermdashEvents => got %d events, want %d", got, want)
 			}
 
 			ev := evs[0]
 			if err, ok := ev.(*terminalapi.Error); ok != tc.wantErr {
-				t.Fatalf("toTermdashEvent => unexpected error:%v, wantErr: %v", err, tc.wantErr)
+				t.Fatalf("toTermdashEvents => unexpected error:%v, wantErr: %v", err, tc.wantErr)
 			}
 			if _, ok := ev.(*terminalapi.Error); ok {
 				return
@@ -165,11 +165,11 @@ func TestMouseButtons(t *testing.T) {
 			switch e := ev.(type) {
 			case *terminalapi.Mouse:
 				if got := e.Button; got != tc.want {
-					t.Errorf("toTermdashEvent => got %v, want %v", got, tc.want)
+					t.Errorf("toTermdashEvents => got %v, want %v", got, tc.want)
 				}
 
 			default:
-				t.Fatalf("toTermdashEvent => unexpected event type %T", e)
+				t.Fatalf("toTermdashEvents => unexpected event type %T", e)
 			}
 		})
 	}
@@ -263,7 +263,7 @@ func TestKeyboardKeys(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("key:%v and ch:%v want:%v", tc.key, tc.ch, tc.want), func(t *testing.T) {
-			evs := toTermdashEvent(tbx.Event{
+			evs := toTermdashEvents(tbx.Event{
 				Type: tbx.EventKey,
 				Key:  tc.key,
 				Ch:   tc.ch,
@@ -278,12 +278,12 @@ func TestKeyboardKeys(t *testing.T) {
 			}
 
 			if gotCount != wantCount {
-				t.Fatalf("toTermdashEvent => got %d events, want %d, events were:\n%v", gotCount, wantCount, pretty.Sprint(evs))
+				t.Fatalf("toTermdashEvents => got %d events, want %d, events were:\n%v", gotCount, wantCount, pretty.Sprint(evs))
 			}
 
 			for i, ev := range evs {
 				if err, ok := ev.(*terminalapi.Error); ok != tc.wantErr {
-					t.Fatalf("toTermdashEvent => unexpected error:%v, wantErr: %v", err, tc.wantErr)
+					t.Fatalf("toTermdashEvents => unexpected error:%v, wantErr: %v", err, tc.wantErr)
 				}
 				if _, ok := ev.(*terminalapi.Error); ok {
 					return
@@ -292,11 +292,11 @@ func TestKeyboardKeys(t *testing.T) {
 				switch e := ev.(type) {
 				case *terminalapi.Keyboard:
 					if got, want := e.Key, tc.want[i]; got != want {
-						t.Errorf("toTermdashEvent => got key[%d] %v, want %v", got, i, want)
+						t.Errorf("toTermdashEvents => got key[%d] %v, want %v", got, i, want)
 					}
 
 				default:
-					t.Fatalf("toTermdashEvent => unexpected event type %T", e)
+					t.Fatalf("toTermdashEvents => unexpected event type %T", e)
 				}
 			}
 		})

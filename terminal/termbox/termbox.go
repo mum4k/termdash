@@ -6,6 +6,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 	tbx "github.com/nsf/termbox-go"
 )
@@ -37,6 +38,13 @@ func ColorMode(cm terminalapi.ColorMode) Option {
 // supported, because termbox uses global state.
 // Implements terminalapi.Terminal.
 type Terminal struct {
+	// events is a queue of input events.
+	events *eventqueue.Unbound
+
+	// done gets closed when Close() is called.
+	done chan struct{}
+
+	// Options.
 	colorMode terminalapi.ColorMode
 }
 
@@ -46,8 +54,12 @@ func New(opts ...Option) (*Terminal, error) {
 	if err := tbx.Init(); err != nil {
 		return nil, err
 	}
+	tbx.SetInputMode(tbx.InputEsc | tbx.InputMouse)
 
-	t := &Terminal{}
+	t := &Terminal{
+		events: eventqueue.New(),
+		done:   make(chan struct{}),
+	}
 	for _, opt := range opts {
 		opt.set(t)
 	}
@@ -57,6 +69,8 @@ func New(opts ...Option) (*Terminal, error) {
 		return nil, err
 	}
 	tbx.SetOutputMode(om)
+
+	go t.pollEvents() // Stops when Close() is called.
 	return t, nil
 }
 
@@ -112,13 +126,34 @@ func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	return nil
 }
 
+// pollEvents polls and enqueues the input events.
+func (t *Terminal) pollEvents() {
+	for {
+		select {
+		case <-t.done:
+			return
+		default:
+		}
+
+		events := toTermdashEvents(tbx.PollEvent())
+		for _, ev := range events {
+			t.events.Push(ev)
+		}
+	}
+}
+
 // Implements terminalapi.Terminal.Event.
 func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
-	return nil
+	ev, err := t.events.Pull(ctx)
+	if err != nil {
+		return terminalapi.NewErrorf("unable to pull the next event: %v", err)
+	}
+	return ev
 }
 
 // Closes the terminal, should be called when the terminal isn't required
 // anymore to return the screen to a sane state.
 func (t *Terminal) Close() {
+	close(t.done)
 	tbx.Close()
 }

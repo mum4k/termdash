@@ -192,8 +192,8 @@ func convResize(tbxEv tbx.Event) terminalapi.Event {
 	}
 }
 
-// toTermdashEvent converts a termbox event to the termdash event format.
-func toTermdashEvent(tbxEv tbx.Event) []terminalapi.Event {
+// toTermdashEvents converts a termbox event to the termdash event format.
+func toTermdashEvents(tbxEv tbx.Event) []terminalapi.Event {
 	switch t := tbxEv.Type; t {
 	case tbx.EventInterrupt:
 		return []terminalapi.Event{

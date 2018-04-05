@@ -25,6 +25,11 @@ type Keyboard struct {
 
 func (*Keyboard) isEvent() {}
 
+// String implements fmt.Stringer.
+func (k Keyboard) String() string {
+	return fmt.Sprintf("Keyboard{Key: %v}", k.Key)
+}
+
 // Resize is the event used when the terminal was resized.
 // Implements terminalapi.Event.
 type Resize struct {
@@ -33,6 +38,11 @@ type Resize struct {
 }
 
 func (*Resize) isEvent() {}
+
+// String implements fmt.Stringer.
+func (r Resize) String() string {
+	return fmt.Sprintf("Resize{Size: %v}", r.Size)
+}
 
 // Mouse is the event used when the mouse is moved or a mouse button is
 // pressed.
@@ -45,6 +55,11 @@ type Mouse struct {
 }
 
 func (*Mouse) isEvent() {}
+
+// String implements fmt.Stringer.
+func (m Mouse) String() string {
+	return fmt.Sprintf("Mouse{Position: %v, Button: %v}", m.Position, m.Button)
+}
 
 // Error is an event indicating an error while processing input.
 type Error string

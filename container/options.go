@@ -23,6 +23,9 @@ type Option interface {
 
 // options stores the options provided to the container.
 type options struct {
+	// inherited are options that are inherited by child containers.
+	inherited inherited
+
 	// split identifies how is this container split.
 	split splitType
 
@@ -37,8 +40,29 @@ type options struct {
 
 	// border is the border around the container.
 	border draw.LineStyle
+}
+
+// inherited contains options that are inherited by child containers.
+type inherited struct {
 	// borderColor is the color used for the border.
 	borderColor cell.Color
+	// focusedColor is the color used for the border when focused.
+	focusedColor cell.Color
+}
+
+// newOptions returns a new options instance with the default values.
+// Parent are the inherited options from the parent container or nil if these
+// options are for a container with no parent (the root).
+func newOptions(parent *options) *options {
+	opts := &options{
+		inherited: inherited{
+			focusedColor: cell.ColorYellow,
+		},
+	}
+	if parent != nil {
+		opts.inherited = parent.inherited
+	}
+	return opts
 }
 
 // option implements Option.
@@ -145,10 +169,20 @@ func Border(ls draw.LineStyle) Option {
 	})
 }
 
-// BorderColor sets the color of the border.
+// BorderColor sets the color of the border around the container.
+// This option is inherited to sub containers created by container splits.
 func BorderColor(color cell.Color) Option {
 	return option(func(c *Container) {
-		c.opts.borderColor = color
+		c.opts.inherited.borderColor = color
+	})
+}
+
+// FocusedColor sets the color of the border around the container when it has
+// keyboard focus.
+// This option is inherited to sub containers created by container splits.
+func FocusedColor(color cell.Color) Option {
+	return option(func(c *Container) {
+		c.opts.inherited.focusedColor = color
 	})
 }
 

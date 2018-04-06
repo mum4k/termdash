@@ -8,19 +8,18 @@ canvases assigned to the placed widgets.
 package container
 
 import (
-	"errors"
 	"fmt"
 	"image"
 
 	"github.com/mum4k/termdash/area"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the
 // terminal.
+// TODO(mum4k): Need better thread safety - events, especially resize can
+// change multiple fields.
 type Container struct {
 	// parent is the parent container, nil if this is the root container.
 	parent *Container
@@ -31,6 +30,10 @@ type Container struct {
 	// term is the terminal this container is placed on.
 	// All containers in the tree share the same terminal.
 	term terminalapi.Terminal
+
+	// focusTracker tracks the active (focused) container.
+	// All containers in the tree share the same tracker.
+	focusTracker *focusTracker
 
 	// area is the area of the terminal this container has access to.
 	area image.Rectangle
@@ -53,8 +56,11 @@ func New(t terminalapi.Terminal, opts ...Option) *Container {
 		term: t,
 		// The root container has access to the entire terminal.
 		area: image.Rect(0, 0, size.X, size.Y),
-		opts: &options{},
+		opts: newOptions( /* parent = */ nil),
 	}
+
+	// Initially the root is focused.
+	root.focusTracker = newFocusTracker(root)
 	applyOptions(root, opts...)
 	return root
 }
@@ -62,10 +68,11 @@ func New(t terminalapi.Terminal, opts ...Option) *Container {
 // newChild creates a new child container of the given parent.
 func newChild(parent *Container, area image.Rectangle) *Container {
 	return &Container{
-		parent: parent,
-		term:   parent.term,
-		area:   area,
-		opts:   &options{},
+		parent:       parent,
+		term:         parent.term,
+		focusTracker: parent.focusTracker,
+		area:         area,
+		opts:         newOptions(parent.opts),
 	}
 }
 
@@ -108,52 +115,20 @@ func (c *Container) createSecond() *Container {
 	return c.second
 }
 
-// draw draws this container and its widget.
-// TODO(mum4k): Draw the widget.
-func (c *Container) draw() error {
-	// TODO(mum4k): Should be verified against the min size reported by the
-	// widget.
-	if us := c.usable(); us.Dx() < 1 || us.Dy() < 1 {
-		return nil
-	}
-
-	cvs, err := canvas.New(c.area)
-	if err != nil {
-		return err
-	}
-
-	if c.hasBorder() {
-		ar, err := area.FromSize(cvs.Size())
-		if err != nil {
-			return err
-		}
-		if err := draw.Box(cvs, ar, c.opts.border, cell.FgColor(c.opts.borderColor)); err != nil {
-			return err
-		}
-	}
-	return cvs.Apply(c.term)
-}
-
 // Draw draws this container and all of its sub containers.
 func (c *Container) Draw() error {
-	var errStr string
-	drawTree(c, &errStr)
-	if errStr != "" {
-		return errors.New(errStr)
-	}
-	return nil
+	return drawTree(c)
 }
 
-// drawTree implements pre-order BST walk through the containers and draws each
-// visited container.
-func drawTree(c *Container, errStr *string) {
-	if c == nil || *errStr != "" {
-		return
-	}
-	if err := c.draw(); err != nil {
-		*errStr = err.Error()
-		return
-	}
-	drawTree(c.first, errStr)
-	drawTree(c.second, errStr)
+// Mouse is used to forward a mouse event to the container.
+// Container uses mouse events to track and change which is the active
+// (focused) container.
+//
+// If the container that receives the mouse click contains a widget that
+// registered for mouse events, the mouse event is further forwarded to that
+// widget.
+func (c *Container) Mouse(m *terminalapi.Mouse) {
+	// TODO(mum4k): Apart from tracking focus, also forward the mouse events to
+	// any contained widgets.
+	c.focusTracker.mouse(m)
 }

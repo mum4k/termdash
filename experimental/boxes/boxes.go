@@ -7,7 +7,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -18,7 +17,7 @@ func events(t terminalapi.Terminal, ctx context.Context) <-chan terminalapi.Even
 	ch := make(chan terminalapi.Event)
 	go func() {
 		for {
-			ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 			ev := t.Event(ctx)
 			switch ev.(type) {
 			case *terminalapi.Error:
@@ -55,7 +54,6 @@ func main() {
 							),
 							container.Bottom(
 								container.Border(draw.LineStyleLight),
-								container.BorderColor(cell.ColorYellow),
 							),
 						),
 					),

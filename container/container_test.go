@@ -96,7 +96,12 @@ func TestDraw(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				mustBox(
+					cvs,
+					image.Rect(0, 0, 10, 10),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
 				mustApply(cvs, ft)
 				return ft
 			},
@@ -146,7 +151,12 @@ func TestDraw(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				mustBox(
+					cvs,
+					image.Rect(0, 0, 10, 10),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
 				mustBox(cvs, image.Rect(1, 1, 9, 5), draw.LineStyleLight)
 				mustBox(cvs, image.Rect(1, 5, 9, 9), draw.LineStyleLight)
 				mustApply(cvs, ft)
@@ -198,7 +208,12 @@ func TestDraw(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				mustBox(
+					cvs,
+					image.Rect(0, 0, 10, 10),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
 				mustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
 				mustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
 				mustApply(cvs, ft)
@@ -278,21 +293,42 @@ func TestDraw(t *testing.T) {
 			},
 		},
 		{
-			desc:     "sets border color",
-			termSize: image.Point{4, 4},
+			desc:     "inherits border and focused color",
+			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) *Container {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
 					BorderColor(cell.ColorRed),
+					FocusedColor(cell.ColorBlue),
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+					),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 4, 4))
+				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
 				mustBox(
 					cvs,
-					image.Rect(0, 0, 4, 4),
+					image.Rect(0, 0, 10, 10),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorBlue),
+				)
+				mustBox(
+					cvs,
+					image.Rect(1, 1, 5, 9),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorRed),
+				)
+				mustBox(
+					cvs,
+					image.Rect(5, 1, 9, 9),
 					draw.LineStyleLight,
 					cell.FgColor(cell.ColorRed),
 				)

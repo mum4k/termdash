@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
 )
@@ -33,11 +32,7 @@ func boxChar(p image.Point, box image.Rectangle, parts map[linePart]rune) rune {
 
 // Box draws a box on the canvas.
 func Box(c *canvas.Canvas, box image.Rectangle, ls LineStyle, opts ...cell.Option) error {
-	ar, err := area.FromSize(c.Size())
-	if err != nil {
-		return err
-	}
-	if !box.In(ar) {
+	if ar := c.Area(); !box.In(ar) {
 		return fmt.Errorf("the requested box %+v falls outside of the provided canvas %+v", box, ar)
 	}
 

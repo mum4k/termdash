@@ -14,6 +14,7 @@ func TestNew(t *testing.T) {
 		desc     string
 		area     image.Rectangle
 		wantSize image.Point
+		wantArea image.Rectangle
 		wantErr  bool
 	}{
 		{
@@ -45,16 +46,19 @@ func TestNew(t *testing.T) {
 			desc:     "smallest valid size",
 			area:     image.Rect(0, 0, 1, 1),
 			wantSize: image.Point{1, 1},
+			wantArea: image.Rect(0, 0, 1, 1),
 		},
 		{
 			desc:     "rectangular canvas 3 by 4",
 			area:     image.Rect(0, 0, 3, 4),
 			wantSize: image.Point{3, 4},
+			wantArea: image.Rect(0, 0, 3, 4),
 		},
 		{
 			desc:     "non-zero based area",
 			area:     image.Rect(1, 1, 2, 3),
 			wantSize: image.Point{1, 2},
+			wantArea: image.Rect(0, 0, 1, 2),
 		},
 	}
 
@@ -68,9 +72,14 @@ func TestNew(t *testing.T) {
 				return
 			}
 
-			got := c.Size()
-			if diff := pretty.Compare(tc.wantSize, got); diff != "" {
+			gotSize := c.Size()
+			if diff := pretty.Compare(tc.wantSize, gotSize); diff != "" {
 				t.Errorf("Size => unexpected diff (-want, +got):\n%s", diff)
+			}
+
+			gotArea := c.Area()
+			if diff := pretty.Compare(tc.wantArea, gotArea); diff != "" {
+				t.Errorf("Area => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

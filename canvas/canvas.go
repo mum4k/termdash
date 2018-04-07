@@ -42,6 +42,12 @@ func (c *Canvas) Size() image.Point {
 	return c.buffer.Size()
 }
 
+// Area returns the area of the 2-D canvas.
+func (c *Canvas) Area() image.Rectangle {
+	s := c.buffer.Size()
+	return image.Rect(0, 0, s.X, s.Y)
+}
+
 // Clear clears all the content on the canvas.
 func (c *Canvas) Clear() error {
 	b, err := cell.NewBuffer(c.Size())

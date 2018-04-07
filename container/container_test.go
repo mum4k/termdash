@@ -2,12 +2,12 @@ package container
 
 import (
 	"image"
-	"log"
 	"testing"
 
-	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
@@ -43,29 +43,6 @@ func Example() {
 	// TODO(mum4k): Include an example with a widget.
 }
 
-// mustCanvas returns a new canvas or panics.
-func mustCanvas(area image.Rectangle) *canvas.Canvas {
-	cvs, err := canvas.New(area)
-	if err != nil {
-		log.Fatalf("canvas.New => unexpected error: %v", err)
-	}
-	return cvs
-}
-
-// mustBox draws box on the canvas or panics.
-func mustBox(c *canvas.Canvas, box image.Rectangle, ls draw.LineStyle, opts ...cell.Option) {
-	if err := draw.Box(c, box, ls, opts...); err != nil {
-		log.Fatalf("draw.Box => unexpected error: %v", err)
-	}
-}
-
-// mustApply applies the canvas on the terminal or panics.
-func mustApply(c *canvas.Canvas, t *faketerm.Terminal) {
-	if err := c.Apply(t); err != nil {
-		log.Fatalf("canvas.Apply => unexpected error: %v", err)
-	}
-}
-
 func TestDraw(t *testing.T) {
 	tests := []struct {
 		desc      string
@@ -95,14 +72,14 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
 					draw.LineStyleLight,
 					cell.FgColor(cell.ColorYellow),
 				)
-				mustApply(cvs, ft)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -124,10 +101,10 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(cvs, image.Rect(0, 0, 10, 5), draw.LineStyleLight)
-				mustBox(cvs, image.Rect(0, 5, 10, 10), draw.LineStyleLight)
-				mustApply(cvs, ft)
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				testdraw.MustBox(cvs, image.Rect(0, 0, 10, 5), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(0, 5, 10, 10), draw.LineStyleLight)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -150,16 +127,16 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
 					draw.LineStyleLight,
 					cell.FgColor(cell.ColorYellow),
 				)
-				mustBox(cvs, image.Rect(1, 1, 9, 5), draw.LineStyleLight)
-				mustBox(cvs, image.Rect(1, 5, 9, 9), draw.LineStyleLight)
-				mustApply(cvs, ft)
+				testdraw.MustBox(cvs, image.Rect(1, 1, 9, 5), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(1, 5, 9, 9), draw.LineStyleLight)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -181,10 +158,10 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(cvs, image.Rect(0, 0, 5, 10), draw.LineStyleLight)
-				mustBox(cvs, image.Rect(5, 0, 10, 10), draw.LineStyleLight)
-				mustApply(cvs, ft)
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				testdraw.MustBox(cvs, image.Rect(0, 0, 5, 10), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(5, 0, 10, 10), draw.LineStyleLight)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -207,16 +184,16 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
 					draw.LineStyleLight,
 					cell.FgColor(cell.ColorYellow),
 				)
-				mustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
-				mustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
-				mustApply(cvs, ft)
+				testdraw.MustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -252,12 +229,12 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 10, 11))
-				mustBox(cvs, image.Rect(0, 0, 5, 5), draw.LineStyleLight)
-				mustBox(cvs, image.Rect(0, 5, 5, 8), draw.LineStyleLight)
-				mustBox(cvs, image.Rect(0, 8, 5, 11), draw.LineStyleLight)
-				mustBox(cvs, image.Rect(5, 0, 10, 11), draw.LineStyleLight)
-				mustApply(cvs, ft)
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 11))
+				testdraw.MustBox(cvs, image.Rect(0, 0, 5, 5), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(0, 5, 5, 8), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(0, 8, 5, 11), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(5, 0, 10, 11), draw.LineStyleLight)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -286,9 +263,9 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 4, 7))
-				mustBox(cvs, image.Rect(0, 0, 4, 3), draw.LineStyleLight)
-				mustApply(cvs, ft)
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 4, 7))
+				testdraw.MustBox(cvs, image.Rect(0, 0, 4, 3), draw.LineStyleLight)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -313,26 +290,26 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := mustCanvas(image.Rect(0, 0, 10, 10))
-				mustBox(
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
 					draw.LineStyleLight,
 					cell.FgColor(cell.ColorBlue),
 				)
-				mustBox(
+				testdraw.MustBox(
 					cvs,
 					image.Rect(1, 1, 5, 9),
 					draw.LineStyleLight,
 					cell.FgColor(cell.ColorRed),
 				)
-				mustBox(
+				testdraw.MustBox(
 					cvs,
 					image.Rect(5, 1, 9, 9),
 					draw.LineStyleLight,
 					cell.FgColor(cell.ColorRed),
 				)
-				mustApply(cvs, ft)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},

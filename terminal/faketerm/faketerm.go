@@ -89,6 +89,12 @@ func (t *Terminal) Size() image.Point {
 	return t.buffer.Size()
 }
 
+// Area returns the area of the fake terminal.
+func (t *Terminal) Area() image.Rectangle {
+	s := t.Size()
+	return image.Rect(0, 0, s.X, s.Y)
+}
+
 // Implements terminalapi.Terminal.Clear.
 func (t *Terminal) Clear(opts ...cell.Option) error {
 	b, err := cell.NewBuffer(t.buffer.Size())

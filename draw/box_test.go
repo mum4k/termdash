@@ -4,8 +4,8 @@ import (
 	"image"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
@@ -17,7 +17,7 @@ func TestBox(t *testing.T) {
 		box     image.Rectangle
 		ls      LineStyle
 		opts    []cell.Option
-		want    cell.Buffer
+		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
 	}{
 		{
@@ -46,31 +46,28 @@ func TestBox(t *testing.T) {
 			canvas: image.Rect(0, 0, 4, 4),
 			box:    image.Rect(0, 0, 4, 4),
 			ls:     LineStyleLight,
-			want: cell.Buffer{
-				{
-					cell.New(lineStyleChars[LineStyleLight][topLeftCorner]),
-					cell.New(lineStyleChars[LineStyleLight][vLine]),
-					cell.New(lineStyleChars[LineStyleLight][vLine]),
-					cell.New(lineStyleChars[LineStyleLight][bottomLeftCorner]),
-				},
-				{
-					cell.New(lineStyleChars[LineStyleLight][hLine]),
-					cell.New(0),
-					cell.New(0),
-					cell.New(lineStyleChars[LineStyleLight][hLine]),
-				},
-				{
-					cell.New(lineStyleChars[LineStyleLight][hLine]),
-					cell.New(0),
-					cell.New(0),
-					cell.New(lineStyleChars[LineStyleLight][hLine]),
-				},
-				{
-					cell.New(lineStyleChars[LineStyleLight][topRightCorner]),
-					cell.New(lineStyleChars[LineStyleLight][vLine]),
-					cell.New(lineStyleChars[LineStyleLight][vLine]),
-					cell.New(lineStyleChars[LineStyleLight][bottomRightCorner]),
-				},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
 			},
 		},
 		{
@@ -78,31 +75,18 @@ func TestBox(t *testing.T) {
 			canvas: image.Rect(0, 0, 4, 4),
 			box:    image.Rect(1, 1, 3, 3),
 			ls:     LineStyleLight,
-			want: cell.Buffer{
-				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-				},
-				{
-					cell.New(0),
-					cell.New(lineStyleChars[LineStyleLight][topLeftCorner]),
-					cell.New(lineStyleChars[LineStyleLight][bottomLeftCorner]),
-					cell.New(0),
-				},
-				{
-					cell.New(0),
-					cell.New(lineStyleChars[LineStyleLight][topRightCorner]),
-					cell.New(lineStyleChars[LineStyleLight][bottomRightCorner]),
-					cell.New(0),
-				},
-				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-				},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{1, 1}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{1, 2}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{2, 1}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{2, 2}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
 			},
 		},
 		{
@@ -113,43 +97,22 @@ func TestBox(t *testing.T) {
 			opts: []cell.Option{
 				cell.FgColor(cell.ColorRed),
 			},
-			want: cell.Buffer{
-				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-				},
-				{
-					cell.New(0),
-					cell.New(
-						lineStyleChars[LineStyleLight][topLeftCorner],
-						cell.FgColor(cell.ColorRed),
-					),
-					cell.New(
-						lineStyleChars[LineStyleLight][bottomLeftCorner],
-						cell.FgColor(cell.ColorRed),
-					),
-					cell.New(0),
-				},
-				{
-					cell.New(0),
-					cell.New(
-						lineStyleChars[LineStyleLight][topRightCorner],
-						cell.FgColor(cell.ColorRed),
-					),
-					cell.New(
-						lineStyleChars[LineStyleLight][bottomRightCorner],
-						cell.FgColor(cell.ColorRed),
-					),
-					cell.New(0),
-				},
-				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
-				},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{1, 1},
+					lineStyleChars[LineStyleLight][topLeftCorner], cell.FgColor(cell.ColorRed))
+				testcanvas.MustSetCell(c, image.Point{1, 2},
+					lineStyleChars[LineStyleLight][bottomLeftCorner], cell.FgColor(cell.ColorRed))
+
+				testcanvas.MustSetCell(c, image.Point{2, 1},
+					lineStyleChars[LineStyleLight][topRightCorner], cell.FgColor(cell.ColorRed))
+				testcanvas.MustSetCell(c, image.Point{2, 2},
+					lineStyleChars[LineStyleLight][bottomRightCorner], cell.FgColor(cell.ColorRed))
+
+				testcanvas.MustApply(c, ft)
+				return ft
 			},
 		},
 	}
@@ -169,19 +132,17 @@ func TestBox(t *testing.T) {
 				return
 			}
 
-			ft, err := faketerm.New(c.Size())
+			got, err := faketerm.New(c.Size())
 			if err != nil {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}
 
-			if err := c.Apply(ft); err != nil {
+			if err := c.Apply(got); err != nil {
 				t.Fatalf("Apply => unexpected error: %v", err)
 			}
 
-			got := ft.BackBuffer()
-			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Logf("Box => got output:\n%s", ft)
-				t.Errorf("Box => unexpected diff (-want, +got):\n%s", diff)
+			if diff := faketerm.Diff(tc.want(c.Size()), got); diff != "" {
+				t.Errorf("Box => %v", diff)
 			}
 		})
 	}

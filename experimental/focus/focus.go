@@ -11,7 +11,7 @@ import (
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widget"
+	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
@@ -53,7 +53,7 @@ func main() {
 	}
 	defer t.Close()
 
-	wOpts := widget.Options{
+	wOpts := widgetapi.Options{
 		WantKeyboard: true,
 		WantMouse:    true,
 	}
@@ -64,7 +64,7 @@ func main() {
 				container.SplitHorizontal(
 					container.Top(
 						container.Border(draw.LineStyleLight),
-						container.PlaceWidget(fakewidget.New(widget.Options{
+						container.PlaceWidget(fakewidget.New(widgetapi.Options{
 							WantKeyboard: true,
 							WantMouse:    true,
 							Ratio:        image.Point{5, 1},
@@ -87,7 +87,7 @@ func main() {
 											container.Left(
 												container.Border(draw.LineStyleLight),
 												container.VerticalAlignMiddle(),
-												container.PlaceWidget(fakewidget.New(widget.Options{
+												container.PlaceWidget(fakewidget.New(widgetapi.Options{
 													WantKeyboard: true,
 													WantMouse:    true,
 													Ratio:        image.Point{2, 1},

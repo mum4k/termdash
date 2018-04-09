@@ -9,7 +9,7 @@ import (
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/widget"
+	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
@@ -290,7 +290,7 @@ func TestNew(t *testing.T) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					PlaceWidget(fakewidget.New(widget.Options{})),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
 					SplitVertical(
 						Left(
 							Border(draw.LineStyleLight),
@@ -330,7 +330,7 @@ func TestNew(t *testing.T) {
 							Border(draw.LineStyleLight),
 						),
 					),
-					PlaceWidget(fakewidget.New(widget.Options{})),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {

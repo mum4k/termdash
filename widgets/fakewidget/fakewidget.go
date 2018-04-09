@@ -13,7 +13,7 @@ import (
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widget"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // outputLines are the number of lines written by this plugin.
@@ -35,7 +35,7 @@ const (
 // above, the widget skips the ones it has no space for.
 //
 // This is thread-safe and must not be copied.
-// Implements widget.Widget.
+// Implements widgetapi.Widget.
 type Mirror struct {
 	// lines are the three lines that will be drawn on the canvas.
 	lines []string
@@ -44,12 +44,12 @@ type Mirror struct {
 	mu sync.RWMutex
 
 	// opts options for this widget.
-	opts widget.Options
+	opts widgetapi.Options
 }
 
 // New returns a new fake widget.
 // The widget will return the provided options on a call to Options().
-func New(opts widget.Options) *Mirror {
+func New(opts widgetapi.Options) *Mirror {
 	return &Mirror{
 		lines: make([]string, outputLines),
 		opts:  opts,
@@ -60,7 +60,7 @@ func New(opts widget.Options) *Mirror {
 // them. Returns an error if the canvas is so small that it cannot even draw a
 // 2x2 border on it, or of any of the text lines end up being longer than the
 // width of the canvas.
-// Draw implements widget.Widget.Draw.
+// Draw implements widgetapi.Widget.Draw.
 func (mi *Mirror) Draw(cvs *canvas.Canvas) error {
 	mi.mu.Lock()
 	defer mi.mu.Unlock()
@@ -96,7 +96,7 @@ func (mi *Mirror) Draw(cvs *canvas.Canvas) error {
 // Keyboard draws the received key on the canvas.
 // Sending the keyboard.KeyEsc causes this widget to forget the last keyboard
 // event and return an error instead.
-// Keyboard implements widget.Widget.Keyboard.
+// Keyboard implements widgetapi.Widget.Keyboard.
 func (mi *Mirror) Keyboard(k *terminalapi.Keyboard) error {
 	mi.mu.Lock()
 	defer mi.mu.Unlock()
@@ -113,7 +113,7 @@ func (mi *Mirror) Keyboard(k *terminalapi.Keyboard) error {
 // received mouse button on the canvas.
 // Sending the mouse.ButtonRight causes this widget to forget the last mouse
 // event and return an error instead.
-// Mouse implements widget.Widget.Mouse.
+// Mouse implements widgetapi.Widget.Mouse.
 func (mi *Mirror) Mouse(m *terminalapi.Mouse) error {
 	mi.mu.Lock()
 	defer mi.mu.Unlock()
@@ -126,7 +126,7 @@ func (mi *Mirror) Mouse(m *terminalapi.Mouse) error {
 	return nil
 }
 
-// Options implements widget.Widget.Options.
-func (mi *Mirror) Options() widget.Options {
+// Options implements widgetapi.Widget.Options.
+func (mi *Mirror) Options() widgetapi.Options {
 	return mi.opts
 }

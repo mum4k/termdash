@@ -1,5 +1,5 @@
-// Package widget defines the API of a widget on the dashboard.
-package widget
+// Package widgetapi defines the API of a widget on the dashboard.
+package widgetapi
 
 import (
 	"image"

@@ -13,7 +13,7 @@ import (
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/faketerm"
 	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widget"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // kEvents are keyboard events to send to the widget.
@@ -245,7 +245,7 @@ func TestMirror(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			w := New(widget.Options{})
+			w := New(widgetapi.Options{})
 
 			for _, kEv := range tc.kEvents {
 				err := w.Keyboard(kEv.k)
@@ -279,7 +279,7 @@ func TestMirror(t *testing.T) {
 }
 
 func TestOptions(t *testing.T) {
-	want := widget.Options{
+	want := widgetapi.Options{
 		Ratio:        image.Point{1, 2},
 		WantKeyboard: true,
 	}

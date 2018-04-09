@@ -5,7 +5,7 @@ package container
 import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/widget"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // applyOptions applies the options to the container.
@@ -32,7 +32,7 @@ type options struct {
 	// widget is the widget in the container.
 	// A container can have either two sub containers (left and right) or a
 	// widget. But not both.
-	widget widget.Widget
+	widget widgetapi.Widget
 
 	// Alignment of the widget if present.
 	hAlign hAlignType
@@ -100,7 +100,7 @@ func SplitHorizontal(t TopOption, b BottomOption) Option {
 // PlaceWidget places the provided widget into the container.
 // The use of this option removes any sub containers. Containers with sub
 // containers cannot have widgets.
-func PlaceWidget(w widget.Widget) Option {
+func PlaceWidget(w widgetapi.Widget) Option {
 	return option(func(c *Container) {
 		c.opts.widget = w
 		c.first = nil

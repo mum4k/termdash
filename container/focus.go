@@ -4,7 +4,6 @@ package container
 
 import (
 	"image"
-	"sync"
 
 	"github.com/mum4k/termdash/terminalapi"
 )
@@ -27,7 +26,8 @@ func pointCont(c *Container, p image.Point) *Container {
 }
 
 // focusTracker tracks the active (focused) container.
-// This object is thread-safe and must not be copied.
+// This is not thread-safe, the implementation assumes that the owner of
+// focusTracker performs locking.
 type focusTracker struct {
 	// container is the currently focused container.
 	container *Container
@@ -39,8 +39,6 @@ type focusTracker struct {
 	// mouseFSM is a state machine tracking mouse clicks in containers and
 	// moving focus from one container to the next.
 	mouseFSM mouseStateFn
-
-	mu sync.RWMutex
 }
 
 // newFocusTracker returns a new focus tracker with focus set at the provided
@@ -52,18 +50,18 @@ func newFocusTracker(c *Container) *focusTracker {
 	}
 }
 
+// isActive determines if the provided container is the currently active container.
 func (ft *focusTracker) isActive(c *Container) bool {
-	ft.mu.RLock()
-	defer ft.mu.RUnlock()
-
 	return ft.container == c
+}
+
+// active returns the currently focused container.
+func (ft *focusTracker) active() *Container {
+	return ft.container
 }
 
 // mouse identifies mouse events that change the focused container and track
 // the focused container in the tree.
 func (ft *focusTracker) mouse(m *terminalapi.Mouse) {
-	ft.mu.Lock()
-	defer ft.mu.Unlock()
-
 	ft.mouseFSM = ft.mouseFSM(ft, m)
 }

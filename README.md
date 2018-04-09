@@ -50,10 +50,9 @@ See the [design document](doc/design.md).
 - [x] Implement the terminal layer.
 - [x] Implement unit test helpers.
 - [x] Implement the container.
-- [ ] Implement the input event pre-processing.
+- [x] Implement the input event pre-processing.
+- [x] Add support for tracking mouse and keyboard focus.
+- [x] Implement the first widget.
 - [ ] Implement the infrastructure layer.
-- [ ] Add support for tracking mouse and keyboard focus.
-- [ ] Implement the first widget.
 - [ ] Documentation and tooling for widget development.
 - [ ] Launch and iterate.
-- [ ] Implement support for other than 50% ratios when splitting containers.

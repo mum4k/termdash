@@ -5,6 +5,7 @@ package draw
 import (
 	"fmt"
 	"image"
+	"unicode/utf8"
 
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
@@ -69,7 +70,8 @@ func Text(c *canvas.Canvas, text string, tb TextBounds, opts ...cell.Option) err
 	} else {
 		wantMaxX = tb.MaxX
 	}
-	if maxX := tb.Start.X + len(text); maxX > wantMaxX && tb.Overrun == OverrunModeStrict {
+	runes := utf8.RuneCountInString(text)
+	if maxX := tb.Start.X + runes; maxX > wantMaxX && tb.Overrun == OverrunModeStrict {
 		return fmt.Errorf("the requested text %q would end at X coordinate %v which falls outside of the maximum %v", text, maxX, wantMaxX)
 	}
 

@@ -133,10 +133,12 @@ func TestMirror(t *testing.T) {
 					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
 				{
-					m: &terminalapi.Mouse{Button: mouse.ButtonRight},
+					m: &terminalapi.Mouse{
+						Position: image.Point{1, 2},
+						Button:   mouse.ButtonMiddle},
 				},
 			},
-			cvs: testcanvas.MustNew(image.Rect(0, 0, 13, 5)),
+			cvs: testcanvas.MustNew(image.Rect(0, 0, 19, 5)),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -144,11 +146,11 @@ func TestMirror(t *testing.T) {
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
-				testdraw.MustText(cvs, "(13,5)", tb)
+				testdraw.MustText(cvs, "(19,5)", tb)
 				tb = draw.TextBounds{
 					Start: image.Point{1, 3},
 				}
-				testdraw.MustText(cvs, "ButtonRight", tb)
+				testdraw.MustText(cvs, "(1,2)ButtonMiddle", tb)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -157,7 +159,7 @@ func TestMirror(t *testing.T) {
 			desc: "skips the mouse event if there isn't a line for it",
 			mEvents: []mEvents{
 				{
-					m: &terminalapi.Mouse{Button: mouse.ButtonRight},
+					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
 			},
 			cvs: testcanvas.MustNew(image.Rect(0, 0, 13, 4)),
@@ -185,7 +187,7 @@ func TestMirror(t *testing.T) {
 					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
 			},
-			cvs: testcanvas.MustNew(image.Rect(0, 0, 12, 5)),
+			cvs: testcanvas.MustNew(image.Rect(0, 0, 17, 5)),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -193,7 +195,7 @@ func TestMirror(t *testing.T) {
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
-				testdraw.MustText(cvs, "(12,5)", tb)
+				testdraw.MustText(cvs, "(17,5)", tb)
 				tb = draw.TextBounds{
 					Start: image.Point{1, 2},
 				}
@@ -201,13 +203,13 @@ func TestMirror(t *testing.T) {
 				tb = draw.TextBounds{
 					Start: image.Point{1, 3},
 				}
-				testdraw.MustText(cvs, "ButtonLeft", tb)
+				testdraw.MustText(cvs, "(0,0)ButtonLeft", tb)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
 		{
-			desc: "KeyEsc and ButtonMiddle reset the last event and return error",
+			desc: "KeyEsc and ButtonRight reset the last event and return error",
 			kEvents: []kEvents{
 				{
 					k: &terminalapi.Keyboard{Key: keyboard.KeyEnter},
@@ -222,7 +224,7 @@ func TestMirror(t *testing.T) {
 					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
 				{
-					m:       &terminalapi.Mouse{Button: mouse.ButtonMiddle},
+					m:       &terminalapi.Mouse{Button: mouse.ButtonRight},
 					wantErr: true,
 				},
 			},

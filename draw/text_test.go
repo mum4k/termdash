@@ -137,6 +137,23 @@ func TestText(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "draws unicode character",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "⇄",
+			tb: TextBounds{
+				Start:   image.Point{0, 0},
+				Overrun: OverrunModeStrict,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '⇄')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

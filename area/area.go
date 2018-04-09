@@ -53,11 +53,12 @@ func abs(x int) int {
 }
 
 // ExcludeBorder returns a new area created by subtracting a border around the
-// provided area. Can return a zero area.
+// provided area. Return the zero area if there isn't enough space to exclude
+// the border.
 func ExcludeBorder(area image.Rectangle) image.Rectangle {
 	// If the area dimensions are smaller than this, subtracting a point for the
 	// border on each of its sides results in a zero area.
-	const minDim = 3
+	const minDim = 2
 	if area.Dx() < minDim || area.Dy() < minDim {
 		return image.ZR
 	}
@@ -66,5 +67,62 @@ func ExcludeBorder(area image.Rectangle) image.Rectangle {
 		abs(area.Min.Y+1),
 		abs(area.Max.X-1),
 		abs(area.Max.Y-1),
+	)
+}
+
+// findGCF finds the greatest common factor of two integers.
+func findGCF(a, b int) int {
+	if a == 0 || b == 0 {
+		return 0
+	}
+
+	// https://en.wikipedia.org/wiki/Euclidean_algorithm
+	for {
+		rem := a % b
+		a = b
+		b = rem
+
+		if b == 0 {
+			break
+		}
+	}
+	return a
+}
+
+// simplifyRatio simplifies the given ratio.
+func simplifyRatio(ratio image.Point) image.Point {
+	gcf := findGCF(ratio.X, ratio.Y)
+	if gcf == 0 {
+		return image.ZP
+	}
+	return image.Point{
+		X: ratio.X / gcf,
+		Y: ratio.Y / gcf,
+	}
+}
+
+// WithRatio returns the largest area that has the requested ratio but is
+// either equal or smaller than the provided area. Returns zero area if the
+// area or the ratio are zero, or if there is no such area.
+func WithRatio(area image.Rectangle, ratio image.Point) image.Rectangle {
+	ratio = simplifyRatio(ratio)
+	if area == image.ZR || ratio == image.ZP {
+		return image.ZR
+	}
+
+	wFact := area.Dx() / ratio.X
+	hFact := area.Dy() / ratio.Y
+
+	var fact int
+	if wFact < hFact {
+		fact = wFact
+	} else {
+		fact = hFact
+	}
+	return image.Rect(
+		area.Min.X,
+		area.Min.Y,
+		ratio.X*fact+area.Min.X,
+		ratio.Y*fact+area.Min.Y,
 	)
 }

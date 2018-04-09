@@ -9,6 +9,8 @@ import (
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/widget"
+	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
 // Example demonstrates how to use the Container API.
@@ -43,13 +45,12 @@ func Example() {
 	// TODO(mum4k): Include an example with a widget.
 }
 
-func TestDraw(t *testing.T) {
+func TestNew(t *testing.T) {
 	tests := []struct {
 		desc      string
 		termSize  image.Point
 		container func(ft *faketerm.Terminal) *Container
 		want      func(size image.Point) *faketerm.Terminal
-		wantErr   bool
 	}{
 		{
 			desc:     "empty container",
@@ -72,7 +73,7 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
@@ -101,7 +102,7 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBox(cvs, image.Rect(0, 0, 10, 5), draw.LineStyleLight)
 				testdraw.MustBox(cvs, image.Rect(0, 5, 10, 10), draw.LineStyleLight)
 				testcanvas.MustApply(cvs, ft)
@@ -127,7 +128,7 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
@@ -158,7 +159,7 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBox(cvs, image.Rect(0, 0, 5, 10), draw.LineStyleLight)
 				testdraw.MustBox(cvs, image.Rect(5, 0, 10, 10), draw.LineStyleLight)
 				testcanvas.MustApply(cvs, ft)
@@ -184,7 +185,7 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
@@ -199,7 +200,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:     "multi level split",
-			termSize: image.Point{10, 11},
+			termSize: image.Point{10, 16},
 			container: func(ft *faketerm.Terminal) *Container {
 				return New(
 					ft,
@@ -229,42 +230,11 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 11))
-				testdraw.MustBox(cvs, image.Rect(0, 0, 5, 5), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(0, 5, 5, 8), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(0, 8, 5, 11), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(5, 0, 10, 11), draw.LineStyleLight)
-				testcanvas.MustApply(cvs, ft)
-				return ft
-			},
-		},
-		{
-			desc:     "container height too low",
-			termSize: image.Point{4, 7},
-			container: func(ft *faketerm.Terminal) *Container {
-				return New(
-					ft,
-					SplitHorizontal(
-						Top(
-							Border(draw.LineStyleLight),
-						),
-						Bottom(
-							SplitHorizontal(
-								Top(
-									Border(draw.LineStyleLight),
-								),
-								Bottom(
-									Border(draw.LineStyleLight),
-								),
-							),
-						),
-					),
-				)
-			},
-			want: func(size image.Point) *faketerm.Terminal {
-				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 4, 7))
-				testdraw.MustBox(cvs, image.Rect(0, 0, 4, 3), draw.LineStyleLight)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBox(cvs, image.Rect(0, 0, 5, 8), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(0, 8, 5, 12), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(0, 12, 5, 16), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(5, 0, 10, 16), draw.LineStyleLight)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -290,7 +260,7 @@ func TestDraw(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 10))
+				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBox(
 					cvs,
 					image.Rect(0, 0, 10, 10),
@@ -313,7 +283,65 @@ func TestDraw(t *testing.T) {
 				return ft
 			},
 		},
-		// TODO(mum4k): Tests where widget removes children and vice versa.
+		{
+			desc:     "splitting a container removes the widget",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(fakewidget.New(widget.Options{})),
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBox(
+					cvs,
+					ft.Area(),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
+				testdraw.MustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
+				testdraw.MustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "placing a widget removes container split",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+					),
+					PlaceWidget(fakewidget.New(widget.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				testdraw.MustText(cvs, "(10,10)", draw.TextBounds{Start: image.Point{1, 1}})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -323,12 +351,8 @@ func TestDraw(t *testing.T) {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}
 
-			err = tc.container(got).Draw()
-			if (err != nil) != tc.wantErr {
-				t.Errorf("Draw => unexpected error: %v, wantErr: %v", err, tc.wantErr)
-			}
-			if err != nil {
-				return
+			if err := tc.container(got).Draw(); err != nil {
+				t.Fatalf("Draw => unexpected error: %v", err)
 			}
 
 			if diff := faketerm.Diff(tc.want(tc.termSize), got); diff != "" {
@@ -338,3 +362,17 @@ func TestDraw(t *testing.T) {
 	}
 
 }
+
+// TODO(mum4k) Add missing tests (Keyboard):
+// Keyboard event isn't forwarded if container has no widget.
+// Keyboard event gets forwarded to focused widget.
+// Keyboard event isn't forwarded if widget didn't request it.
+// Widget returns an error when receiving the keyboard event.
+
+// TODO(mum4k) Add missing tests (Mouse):
+// Mouse event isn't forwarded if container has no widget.
+// Mouse event is forwarded to container at that point.
+// Mouse event isn't forwarded if widget didn't request it.
+// Mouse event isn't forwarded if it falls outside of widget's usable area.
+// Mouse coordinates are relative to widget's canvas.
+// Widget returns an error when receiving the mouse event.

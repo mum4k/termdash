@@ -4,23 +4,27 @@ package main
 
 import (
 	"context"
+	"image"
 	"time"
 
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/widget"
+	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
-// mouseEvents forwards mouse events to the container and redraws it.
-func mouseEvents(ctx context.Context, t terminalapi.Terminal, c *container.Container) <-chan *terminalapi.Mouse {
-	ch := make(chan *terminalapi.Mouse)
+// inputEvents sends mouse and keyboard events on the channel.
+func inputEvents(ctx context.Context, t terminalapi.Terminal, c *container.Container) <-chan terminalapi.Event {
+	ch := make(chan terminalapi.Event)
 
 	go func() {
 		for {
 			ev := t.Event(ctx)
-			if m, ok := ev.(*terminalapi.Mouse); ok {
-				ch <- m
+			switch ev.(type) {
+			case *terminalapi.Keyboard, *terminalapi.Mouse:
+				ch <- ev
 			}
 		}
 	}()
@@ -49,6 +53,10 @@ func main() {
 	}
 	defer t.Close()
 
+	wOpts := widget.Options{
+		WantKeyboard: true,
+		WantMouse:    true,
+	}
 	c := container.New(
 		t,
 		container.SplitVertical(
@@ -56,24 +64,38 @@ func main() {
 				container.SplitHorizontal(
 					container.Top(
 						container.Border(draw.LineStyleLight),
+						container.PlaceWidget(fakewidget.New(widget.Options{
+							WantKeyboard: true,
+							WantMouse:    true,
+							Ratio:        image.Point{5, 1},
+						})),
 					),
 					container.Bottom(
 						container.SplitHorizontal(
 							container.Top(
 								container.Border(draw.LineStyleLight),
+								container.PlaceWidget(fakewidget.New(wOpts)),
 							),
 							container.Bottom(
 								container.SplitVertical(
 									container.Left(
 										container.Border(draw.LineStyleLight),
+										container.PlaceWidget(fakewidget.New(wOpts)),
 									),
 									container.Right(
 										container.SplitVertical(
 											container.Left(
 												container.Border(draw.LineStyleLight),
+												container.VerticalAlignMiddle(),
+												container.PlaceWidget(fakewidget.New(widget.Options{
+													WantKeyboard: true,
+													WantMouse:    true,
+													Ratio:        image.Point{2, 1},
+												})),
 											),
 											container.Right(
 												container.Border(draw.LineStyleLight),
+												container.PlaceWidget(fakewidget.New(wOpts)),
 											),
 										),
 									),
@@ -85,6 +107,7 @@ func main() {
 			),
 			container.Right(
 				container.Border(draw.LineStyleLight),
+				container.PlaceWidget(fakewidget.New(wOpts)),
 			),
 		),
 	)
@@ -93,7 +116,7 @@ func main() {
 		panic(err)
 	}
 
-	mouse := mouseEvents(context.Background(), t, c)
+	events := inputEvents(context.Background(), t, c)
 	redrawTimer := time.NewTicker(100 * time.Millisecond)
 	defer redrawTimer.Stop()
 
@@ -103,8 +126,13 @@ func main() {
 	for {
 		defer exitTimer.Stop()
 		select {
-		case m := <-mouse:
-			c.Mouse(m)
+		case ev := <-events:
+			switch e := ev.(type) {
+			case *terminalapi.Mouse:
+				c.Mouse(e)
+			case *terminalapi.Keyboard:
+				c.Keyboard(e)
+			}
 			exitTimer.Stop()
 			exitTimer = time.NewTicker(exitTime)
 

@@ -109,19 +109,20 @@ func (mi *Mirror) Keyboard(k *terminalapi.Keyboard) error {
 	return nil
 }
 
-// Mouse draws the name of the received mouse button on the canvas.
-// Sending the mouse.ButtonMiddle causes this widget to forget the last mouse
+// Mouse draws the canvas coordinates of the mouse event and the name of the
+// received mouse button on the canvas.
+// Sending the mouse.ButtonRight causes this widget to forget the last mouse
 // event and return an error instead.
 // Mouse implements widget.Widget.Mouse.
 func (mi *Mirror) Mouse(m *terminalapi.Mouse) error {
 	mi.mu.Lock()
 	defer mi.mu.Unlock()
 
-	if m.Button == mouse.ButtonMiddle {
+	if m.Button == mouse.ButtonRight {
 		mi.lines[mouseLine] = ""
 		return fmt.Errorf("fakewidget received mouse event: %v", m)
 	}
-	mi.lines[mouseLine] = m.Button.String()
+	mi.lines[mouseLine] = fmt.Sprintf("%v%v", m.Position, m.Button)
 	return nil
 }
 

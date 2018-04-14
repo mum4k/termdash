@@ -9,7 +9,6 @@ rewrite you ask?
 1. The above mentioned [gizak/termui](http://github.com/gizak/termui) is
    abandoned and isn't maintained anymore.
 1. The project doesn't follow the design goals outlined below.
-1. The project is released under a licence I cannot use.
 
 # Design goals
 

@@ -99,6 +99,24 @@ func (c *Container) usable() image.Rectangle {
 	}
 }
 
+// widgetArea returns the area in the container that is available for the
+// widget's canvas. Takes the container border, widget's requested ratio and
+// container's alignment into account.
+// Returns a zero area if the container has no widget.
+func (c *Container) widgetArea() image.Rectangle {
+	if !c.hasWidget() {
+		return image.ZR
+	}
+
+	adjusted := c.usable()
+	wOpts := c.opts.widget.Options()
+	if wOpts.Ratio.X > 0 && wOpts.Ratio.Y > 0 {
+		adjusted = area.WithRatio(c.usable(), wOpts.Ratio)
+	}
+	adjusted = hAlignWidget(c, adjusted)
+	return vAlignWidget(c, adjusted)
+}
+
 // split splits the container's usable area into child areas.
 // Panics if the container isn't configured for a split.
 func (c *Container) split() (image.Rectangle, image.Rectangle) {
@@ -160,18 +178,28 @@ func (c *Container) Mouse(m *terminalapi.Mouse) error {
 	c.focusTracker.mouse(m)
 
 	target := pointCont(c, m.Position)
+	if target == nil { // Ignore mouse clicks where no containers are.
+		return nil
+	}
 	w := target.opts.widget
 	if w == nil || !w.Options().WantMouse {
 		return nil
 	}
 
+	// Ignore clicks falling outside of the container.
 	if !m.Position.In(target.usable()) {
 		return nil
 	}
+
+	// Ignore clicks falling outside of the widget's canvas.
+	if !m.Position.In(target.widgetArea()) {
+		return nil
+	}
+
 	// The sent mouse coordinate is relative to the widget canvas, i.e. zero
 	// based, even though the widget might not be in the top left corner on the
 	// terminal.
-	offset := target.usable().Min
+	offset := target.widgetArea().Min
 	wm := &terminalapi.Mouse{
 		Position: m.Position.Sub(offset),
 		Button:   m.Button,

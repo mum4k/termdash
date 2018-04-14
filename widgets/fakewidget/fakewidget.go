@@ -5,6 +5,7 @@ package fakewidget
 import (
 	"fmt"
 	"image"
+	"log"
 	"sync"
 
 	"github.com/mum4k/termdash/area"
@@ -129,4 +130,42 @@ func (mi *Mirror) Mouse(m *terminalapi.Mouse) error {
 // Options implements widgetapi.Widget.Options.
 func (mi *Mirror) Options() widgetapi.Options {
 	return mi.opts
+}
+
+// Draw draws the content that would be expected after placing the Mirror
+// widget onto the provided canvas and forwarding the given events.
+func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) error {
+	mirror := New(opts)
+	for _, ev := range events {
+		switch e := ev.(type) {
+		case *terminalapi.Mouse:
+			if !opts.WantMouse {
+				continue
+			}
+			if err := mirror.Mouse(e); err != nil {
+				return err
+			}
+		case *terminalapi.Keyboard:
+			if !opts.WantKeyboard {
+				continue
+			}
+			if err := mirror.Keyboard(e); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unsupported event type %T", e)
+		}
+	}
+
+	if err := mirror.Draw(cvs); err != nil {
+		return err
+	}
+	return cvs.Apply(t)
+}
+
+// MustDraw is like Draw, but panics on all errors.
+func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) {
+	if err := Draw(t, cvs, opts, events...); err != nil {
+		log.Fatal("Draw => %v", err)
+	}
 }

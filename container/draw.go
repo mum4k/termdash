@@ -99,28 +99,26 @@ func vAlignWidget(c *Container, wArea image.Rectangle) image.Rectangle {
 
 // drawWidget requests the widget to draw on the canvas.
 func drawWidget(c *Container) error {
+	widgetArea := c.widgetArea()
+	if widgetArea == image.ZR {
+		return nil
+	}
+
 	if !c.hasWidget() {
 		return nil
 	}
 
-	adjusted := c.usable()
-	wOpts := c.opts.widget.Options()
-	if wOpts.Ratio.X > 0 && wOpts.Ratio.Y > 0 {
-		adjusted = area.WithRatio(c.usable(), wOpts.Ratio)
-	}
-	adjusted = hAlignWidget(c, adjusted)
-	adjusted = vAlignWidget(c, adjusted)
-
 	needSize := image.Point{1, 1}
+	wOpts := c.opts.widget.Options()
 	if wOpts.MinimumSize.X > 0 && wOpts.MinimumSize.Y > 0 {
 		needSize = wOpts.MinimumSize
 	}
 
-	if adjusted.Dx() < needSize.X || adjusted.Dy() < needSize.Y {
+	if widgetArea.Dx() < needSize.X || widgetArea.Dy() < needSize.Y {
 		return drawResize(c, c.usable())
 	}
 
-	cvs, err := canvas.New(adjusted)
+	cvs, err := canvas.New(widgetArea)
 	if err != nil {
 		return err
 	}

@@ -40,6 +40,9 @@ const (
 	mouseLine
 )
 
+// MinimumSize is the minimum size required to draw this widget.
+var MinimumSize = image.Point{24, 5}
+
 // Mirror is a fake widget. The fake widget draws a box around its assigned
 // canvas and writes the size of its assigned canvas on the first line of the
 // canvas. It writes the last received keyboard event onto the second line.
@@ -180,6 +183,6 @@ func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, ev
 // MustDraw is like Draw, but panics on all errors.
 func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) {
 	if err := Draw(t, cvs, opts, events...); err != nil {
-		log.Fatal("Draw => %v", err)
+		log.Fatalf("Draw => %v", err)
 	}
 }

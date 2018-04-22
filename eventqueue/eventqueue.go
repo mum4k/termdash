@@ -126,16 +126,15 @@ func (u *Unbound) Pull(ctx context.Context) (terminalapi.Event, error) {
 	u.cond.L.Lock()
 	defer u.cond.L.Unlock()
 	for {
-		if e := u.Pop(); e != nil {
-			return e, nil
-		}
-
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
 		}
 
+		if e := u.Pop(); e != nil {
+			return e, nil
+		}
 		u.cond.Wait()
 	}
 }

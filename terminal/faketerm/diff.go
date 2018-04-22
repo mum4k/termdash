@@ -39,7 +39,7 @@ type optDiff struct {
 // difference. If a difference is found, returns a human readable description
 // of the differences.
 func Diff(want, got *Terminal) string {
-	if reflect.DeepEqual(want, got) {
+	if reflect.DeepEqual(want.BackBuffer(), got.BackBuffer()) {
 		return ""
 	}
 

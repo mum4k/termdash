@@ -18,13 +18,13 @@ package faketerm
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"image"
 	"log"
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
@@ -42,11 +42,23 @@ func (o option) set(t *Terminal) {
 	o(t)
 }
 
+// WithEventQueue provides a queue of events.
+// One event will be consumed from the queue each time Event() is called. If
+// not provided, Event() returns an error on each call.
+func WithEventQueue(eq *eventqueue.Unbound) Option {
+	return option(func(t *Terminal) {
+		t.events = eq
+	})
+}
+
 // Terminal is a fake terminal.
-// This implementation is thread-safe.
+// This implementation is not thread-safe.
 type Terminal struct {
 	// buffer holds the terminal cells.
 	buffer cell.Buffer
+
+	// events is a queue of input events.
+	events *eventqueue.Unbound
 }
 
 // New returns a new fake Terminal.
@@ -72,6 +84,18 @@ func MustNew(size image.Point, opts ...Option) *Terminal {
 		log.Fatalf("New => unexpected error: %v", err)
 	}
 	return ft
+}
+
+// Resize resizes the terminal to the provided size.
+// This also clears the internal buffer.
+func (t *Terminal) Resize(size image.Point) error {
+	b, err := cell.NewBuffer(size)
+	if err != nil {
+		return err
+	}
+
+	t.buffer = b
+	return nil
 }
 
 // BackBuffer returns the back buffer of the fake terminal.
@@ -121,7 +145,7 @@ func (t *Terminal) Clear(opts ...cell.Option) error {
 
 // Implements terminalapi.Terminal.Flush.
 func (t *Terminal) Flush() error {
-	return errors.New("unimplemented")
+	return nil // nowhere to flush to.
 }
 
 // Implements terminalapi.Terminal.SetCursor.
@@ -152,8 +176,15 @@ func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 
 // Implements terminalapi.Terminal.Event.
 func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
-	log.Fatal("unimplemented")
-	return nil
+	if t.events == nil {
+		return terminalapi.NewErrorf("no event queue provided, use the WithEventQueue option when creating the fake terminal")
+	}
+
+	ev, err := t.events.Pull(ctx)
+	if err != nil {
+		return terminalapi.NewErrorf("unable to pull the next event: %v", err)
+	}
+	return ev
 }
 
 // Closes the terminal. This is a no-op on the fake terminal.

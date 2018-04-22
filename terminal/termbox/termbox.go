@@ -46,10 +46,8 @@ func ColorMode(cm terminalapi.ColorMode) Option {
 	})
 }
 
-// Terminal provides input and output to a real terminal.
-// Wraps the nsf/termbox-go terminal implementation.
-// This isn't thread-safe, because termbox isn't and only one instance is ever
-// supported, because termbox uses global state.
+// Terminal provides input and output to a real terminal. Wraps the
+// nsf/termbox-go terminal implementation. This object is not thread-safe.
 // Implements terminalapi.Terminal.
 type Terminal struct {
 	// events is a queue of input events.

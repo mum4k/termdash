@@ -386,3 +386,149 @@ func TestDrawWidget(t *testing.T) {
 		})
 	}
 }
+
+func TestDrawHandlesTerminalResize(t *testing.T) {
+	termSize := image.Point{60, 10}
+	got, err := faketerm.New(termSize)
+	if err != nil {
+		t.Errorf("faketerm.New => unexpected error: %v", err)
+	}
+
+	cont := New(
+		got,
+		SplitVertical(
+			Left(
+				SplitHorizontal(
+					Top(
+						PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					),
+					Bottom(
+						PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					),
+				),
+			),
+			Right(
+				SplitVertical(
+					Left(
+						PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					),
+					Right(
+						PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					),
+				),
+			),
+		),
+	)
+
+	// The following tests aren't hermetic, they all access the same container
+	// and fake terminal in order to retain state between resizes.
+	tests := []struct {
+		desc   string
+		resize *image.Point // if not nil, the fake terminal will be resized.
+		want   func(size image.Point) *faketerm.Terminal
+	}{
+		{
+			desc: "handles the initial draw request",
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 0, 30, 5)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 5, 30, 10)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(30, 0, 45, 10)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(45, 0, 60, 10)),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+		},
+		{
+			desc:   "increase in size",
+			resize: &image.Point{80, 10},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 0, 40, 5)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 5, 40, 10)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(40, 0, 60, 10)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(60, 0, 80, 10)),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+		},
+		{
+			desc:   "decrease in size",
+			resize: &image.Point{50, 10},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 0, 25, 5)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 5, 25, 10)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(25, 0, 37, 10)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(37, 0, 50, 10)),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.resize != nil {
+				if err := got.Resize(*tc.resize); err != nil {
+					t.Fatalf("Resize => unexpected error: %v", err)
+				}
+			}
+			if err := cont.Draw(); err != nil {
+				t.Fatalf("Draw => unexpected error: %v", err)
+			}
+
+			if diff := faketerm.Diff(tc.want(got.Size()), got); diff != "" {
+				t.Errorf("Draw => %v", diff)
+			}
+		})
+	}
+}

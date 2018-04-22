@@ -30,7 +30,20 @@ import (
 // drawTree draws this container and all of its sub containers.
 func drawTree(c *Container) error {
 	var errStr string
-	preOrder(c, &errStr, visitFunc(func(c *Container) error {
+
+	root := rootCont(c)
+	size := root.term.Size()
+	root.area = image.Rect(0, 0, size.X, size.Y)
+
+	preOrder(root, &errStr, visitFunc(func(c *Container) error {
+		first, second := c.split()
+		if c.first != nil {
+			c.first.area = first
+		}
+
+		if c.second != nil {
+			c.second.area = second
+		}
 		return drawCont(c)
 	}))
 	if errStr != "" {

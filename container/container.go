@@ -24,7 +24,6 @@ package container
 import (
 	"fmt"
 	"image"
-	"sync"
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/draw"
@@ -33,7 +32,7 @@ import (
 
 // Container wraps either sub containers or widgets and positions them on the
 // terminal.
-// This is thread-safe and must not be copied.
+// This is not thread-safe.
 type Container struct {
 	// parent is the parent container, nil if this is the root container.
 	parent *Container
@@ -51,9 +50,6 @@ type Container struct {
 
 	// area is the area of the terminal this container has access to.
 	area image.Rectangle
-
-	// mu locks the container while it is being drawn or while it receives input events.
-	mu sync.Mutex
 
 	// opts are the options provided to the container.
 	opts *options
@@ -157,9 +153,6 @@ func (c *Container) createSecond() *Container {
 
 // Draw draws this container and all of its sub containers.
 func (c *Container) Draw() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	return drawTree(c)
 }
 
@@ -167,9 +160,6 @@ func (c *Container) Draw() error {
 // Keyboard events are forwarded to the widget in the currently focused
 // container, assuming that the widget registered for keyboard events.
 func (c *Container) Keyboard(k *terminalapi.Keyboard) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	w := c.focusTracker.active().opts.widget
 	if w == nil || !w.Options().WantKeyboard {
 		return nil
@@ -186,9 +176,6 @@ func (c *Container) Keyboard(k *terminalapi.Keyboard) error {
 // widget. Only mouse events that fall within the widget's canvas are forwarded
 // and the coordinates are adjusted relative to the widget's canvas.
 func (c *Container) Mouse(m *terminalapi.Mouse) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	c.focusTracker.mouse(m)
 
 	target := pointCont(c, m.Position)

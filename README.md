@@ -40,7 +40,20 @@ together.
 
 # High-Level design
 
-See the [design document](doc/design.md).
+See the [design document](doc/hld.md).
+
+# Contributing
+
+If you are willing to contribute, improve the infrastructure or develop a
+widget, first of all Thank You! Your help is appreciated.
+
+Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines related
+to the Google's CLA, and code review requirements.
+
+As stated above the primary goal of this project is to develop readable, well
+designed code, the functionality and efficiency comes second. With that please
+expect rather more detailed code review. Please read the projects [design
+guidelines](doc/design_guidelines.md) before contributing.
 
 # Project status
 
@@ -53,5 +66,6 @@ See the [design document](doc/design.md).
 - [x] Add support for tracking mouse and keyboard focus.
 - [x] Implement the first widget.
 - [ ] Implement the infrastructure layer.
+- [ ] Write the design guidelines document.
 - [ ] Documentation and tooling for widget development.
 - [ ] Launch and iterate.

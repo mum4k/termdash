@@ -69,4 +69,5 @@ guidelines](doc/design_guidelines.md) before contributing.
 - [ ] Write the design guidelines document.
 - [ ] Documentation and tooling for widget development.
 - [ ] Implement the first widget.
+- [ ] Move internal libraries to internal/ directory.
 - [ ] Launch and iterate.

@@ -52,7 +52,7 @@ to the Google's CLA, and code review requirements.
 
 As stated above the primary goal of this project is to develop readable, well
 designed code, the functionality and efficiency comes second. With that please
-expect rather more detailed code review. Please read the projects [design
+expect rather more detailed code review. Please read the [design
 guidelines](doc/design_guidelines.md) before contributing.
 
 # Project status

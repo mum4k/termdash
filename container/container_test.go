@@ -54,12 +54,10 @@ func Example() {
 			),
 			Right(
 				Border(draw.LineStyleLight),
+				PlaceWidget(fakewidget.New(widgetapi.Options{})),
 			),
 		),
 	)
-
-	// TODO(mum4k): Allow splits on different ratios.
-	// TODO(mum4k): Include an example with a widget.
 }
 
 func TestNew(t *testing.T) {

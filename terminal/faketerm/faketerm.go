@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"sync"
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/cell"
@@ -52,13 +53,16 @@ func WithEventQueue(eq *eventqueue.Unbound) Option {
 }
 
 // Terminal is a fake terminal.
-// This implementation is not thread-safe.
+// This implementation is thread-safe.
 type Terminal struct {
 	// buffer holds the terminal cells.
 	buffer cell.Buffer
 
 	// events is a queue of input events.
 	events *eventqueue.Unbound
+
+	// mu protects the buffer.
+	mu sync.Mutex
 }
 
 // New returns a new fake Terminal.
@@ -89,6 +93,9 @@ func MustNew(size image.Point, opts ...Option) *Terminal {
 // Resize resizes the terminal to the provided size.
 // This also clears the internal buffer.
 func (t *Terminal) Resize(size image.Point) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	b, err := cell.NewBuffer(size)
 	if err != nil {
 		return err
@@ -100,6 +107,9 @@ func (t *Terminal) Resize(size image.Point) error {
 
 // BackBuffer returns the back buffer of the fake terminal.
 func (t *Terminal) BackBuffer() cell.Buffer {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	return t.buffer
 }
 
@@ -124,6 +134,9 @@ func (t *Terminal) String() string {
 
 // Implements terminalapi.Terminal.Size.
 func (t *Terminal) Size() image.Point {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	return t.buffer.Size()
 }
 
@@ -135,6 +148,9 @@ func (t *Terminal) Area() image.Rectangle {
 
 // Implements terminalapi.Terminal.Clear.
 func (t *Terminal) Clear(opts ...cell.Option) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	b, err := cell.NewBuffer(t.buffer.Size())
 	if err != nil {
 		return err
@@ -160,6 +176,9 @@ func (t *Terminal) HideCursor() {
 
 // Implements terminalapi.Terminal.SetCell.
 func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	ar, err := area.FromSize(t.buffer.Size())
 	if err != nil {
 		return err
@@ -183,6 +202,10 @@ func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 	ev, err := t.events.Pull(ctx)
 	if err != nil {
 		return terminalapi.NewErrorf("unable to pull the next event: %v", err)
+	}
+
+	if res, ok := ev.(*terminalapi.Resize); ok {
+		t.Resize(res.Size)
 	}
 	return ev
 }

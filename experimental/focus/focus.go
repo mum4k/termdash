@@ -21,6 +21,7 @@ import (
 	"image"
 	"time"
 
+	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -45,21 +46,6 @@ func inputEvents(ctx context.Context, t terminalapi.Terminal, c *container.Conta
 	return ch
 }
 
-// redraw redraws the containers on the terminal.
-func redraw(t terminalapi.Terminal, c *container.Container) error {
-	//if err := t.Clear(); err != nil {
-	//	return err
-	//}
-	if err := c.Draw(); err != nil {
-		return err
-	}
-
-	if err := t.Flush(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func main() {
 	t, err := termbox.New()
 	if err != nil {
@@ -68,6 +54,7 @@ func main() {
 	defer t.Close()
 
 	wOpts := widgetapi.Options{
+		MinimumSize:  fakewidget.MinimumSize,
 		WantKeyboard: true,
 		WantMouse:    true,
 	}
@@ -79,6 +66,7 @@ func main() {
 					container.Top(
 						container.Border(draw.LineStyleLight),
 						container.PlaceWidget(fakewidget.New(widgetapi.Options{
+							MinimumSize:  fakewidget.MinimumSize,
 							WantKeyboard: true,
 							WantMouse:    true,
 							Ratio:        image.Point{5, 1},
@@ -102,6 +90,7 @@ func main() {
 												container.Border(draw.LineStyleLight),
 												container.VerticalAlignMiddle(),
 												container.PlaceWidget(fakewidget.New(widgetapi.Options{
+													MinimumSize:  fakewidget.MinimumSize,
 													WantKeyboard: true,
 													WantMouse:    true,
 													Ratio:        image.Point{2, 1},
@@ -126,36 +115,8 @@ func main() {
 		),
 	)
 
-	if err := redraw(t, c); err != nil {
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := termdash.Run(ctx, t, c); err != nil {
 		panic(err)
-	}
-
-	events := inputEvents(context.Background(), t, c)
-	redrawTimer := time.NewTicker(100 * time.Millisecond)
-	defer redrawTimer.Stop()
-
-	const exitTime = 10 * time.Second
-	exitTimer := time.NewTicker(exitTime)
-
-	for {
-		defer exitTimer.Stop()
-		select {
-		case ev := <-events:
-			switch e := ev.(type) {
-			case *terminalapi.Mouse:
-				c.Mouse(e)
-			case *terminalapi.Keyboard:
-				c.Keyboard(e)
-			}
-			exitTimer.Stop()
-			exitTimer = time.NewTicker(exitTime)
-
-		case <-redrawTimer.C:
-			if err := redraw(t, c); err != nil {
-				panic(err)
-			}
-		case <-exitTimer.C:
-			return
-		}
 	}
 }

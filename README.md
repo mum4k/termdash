@@ -65,7 +65,8 @@ guidelines](doc/design_guidelines.md) before contributing.
 - [x] Implement the input event pre-processing.
 - [x] Add support for tracking mouse and keyboard focus.
 - [x] Implement the first widget.
-- [ ] Implement the infrastructure layer.
+- [x] Implement the infrastructure layer.
 - [ ] Write the design guidelines document.
 - [ ] Documentation and tooling for widget development.
+- [ ] Implement the first widget.
 - [ ] Launch and iterate.

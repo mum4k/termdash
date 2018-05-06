@@ -44,7 +44,7 @@ func boxChar(p image.Point, box image.Rectangle, parts map[linePart]rune) rune {
 	return -1
 }
 
-// Box draws a box on the canvas.
+// Box draws a box (i.e. a border) on the canvas.
 func Box(c *canvas.Canvas, box image.Rectangle, ls LineStyle, opts ...cell.Option) error {
 	if ar := c.Area(); !box.In(ar) {
 		return fmt.Errorf("the requested box %+v falls outside of the provided canvas %+v", box, ar)

@@ -16,8 +16,8 @@
 package testdraw
 
 import (
+	"fmt"
 	"image"
-	"log"
 
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
@@ -27,13 +27,13 @@ import (
 // MustBox draws box on the canvas or panics.
 func MustBox(c *canvas.Canvas, box image.Rectangle, ls draw.LineStyle, opts ...cell.Option) {
 	if err := draw.Box(c, box, ls, opts...); err != nil {
-		log.Fatalf("draw.Box => unexpected error: %v", err)
+		panic(fmt.Sprintf("draw.Box => unexpected error: %v", err))
 	}
 }
 
 // MustText draws the text on the canvas or panics.
 func MustText(c *canvas.Canvas, text string, tb draw.TextBounds, opts ...cell.Option) {
 	if err := draw.Text(c, text, tb, opts...); err != nil {
-		log.Fatalf("draw.Text => unexpected error: %v", err)
+		panic(fmt.Sprintf("draw.Text => unexpected error: %v", err))
 	}
 }

@@ -85,7 +85,7 @@ func New(size image.Point, opts ...Option) (*Terminal, error) {
 func MustNew(size image.Point, opts ...Option) *Terminal {
 	ft, err := New(size, opts...)
 	if err != nil {
-		log.Fatalf("New => unexpected error: %v", err)
+		panic(fmt.Sprintf("New => unexpected error: %v", err))
 	}
 	return ft
 }

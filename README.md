@@ -51,9 +51,15 @@ Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines related
 to the Google's CLA, and code review requirements.
 
 As stated above the primary goal of this project is to develop readable, well
-designed code, the functionality and efficiency comes second. With that please
-expect rather more detailed code review. Please read the [design
-guidelines](doc/design_guidelines.md) before contributing.
+designed code, the functionality and efficiency come second. This is achieved
+through detailed code reviews, design discussions and following of the [design
+guidelines](doc/design_guidelines.md). Please familiarize yourself with these
+before contributing.
+
+## Contributing widgets
+
+If you're developing a new widget, please see the [widget
+development](doc/widget_development.md) section.
 
 # Project status
 

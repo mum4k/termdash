@@ -46,6 +46,31 @@ func TestText(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:   "unsupported overrun mode specified",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "ab",
+			tb: TextBounds{
+				Start:   image.Point{0, 0},
+				Overrun: OverrunMode(-1),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
+			desc:   "zero text",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "",
+			tb: TextBounds{
+				Start:   image.Point{0, 0},
+				Overrun: OverrunModeStrict,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
 			desc:   "text falls outside of the canvas on OverrunModeStrict",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "ab",
@@ -57,6 +82,76 @@ func TestText(t *testing.T) {
 				return faketerm.MustNew(size)
 			},
 			wantErr: true,
+		},
+		{
+			desc:   "text falls outside of the canvas on OverrunModeTrim",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "ab",
+			tb: TextBounds{
+				Start:   image.Point{0, 0},
+				Overrun: OverrunModeTrim,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "OverrunModeTrim trims longer text",
+			canvas: image.Rect(0, 0, 2, 1),
+			text:   "abcdef",
+			tb: TextBounds{
+				Start:   image.Point{0, 0},
+				Overrun: OverrunModeTrim,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'b')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "text falls outside of the canvas on OverrunModeThreeDot",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "ab",
+			tb: TextBounds{
+				Start:   image.Point{0, 0},
+				Overrun: OverrunModeThreeDot,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '…')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "OverrunModeThreeDot trims longer text",
+			canvas: image.Rect(0, 0, 2, 1),
+			text:   "abcdef",
+			tb: TextBounds{
+				Start:   image.Point{0, 0},
+				Overrun: OverrunModeThreeDot,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, '…')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
 		},
 		{
 			desc:   "requested MaxX is negative",

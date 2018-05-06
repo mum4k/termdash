@@ -19,7 +19,6 @@ package fakewidget
 import (
 	"fmt"
 	"image"
-	"log"
 	"sync"
 
 	"github.com/mum4k/termdash/area"
@@ -183,6 +182,6 @@ func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, ev
 // MustDraw is like Draw, but panics on all errors.
 func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) {
 	if err := Draw(t, cvs, opts, events...); err != nil {
-		log.Fatalf("Draw => %v", err)
+		panic(fmt.Sprintf("Draw => %v", err))
 	}
 }

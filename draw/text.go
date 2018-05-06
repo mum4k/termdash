@@ -38,7 +38,9 @@ func (om OverrunMode) String() string {
 
 // overrunModeNames maps OverrunMode values to human readable names.
 var overrunModeNames = map[OverrunMode]string{
-	OverrunModeStrict: "OverrunModeStrict",
+	OverrunModeStrict:   "OverrunModeStrict",
+	OverrunModeTrim:     "OverrunModeTrim",
+	OverrunModeThreeDot: "OverrunModeThreeDot",
 }
 
 const (
@@ -46,7 +48,12 @@ const (
 	// returns an error if it doesn't.
 	OverrunModeStrict OverrunMode = iota
 
-	// TODO(mum4k): Support other overrun modes, like Trim, ThreeDot or LineWrap.
+	// OverrunModeTrim trims the part of the text that doesn't fit.
+	OverrunModeTrim
+
+	// OverrunModeThreeDot trims the text and places the horizontal ellipsis
+	// '…' character at the end.
+	OverrunModeThreeDot
 )
 
 // TextBounds specifies the limits (start and end cells) that the text must
@@ -67,6 +74,27 @@ type TextBounds struct {
 	Overrun OverrunMode
 }
 
+// bounds enforces the text bounds based on the specified overrun mode.
+// Returns test that can be safely drawn within the bounds.
+func bounds(text string, maxRunes int, om OverrunMode) (string, error) {
+	runes := utf8.RuneCountInString(text)
+	if runes <= maxRunes {
+		return text, nil
+	}
+
+	switch om {
+	case OverrunModeStrict:
+		return "", fmt.Errorf("the requested text %q takes %d runes to draw, space is available for only %d runes and overrun mode is %v", text, runes, maxRunes, om)
+	case OverrunModeTrim:
+		return text[:maxRunes], nil
+
+	case OverrunModeThreeDot:
+		return fmt.Sprintf("%s…", text[:maxRunes-1]), nil
+	default:
+		return "", fmt.Errorf("unsupported overrun mode %v", om)
+	}
+}
+
 // Text prints the provided text on the canvas.
 func Text(c *canvas.Canvas, text string, tb TextBounds, opts ...cell.Option) error {
 	ar := c.Area()
@@ -84,13 +112,15 @@ func Text(c *canvas.Canvas, text string, tb TextBounds, opts ...cell.Option) err
 	} else {
 		wantMaxX = tb.MaxX
 	}
-	runes := utf8.RuneCountInString(text)
-	if maxX := tb.Start.X + runes; maxX > wantMaxX && tb.Overrun == OverrunModeStrict {
-		return fmt.Errorf("the requested text %q would end at X coordinate %v which falls outside of the maximum %v", text, maxX, wantMaxX)
+
+	maxRunes := wantMaxX - tb.Start.X
+	trimmed, err := bounds(text, maxRunes, tb.Overrun)
+	if err != nil {
+		return err
 	}
 
 	cur := tb.Start
-	for _, r := range text {
+	for _, r := range trimmed {
 		if err := c.SetCell(cur, r, opts...); err != nil {
 			return err
 		}

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
@@ -82,53 +81,12 @@ func drawBorder(c *Container) error {
 	return cvs.Apply(c.term)
 }
 
-// hAlignWidget adjusts the given widget area within the containers area
-// based on the requested horizontal alignment.
-func hAlignWidget(c *Container, wArea image.Rectangle) image.Rectangle {
-	gap := c.usable().Dx() - wArea.Dx()
-	switch c.opts.hAlign {
-	case align.HorizontalRight:
-		// Use gap from above.
-	case align.HorizontalCenter:
-		gap /= 2
-	default:
-		// Left or unknown.
-		gap = 0
-	}
-
-	return image.Rect(
-		wArea.Min.X+gap,
-		wArea.Min.Y,
-		wArea.Max.X+gap,
-		wArea.Max.Y,
-	)
-}
-
-// vAlignWidget adjusts the given widget area within the containers area
-// based on the requested vertical alignment.
-func vAlignWidget(c *Container, wArea image.Rectangle) image.Rectangle {
-	gap := c.usable().Dy() - wArea.Dy()
-	switch c.opts.vAlign {
-	case align.VerticalBottom:
-		// Use gap from above.
-	case align.VerticalMiddle:
-		gap /= 2
-	default:
-		// Top or unknown.
-		gap = 0
-	}
-
-	return image.Rect(
-		wArea.Min.X,
-		wArea.Min.Y+gap,
-		wArea.Max.X,
-		wArea.Max.Y+gap,
-	)
-}
-
 // drawWidget requests the widget to draw on the canvas.
 func drawWidget(c *Container) error {
-	widgetArea := c.widgetArea()
+	widgetArea, err := c.widgetArea()
+	if err != nil {
+		return err
+	}
 	if widgetArea == image.ZR {
 		return nil
 	}

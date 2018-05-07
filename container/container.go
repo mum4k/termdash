@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"image"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminalapi"
@@ -113,9 +114,9 @@ func (c *Container) usable() image.Rectangle {
 // widget's canvas. Takes the container border, widget's requested maximum size
 // and ratio and container's alignment into account.
 // Returns a zero area if the container has no widget.
-func (c *Container) widgetArea() image.Rectangle {
+func (c *Container) widgetArea() (image.Rectangle, error) {
 	if !c.hasWidget() {
-		return image.ZR
+		return image.ZR, nil
 	}
 
 	adjusted := c.usable()
@@ -131,8 +132,11 @@ func (c *Container) widgetArea() image.Rectangle {
 	if wOpts.Ratio.X > 0 && wOpts.Ratio.Y > 0 {
 		adjusted = area.WithRatio(adjusted, wOpts.Ratio)
 	}
-	adjusted = hAlignWidget(c, adjusted)
-	return vAlignWidget(c, adjusted)
+	adjusted, err := align.Rectangle(c.usable(), adjusted, c.opts.hAlign, c.opts.vAlign)
+	if err != nil {
+		return image.ZR, err
+	}
+	return adjusted, nil
 }
 
 // split splits the container's usable area into child areas.
@@ -201,14 +205,18 @@ func (c *Container) Mouse(m *terminalapi.Mouse) error {
 	}
 
 	// Ignore clicks falling outside of the widget's canvas.
-	if !m.Position.In(target.widgetArea()) {
+	wa, err := target.widgetArea()
+	if err != nil {
+		return err
+	}
+	if !m.Position.In(wa) {
 		return nil
 	}
 
 	// The sent mouse coordinate is relative to the widget canvas, i.e. zero
 	// based, even though the widget might not be in the top left corner on the
 	// terminal.
-	offset := target.widgetArea().Min
+	offset := wa.Min
 	wm := &terminalapi.Mouse{
 		Position: m.Position.Sub(offset),
 		Button:   m.Button,

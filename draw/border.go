@@ -19,7 +19,9 @@ package draw
 import (
 	"fmt"
 	"image"
+	"unicode/utf8"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
 )
@@ -32,8 +34,12 @@ type BorderOption interface {
 
 // borderOptions stores the provided options.
 type borderOptions struct {
-	cellOpts  []cell.Option
-	lineStyle LineStyle
+	cellOpts      []cell.Option
+	lineStyle     LineStyle
+	title         string
+	titleOM       OverrunMode
+	titleCellOpts []cell.Option
+	titleHAlign   align.Horizontal
 }
 
 // borderOption implements BorderOption.
@@ -61,6 +67,22 @@ func BorderCellOpts(opts ...cell.Option) BorderOption {
 	})
 }
 
+// BorderTitle sets a title for the border.
+func BorderTitle(title string, overrun OverrunMode, opts ...cell.Option) BorderOption {
+	return borderOption(func(bOpts *borderOptions) {
+		bOpts.title = title
+		bOpts.titleOM = overrun
+		bOpts.titleCellOpts = opts
+	})
+}
+
+// BorderTitleAlign configures the horizontal alignment for the title.
+func BorderTitleAlign(h align.Horizontal) BorderOption {
+	return borderOption(func(bOpts *borderOptions) {
+		bOpts.titleHAlign = h
+	})
+}
+
 // borderChar returns the correct border character from the parts for the use
 // at the specified point of the border. Returns -1 if no character should be at
 // this point.
@@ -80,6 +102,51 @@ func borderChar(p image.Point, border image.Rectangle, parts map[linePart]rune) 
 		return parts[hLine]
 	}
 	return -1
+}
+
+// drawTitle draws a text title at the top of the border.
+func drawTitle(c *canvas.Canvas, border image.Rectangle, opt *borderOptions) error {
+	// Don't attempt to draw the title if there isn't space for at least one rune.
+	// The title must not overwrite any of the corner runes on the border so we
+	// need the following minimum width.
+	const minForTitle = 3
+	if border.Dx() < minForTitle {
+		return nil
+	}
+
+	available := image.Rect(
+		border.Min.X+1, // One space for the top left corner char.
+		border.Min.Y,
+		border.Max.X-1, // One space for the top right corner char.
+		border.Min.Y,
+	)
+	runes := utf8.RuneCountInString(opt.title)
+	var textLen int
+	if runes < available.Dx() {
+		textLen = runes
+	} else {
+		textLen = available.Dx()
+	}
+	text := image.Rect(
+		available.Min.X,
+		available.Min.Y,
+		// For the purposes of aligning the text, assume that it will be
+		// trimmed to the available space.
+		available.Min.X+textLen,
+		available.Max.Y,
+	)
+
+	aligned, err := align.Rectangle(available, text, opt.titleHAlign, align.VerticalTop)
+	if err != nil {
+		return err
+	}
+	start := image.Point{aligned.Min.X, available.Min.Y}
+	return Text(
+		c, opt.title, start,
+		TextCellOpts(opt.titleCellOpts...),
+		TextOverrunMode(opt.titleOM),
+		TextMaxX(available.Max.X),
+	)
 }
 
 // Border draws a border on the canvas.
@@ -117,6 +184,10 @@ func Border(c *canvas.Canvas, border image.Rectangle, opts ...BorderOption) erro
 				return err
 			}
 		}
+	}
+
+	if opt.title != "" {
+		return drawTitle(c, border, opt)
 	}
 	return nil
 }

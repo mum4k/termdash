@@ -240,6 +240,22 @@ func TestText(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "draws multiple unicode characters",
+			canvas: image.Rect(0, 0, 3, 3),
+			text:   "⇄࿃°",
+			start:  image.Point{0, 0},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '⇄')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, '࿃')
+				testcanvas.MustSetCell(c, image.Point{2, 0}, '°')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

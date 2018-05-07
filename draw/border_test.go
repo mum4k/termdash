@@ -18,6 +18,7 @@ import (
 	"image"
 	"testing"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/cell"
@@ -120,6 +121,274 @@ func TestBorder(t *testing.T) {
 					lineStyleChars[LineStyleLight][topRightCorner], cell.FgColor(cell.ColorRed))
 				testcanvas.MustSetCell(c, image.Point{2, 2},
 					lineStyleChars[LineStyleLight][bottomRightCorner], cell.FgColor(cell.ColorRed))
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws border with a title",
+			canvas: image.Rect(0, 0, 4, 4),
+			border: image.Rect(0, 0, 4, 4),
+			opts: []BorderOption{
+				BorderTitle("ab", OverrunModeStrict),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b')
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws border with a title and cell options",
+			canvas: image.Rect(0, 0, 4, 4),
+			border: image.Rect(0, 0, 4, 4),
+			opts: []BorderOption{
+				BorderTitle("ab", OverrunModeStrict, cell.FgColor(cell.ColorRed)),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a', cell.FgColor(cell.ColorRed))
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b', cell.FgColor(cell.ColorRed))
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "fails to draw border with a too long title in strict mode",
+			canvas: image.Rect(0, 0, 4, 4),
+			border: image.Rect(0, 0, 4, 4),
+			opts: []BorderOption{
+				BorderTitle("abc", OverrunModeStrict),
+			},
+			wantErr: true,
+		},
+		{
+			desc:   "doesn't draw the border if there isn't enough space",
+			canvas: image.Rect(0, 0, 4, 4),
+			border: image.Rect(1, 1, 3, 3),
+			opts: []BorderOption{
+				BorderTitle("abc", OverrunModeStrict),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{1, 1}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{1, 2}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{2, 1}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{2, 2}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws border with a trimmed title",
+			canvas: image.Rect(0, 0, 4, 4),
+			border: image.Rect(0, 0, 4, 4),
+			opts: []BorderOption{
+				BorderTitle("abc", OverrunModeTrim),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b')
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws border with a title shortened using the horizontal ellipsis rune",
+			canvas: image.Rect(0, 0, 4, 4),
+			border: image.Rect(0, 0, 4, 4),
+			opts: []BorderOption{
+				BorderTitle("abc", OverrunModeThreeDot),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, '…')
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "aligns the title to the left",
+			canvas: image.Rect(0, 0, 6, 4),
+			border: image.Rect(0, 0, 6, 4),
+			opts: []BorderOption{
+				BorderTitle("ab", OverrunModeStrict),
+				BorderTitleAlign(align.HorizontalLeft),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b')
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{4, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "aligns the title in the center",
+			canvas: image.Rect(0, 0, 6, 4),
+			border: image.Rect(0, 0, 6, 4),
+			opts: []BorderOption{
+				BorderTitle("ab", OverrunModeStrict),
+				BorderTitleAlign(align.HorizontalCenter),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, 'b')
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{4, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "aligns the title to the right",
+			canvas: image.Rect(0, 0, 6, 4),
+			border: image.Rect(0, 0, 6, 4),
+			opts: []BorderOption{
+				BorderTitle("ab", OverrunModeStrict),
+				BorderTitleAlign(align.HorizontalRight),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{4, 0}, 'b')
+				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[LineStyleLight][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[LineStyleLight][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[LineStyleLight][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft

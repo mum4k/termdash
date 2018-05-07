@@ -18,6 +18,7 @@ import (
 	"image"
 	"testing"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -53,6 +54,145 @@ func TestDrawWidget(t *testing.T) {
 					cvs,
 					cvs.Area(),
 					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				// Fake widget border.
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
+				testdraw.MustText(cvs, "(7,3)", image.Point{2, 2})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws widget with container border and title aligned on the left",
+			termSize: image.Point{9, 5},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					BorderTitle("ab"),
+					BorderTitleAlignLeft(),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+					draw.BorderTitle(
+						"ab",
+						draw.OverrunModeThreeDot,
+						cell.FgColor(cell.ColorYellow),
+					),
+				)
+
+				// Fake widget border.
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
+				testdraw.MustText(cvs, "(7,3)", image.Point{2, 2})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws widget with container border and title aligned in the center",
+			termSize: image.Point{9, 5},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					BorderTitle("ab"),
+					BorderTitleAlignCenter(),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+					draw.BorderTitle(
+						"ab",
+						draw.OverrunModeThreeDot,
+						cell.FgColor(cell.ColorYellow),
+					),
+					draw.BorderTitleAlign(align.HorizontalCenter),
+				)
+
+				// Fake widget border.
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
+				testdraw.MustText(cvs, "(7,3)", image.Point{2, 2})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws widget with container border and title aligned on the right",
+			termSize: image.Point{9, 5},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					BorderTitle("ab"),
+					BorderTitleAlignRight(),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+					draw.BorderTitle(
+						"ab",
+						draw.OverrunModeThreeDot,
+						cell.FgColor(cell.ColorYellow),
+					),
+					draw.BorderTitleAlign(align.HorizontalRight),
+				)
+
+				// Fake widget border.
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
+				testdraw.MustText(cvs, "(7,3)", image.Point{2, 2})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws widget with container border and title that is trimmed",
+			termSize: image.Point{9, 5},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					BorderTitle("abcdefgh"),
+					BorderTitleAlignRight(),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+					draw.BorderTitle(
+						"abcdefgh",
+						draw.OverrunModeThreeDot,
+						cell.FgColor(cell.ColorYellow),
+					),
+					draw.BorderTitleAlign(align.HorizontalRight),
 				)
 
 				// Fake widget border.

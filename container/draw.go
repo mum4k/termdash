@@ -75,7 +75,12 @@ func drawBorder(c *Container) error {
 		cOpts = append(cOpts, cell.FgColor(c.opts.inherited.borderColor))
 	}
 
-	if err := draw.Border(cvs, ar, draw.BorderLineStyle(c.opts.border), draw.BorderCellOpts(cOpts...)); err != nil {
+	if err := draw.Border(cvs, ar,
+		draw.BorderLineStyle(c.opts.border),
+		draw.BorderTitle(c.opts.borderTitle, draw.OverrunModeThreeDot, cOpts...),
+		draw.BorderTitleAlign(c.opts.borderTitleHAlign),
+		draw.BorderCellOpts(cOpts...),
+	); err != nil {
 		return err
 	}
 	return cvs.Apply(c.term)

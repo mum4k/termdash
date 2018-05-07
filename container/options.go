@@ -54,7 +54,9 @@ type options struct {
 	vAlign align.Vertical
 
 	// border is the border around the container.
-	border draw.LineStyle
+	border            draw.LineStyle
+	borderTitle       string
+	borderTitleHAlign align.Horizontal
 }
 
 // inherited contains options that are inherited by child containers.
@@ -181,6 +183,34 @@ func VerticalAlignBottom() Option {
 func Border(ls draw.LineStyle) Option {
 	return option(func(c *Container) {
 		c.opts.border = ls
+	})
+}
+
+// BorderTitle sets a text title within the border.
+func BorderTitle(title string) Option {
+	return option(func(c *Container) {
+		c.opts.borderTitle = title
+	})
+}
+
+// BorderTitleAlignLeft aligns the border title on the left.
+func BorderTitleAlignLeft() Option {
+	return option(func(c *Container) {
+		c.opts.borderTitleHAlign = align.HorizontalLeft
+	})
+}
+
+// BorderTitleAlignCenter aligns the border title in the center.
+func BorderTitleAlignCenter() Option {
+	return option(func(c *Container) {
+		c.opts.borderTitleHAlign = align.HorizontalCenter
+	})
+}
+
+// BorderTitleAlignRight aligns the border title on the right.
+func BorderTitleAlignRight() Option {
+	return option(func(c *Container) {
+		c.opts.borderTitleHAlign = align.HorizontalRight
 	})
 }
 

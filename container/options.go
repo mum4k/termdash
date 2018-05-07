@@ -75,6 +75,8 @@ func newOptions(parent *options) *options {
 		inherited: inherited{
 			focusedColor: cell.ColorYellow,
 		},
+		hAlign: align.HorizontalCenter,
+		vAlign: align.VerticalMiddle,
 	}
 	if parent != nil {
 		opts.inherited = parent.inherited
@@ -127,7 +129,7 @@ func PlaceWidget(w widgetapi.Widget) Option {
 
 // HorizontalAlignLeft aligns the placed widget on the left of the
 // container along the horizontal axis. Has no effect if the container contains
-// no widget. This is the default horizontal alignment if no other is specified.
+// no widget.
 func HorizontalAlignLeft() Option {
 	return option(func(c *Container) {
 		c.opts.hAlign = align.HorizontalLeft
@@ -136,7 +138,7 @@ func HorizontalAlignLeft() Option {
 
 // HorizontalAlignCenter aligns the placed widget in the center of the
 // container along the horizontal axis. Has no effect if the container contains
-// no widget.
+// no widget. This is the default horizontal alignment if no other is specified.
 func HorizontalAlignCenter() Option {
 	return option(func(c *Container) {
 		c.opts.hAlign = align.HorizontalCenter
@@ -154,7 +156,7 @@ func HorizontalAlignRight() Option {
 
 // VerticalAlignTop aligns the placed widget on the top of the
 // container along the vertical axis. Has no effect if the container contains
-// no widget. This is the default vertical alignment if no other is specified.
+// no widget.
 func VerticalAlignTop() Option {
 	return option(func(c *Container) {
 		c.opts.vAlign = align.VerticalTop
@@ -163,7 +165,7 @@ func VerticalAlignTop() Option {
 
 // VerticalAlignMiddle aligns the placed widget in the middle of the
 // container along the vertical axis. Has no effect if the container contains
-// no widget.
+// no widget. This is the default vertical alignment if no other is specified.
 func VerticalAlignMiddle() Option {
 	return option(func(c *Container) {
 		c.opts.vAlign = align.VerticalMiddle

@@ -31,11 +31,18 @@ type Options struct {
 	// canvas of any ratio.
 	Ratio image.Point
 
-	// MinimumSize allows a widget to specify the smallest required canvas size.
+	// MinimumSize allows a widget to specify the smallest allowed canvas size.
 	// If the terminal size and/or splits cause the assigned canvas to be
 	// smaller than this, the widget will be skipped. I.e. The Draw() method
 	// won't be called until a resize above the specified minimum.
 	MinimumSize image.Point
+
+	// MaximumSize allows a widget to specify the largest allowed canvas size.
+	// If the terminal size and/or splits cause the assigned canvas to be larger
+	// than this, the widget will only receive a canvas of this size within its
+	// container. Setting any of the two coordinates to zero indicates
+	// unlimited.
+	MaximumSize image.Point
 
 	// WantKeyboard allows a widget to request keyboard events.
 	// If false, keyboard events won't be forwarded to the widget.

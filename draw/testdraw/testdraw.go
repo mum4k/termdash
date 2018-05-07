@@ -37,3 +37,10 @@ func MustText(c *canvas.Canvas, text string, tb draw.TextBounds, opts ...cell.Op
 		panic(fmt.Sprintf("draw.Text => unexpected error: %v", err))
 	}
 }
+
+// MustRectangle draws the rectangle on the canvas or panics.
+func MustRectangle(c *canvas.Canvas, r image.Rectangle, opts ...draw.RectangleOption) {
+	if err := draw.Rectangle(c, r, opts...); err != nil {
+		panic(fmt.Sprintf("draw.Rectangle => unexpected error: %v", err))
+	}
+}

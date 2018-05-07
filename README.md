@@ -61,19 +61,8 @@ before contributing.
 If you're developing a new widget, please see the [widget
 development](doc/widget_development.md) section.
 
-# Project status
+## Implemented Widgets
 
-- [x] High-Level Design.
-- [x] Submit the APIs.
-- [x] Implement the terminal layer.
-- [x] Implement unit test helpers.
-- [x] Implement the container.
-- [x] Implement the input event pre-processing.
-- [x] Add support for tracking mouse and keyboard focus.
-- [x] Implement the first widget.
-- [x] Implement the infrastructure layer.
-- [ ] Write the design guidelines document.
-- [ ] Documentation and tooling for widget development.
-- [ ] Implement the first widget.
-- [ ] Move internal libraries to internal/ directory.
-- [ ] Launch and iterate.
+### The Gauge
+
+Run the [gaugedemo](widgets/gauge/demo/gaugedemo.go).

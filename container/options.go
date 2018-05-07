@@ -127,57 +127,21 @@ func PlaceWidget(w widgetapi.Widget) Option {
 	})
 }
 
-// HorizontalAlignLeft aligns the placed widget on the left of the
-// container along the horizontal axis. Has no effect if the container contains
-// no widget.
-func HorizontalAlignLeft() Option {
+// AlignHorizontal sets the horizontal alignment for the widget placed in the
+// container. Has no effect if the container contains no widget.
+// Defaults alignment in the center.
+func AlignHorizontal(h align.Horizontal) Option {
 	return option(func(c *Container) {
-		c.opts.hAlign = align.HorizontalLeft
+		c.opts.hAlign = h
 	})
 }
 
-// HorizontalAlignCenter aligns the placed widget in the center of the
-// container along the horizontal axis. Has no effect if the container contains
-// no widget. This is the default horizontal alignment if no other is specified.
-func HorizontalAlignCenter() Option {
+// AlignVertical sets the vertical alignment for the widget placed in the container.
+// Has no effect if the container contains no widget.
+// Defaults to alignment in the middle.
+func AlignVertical(v align.Vertical) Option {
 	return option(func(c *Container) {
-		c.opts.hAlign = align.HorizontalCenter
-	})
-}
-
-// HorizontalAlignRight aligns the placed widget on the right of the
-// container along the horizontal axis. Has no effect if the container contains
-// no widget.
-func HorizontalAlignRight() Option {
-	return option(func(c *Container) {
-		c.opts.hAlign = align.HorizontalRight
-	})
-}
-
-// VerticalAlignTop aligns the placed widget on the top of the
-// container along the vertical axis. Has no effect if the container contains
-// no widget.
-func VerticalAlignTop() Option {
-	return option(func(c *Container) {
-		c.opts.vAlign = align.VerticalTop
-	})
-}
-
-// VerticalAlignMiddle aligns the placed widget in the middle of the
-// container along the vertical axis. Has no effect if the container contains
-// no widget. This is the default vertical alignment if no other is specified.
-func VerticalAlignMiddle() Option {
-	return option(func(c *Container) {
-		c.opts.vAlign = align.VerticalMiddle
-	})
-}
-
-// VerticalAlignBottom aligns the placed widget at the bottom of the
-// container along the vertical axis. Has no effect if the container contains
-// no widget.
-func VerticalAlignBottom() Option {
-	return option(func(c *Container) {
-		c.opts.vAlign = align.VerticalBottom
+		c.opts.vAlign = v
 	})
 }
 

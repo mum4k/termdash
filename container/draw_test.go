@@ -283,8 +283,8 @@ func TestDrawWidget(t *testing.T) {
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						MaximumSize: image.Point{10, 10},
 					})),
-					HorizontalAlignLeft(),
-					VerticalAlignTop(),
+					AlignHorizontal(align.HorizontalLeft),
+					AlignVertical(align.VerticalTop),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -315,8 +315,8 @@ func TestDrawWidget(t *testing.T) {
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						MaximumSize: image.Point{10, 0},
 					})),
-					HorizontalAlignLeft(),
-					VerticalAlignTop(),
+					AlignHorizontal(align.HorizontalLeft),
+					AlignVertical(align.VerticalTop),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -347,8 +347,8 @@ func TestDrawWidget(t *testing.T) {
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						MaximumSize: image.Point{0, 10},
 					})),
-					HorizontalAlignLeft(),
-					VerticalAlignTop(),
+					AlignHorizontal(align.HorizontalLeft),
+					AlignVertical(align.VerticalTop),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -379,8 +379,8 @@ func TestDrawWidget(t *testing.T) {
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
 					)),
-					HorizontalAlignLeft(),
-					VerticalAlignTop(),
+					AlignHorizontal(align.HorizontalLeft),
+					AlignVertical(align.VerticalTop),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -440,7 +440,7 @@ func TestDrawWidget(t *testing.T) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					HorizontalAlignLeft(),
+					AlignHorizontal(align.HorizontalLeft),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
 					)),
@@ -471,7 +471,7 @@ func TestDrawWidget(t *testing.T) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					HorizontalAlignCenter(),
+					AlignHorizontal(align.HorizontalCenter),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
 					)),
@@ -502,7 +502,7 @@ func TestDrawWidget(t *testing.T) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					HorizontalAlignRight(),
+					AlignHorizontal(align.HorizontalRight),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
 					)),
@@ -533,7 +533,7 @@ func TestDrawWidget(t *testing.T) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					VerticalAlignTop(),
+					AlignVertical(align.VerticalTop),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{2, 1}},
 					)),
@@ -564,7 +564,7 @@ func TestDrawWidget(t *testing.T) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					VerticalAlignMiddle(),
+					AlignVertical(align.VerticalMiddle),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{2, 1}},
 					)),
@@ -595,7 +595,7 @@ func TestDrawWidget(t *testing.T) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					VerticalAlignBottom(),
+					AlignVertical(align.VerticalBottom),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{2, 1}},
 					)),

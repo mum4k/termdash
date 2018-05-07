@@ -18,6 +18,7 @@ import (
 	"image"
 	"testing"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -701,8 +702,8 @@ func TestMouse(t *testing.T) {
 							Ratio:     image.Point{2, 1},
 						}),
 					),
-					VerticalAlignMiddle(),
-					HorizontalAlignCenter(),
+					AlignVertical(align.VerticalMiddle),
+					AlignHorizontal(align.HorizontalCenter),
 				)
 			},
 			events: []terminalapi.Event{
@@ -731,8 +732,8 @@ func TestMouse(t *testing.T) {
 							Ratio:     image.Point{2, 1},
 						}),
 					),
-					VerticalAlignMiddle(),
-					HorizontalAlignCenter(),
+					AlignVertical(align.VerticalMiddle),
+					AlignHorizontal(align.HorizontalCenter),
 				)
 			},
 			events: []terminalapi.Event{
@@ -762,8 +763,8 @@ func TestMouse(t *testing.T) {
 							Ratio:     image.Point{9, 10},
 						}),
 					),
-					VerticalAlignMiddle(),
-					HorizontalAlignCenter(),
+					AlignVertical(align.VerticalMiddle),
+					AlignHorizontal(align.HorizontalCenter),
 				)
 			},
 			events: []terminalapi.Event{

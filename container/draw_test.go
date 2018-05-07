@@ -57,8 +57,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
-				tb := draw.TextBounds{Start: image.Point{2, 2}}
-				testdraw.MustText(cvs, "(7,3)", tb)
+				testdraw.MustText(cvs, "(7,3)", image.Point{2, 2})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -78,8 +77,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(0, 0, 9, 5))
-				tb := draw.TextBounds{Start: image.Point{1, 1}}
-				testdraw.MustText(cvs, "(9,5)", tb)
+				testdraw.MustText(cvs, "(9,5)", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -111,7 +109,7 @@ func TestDrawWidget(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustText(cvs, "⇄", draw.TextBounds{})
+				testdraw.MustText(cvs, "⇄", image.Point{0, 0})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -130,7 +128,7 @@ func TestDrawWidget(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustText(cvs, "⇄", draw.TextBounds{})
+				testdraw.MustText(cvs, "⇄", image.Point{0, 0})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -249,8 +247,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(1, 1, 11, 21))
-				tb := draw.TextBounds{Start: image.Point{2, 2}}
-				testdraw.MustText(cvs, "(10,20)", tb)
+				testdraw.MustText(cvs, "(10,20)", image.Point{2, 2})
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -313,8 +310,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(1, 1, 11, 21))
-				tb := draw.TextBounds{Start: image.Point{2, 2}}
-				testdraw.MustText(cvs, "(10,20)", tb)
+				testdraw.MustText(cvs, "(10,20)", image.Point{2, 2})
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -345,8 +341,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(6, 1, 16, 21))
-				tb := draw.TextBounds{Start: image.Point{7, 2}}
-				testdraw.MustText(cvs, "(10,20)", tb)
+				testdraw.MustText(cvs, "(10,20)", image.Point{7, 2})
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -377,8 +372,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(11, 1, 21, 21))
-				tb := draw.TextBounds{Start: image.Point{12, 2}}
-				testdraw.MustText(cvs, "(10,20)", tb)
+				testdraw.MustText(cvs, "(10,20)", image.Point{12, 2})
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -409,8 +403,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(1, 1, 21, 11))
-				tb := draw.TextBounds{Start: image.Point{2, 2}}
-				testdraw.MustText(cvs, "(20,10)", tb)
+				testdraw.MustText(cvs, "(20,10)", image.Point{2, 2})
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -441,8 +434,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(1, 6, 21, 16))
-				tb := draw.TextBounds{Start: image.Point{2, 7}}
-				testdraw.MustText(cvs, "(20,10)", tb)
+				testdraw.MustText(cvs, "(20,10)", image.Point{2, 7})
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -473,8 +465,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(1, 11, 21, 21))
-				tb := draw.TextBounds{Start: image.Point{2, 12}}
-				testdraw.MustText(cvs, "(20,10)", tb)
+				testdraw.MustText(cvs, "(20,10)", image.Point{2, 12})
 
 				testcanvas.MustApply(cvs, ft)
 				return ft

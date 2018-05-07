@@ -170,7 +170,7 @@ func drawResize(c *Container, area image.Rectangle) error {
 		return err
 	}
 
-	if err := draw.Text(cvs, "⇄", draw.TextBounds{}); err != nil {
+	if err := draw.Text(cvs, "⇄", image.Point{0, 0}); err != nil {
 		return err
 	}
 	return cvs.Apply(c.term)

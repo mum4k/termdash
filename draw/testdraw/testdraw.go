@@ -20,7 +20,6 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 )
 
@@ -32,8 +31,8 @@ func MustBorder(c *canvas.Canvas, border image.Rectangle, opts ...draw.BorderOpt
 }
 
 // MustText draws the text on the canvas or panics.
-func MustText(c *canvas.Canvas, text string, tb draw.TextBounds, opts ...cell.Option) {
-	if err := draw.Text(c, text, tb, opts...); err != nil {
+func MustText(c *canvas.Canvas, text string, start image.Point, opts ...draw.TextOption) {
+	if err := draw.Text(c, text, start, opts...); err != nil {
 		panic(fmt.Sprintf("draw.Text => unexpected error: %v", err))
 	}
 }

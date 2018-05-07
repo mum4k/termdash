@@ -56,22 +56,51 @@ const (
 	OverrunModeThreeDot
 )
 
-// TextBounds specifies the limits (start and end cells) that the text must
-// fall into and the overrun mode when it doesn't.
-type TextBounds struct {
-	// Start is the starting point of the drawn text.
-	Start image.Point
+// TextOption is used to provide options to Text().
+type TextOption interface {
+	// set sets the provided option.
+	set(*textOptions)
+}
 
-	// MaxX sets a limit on the X coordinate (column) of the drawn text.
-	// The X coordinate of all cells used by the text must be within
-	// start.X <= X < MaxX.
-	// This is optional, if set to zero, the width of the canvas is used as MaxX.
-	// This cannot be negative or greater than the width of the canvas.
-	MaxX int
+// textOptions stores the provided options.
+type textOptions struct {
+	cellOpts    []cell.Option
+	maxX        int
+	overrunMode OverrunMode
+}
 
-	// Om indicates what to do with text that overruns the MaxX or the width of
-	// the canvas if MaxX isn't specified.
-	Overrun OverrunMode
+// textOption implements TextOption.
+type textOption func(*textOptions)
+
+// set implements TextOption.set.
+func (to textOption) set(tOpts *textOptions) {
+	to(tOpts)
+}
+
+// TextCellOpts sets options on the cells that contain the text.
+func TextCellOpts(opts ...cell.Option) TextOption {
+	return textOption(func(tOpts *textOptions) {
+		tOpts.cellOpts = opts
+	})
+}
+
+// TextMaxX sets a limit on the X coordinate (column) of the drawn text.
+// The X coordinate of all cells used by the text must be within
+// start.X <= X < TextMaxX.
+// If not provided, the width of the canvas is used as TextMaxX.
+func TextMaxX(x int) TextOption {
+	return textOption(func(tOpts *textOptions) {
+		tOpts.maxX = x
+	})
+}
+
+// TextOverrunMode indicates what to do with text that overruns the TextMaxX()
+// or the width of the canvas if TextMaxX() isn't specified.
+// Defaults to OverrunModeStrict.
+func TextOverrunMode(om OverrunMode) TextOption {
+	return textOption(func(tOpts *textOptions) {
+		tOpts.overrunMode = om
+	})
 }
 
 // bounds enforces the text bounds based on the specified overrun mode.
@@ -95,33 +124,38 @@ func bounds(text string, maxRunes int, om OverrunMode) (string, error) {
 	}
 }
 
-// Text prints the provided text on the canvas.
-func Text(c *canvas.Canvas, text string, tb TextBounds, opts ...cell.Option) error {
+// Text prints the provided text on the canvas starting at the provided point.
+func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) error {
 	ar := c.Area()
-	if !tb.Start.In(ar) {
-		return fmt.Errorf("the requested start point %v falls outside of the provided canvas %v", tb.Start, ar)
+	if !start.In(ar) {
+		return fmt.Errorf("the requested start point %v falls outside of the provided canvas %v", start, ar)
 	}
 
-	if tb.MaxX < 0 || tb.MaxX > ar.Max.X {
-		return fmt.Errorf("invalid TextBouds.MaxX %v, must be a positive number that is <= canvas.width %v", tb.MaxX, ar.Dx())
+	opt := &textOptions{}
+	for _, o := range opts {
+		o.set(opt)
+	}
+
+	if opt.maxX < 0 || opt.maxX > ar.Max.X {
+		return fmt.Errorf("invalid TextMaxX(%v), must be a positive number that is <= canvas.width %v", opt.maxX, ar.Dx())
 	}
 
 	var wantMaxX int
-	if tb.MaxX == 0 {
+	if opt.maxX == 0 {
 		wantMaxX = ar.Max.X
 	} else {
-		wantMaxX = tb.MaxX
+		wantMaxX = opt.maxX
 	}
 
-	maxRunes := wantMaxX - tb.Start.X
-	trimmed, err := bounds(text, maxRunes, tb.Overrun)
+	maxRunes := wantMaxX - start.X
+	trimmed, err := bounds(text, maxRunes, opt.overrunMode)
 	if err != nil {
 		return err
 	}
 
-	cur := tb.Start
+	cur := start
 	for _, r := range trimmed {
-		if err := c.SetCell(cur, r, opts...); err != nil {
+		if err := c.SetCell(cur, r, opt.cellOpts...); err != nil {
 			return err
 		}
 		cur = image.Point{cur.X + 1, cur.Y}

@@ -345,7 +345,7 @@ func TestNew(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, image.Rect(0, 0, 10, 10))
-				testdraw.MustText(cvs, "(10,10)", draw.TextBounds{Start: image.Point{1, 1}})
+				testdraw.MustText(cvs, "(10,10)", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},

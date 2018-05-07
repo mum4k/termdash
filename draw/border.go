@@ -36,10 +36,10 @@ type borderOptions struct {
 	lineStyle LineStyle
 }
 
-// borderOption implements Option.
+// borderOption implements BorderOption.
 type borderOption func(bOpts *borderOptions)
 
-// set implements Option.set.
+// set implements BorderOption.set.
 func (bo borderOption) set(bOpts *borderOptions) {
 	bo(bOpts)
 }

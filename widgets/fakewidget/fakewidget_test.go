@@ -21,7 +21,6 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/testcanvas"
-	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
@@ -74,10 +73,7 @@ func TestMirror(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
-				tb := draw.TextBounds{
-					Start: image.Point{1, 1},
-				}
-				testdraw.MustText(cvs, "(7,3)", tb)
+				testdraw.MustText(cvs, "(7,3)", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -108,14 +104,8 @@ func TestMirror(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
-				tb := draw.TextBounds{
-					Start: image.Point{1, 1},
-				}
-				testdraw.MustText(cvs, "(8,4)", tb)
-				tb = draw.TextBounds{
-					Start: image.Point{1, 2},
-				}
-				testdraw.MustText(cvs, "KeyEnd", tb)
+				testdraw.MustText(cvs, "(8,4)", image.Point{1, 1})
+				testdraw.MustText(cvs, "KeyEnd", image.Point{1, 2})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -132,10 +122,7 @@ func TestMirror(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
-				tb := draw.TextBounds{
-					Start: image.Point{1, 1},
-				}
-				testdraw.MustText(cvs, "(8,3)", tb)
+				testdraw.MustText(cvs, "(8,3)", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -157,14 +144,8 @@ func TestMirror(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
-				tb := draw.TextBounds{
-					Start: image.Point{1, 1},
-				}
-				testdraw.MustText(cvs, "(19,5)", tb)
-				tb = draw.TextBounds{
-					Start: image.Point{1, 3},
-				}
-				testdraw.MustText(cvs, "(1,2)ButtonMiddle", tb)
+				testdraw.MustText(cvs, "(19,5)", image.Point{1, 1})
+				testdraw.MustText(cvs, "(1,2)ButtonMiddle", image.Point{1, 3})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -181,10 +162,7 @@ func TestMirror(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
-				tb := draw.TextBounds{
-					Start: image.Point{1, 1},
-				}
-				testdraw.MustText(cvs, "(13,4)", tb)
+				testdraw.MustText(cvs, "(13,4)", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -206,18 +184,9 @@ func TestMirror(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
-				tb := draw.TextBounds{
-					Start: image.Point{1, 1},
-				}
-				testdraw.MustText(cvs, "(17,5)", tb)
-				tb = draw.TextBounds{
-					Start: image.Point{1, 2},
-				}
-				testdraw.MustText(cvs, "KeyEnter", tb)
-				tb = draw.TextBounds{
-					Start: image.Point{1, 3},
-				}
-				testdraw.MustText(cvs, "(0,0)ButtonLeft", tb)
+				testdraw.MustText(cvs, "(17,5)", image.Point{1, 1})
+				testdraw.MustText(cvs, "KeyEnter", image.Point{1, 2})
+				testdraw.MustText(cvs, "(0,0)ButtonLeft", image.Point{1, 3})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -247,10 +216,7 @@ func TestMirror(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
-				tb := draw.TextBounds{
-					Start: image.Point{1, 1},
-				}
-				testdraw.MustText(cvs, "(12,5)", tb)
+				testdraw.MustText(cvs, "(12,5)", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},

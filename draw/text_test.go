@@ -29,17 +29,15 @@ func TestText(t *testing.T) {
 		desc    string
 		canvas  image.Rectangle
 		text    string
-		tb      TextBounds
-		opts    []cell.Option
+		start   image.Point
+		opts    []TextOption
 		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
 	}{
 		{
 			desc:   "start falls outside of the canvas",
 			canvas: image.Rect(0, 0, 2, 2),
-			tb: TextBounds{
-				Start: image.Point{2, 2},
-			},
+			start:  image.Point{2, 2},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
@@ -49,9 +47,9 @@ func TestText(t *testing.T) {
 			desc:   "unsupported overrun mode specified",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "ab",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunMode(-1),
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunMode(-1)),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
@@ -62,10 +60,7 @@ func TestText(t *testing.T) {
 			desc:   "zero text",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeStrict,
-			},
+			start:  image.Point{0, 0},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
@@ -74,10 +69,7 @@ func TestText(t *testing.T) {
 			desc:   "text falls outside of the canvas on OverrunModeStrict",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "ab",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeStrict,
-			},
+			start:  image.Point{0, 0},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
@@ -87,9 +79,9 @@ func TestText(t *testing.T) {
 			desc:   "text falls outside of the canvas on OverrunModeTrim",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "ab",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeTrim,
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeTrim),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -104,9 +96,9 @@ func TestText(t *testing.T) {
 			desc:   "OverrunModeTrim trims longer text",
 			canvas: image.Rect(0, 0, 2, 1),
 			text:   "abcdef",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeTrim,
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeTrim),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -122,9 +114,9 @@ func TestText(t *testing.T) {
 			desc:   "text falls outside of the canvas on OverrunModeThreeDot",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "ab",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeThreeDot,
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeThreeDot),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -139,9 +131,9 @@ func TestText(t *testing.T) {
 			desc:   "OverrunModeThreeDot trims longer text",
 			canvas: image.Rect(0, 0, 2, 1),
 			text:   "abcdef",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeThreeDot,
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeThreeDot),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -157,10 +149,9 @@ func TestText(t *testing.T) {
 			desc:   "requested MaxX is negative",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				MaxX:    -1,
-				Overrun: OverrunModeStrict,
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextMaxX(-1),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
@@ -171,10 +162,9 @@ func TestText(t *testing.T) {
 			desc:   "requested MaxX is greater than canvas width",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeStrict,
-				MaxX:    2,
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextMaxX(2),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
@@ -185,10 +175,9 @@ func TestText(t *testing.T) {
 			desc:   "text falls outside of requested MaxX",
 			canvas: image.Rect(0, 0, 3, 2),
 			text:   "ab",
-			tb: TextBounds{
-				Start:   image.Point{1, 1},
-				Overrun: OverrunModeStrict,
-				MaxX:    2,
+			start:  image.Point{1, 1},
+			opts: []TextOption{
+				TextMaxX(2),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
@@ -199,10 +188,7 @@ func TestText(t *testing.T) {
 			desc:   "text is empty, nothing to do",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeStrict,
-			},
+			start:  image.Point{0, 0},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
@@ -211,10 +197,7 @@ func TestText(t *testing.T) {
 			desc:   "draws text",
 			canvas: image.Rect(0, 0, 3, 2),
 			text:   "ab",
-			tb: TextBounds{
-				Start:   image.Point{1, 1},
-				Overrun: OverrunModeStrict,
-			},
+			start:  image.Point{1, 1},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -229,12 +212,9 @@ func TestText(t *testing.T) {
 			desc:   "draws text with cell options",
 			canvas: image.Rect(0, 0, 3, 2),
 			text:   "ab",
-			tb: TextBounds{
-				Start:   image.Point{1, 1},
-				Overrun: OverrunModeStrict,
-			},
-			opts: []cell.Option{
-				cell.FgColor(cell.ColorRed),
+			start:  image.Point{1, 1},
+			opts: []TextOption{
+				TextCellOpts(cell.FgColor(cell.ColorRed)),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -250,10 +230,7 @@ func TestText(t *testing.T) {
 			desc:   "draws unicode character",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "⇄",
-			tb: TextBounds{
-				Start:   image.Point{0, 0},
-				Overrun: OverrunModeStrict,
-			},
+			start:  image.Point{0, 0},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -272,7 +249,7 @@ func TestText(t *testing.T) {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			err = Text(c, tc.text, tc.tb, tc.opts...)
+			err = Text(c, tc.text, tc.start, tc.opts...)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Text => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

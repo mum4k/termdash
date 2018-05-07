@@ -25,7 +25,7 @@ type rectOptions struct {
 // rectOption implements RectangleOption.
 type rectOption func(rOpts *rectOptions)
 
-// set implements Option.set.
+// set implements RectangleOption.set.
 func (ro rectOption) set(rOpts *rectOptions) {
 	ro(rOpts)
 }
@@ -37,7 +37,7 @@ func RectCellOpts(opts ...cell.Option) RectangleOption {
 	})
 }
 
-// RectangleOption { is the default for the RectChar option.
+// DefaultRectChar  is the default value for the RectChar option.
 const DefaultRectChar = ' '
 
 // RectChar sets the character used in each of the cells of the rectangle.

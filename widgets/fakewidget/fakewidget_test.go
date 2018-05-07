@@ -73,7 +73,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
@@ -88,7 +88,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -107,7 +107,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
@@ -131,7 +131,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
@@ -156,7 +156,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
@@ -180,7 +180,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
@@ -205,7 +205,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}
@@ -246,7 +246,7 @@ func TestMirror(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, cvs.Area(), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, cvs.Area())
 				tb := draw.TextBounds{
 					Start: image.Point{1, 1},
 				}

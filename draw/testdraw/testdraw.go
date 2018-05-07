@@ -24,10 +24,10 @@ import (
 	"github.com/mum4k/termdash/draw"
 )
 
-// MustBox draws box on the canvas or panics.
-func MustBox(c *canvas.Canvas, box image.Rectangle, ls draw.LineStyle, opts ...cell.Option) {
-	if err := draw.Box(c, box, ls, opts...); err != nil {
-		panic(fmt.Sprintf("draw.Box => unexpected error: %v", err))
+// MustBorder draws border on the canvas or panics.
+func MustBorder(c *canvas.Canvas, border image.Rectangle, opts ...draw.BorderOption) {
+	if err := draw.Border(c, border, opts...); err != nil {
+		panic(fmt.Sprintf("draw.Border => unexpected error: %v", err))
 	}
 }
 

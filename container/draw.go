@@ -69,13 +69,14 @@ func drawBorder(c *Container) error {
 		return err
 	}
 
-	var opts []cell.Option
+	var cOpts []cell.Option
 	if c.focusTracker.isActive(c) {
-		opts = append(opts, cell.FgColor(c.opts.inherited.focusedColor))
+		cOpts = append(cOpts, cell.FgColor(c.opts.inherited.focusedColor))
 	} else {
-		opts = append(opts, cell.FgColor(c.opts.inherited.borderColor))
+		cOpts = append(cOpts, cell.FgColor(c.opts.inherited.borderColor))
 	}
-	if err := draw.Box(cvs, ar, c.opts.border, opts...); err != nil {
+
+	if err := draw.Border(cvs, ar, draw.BorderLineStyle(c.opts.border), draw.BorderCellOpts(cOpts...)); err != nil {
 		return err
 	}
 	return cvs.Apply(c.term)

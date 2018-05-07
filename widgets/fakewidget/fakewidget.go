@@ -42,10 +42,10 @@ const (
 // MinimumSize is the minimum size required to draw this widget.
 var MinimumSize = image.Point{24, 5}
 
-// Mirror is a fake widget. The fake widget draws a box around its assigned
+// Mirror is a fake widget. The fake widget draws a border around its assigned
 // canvas and writes the size of its assigned canvas on the first line of the
-// canvas. It writes the last received keyboard event onto the second line.
-// It writes the last received mouse event onto the third line.
+// canvas. It writes the last received keyboard event onto the second line. It
+// writes the last received mouse event onto the third line.
 //
 // The widget requests the same options that are provided to the constructor.
 // If the options or canvas size don't allow for the three lines mentioned
@@ -84,7 +84,7 @@ func (mi *Mirror) Draw(cvs *canvas.Canvas) error {
 	if err := cvs.Clear(); err != nil {
 		return err
 	}
-	if err := draw.Box(cvs, cvs.Area(), draw.LineStyleLight); err != nil {
+	if err := draw.Border(cvs, cvs.Area()); err != nil {
 		return err
 	}
 

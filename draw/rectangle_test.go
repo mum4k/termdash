@@ -11,7 +11,6 @@ import (
 )
 
 func TestRectangle(t *testing.T) {
-	t.Skip()
 	tests := []struct {
 		desc    string
 		canvas  image.Rectangle
@@ -30,6 +29,8 @@ func TestRectangle(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'x')
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -48,6 +49,14 @@ func TestRectangle(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(
+					c,
+					image.Point{0, 0},
+					'x',
+					cell.FgColor(cell.ColorBlue),
+					cell.BgColor(cell.ColorRed),
+				)
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -62,6 +71,13 @@ func TestRectangle(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'o')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'o')
+				testcanvas.MustSetCell(c, image.Point{2, 0}, 'o')
+				testcanvas.MustSetCell(c, image.Point{0, 1}, 'o')
+				testcanvas.MustSetCell(c, image.Point{1, 1}, 'o')
+				testcanvas.MustSetCell(c, image.Point{2, 1}, 'o')
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -69,13 +85,20 @@ func TestRectangle(t *testing.T) {
 		{
 			desc:   "rectangle not in the corner of the canvas",
 			canvas: image.Rect(0, 0, 10, 10),
-			rect:   image.Rect(1, 1, 9, 3),
+			rect:   image.Rect(2, 1, 4, 4),
 			opts: []RectangleOption{
 				RectChar('o'),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{2, 1}, 'o')
+				testcanvas.MustSetCell(c, image.Point{3, 1}, 'o')
+				testcanvas.MustSetCell(c, image.Point{2, 2}, 'o')
+				testcanvas.MustSetCell(c, image.Point{3, 2}, 'o')
+				testcanvas.MustSetCell(c, image.Point{2, 3}, 'o')
+				testcanvas.MustSetCell(c, image.Point{3, 3}, 'o')
 				testcanvas.MustApply(c, ft)
 				return ft
 			},

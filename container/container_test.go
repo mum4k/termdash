@@ -89,11 +89,10 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					image.Rect(0, 0, 10, 10),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -118,8 +117,8 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, image.Rect(0, 0, 10, 5), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(0, 5, 10, 10), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 10, 5))
+				testdraw.MustBorder(cvs, image.Rect(0, 5, 10, 10))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -144,14 +143,13 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					image.Rect(0, 0, 10, 10),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
-				testdraw.MustBox(cvs, image.Rect(1, 1, 9, 5), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(1, 5, 9, 9), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 9, 5))
+				testdraw.MustBorder(cvs, image.Rect(1, 5, 9, 9))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -175,8 +173,8 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, image.Rect(0, 0, 5, 10), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(5, 0, 10, 10), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 5, 10))
+				testdraw.MustBorder(cvs, image.Rect(5, 0, 10, 10))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -201,14 +199,13 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					image.Rect(0, 0, 10, 10),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
-				testdraw.MustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 5, 9))
+				testdraw.MustBorder(cvs, image.Rect(5, 1, 9, 9))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -246,10 +243,10 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, image.Rect(0, 0, 5, 8), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(0, 8, 5, 12), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(0, 12, 5, 16), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(5, 0, 10, 16), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 5, 8))
+				testdraw.MustBorder(cvs, image.Rect(0, 8, 5, 12))
+				testdraw.MustBorder(cvs, image.Rect(0, 12, 5, 16))
+				testdraw.MustBorder(cvs, image.Rect(5, 0, 10, 16))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -276,23 +273,20 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					image.Rect(0, 0, 10, 10),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorBlue),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorBlue)),
 				)
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					image.Rect(1, 1, 5, 9),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorRed),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
 				)
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					image.Rect(5, 1, 9, 9),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorRed),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
 				)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -319,14 +313,13 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					ft.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
-				testdraw.MustBox(cvs, image.Rect(1, 1, 5, 9), draw.LineStyleLight)
-				testdraw.MustBox(cvs, image.Rect(5, 1, 9, 9), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 5, 9))
+				testdraw.MustBorder(cvs, image.Rect(5, 1, 9, 9))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -351,7 +344,7 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(cvs, image.Rect(0, 0, 10, 10), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 10, 10))
 				testdraw.MustText(cvs, "(10,10)", draw.TextBounds{Start: image.Point{1, 1}})
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -681,11 +674,10 @@ func TestMouse(t *testing.T) {
 				ft := faketerm.MustNew(size)
 
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					ft.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 				testcanvas.MustApply(cvs, ft)
 

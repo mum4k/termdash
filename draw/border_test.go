@@ -24,42 +24,40 @@ import (
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
-func TestBox(t *testing.T) {
+func TestBorder(t *testing.T) {
 	tests := []struct {
 		desc    string
 		canvas  image.Rectangle
-		box     image.Rectangle
-		ls      LineStyle
-		opts    []cell.Option
+		border  image.Rectangle
+		opts    []BorderOption
 		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
 	}{
 		{
-			desc:    "box is larger than canvas",
+			desc:    "border is larger than canvas",
 			canvas:  image.Rect(0, 0, 1, 1),
-			box:     image.Rect(0, 0, 2, 2),
-			ls:      LineStyleLight,
+			border:  image.Rect(0, 0, 2, 2),
 			wantErr: true,
 		},
 		{
-			desc:    "box is too small",
+			desc:    "border is too small",
 			canvas:  image.Rect(0, 0, 2, 2),
-			box:     image.Rect(0, 0, 1, 1),
-			ls:      LineStyleLight,
+			border:  image.Rect(0, 0, 1, 1),
 			wantErr: true,
 		},
 		{
-			desc:    "unsupported line style",
-			canvas:  image.Rect(0, 0, 4, 4),
-			box:     image.Rect(0, 0, 2, 2),
-			ls:      LineStyle(-1),
-			wantErr: true,
-		},
-		{
-			desc:   "draws box around the canvas",
+			desc:   "unsupported line style",
 			canvas: image.Rect(0, 0, 4, 4),
-			box:    image.Rect(0, 0, 4, 4),
-			ls:     LineStyleLight,
+			border: image.Rect(0, 0, 2, 2),
+			opts: []BorderOption{
+				BorderLineStyle(LineStyle(-1)),
+			},
+			wantErr: true,
+		},
+		{
+			desc:   "draws border around the canvas",
+			canvas: image.Rect(0, 0, 4, 4),
+			border: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -85,10 +83,9 @@ func TestBox(t *testing.T) {
 			},
 		},
 		{
-			desc:   "draws box in the canvas",
+			desc:   "draws border in the canvas",
 			canvas: image.Rect(0, 0, 4, 4),
-			box:    image.Rect(1, 1, 3, 3),
-			ls:     LineStyleLight,
+			border: image.Rect(1, 1, 3, 3),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -104,12 +101,11 @@ func TestBox(t *testing.T) {
 			},
 		},
 		{
-			desc:   "draws box with cell options",
+			desc:   "draws border with cell options",
 			canvas: image.Rect(0, 0, 4, 4),
-			box:    image.Rect(1, 1, 3, 3),
-			ls:     LineStyleLight,
-			opts: []cell.Option{
-				cell.FgColor(cell.ColorRed),
+			border: image.Rect(1, 1, 3, 3),
+			opts: []BorderOption{
+				BorderCellOpts(cell.FgColor(cell.ColorRed)),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -138,9 +134,9 @@ func TestBox(t *testing.T) {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			err = Box(c, tc.box, tc.ls, tc.opts...)
+			err = Border(c, tc.border, tc.opts...)
 			if (err != nil) != tc.wantErr {
-				t.Errorf("Box => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				t.Errorf("Border => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
 			if err != nil {
 				return
@@ -156,7 +152,7 @@ func TestBox(t *testing.T) {
 			}
 
 			if diff := faketerm.Diff(tc.want(c.Size()), got); diff != "" {
-				t.Errorf("Box => %v", diff)
+				t.Errorf("Border => %v", diff)
 			}
 		})
 	}

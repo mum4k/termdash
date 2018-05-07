@@ -49,15 +49,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(1, 1, 8, 4), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
 				tb := draw.TextBounds{Start: image.Point{2, 2}}
 				testdraw.MustText(cvs, "(7,3)", tb)
 				testcanvas.MustApply(cvs, ft)
@@ -78,7 +77,7 @@ func TestDrawWidget(t *testing.T) {
 				cvs := testcanvas.MustNew(ft.Area())
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(0, 0, 9, 5), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 9, 5))
 				tb := draw.TextBounds{Start: image.Point{1, 1}}
 				testdraw.MustText(cvs, "(9,5)", tb)
 				testcanvas.MustApply(cvs, ft)
@@ -152,11 +151,10 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				contCvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					contCvs,
 					contCvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 				testcanvas.MustApply(contCvs, ft)
 
@@ -183,11 +181,10 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				contCvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					contCvs,
 					contCvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 				testcanvas.MustApply(contCvs, ft)
 
@@ -214,11 +211,10 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				contCvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					contCvs,
 					contCvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 				testcanvas.MustApply(contCvs, ft)
 
@@ -245,15 +241,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(1, 1, 11, 21), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 11, 21))
 				tb := draw.TextBounds{Start: image.Point{2, 2}}
 				testdraw.MustText(cvs, "(10,20)", tb)
 
@@ -278,11 +273,10 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				contCvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					contCvs,
 					contCvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 				testcanvas.MustApply(contCvs, ft)
 
@@ -311,15 +305,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(1, 1, 11, 21), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 11, 21))
 				tb := draw.TextBounds{Start: image.Point{2, 2}}
 				testdraw.MustText(cvs, "(10,20)", tb)
 
@@ -344,15 +337,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(6, 1, 16, 21), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(6, 1, 16, 21))
 				tb := draw.TextBounds{Start: image.Point{7, 2}}
 				testdraw.MustText(cvs, "(10,20)", tb)
 
@@ -377,15 +369,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(11, 1, 21, 21), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(11, 1, 21, 21))
 				tb := draw.TextBounds{Start: image.Point{12, 2}}
 				testdraw.MustText(cvs, "(10,20)", tb)
 
@@ -410,15 +401,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(1, 1, 21, 11), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 21, 11))
 				tb := draw.TextBounds{Start: image.Point{2, 2}}
 				testdraw.MustText(cvs, "(20,10)", tb)
 
@@ -443,15 +433,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(1, 6, 21, 16), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 6, 21, 16))
 				tb := draw.TextBounds{Start: image.Point{2, 7}}
 				testdraw.MustText(cvs, "(20,10)", tb)
 
@@ -476,15 +465,14 @@ func TestDrawWidget(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 				// Container border.
-				testdraw.MustBox(
+				testdraw.MustBorder(
 					cvs,
 					cvs.Area(),
-					draw.LineStyleLight,
-					cell.FgColor(cell.ColorYellow),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 
 				// Fake widget border.
-				testdraw.MustBox(cvs, image.Rect(1, 11, 21, 21), draw.LineStyleLight)
+				testdraw.MustBorder(cvs, image.Rect(1, 11, 21, 21))
 				tb := draw.TextBounds{Start: image.Point{2, 12}}
 				testdraw.MustText(cvs, "(20,10)", tb)
 

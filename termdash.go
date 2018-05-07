@@ -58,11 +58,12 @@ func RedrawInterval(t time.Duration) Option {
 	})
 }
 
-// InputErrorHandler is used to provide a function that will be called with all
-// input event errors. If not provided, input event errors are discarded.
-func InputErrorHandler(f func(error)) Option {
+// ErrorHandler is used to provide a function that will be called with all
+// errors that occur while the dashboard is running. If not provided, any
+// errors panic the application.
+func ErrorHandler(f func(error)) Option {
 	return option(func(td *termdash) {
-		td.inputErrorHandler = f
+		td.errorHandler = f
 	})
 }
 
@@ -119,7 +120,7 @@ type termdash struct {
 
 	// Options.
 	redrawInterval     time.Duration
-	inputErrorHandler  func(error)
+	errorHandler       func(error)
 	mouseSubscriber    func(*terminalapi.Mouse)
 	keyboardSubscriber func(*terminalapi.Keyboard)
 }
@@ -140,11 +141,13 @@ func newTermdash(t terminalapi.Terminal, c *container.Container, opts ...Option)
 	return td
 }
 
-// inputError forwards the input error to the error handler if one was
-// provided.
-func (td *termdash) inputError(err error) {
-	if td.inputErrorHandler != nil {
-		td.inputErrorHandler(err)
+// handleError forwards the error to the error handler if one was
+// provided or panics.
+func (td *termdash) handleError(err error) {
+	if td.errorHandler != nil {
+		td.errorHandler(err)
+	} else {
+		panic(err)
 	}
 }
 
@@ -223,12 +226,12 @@ func (td *termdash) processEvents(ctx context.Context) {
 		switch ev := event.(type) {
 		case *terminalapi.Keyboard:
 			if err := td.keyEvRedraw(ev); err != nil {
-				td.inputError(err)
+				td.handleError(err)
 			}
 
 		case *terminalapi.Mouse:
 			if err := td.mouseEvRedraw(ev); err != nil {
-				td.inputError(err)
+				td.handleError(err)
 			}
 
 		case *terminalapi.Resize:
@@ -240,7 +243,7 @@ func (td *termdash) processEvents(ctx context.Context) {
 			select {
 			case <-ctx.Done():
 			default:
-				td.inputError(ev.Error())
+				td.handleError(ev.Error())
 			}
 		}
 
@@ -260,10 +263,6 @@ func (td *termdash) start(ctx context.Context) error {
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
-	if err := td.periodicRedraw(); err != nil {
-		return err
-	}
 
 	// stops when stop() is called or the context expires.
 	go td.processEvents(ctx)

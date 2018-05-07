@@ -107,6 +107,7 @@ func TestRun(t *testing.T) {
 
 	tests := []struct {
 		desc   string
+		size   image.Point
 		opts   []Option
 		events []terminalapi.Event
 		// function to execute after the test case, can do additional comparison.
@@ -116,6 +117,7 @@ func TestRun(t *testing.T) {
 	}{
 		{
 			desc: "draws the dashboard until closed",
+			size: image.Point{60, 10},
 			opts: []Option{
 				RedrawInterval(1),
 			},
@@ -131,7 +133,20 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
+			desc: "fails when the widget doesn't draw",
+			size: image.Point{1, 1},
+			opts: []Option{
+				RedrawInterval(1),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				return ft
+			},
+			wantErr: true,
+		},
+		{
 			desc: "resizes the terminal",
+			size: image.Point{60, 10},
 			opts: []Option{
 				RedrawInterval(1),
 			},
@@ -149,9 +164,9 @@ func TestRun(t *testing.T) {
 				return ft
 			},
 		},
-
 		{
 			desc: "forwards mouse events to container",
+			size: image.Point{60, 10},
 			opts: []Option{
 				RedrawInterval(1),
 			},
@@ -174,6 +189,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			desc: "forwards keyboard events to container",
+			size: image.Point{60, 10},
 			opts: []Option{
 				RedrawInterval(1),
 			},
@@ -196,29 +212,11 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
-			desc: "ignores input errors without error handler",
-			opts: []Option{
-				RedrawInterval(1),
-			},
-			events: []terminalapi.Event{
-				terminalapi.NewError("input error"),
-			},
-			want: func(size image.Point) *faketerm.Terminal {
-				ft := faketerm.MustNew(size)
-
-				fakewidget.MustDraw(
-					ft,
-					testcanvas.MustNew(ft.Area()),
-					widgetapi.Options{},
-				)
-				return ft
-			},
-		},
-		{
 			desc: "forwards input errors to the error handler",
+			size: image.Point{60, 10},
 			opts: []Option{
 				RedrawInterval(1),
-				InputErrorHandler(handler.handle),
+				ErrorHandler(handler.handle),
 			},
 			events: []terminalapi.Event{
 				terminalapi.NewError("input error"),
@@ -242,6 +240,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			desc: "forwards keyboard events to the subscriber",
+			size: image.Point{60, 10},
 			opts: []Option{
 				RedrawInterval(1),
 				KeyboardSubscriber(keySub.receive),
@@ -272,6 +271,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			desc: "forwards mouse events to the subscriber",
+			size: image.Point{60, 10},
 			opts: []Option{
 				RedrawInterval(1),
 				MouseSubscriber(mouseSub.receive),
@@ -313,7 +313,7 @@ func TestRun(t *testing.T) {
 				eq.Push(ev)
 			}
 
-			got, err := faketerm.New(image.Point{60, 10}, faketerm.WithEventQueue(eq))
+			got, err := faketerm.New(tc.size, faketerm.WithEventQueue(eq))
 			if err != nil {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}

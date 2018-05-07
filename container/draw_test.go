@@ -137,6 +137,99 @@ func TestDrawWidget(t *testing.T) {
 			},
 		},
 		{
+			desc:     "widget's canvas is limited to the requested maximum size",
+			termSize: image.Point{22, 22},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(fakewidget.New(widgetapi.Options{
+						MaximumSize: image.Point{10, 10},
+					})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				contCvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBox(
+					contCvs,
+					contCvs.Area(),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
+				testcanvas.MustApply(contCvs, ft)
+
+				// Fake widget.
+				cvs := testcanvas.MustNew(image.Rect(1, 1, 11, 11))
+				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "widget's canvas is limited to the requested maximum width",
+			termSize: image.Point{22, 22},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(fakewidget.New(widgetapi.Options{
+						MaximumSize: image.Point{10, 0},
+					})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				contCvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBox(
+					contCvs,
+					contCvs.Area(),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
+				testcanvas.MustApply(contCvs, ft)
+
+				// Fake widget.
+				cvs := testcanvas.MustNew(image.Rect(1, 1, 11, 21))
+				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "widget's canvas is limited to the requested maximum height",
+			termSize: image.Point{22, 22},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(fakewidget.New(widgetapi.Options{
+						MaximumSize: image.Point{0, 10},
+					})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				contCvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBox(
+					contCvs,
+					contCvs.Area(),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
+				testcanvas.MustApply(contCvs, ft)
+
+				// Fake widget.
+				cvs := testcanvas.MustNew(image.Rect(1, 1, 21, 11))
+				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "widget gets the requested aspect ratio",
 			termSize: image.Point{22, 22},
 			container: func(ft *faketerm.Terminal) *Container {
@@ -168,6 +261,39 @@ func TestDrawWidget(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:     "widget's canvas is limited to the requested maximum size and ratio",
+			termSize: image.Point{22, 22},
+			container: func(ft *faketerm.Terminal) *Container {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(fakewidget.New(widgetapi.Options{
+						MaximumSize: image.Point{20, 19},
+						Ratio:       image.Point{1, 1},
+					})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				contCvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBox(
+					contCvs,
+					contCvs.Area(),
+					draw.LineStyleLight,
+					cell.FgColor(cell.ColorYellow),
+				)
+				testcanvas.MustApply(contCvs, ft)
+
+				// Fake widget.
+				cvs := testcanvas.MustNew(image.Rect(1, 1, 20, 20))
+				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+
 		{
 			desc:     "horizontal left align for the widget",
 			termSize: image.Point{22, 22},

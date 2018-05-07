@@ -110,8 +110,8 @@ func (c *Container) usable() image.Rectangle {
 }
 
 // widgetArea returns the area in the container that is available for the
-// widget's canvas. Takes the container border, widget's requested ratio and
-// container's alignment into account.
+// widget's canvas. Takes the container border, widget's requested maximum size
+// and ratio and container's alignment into account.
 // Returns a zero area if the container has no widget.
 func (c *Container) widgetArea() image.Rectangle {
 	if !c.hasWidget() {
@@ -120,8 +120,16 @@ func (c *Container) widgetArea() image.Rectangle {
 
 	adjusted := c.usable()
 	wOpts := c.opts.widget.Options()
+
+	if maxX := wOpts.MaximumSize.X; maxX > 0 && adjusted.Dx() > maxX {
+		adjusted.Max.X -= adjusted.Dx() - maxX
+	}
+	if maxY := wOpts.MaximumSize.Y; maxY > 0 && adjusted.Dy() > maxY {
+		adjusted.Max.Y -= adjusted.Dy() - maxY
+	}
+
 	if wOpts.Ratio.X > 0 && wOpts.Ratio.Y > 0 {
-		adjusted = area.WithRatio(c.usable(), wOpts.Ratio)
+		adjusted = area.WithRatio(adjusted, wOpts.Ratio)
 	}
 	adjusted = hAlignWidget(c, adjusted)
 	return vAlignWidget(c, adjusted)

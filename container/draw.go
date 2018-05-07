@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"image"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
@@ -85,9 +86,9 @@ func drawBorder(c *Container) error {
 func hAlignWidget(c *Container, wArea image.Rectangle) image.Rectangle {
 	gap := c.usable().Dx() - wArea.Dx()
 	switch c.opts.hAlign {
-	case hAlignTypeRight:
+	case align.HorizontalRight:
 		// Use gap from above.
-	case hAlignTypeCenter:
+	case align.HorizontalCenter:
 		gap /= 2
 	default:
 		// Left or unknown.
@@ -107,9 +108,9 @@ func hAlignWidget(c *Container, wArea image.Rectangle) image.Rectangle {
 func vAlignWidget(c *Container, wArea image.Rectangle) image.Rectangle {
 	gap := c.usable().Dy() - wArea.Dy()
 	switch c.opts.vAlign {
-	case vAlignTypeBottom:
+	case align.VerticalBottom:
 		// Use gap from above.
-	case vAlignTypeMiddle:
+	case align.VerticalMiddle:
 		gap /= 2
 	default:
 		// Top or unknown.

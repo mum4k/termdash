@@ -17,6 +17,7 @@ package container
 // options.go defines container options.
 
 import (
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/widgetapi"
@@ -49,8 +50,8 @@ type options struct {
 	widget widgetapi.Widget
 
 	// Alignment of the widget if present.
-	hAlign hAlignType
-	vAlign vAlignType
+	hAlign align.Horizontal
+	vAlign align.Vertical
 
 	// border is the border around the container.
 	border draw.LineStyle
@@ -127,7 +128,7 @@ func PlaceWidget(w widgetapi.Widget) Option {
 // no widget. This is the default horizontal alignment if no other is specified.
 func HorizontalAlignLeft() Option {
 	return option(func(c *Container) {
-		c.opts.hAlign = hAlignTypeLeft
+		c.opts.hAlign = align.HorizontalLeft
 	})
 }
 
@@ -136,7 +137,7 @@ func HorizontalAlignLeft() Option {
 // no widget.
 func HorizontalAlignCenter() Option {
 	return option(func(c *Container) {
-		c.opts.hAlign = hAlignTypeCenter
+		c.opts.hAlign = align.HorizontalCenter
 	})
 }
 
@@ -145,7 +146,7 @@ func HorizontalAlignCenter() Option {
 // no widget.
 func HorizontalAlignRight() Option {
 	return option(func(c *Container) {
-		c.opts.hAlign = hAlignTypeRight
+		c.opts.hAlign = align.HorizontalRight
 	})
 }
 
@@ -154,7 +155,7 @@ func HorizontalAlignRight() Option {
 // no widget. This is the default vertical alignment if no other is specified.
 func VerticalAlignTop() Option {
 	return option(func(c *Container) {
-		c.opts.vAlign = vAlignTypeTop
+		c.opts.vAlign = align.VerticalTop
 	})
 }
 
@@ -163,7 +164,7 @@ func VerticalAlignTop() Option {
 // no widget.
 func VerticalAlignMiddle() Option {
 	return option(func(c *Container) {
-		c.opts.vAlign = vAlignTypeMiddle
+		c.opts.vAlign = align.VerticalMiddle
 	})
 }
 
@@ -172,7 +173,7 @@ func VerticalAlignMiddle() Option {
 // no widget.
 func VerticalAlignBottom() Option {
 	return option(func(c *Container) {
-		c.opts.vAlign = vAlignTypeBottom
+		c.opts.vAlign = align.VerticalBottom
 	})
 }
 
@@ -220,54 +221,6 @@ var splitTypeNames = map[splitType]string{
 const (
 	splitTypeVertical splitType = iota
 	splitTypeHorizontal
-)
-
-// hAlignType indicates the horizontal alignment of the widget in the container.
-type hAlignType int
-
-// String implements fmt.Stringer()
-func (hat hAlignType) String() string {
-	if n, ok := hAlignTypeNames[hat]; ok {
-		return n
-	}
-	return "hAlignTypeUnknown"
-}
-
-// hAlignTypeNames maps hAlignType values to human readable names.
-var hAlignTypeNames = map[hAlignType]string{
-	hAlignTypeLeft:   "hAlignTypeLeft",
-	hAlignTypeCenter: "hAlignTypeCenter",
-	hAlignTypeRight:  "hAlignTypeRight",
-}
-
-const (
-	hAlignTypeLeft hAlignType = iota
-	hAlignTypeCenter
-	hAlignTypeRight
-)
-
-// vAlignType represents
-type vAlignType int
-
-// String implements fmt.Stringer()
-func (vat vAlignType) String() string {
-	if n, ok := vAlignTypeNames[vat]; ok {
-		return n
-	}
-	return "vAlignTypeUnknown"
-}
-
-// vAlignTypeNames maps vAlignType values to human readable names.
-var vAlignTypeNames = map[vAlignType]string{
-	vAlignTypeTop:    "vAlignTypeTop",
-	vAlignTypeMiddle: "vAlignTypeMiddle",
-	vAlignTypeBottom: "vAlignTypeBottom",
-}
-
-const (
-	vAlignTypeTop vAlignType = iota
-	vAlignTypeMiddle
-	vAlignTypeBottom
 )
 
 // LeftOption is used to provide options to the left sub container after a

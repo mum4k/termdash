@@ -4,6 +4,8 @@ package align
 import (
 	"fmt"
 	"image"
+	"strings"
+	"unicode/utf8"
 )
 
 // Horizontal indicates the type of horizontal alignment.
@@ -120,4 +122,37 @@ func Rectangle(rect image.Rectangle, ar image.Rectangle, h Horizontal, v Vertica
 		return image.ZR, err
 	}
 	return aligned, nil
+}
+
+// Text aligns the text within the given rectangle, returns the start point for the text.
+// For the purposes of the alignment this assumes that text will be trimmed if
+// it overruns the rectangle.
+// This only supports a single line of text, the text must not contain newlines.
+func Text(rect image.Rectangle, text string, h Horizontal, v Vertical) (image.Point, error) {
+	if strings.ContainsRune(text, '\n') {
+		return image.ZP, fmt.Errorf("the provided text contains a newline character: %q", text)
+	}
+
+	runes := utf8.RuneCountInString(text)
+	var textLen int
+	if runes < rect.Dx() {
+		textLen = runes
+	} else {
+		textLen = rect.Dx()
+	}
+
+	textRect := image.Rect(
+		rect.Min.X,
+		rect.Min.Y,
+		// For the purposes of aligning the text, assume that it will be
+		// trimmed to the available space.
+		rect.Min.X+textLen,
+		rect.Min.Y+1,
+	)
+
+	aligned, err := Rectangle(rect, textRect, h, v)
+	if err != nil {
+		return image.ZP, err
+	}
+	return image.Point{aligned.Min.X, aligned.Min.Y}, nil
 }

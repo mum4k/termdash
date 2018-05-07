@@ -19,7 +19,6 @@ package draw
 import (
 	"fmt"
 	"image"
-	"unicode/utf8"
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas"
@@ -118,29 +117,13 @@ func drawTitle(c *canvas.Canvas, border image.Rectangle, opt *borderOptions) err
 		border.Min.X+1, // One space for the top left corner char.
 		border.Min.Y,
 		border.Max.X-1, // One space for the top right corner char.
-		border.Min.Y,
+		border.Min.Y+1,
 	)
-	runes := utf8.RuneCountInString(opt.title)
-	var textLen int
-	if runes < available.Dx() {
-		textLen = runes
-	} else {
-		textLen = available.Dx()
-	}
-	text := image.Rect(
-		available.Min.X,
-		available.Min.Y,
-		// For the purposes of aligning the text, assume that it will be
-		// trimmed to the available space.
-		available.Min.X+textLen,
-		available.Max.Y,
-	)
-
-	aligned, err := align.Rectangle(available, text, opt.titleHAlign, align.VerticalTop)
+	start, err := align.Text(available, opt.title, opt.titleHAlign, align.VerticalTop)
 	if err != nil {
 		return err
 	}
-	start := image.Point{aligned.Min.X, available.Min.Y}
+
 	return Text(
 		c, opt.title, start,
 		TextCellOpts(opt.titleCellOpts...),

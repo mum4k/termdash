@@ -211,3 +211,118 @@ func TestRectangle(t *testing.T) {
 		})
 	}
 }
+
+func TestText(t *testing.T) {
+	tests := []struct {
+		desc    string
+		rect    image.Rectangle
+		text    string
+		hAlign  Horizontal
+		vAlign  Vertical
+		want    image.Point
+		wantErr bool
+	}{
+		{
+			desc:    "fails when text contains newline",
+			rect:    image.Rect(0, 0, 3, 3),
+			text:    "a\nb",
+			wantErr: true,
+		},
+		{
+			desc:   "aligns text top and left",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalLeft,
+			vAlign: VerticalTop,
+			want:   image.Point{1, 1},
+		},
+		{
+			desc:   "aligns text top and center",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalCenter,
+			vAlign: VerticalTop,
+			want:   image.Point{2, 1},
+		},
+		{
+			desc:   "aligns text top and right",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalRight,
+			vAlign: VerticalTop,
+			want:   image.Point{3, 1},
+		},
+		{
+			desc:   "aligns text middle and left",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalLeft,
+			vAlign: VerticalMiddle,
+			want:   image.Point{1, 2},
+		},
+		{
+			desc:   "aligns text middle and center",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalCenter,
+			vAlign: VerticalMiddle,
+			want:   image.Point{2, 2},
+		},
+		{
+			desc:   "aligns text middle and right",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalRight,
+			vAlign: VerticalMiddle,
+			want:   image.Point{3, 2},
+		},
+		{
+			desc:   "aligns text bottom and left",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalLeft,
+			vAlign: VerticalBottom,
+			want:   image.Point{1, 3},
+		},
+		{
+			desc:   "aligns text bottom and center",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalCenter,
+			vAlign: VerticalBottom,
+			want:   image.Point{2, 3},
+		},
+		{
+			desc:   "aligns text bottom and right",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "a",
+			hAlign: HorizontalRight,
+			vAlign: VerticalBottom,
+			want:   image.Point{3, 3},
+		},
+		{
+			desc:   "aligns text that is too long, assumes trimming",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "abcd",
+			hAlign: HorizontalCenter,
+			vAlign: VerticalTop,
+			want:   image.Point{1, 1},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := Text(tc.rect, tc.text, tc.hAlign, tc.vAlign)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Text => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("Text => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}

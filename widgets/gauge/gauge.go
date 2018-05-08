@@ -16,10 +16,10 @@
 package gauge
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"image"
-	"strings"
 	"sync"
 	"unicode/utf8"
 
@@ -172,15 +172,15 @@ func (g *Gauge) progressText() string {
 // gaugeText returns full text to be displayed within the gauge, i.e. the
 // progress text and the optional label.
 func (g *Gauge) gaugeText() string {
-	var sb strings.Builder
-	sb.WriteString(g.progressText())
+	var b bytes.Buffer
+	b.WriteString(g.progressText())
 	if g.opts.textLabel != "" {
-		if sb.Len() > 0 {
-			sb.WriteString(" ")
+		if b.Len() > 0 {
+			b.WriteString(" ")
 		}
-		sb.WriteString(fmt.Sprintf("(%s)", g.opts.textLabel))
+		b.WriteString(fmt.Sprintf("(%s)", g.opts.textLabel))
 	}
-	return sb.String()
+	return b.String()
 }
 
 // drawText draws the text enumerating the progress and the text label.

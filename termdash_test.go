@@ -35,7 +35,7 @@ import (
 )
 
 // Example shows how to setup and run termdash.
-func Example() error {
+func Example() {
 	// Create the terminal.
 	t, err := termbox.New()
 	if err != nil {
@@ -66,9 +66,8 @@ func Example() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := Run(ctx, t, c); err != nil {
-		return err
+		panic(err)
 	}
-	return nil
 }
 
 // errorHandler just stores the last error received.

@@ -21,7 +21,7 @@ import "fmt"
 
 // lineStyleChars maps the line styles to the corresponding component characters.
 var lineStyleChars = map[LineStyle]map[linePart]rune{
-	LineStyleLight: map[linePart]rune{
+	LineStyleLight: {
 		hLine:             '─',
 		vLine:             '│',
 		topLeftCorner:     '┌',

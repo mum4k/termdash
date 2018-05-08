@@ -1,0 +1,14 @@
+language: go
+go:
+        - 1.8.x
+        - 1.9.x
+        - 1.10.x
+        - stable
+script:
+        - go get -t ./...
+        - go test ./...
+        - go test -race ./...
+        - go vet ./...
+        - diff -u <(echo -n) <(gofmt -d -s .)
+after_success:
+        - ./scripts/coverage.sh

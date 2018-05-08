@@ -67,4 +67,4 @@ development](doc/widget_development.md) section.
 
 Run the [gaugedemo](widgets/gauge/demo/gaugedemo.go).
 
-[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/png" width="70%">](widgets/gauge/demo/gaugedemo.go)
+[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/png" width="100%">](widgets/gauge/demo/gaugedemo.go)

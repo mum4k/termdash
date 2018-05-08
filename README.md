@@ -66,3 +66,5 @@ development](doc/widget_development.md) section.
 ### The Gauge
 
 Run the [gaugedemo](widgets/gauge/demo/gaugedemo.go).
+
+[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/png" width="70%">](widgets/gauge/demo/gaugedemo.go)

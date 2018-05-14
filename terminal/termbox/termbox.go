@@ -86,13 +86,13 @@ func New(opts ...Option) (*Terminal, error) {
 	return t, nil
 }
 
-// Implements terminalapi.Terminal.Size.
+// Size implements terminalapi.Terminal.Size.
 func (t *Terminal) Size() image.Point {
 	w, h := tbx.Size()
 	return image.Point{w, h}
 }
 
-// Implements terminalapi.Terminal.Clear.
+// Clear implements terminalapi.Terminal.Clear.
 func (t *Terminal) Clear(opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
 	fg, err := cellOptsToFg(o)
@@ -107,22 +107,22 @@ func (t *Terminal) Clear(opts ...cell.Option) error {
 	return tbx.Clear(fg, bg)
 }
 
-// Implements terminalapi.Terminal.Flush.
+// Flush implements terminalapi.Terminal.Flush.
 func (t *Terminal) Flush() error {
 	return tbx.Flush()
 }
 
-// Implements terminalapi.Terminal.SetCursor.
+// SetCursor implements terminalapi.Terminal.SetCursor.
 func (t *Terminal) SetCursor(p image.Point) {
 	tbx.SetCursor(p.X, p.Y)
 }
 
-// Implements terminalapi.Terminal.HideCursor.
+// HideCursor implements terminalapi.Terminal.HideCursor.
 func (t *Terminal) HideCursor() {
 	tbx.HideCursor()
 }
 
-// Implements terminalapi.Terminal.SetCell.
+// SetCell implements terminalapi.Terminal.SetCell.
 func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
 	fg, err := cellOptsToFg(o)
@@ -154,7 +154,7 @@ func (t *Terminal) pollEvents() {
 	}
 }
 
-// Implements terminalapi.Terminal.Event.
+// Event implements terminalapi.Terminal.Event.
 func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 	ev, err := t.events.Pull(ctx)
 	if err != nil {
@@ -163,8 +163,9 @@ func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 	return ev
 }
 
-// Closes the terminal, should be called when the terminal isn't required
+// Close closes the terminal, should be called when the terminal isn't required
 // anymore to return the screen to a sane state.
+// Implements terminalapi.Terminal.Close.
 func (t *Terminal) Close() {
 	close(t.done)
 	tbx.Close()

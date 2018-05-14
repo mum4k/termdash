@@ -35,6 +35,7 @@ var colorModeNames = map[ColorMode]string{
 	ColorModeGrayscale: "ColorModeGrayscale",
 }
 
+// Supported color modes.
 const (
 	ColorMode8 ColorMode = iota
 	ColorMode256

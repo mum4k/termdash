@@ -132,7 +132,7 @@ func (t *Terminal) String() string {
 	return b.String()
 }
 
-// Implements terminalapi.Terminal.Size.
+// Size implements terminalapi.Terminal.Size.
 func (t *Terminal) Size() image.Point {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -146,7 +146,7 @@ func (t *Terminal) Area() image.Rectangle {
 	return image.Rect(0, 0, s.X, s.Y)
 }
 
-// Implements terminalapi.Terminal.Clear.
+// Clear implements terminalapi.Terminal.Clear.
 func (t *Terminal) Clear(opts ...cell.Option) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -159,22 +159,22 @@ func (t *Terminal) Clear(opts ...cell.Option) error {
 	return nil
 }
 
-// Implements terminalapi.Terminal.Flush.
+// Flush implements terminalapi.Terminal.Flush.
 func (t *Terminal) Flush() error {
 	return nil // nowhere to flush to.
 }
 
-// Implements terminalapi.Terminal.SetCursor.
+// SetCursor implements terminalapi.Terminal.SetCursor.
 func (t *Terminal) SetCursor(p image.Point) {
 	log.Fatal("unimplemented")
 }
 
-// Implements terminalapi.Terminal.HideCursor.
+// HideCursor implements terminalapi.Terminal.HideCursor.
 func (t *Terminal) HideCursor() {
 	log.Fatal("unimplemented")
 }
 
-// Implements terminalapi.Terminal.SetCell.
+// SetCell implements terminalapi.Terminal.SetCell.
 func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -193,7 +193,7 @@ func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	return nil
 }
 
-// Implements terminalapi.Terminal.Event.
+// Event implements terminalapi.Terminal.Event.
 func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 	if t.events == nil {
 		return terminalapi.NewErrorf("no event queue provided, use the WithEventQueue option when creating the fake terminal")
@@ -210,5 +210,5 @@ func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 	return ev
 }
 
-// Closes the terminal. This is a no-op on the fake terminal.
+// Close closes the terminal. This is a no-op on the fake terminal.
 func (t *Terminal) Close() {}

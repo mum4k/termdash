@@ -125,10 +125,11 @@ func bounds(text string, maxRunes int, om OverrunMode) (string, error) {
 }
 
 // Text prints the provided text on the canvas starting at the provided point.
-func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) error {
+// Returns the number of cells written.
+func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) (int, error) {
 	ar := c.Area()
 	if !start.In(ar) {
-		return fmt.Errorf("the requested start point %v falls outside of the provided canvas %v", start, ar)
+		return -1, fmt.Errorf("the requested start point %v falls outside of the provided canvas %v", start, ar)
 	}
 
 	opt := &textOptions{}
@@ -137,7 +138,7 @@ func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) 
 	}
 
 	if opt.maxX < 0 || opt.maxX > ar.Max.X {
-		return fmt.Errorf("invalid TextMaxX(%v), must be a positive number that is <= canvas.width %v", opt.maxX, ar.Dx())
+		return -1, fmt.Errorf("invalid TextMaxX(%v), must be a positive number that is <= canvas.width %v", opt.maxX, ar.Dx())
 	}
 
 	var wantMaxX int
@@ -150,15 +151,15 @@ func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) 
 	maxRunes := wantMaxX - start.X
 	trimmed, err := bounds(text, maxRunes, opt.overrunMode)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	cur := start
 	for _, r := range trimmed {
 		if err := c.SetCell(cur, r, opt.cellOpts...); err != nil {
-			return err
+			return -1, err
 		}
 		cur = image.Point{cur.X + 1, cur.Y}
 	}
-	return nil
+	return cur.X - start.X, nil
 }

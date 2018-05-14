@@ -96,7 +96,8 @@ func (mi *Mirror) Draw(cvs *canvas.Canvas) error {
 			break
 		}
 
-		if err := draw.Text(cvs, mi.lines[i], start, draw.TextMaxX(usable.Max.X)); err != nil {
+		_, err := draw.Text(cvs, mi.lines[i], start, draw.TextMaxX(usable.Max.X))
+		if err != nil {
 			return err
 		}
 		start = image.Point{start.X, start.Y + 1}

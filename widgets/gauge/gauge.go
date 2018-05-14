@@ -204,19 +204,21 @@ func (g *Gauge) drawText(cvs *canvas.Canvas) error {
 	switch {
 	case gaugeEndX < textStart.X:
 		// The text entirely falls outside of the drawn gauge.
-		return draw.Text(cvs, text, textStart,
+		_, err := draw.Text(cvs, text, textStart,
 			draw.TextOverrunMode(draw.OverrunModeThreeDot),
 			draw.TextCellOpts(cell.FgColor(g.opts.emptyTextColor)),
 			draw.TextMaxX(ar.Max.X),
 		)
+		return err
 
 	case gaugeEndX >= textEndX:
 		// The text entirely falls inside of the drawn gauge.
-		return draw.Text(cvs, text, textStart,
+		_, err := draw.Text(cvs, text, textStart,
 			draw.TextOverrunMode(draw.OverrunModeThreeDot),
 			draw.TextCellOpts(cell.FgColor(g.opts.filledTextColor)),
 			draw.TextMaxX(ar.Max.X),
 		)
+		return err
 
 	default:
 		// Part of the text falls inside of the drawn gauge and part outside.
@@ -225,16 +227,17 @@ func (g *Gauge) drawText(cvs *canvas.Canvas) error {
 		insideText := utfText.Slice(0, insideCount)
 		outsideText := utfText.Slice(insideCount, utfText.RuneCount())
 
-		if err := draw.Text(cvs, insideText, textStart,
+		_, err := draw.Text(cvs, insideText, textStart,
 			draw.TextOverrunMode(draw.OverrunModeTrim),
 			draw.TextCellOpts(cell.FgColor(g.opts.filledTextColor)),
-		); err != nil {
+		)
+		if err != nil {
 			return err
 		}
 
 		outsideStart := image.Point{textStart.X + insideCount, textStart.Y}
 		if outsideStart.In(ar) {
-			if err := draw.Text(cvs, outsideText, outsideStart,
+			if _, err := draw.Text(cvs, outsideText, outsideStart,
 				draw.TextOverrunMode(draw.OverrunModeThreeDot),
 				draw.TextCellOpts(cell.FgColor(g.opts.emptyTextColor)),
 				draw.TextMaxX(ar.Max.X),

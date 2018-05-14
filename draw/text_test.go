@@ -26,13 +26,14 @@ import (
 
 func TestText(t *testing.T) {
 	tests := []struct {
-		desc    string
-		canvas  image.Rectangle
-		text    string
-		start   image.Point
-		opts    []TextOption
-		want    func(size image.Point) *faketerm.Terminal
-		wantErr bool
+		desc      string
+		canvas    image.Rectangle
+		text      string
+		start     image.Point
+		opts      []TextOption
+		want      func(size image.Point) *faketerm.Terminal
+		wantCells int
+		wantErr   bool
 	}{
 		{
 			desc:   "start falls outside of the canvas",
@@ -64,6 +65,7 @@ func TestText(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
+			wantCells: 0,
 		},
 		{
 			desc:   "text falls outside of the canvas on OverrunModeStrict",
@@ -91,6 +93,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 1,
 		},
 		{
 			desc:   "OverrunModeTrim trims longer text",
@@ -109,6 +112,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 2,
 		},
 		{
 			desc:   "text falls outside of the canvas on OverrunModeThreeDot",
@@ -126,6 +130,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 1,
 		},
 		{
 			desc:   "OverrunModeThreeDot trims longer text",
@@ -144,6 +149,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 2,
 		},
 		{
 			desc:   "requested MaxX is negative",
@@ -185,15 +191,6 @@ func TestText(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc:   "text is empty, nothing to do",
-			canvas: image.Rect(0, 0, 1, 1),
-			text:   "",
-			start:  image.Point{0, 0},
-			want: func(size image.Point) *faketerm.Terminal {
-				return faketerm.MustNew(size)
-			},
-		},
-		{
 			desc:   "draws text",
 			canvas: image.Rect(0, 0, 3, 2),
 			text:   "ab",
@@ -207,6 +204,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 2,
 		},
 		{
 			desc:   "draws text with cell options",
@@ -225,6 +223,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 2,
 		},
 		{
 			desc:   "draws unicode character",
@@ -239,6 +238,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 1,
 		},
 		{
 			desc:   "draws multiple unicode characters",
@@ -255,6 +255,7 @@ func TestText(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCells: 3,
 		},
 	}
 
@@ -265,7 +266,7 @@ func TestText(t *testing.T) {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			err = Text(c, tc.text, tc.start, tc.opts...)
+			gotCells, err := Text(c, tc.text, tc.start, tc.opts...)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Text => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
@@ -284,6 +285,10 @@ func TestText(t *testing.T) {
 
 			if diff := faketerm.Diff(tc.want(c.Size()), got); diff != "" {
 				t.Errorf("Text => %v", diff)
+			}
+
+			if gotCells != tc.wantCells {
+				t.Errorf("Text => unexpected number of cells, got %d, want %d", gotCells, tc.wantCells)
 			}
 		})
 	}

@@ -124,12 +124,13 @@ func drawTitle(c *canvas.Canvas, border image.Rectangle, opt *borderOptions) err
 		return err
 	}
 
-	return Text(
+	_, err = Text(
 		c, opt.title, start,
 		TextCellOpts(opt.titleCellOpts...),
 		TextOverrunMode(opt.titleOM),
 		TextMaxX(available.Max.X),
 	)
+	return err
 }
 
 // Border draws a border on the canvas.

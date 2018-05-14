@@ -31,10 +31,13 @@ func MustBorder(c *canvas.Canvas, border image.Rectangle, opts ...draw.BorderOpt
 }
 
 // MustText draws the text on the canvas or panics.
-func MustText(c *canvas.Canvas, text string, start image.Point, opts ...draw.TextOption) {
-	if err := draw.Text(c, text, start, opts...); err != nil {
+// Returns the number of written cells.
+func MustText(c *canvas.Canvas, text string, start image.Point, opts ...draw.TextOption) int {
+	cells, err := draw.Text(c, text, start, opts...)
+	if err != nil {
 		panic(fmt.Sprintf("draw.Text => unexpected error: %v", err))
 	}
+	return cells
 }
 
 // MustRectangle draws the rectangle on the canvas or panics.

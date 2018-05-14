@@ -36,6 +36,7 @@ var buttonNames = map[Button]string{
 	ButtonWheelDown: "ButtonWheelDown",
 }
 
+// Buttons recognized on the mouse.
 const (
 	buttonUnknown Button = iota
 	ButtonLeft

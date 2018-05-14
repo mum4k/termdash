@@ -65,12 +65,12 @@ func (o option) set(opts *options) {
 	o(opts)
 }
 
-// DefaultGaugeChar is the default value for the GaugeChar option.
-const DefaultGaugeChar = draw.DefaultRectChar
+// DefaultChar is the default value for the Char option.
+const DefaultChar = draw.DefaultRectChar
 
-// GaugeChar sets the rune that is used when drawing the rectangle representing
-// the current progress.
-func GaugeChar(ch rune) Option {
+// Char sets the rune that is used when drawing the rectangle representing the
+// current progress.
+func Char(ch rune) Option {
 	return option(func(opts *options) {
 		opts.gaugeChar = ch
 	})

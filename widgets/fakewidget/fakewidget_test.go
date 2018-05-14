@@ -29,26 +29,26 @@ import (
 	"github.com/mum4k/termdash/widgetapi"
 )
 
-// kEvents are keyboard events to send to the widget.
-type kEvents struct {
+// keyEvents are keyboard events to send to the widget.
+type keyEvents struct {
 	k       *terminalapi.Keyboard
 	wantErr bool
 }
 
-// mEvents are mouse events to send to the widget.
-type mEvents struct {
+// mouseEvents are mouse events to send to the widget.
+type mouseEvents struct {
 	m       *terminalapi.Mouse
 	wantErr bool
 }
 
 func TestMirror(t *testing.T) {
 	tests := []struct {
-		desc    string
-		kEvents []kEvents // Keyboard events to send before calling Draw().
-		mEvents []mEvents // Mouse events to send before calling Draw().
-		cvs     *canvas.Canvas
-		want    func(size image.Point) *faketerm.Terminal
-		wantErr bool
+		desc        string
+		keyEvents   []keyEvents   // Keyboard events to send before calling Draw().
+		mouseEvents []mouseEvents // Mouse events to send before calling Draw().
+		cvs         *canvas.Canvas
+		want        func(size image.Point) *faketerm.Terminal
+		wantErr     bool
 	}{
 		{
 			desc: "canvas too small to draw a box",
@@ -91,7 +91,7 @@ func TestMirror(t *testing.T) {
 		},
 		{
 			desc: "draws the last keyboard event",
-			kEvents: []kEvents{
+			keyEvents: []keyEvents{
 				{
 					k: &terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				},
@@ -112,7 +112,7 @@ func TestMirror(t *testing.T) {
 		},
 		{
 			desc: "skips the keyboard event if there isn't a line for it",
-			kEvents: []kEvents{
+			keyEvents: []keyEvents{
 				{
 					k: &terminalapi.Keyboard{Key: keyboard.KeyEnd},
 				},
@@ -129,7 +129,7 @@ func TestMirror(t *testing.T) {
 		},
 		{
 			desc: "draws the last mouse event",
-			mEvents: []mEvents{
+			mouseEvents: []mouseEvents{
 				{
 					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
@@ -152,7 +152,7 @@ func TestMirror(t *testing.T) {
 		},
 		{
 			desc: "skips the mouse event if there isn't a line for it",
-			mEvents: []mEvents{
+			mouseEvents: []mouseEvents{
 				{
 					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
@@ -169,12 +169,12 @@ func TestMirror(t *testing.T) {
 		},
 		{
 			desc: "draws both keyboard and mouse events",
-			kEvents: []kEvents{
+			keyEvents: []keyEvents{
 				{
 					k: &terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				},
 			},
-			mEvents: []mEvents{
+			mouseEvents: []mouseEvents{
 				{
 					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
@@ -193,7 +193,7 @@ func TestMirror(t *testing.T) {
 		},
 		{
 			desc: "KeyEsc and ButtonRight reset the last event and return error",
-			kEvents: []kEvents{
+			keyEvents: []keyEvents{
 				{
 					k: &terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				},
@@ -202,7 +202,7 @@ func TestMirror(t *testing.T) {
 					wantErr: true,
 				},
 			},
-			mEvents: []mEvents{
+			mouseEvents: []mouseEvents{
 				{
 					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
 				},
@@ -227,17 +227,17 @@ func TestMirror(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			w := New(widgetapi.Options{})
 
-			for _, kEv := range tc.kEvents {
-				err := w.Keyboard(kEv.k)
-				if (err != nil) != kEv.wantErr {
-					t.Errorf("Keyboard => got error:%v, wantErr: %v", err, kEv.wantErr)
+			for _, keyEv := range tc.keyEvents {
+				err := w.Keyboard(keyEv.k)
+				if (err != nil) != keyEv.wantErr {
+					t.Errorf("Keyboard => got error:%v, wantErr: %v", err, keyEv.wantErr)
 				}
 			}
 
-			for _, mEv := range tc.mEvents {
-				err := w.Mouse(mEv.m)
-				if (err != nil) != mEv.wantErr {
-					t.Errorf("Mouse => got error:%v, wantErr: %v", err, mEv.wantErr)
+			for _, mouseEv := range tc.mouseEvents {
+				err := w.Mouse(mouseEv.m)
+				if (err != nil) != mouseEv.wantErr {
+					t.Errorf("Mouse => got error:%v, wantErr: %v", err, mouseEv.wantErr)
 				}
 			}
 

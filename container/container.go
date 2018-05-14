@@ -105,9 +105,8 @@ func (c *Container) hasWidget() bool {
 func (c *Container) usable() image.Rectangle {
 	if c.hasBorder() {
 		return area.ExcludeBorder(c.area)
-	} else {
-		return c.area
 	}
+	return c.area
 }
 
 // widgetArea returns the area in the container that is available for the
@@ -142,11 +141,11 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 // split splits the container's usable area into child areas.
 // Panics if the container isn't configured for a split.
 func (c *Container) split() (image.Rectangle, image.Rectangle) {
-	if ar := c.usable(); c.opts.split == splitTypeVertical {
+	ar := c.usable()
+	if c.opts.split == splitTypeVertical {
 		return area.VSplit(ar)
-	} else {
-		return area.HSplit(ar)
 	}
+	return area.HSplit(ar)
 }
 
 // createFirst creates and returns the first sub container of this container.

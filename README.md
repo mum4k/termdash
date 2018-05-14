@@ -72,3 +72,7 @@ development](doc/widget_development.md) section.
 Run the [gaugedemo](widgets/gauge/demo/gaugedemo.go).
 
 [<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/png" width="100%">](widgets/gauge/demo/gaugedemo.go)
+
+## Disclaimer
+
+This is not an official Google product.

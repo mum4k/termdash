@@ -40,6 +40,7 @@ var colorNames = map[Color]string{
 	ColorWhite:   "ColorWhite",
 }
 
+// The supported terminal colors.
 const (
 	ColorDefault Color = iota
 	ColorBlack

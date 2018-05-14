@@ -56,6 +56,7 @@ var lineStyleNames = map[LineStyle]string{
 	LineStyleLight: "LineStyleLight",
 }
 
+// Supported line styles.
 const (
 	LineStyleNone LineStyle = iota
 	LineStyleLight

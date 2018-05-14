@@ -80,7 +80,7 @@ func (u *Unbound) empty() bool {
 	return u.first == nil
 }
 
-// Put puts an event onto the queue.
+// Push pushes an event onto the queue.
 func (u *Unbound) Push(e terminalapi.Event) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -98,7 +98,7 @@ func (u *Unbound) Push(e terminalapi.Event) {
 	u.cond.Signal()
 }
 
-// Get gets an event from the queue. Returns nil if the queue is empty.
+// Pop pops an event from the queue. Returns nil if the queue is empty.
 func (u *Unbound) Pop() terminalapi.Event {
 	u.mu.Lock()
 	defer u.mu.Unlock()

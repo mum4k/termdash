@@ -56,7 +56,7 @@ A typical unit test creates the expected fake terminal, executes the widget to
 get the actual fake terminal and compares the two:
 
 ```go
-TestWidget(t *testing.T) {
+func TestWidget(t *testing.T) {
   tests := []struct {
     desc    string
     canvas  image.Rectangle

@@ -57,7 +57,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge showing percentage",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 			),
 			percent: &percentCall{p: 35},
 			canvas:  image.Rect(0, 0, 10, 3),
@@ -77,7 +77,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "aligns the progress text top and left",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HorizontalTextAlign(align.HorizontalLeft),
 				VerticalTextAlign(align.VerticalTop),
 			),
@@ -95,7 +95,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "aligns the progress text top and left with border",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HorizontalTextAlign(align.HorizontalLeft),
 				VerticalTextAlign(align.VerticalTop),
 				Border(draw.LineStyleLight),
@@ -115,7 +115,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "aligns the progress text bottom and right",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HorizontalTextAlign(align.HorizontalRight),
 				VerticalTextAlign(align.VerticalBottom),
 			),
@@ -133,7 +133,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "aligns the progress text bottom and right with border",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HorizontalTextAlign(align.HorizontalRight),
 				VerticalTextAlign(align.VerticalBottom),
 				Border(draw.LineStyleLight),
@@ -153,7 +153,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge showing percentage with border",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				Border(draw.LineStyleLight),
 				BorderTitle("title"),
 			),
@@ -178,7 +178,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "respects border options",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				Border(draw.LineStyleLight, cell.FgColor(cell.ColorBlue)),
 				BorderTitle("title"),
 				BorderTitleAlign(align.HorizontalRight),
@@ -206,7 +206,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge showing zero percentage",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 			),
 			percent: &percentCall{},
 			canvas:  image.Rect(0, 0, 10, 3),
@@ -222,7 +222,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge showing 100 percent",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 			),
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
@@ -244,7 +244,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge showing 100 percent with border",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				Border(draw.LineStyleLight),
 			),
 			percent: &percentCall{p: 100},
@@ -268,7 +268,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge showing absolute progress",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 			),
 			absolute: &absoluteCall{done: 20, total: 100},
 			canvas:   image.Rect(0, 0, 10, 3),
@@ -288,7 +288,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge without text progress",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HideTextProgress(),
 			),
 			percent: &percentCall{p: 35},
@@ -308,7 +308,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "passing option to Percent() overrides one provided to New()",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HideTextProgress(),
 			),
 			percent: &percentCall{p: 35, opts: []Option{ShowTextProgress()}},
@@ -329,7 +329,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "passing option to Absolute() overrides one provided to New()",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HideTextProgress(),
 			),
 			absolute: &absoluteCall{done: 20, total: 100, opts: []Option{ShowTextProgress()}},
@@ -350,7 +350,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge takes full size of the canvas",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HideTextProgress(),
 			),
 			percent: &percentCall{p: 100},
@@ -370,7 +370,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge with text label",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				HideTextProgress(),
 				TextLabel("label"),
 			),
@@ -394,7 +394,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "gauge with progress text and text label",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("l"),
 			),
 			percent: &percentCall{p: 100},
@@ -417,7 +417,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "text fully outside of gauge respects EmptyTextColor",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("l"),
 				EmptyTextColor(cell.ColorMagenta),
 				FilledTextColor(cell.ColorBlue),
@@ -442,7 +442,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "text fully inside of gauge respects FilledTextColor",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("l"),
 				EmptyTextColor(cell.ColorMagenta),
 				FilledTextColor(cell.ColorBlue),
@@ -467,7 +467,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "part of the text is inside and part outside of gauge",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("l"),
 				EmptyTextColor(cell.ColorMagenta),
 				FilledTextColor(cell.ColorBlue),
@@ -495,7 +495,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "truncates text that is outside of gauge",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("long label"),
 			),
 			percent: &percentCall{p: 0},
@@ -514,7 +514,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "truncates text that is outside of gauge when drawn with border",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("long label"),
 				Border(draw.LineStyleLight),
 			),
@@ -535,7 +535,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "truncates text that is inside of gauge",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("long label"),
 			),
 			percent: &percentCall{p: 100},
@@ -558,7 +558,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "truncates text that is inside of gauge when drawn with border",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("long label"),
 				Border(draw.LineStyleLight),
 			),
@@ -583,7 +583,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "truncates text that is inside and outside of gauge",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("long label"),
 			),
 			percent: &percentCall{p: 50},
@@ -609,7 +609,7 @@ func TestGauge(t *testing.T) {
 		{
 			desc: "truncates text that is inside and outside of gauge with border",
 			gauge: New(
-				GaugeChar('o'),
+				Char('o'),
 				TextLabel("long label"),
 				Border(draw.LineStyleLight),
 			),

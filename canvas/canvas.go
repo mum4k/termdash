@@ -72,22 +72,26 @@ func (c *Canvas) Clear() error {
 	return nil
 }
 
-// SetCell sets the value of the specified cell on the canvas.
+// SetCell sets the rune of the specified cell on the canvas. Returns the
+// number of cells the rune occupies, wide runes can occupy multiple cells when
+// printed on the terminal. See http://www.unicode.org/reports/tr11/.
 // Use the options to specify which attributes to modify, if an attribute
 // option isn't specified, the attribute retains its previous value.
-func (c *Canvas) SetCell(p image.Point, r rune, opts ...cell.Option) error {
-	ar, err := area.FromSize(c.buffer.Size())
+func (c *Canvas) SetCell(p image.Point, r rune, opts ...cell.Option) (int, error) {
+	return c.buffer.SetCell(p, r, opts...)
+}
+
+// Cell returns a copy of the specified cell.
+func (c *Canvas) Cell(p image.Point) (*cell.Cell, error) {
+	ar, err := area.FromSize(c.Size())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !p.In(ar) {
-		return fmt.Errorf("cell at point %+v falls out of the canvas area %+v", p, ar)
+		return nil, fmt.Errorf("point %v falls outside of the area %v occupied by the canvas", p, ar)
 	}
 
-	cell := c.buffer[p.X][p.Y]
-	cell.Rune = r
-	cell.Apply(opts...)
-	return nil
+	return c.buffer[p.X][p.Y].Copy(), nil
 }
 
 // Apply applies the canvas to the corresponding area of the terminal.
@@ -109,6 +113,17 @@ func (c *Canvas) Apply(t terminalapi.Terminal) error {
 
 	for col := range c.buffer {
 		for row := range c.buffer[col] {
+			partial, err := c.buffer.IsPartial(image.Point{col, row})
+			if err != nil {
+				return err
+			}
+			if partial {
+				// Skip over partial cells, i.e. cells that follow a cell
+				// containing a full-width rune. A full-width rune takes only
+				// one cell in the buffer, but two on the terminal.
+				// See http://www.unicode.org/reports/tr11/.
+				continue
+			}
 			cell := c.buffer[col][row]
 			// The image.Point{0, 0} of this canvas isn't always exactly at
 			// image.Point{0, 0} on the terminal.

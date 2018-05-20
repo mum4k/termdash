@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
@@ -108,6 +109,7 @@ func TestSetCellAndApply(t *testing.T) {
 		r              rune
 		opts           []cell.Option
 		want           cell.Buffer // Expected back buffer in the fake terminal.
+		wantCells      int
 		wantSetCellErr bool
 		wantApplyErr   bool
 	}{
@@ -124,6 +126,7 @@ func TestSetCellAndApply(t *testing.T) {
 			canvasArea: image.Rect(1, 1, 3, 3),
 			point:      image.Point{0, 0},
 			r:          'X',
+			wantCells:  1,
 			want: cell.Buffer{
 				{
 					cell.New(0),
@@ -143,11 +146,45 @@ func TestSetCellAndApply(t *testing.T) {
 			},
 		},
 		{
+			desc:       "sets a full-width rune in the top-left corner cell",
+			termSize:   image.Point{3, 3},
+			canvasArea: image.Rect(1, 1, 3, 3),
+			point:      image.Point{0, 0},
+			r:          '界',
+			wantCells:  2,
+			want: cell.Buffer{
+				{
+					cell.New(0),
+					cell.New(0),
+					cell.New(0),
+				},
+				{
+					cell.New(0),
+					cell.New('界'),
+					cell.New(0),
+				},
+				{
+					cell.New(0),
+					cell.New(0),
+					cell.New(0),
+				},
+			},
+		},
+		{
+			desc:           "not enough space for a full-width rune",
+			termSize:       image.Point{3, 3},
+			canvasArea:     image.Rect(1, 1, 3, 3),
+			point:          image.Point{1, 0},
+			r:              '界',
+			wantSetCellErr: true,
+		},
+		{
 			desc:       "sets a top-right corner cell",
 			termSize:   image.Point{3, 3},
 			canvasArea: image.Rect(1, 1, 3, 3),
 			point:      image.Point{1, 0},
 			r:          'X',
+			wantCells:  1,
 			want: cell.Buffer{
 				{
 					cell.New(0),
@@ -172,6 +209,7 @@ func TestSetCellAndApply(t *testing.T) {
 			canvasArea: image.Rect(1, 1, 3, 3),
 			point:      image.Point{0, 1},
 			r:          'X',
+			wantCells:  1,
 			want: cell.Buffer{
 				{
 					cell.New(0),
@@ -196,6 +234,7 @@ func TestSetCellAndApply(t *testing.T) {
 			canvasArea: image.Rect(1, 1, 3, 3),
 			point:      image.Point{1, 1},
 			r:          'Z',
+			wantCells:  1,
 			want: cell.Buffer{
 				{
 					cell.New(0),
@@ -223,6 +262,7 @@ func TestSetCellAndApply(t *testing.T) {
 			opts: []cell.Option{
 				cell.BgColor(cell.ColorRed),
 			},
+			wantCells: 1,
 			want: cell.Buffer{
 				{
 					cell.New(0),
@@ -247,6 +287,7 @@ func TestSetCellAndApply(t *testing.T) {
 			canvasArea: image.Rect(0, 0, 1, 1),
 			point:      image.Point{0, 0},
 			r:          'A',
+			wantCells:  1,
 			want: cell.Buffer{
 				{
 					cell.New('A'),
@@ -259,6 +300,7 @@ func TestSetCellAndApply(t *testing.T) {
 			canvasArea:   image.Rect(0, 0, 2, 2),
 			point:        image.Point{0, 0},
 			r:            'A',
+			wantCells:    1,
 			wantApplyErr: true,
 		},
 	}
@@ -270,12 +312,16 @@ func TestSetCellAndApply(t *testing.T) {
 				t.Fatalf("New => unexpected error: %v", err)
 			}
 
-			err = c.SetCell(tc.point, tc.r, tc.opts...)
+			gotCells, err := c.SetCell(tc.point, tc.r, tc.opts...)
 			if (err != nil) != tc.wantSetCellErr {
 				t.Errorf("SetCell => unexpected error: %v, wantSetCellErr: %v", err, tc.wantSetCellErr)
 			}
 			if err != nil {
 				return
+			}
+
+			if gotCells != tc.wantCells {
+				t.Errorf("SetCell => unexpected number of cells %d, want %d", gotCells, tc.wantCells)
 			}
 
 			ft, err := faketerm.New(tc.termSize)
@@ -304,7 +350,7 @@ func TestClear(t *testing.T) {
 		t.Fatalf("New => unexpected error: %v", err)
 	}
 
-	if err := c.SetCell(image.Point{0, 0}, 'X'); err != nil {
+	if _, err := c.SetCell(image.Point{0, 0}, 'X'); err != nil {
 		t.Fatalf("SetCell => unexpected error: %v", err)
 	}
 
@@ -373,5 +419,115 @@ func TestClear(t *testing.T) {
 	got = ft.BackBuffer()
 	if diff := pretty.Compare(want, got); diff != "" {
 		t.Errorf("faketerm.BackBuffer after Clear => unexpected diff (-want, +got):\n%s", diff)
+	}
+}
+
+// TestApplyFullWidthRunes verifies that when applying a full-width rune to the
+// terminal, canvas doesn't touch the neighbor cell that holds the remaining
+// part of the full-width rune.
+func TestApplyFullWidthRunes(t *testing.T) {
+	ar := image.Rect(0, 0, 3, 3)
+	c, err := New(ar)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+
+	fullP := image.Point{0, 0}
+	if _, err := c.SetCell(fullP, '界'); err != nil {
+		t.Fatalf("SetCell => unexpected error: %v", err)
+	}
+
+	ft, err := faketerm.New(area.Size(ar))
+	if err != nil {
+		t.Fatalf("faketerm.New => unexpected error: %v", err)
+	}
+	partP := image.Point{1, 0}
+	if err := ft.SetCell(partP, 'A'); err != nil {
+		t.Fatalf("faketerm.SetCell => unexpected error: %v", err)
+	}
+
+	if err := c.Apply(ft); err != nil {
+		t.Fatalf("Apply => unexpected error: %v", err)
+	}
+
+	want, err := cell.NewBuffer(area.Size(ar))
+	if err != nil {
+		t.Fatalf("NewBuffer => unexpected error: %v", err)
+	}
+	want[fullP.X][fullP.Y].Rune = '界'
+	want[partP.X][partP.Y].Rune = 'A'
+
+	got := ft.BackBuffer()
+	if diff := pretty.Compare(want, got); diff != "" {
+		t.Errorf("faketerm.BackBuffer => unexpected diff (-want, +got):\n%s", diff)
+	}
+}
+
+func TestCell(t *testing.T) {
+	tests := []struct {
+		desc    string
+		cvs     func() (*Canvas, error)
+		point   image.Point
+		want    *cell.Cell
+		wantErr bool
+	}{
+		{
+			desc: "requested point falls outside of the canvas",
+			cvs: func() (*Canvas, error) {
+				cvs, err := New(image.Rect(0, 0, 1, 1))
+				if err != nil {
+					return nil, err
+				}
+				return cvs, nil
+			},
+			point:   image.Point{1, 1},
+			wantErr: true,
+		},
+		{
+			desc: "returns the cell",
+			cvs: func() (*Canvas, error) {
+				cvs, err := New(image.Rect(0, 0, 2, 2))
+				if err != nil {
+					return nil, err
+				}
+				if _, err := cvs.SetCell(
+					image.Point{1, 1}, 'A',
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
+				); err != nil {
+					return nil, err
+				}
+				return cvs, nil
+			},
+			point: image.Point{1, 1},
+			want: &cell.Cell{
+				Rune: 'A',
+				Opts: cell.NewOptions(
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
+				),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			cvs, err := tc.cvs()
+			if err != nil {
+				t.Fatalf("tc.cvs => unexpected error: %v", err)
+			}
+
+			got, err := cvs.Cell(tc.point)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Cell => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("Cell => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
 	}
 }

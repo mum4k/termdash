@@ -267,3 +267,327 @@ func TestBufferSize(t *testing.T) {
 		})
 	}
 }
+
+// mustNewBuffer returns a new Buffer or panics.
+func mustNewBuffer(size image.Point) Buffer {
+	b, err := NewBuffer(size)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func TestSetCell(t *testing.T) {
+	size := image.Point{3, 3}
+	tests := []struct {
+		desc      string
+		buffer    Buffer
+		point     image.Point
+		r         rune
+		opts      []Option
+		wantCells int
+		want      Buffer
+		wantErr   bool
+	}{
+		{
+			desc:    "point falls before the buffer",
+			buffer:  mustNewBuffer(size),
+			point:   image.Point{-1, -1},
+			r:       'A',
+			wantErr: true,
+		},
+		{
+			desc:    "point falls after the buffer",
+			buffer:  mustNewBuffer(size),
+			point:   image.Point{3, 3},
+			r:       'A',
+			wantErr: true,
+		},
+		{
+			desc: "point falls on cell with partial rune",
+			buffer: func() Buffer {
+				b := mustNewBuffer(size)
+				b[0][0].Rune = '世'
+				return b
+			}(),
+			point:   image.Point{1, 0},
+			r:       'A',
+			wantErr: true,
+		},
+		{
+			desc: "point falls on cell with full-width rune and overwrites with half-width rune",
+			buffer: func() Buffer {
+				b := mustNewBuffer(size)
+				b[0][0].Rune = '世'
+				return b
+			}(),
+			point:     image.Point{0, 0},
+			r:         'A',
+			wantCells: 1,
+			want: func() Buffer {
+				b := mustNewBuffer(size)
+				b[0][0].Rune = 'A'
+				return b
+			}(),
+		},
+		{
+			desc: "point falls on cell with full-width rune and overwrites with full-width rune",
+			buffer: func() Buffer {
+				b := mustNewBuffer(size)
+				b[0][0].Rune = '世'
+				return b
+			}(),
+			point:     image.Point{0, 0},
+			r:         '界',
+			wantCells: 2,
+			want: func() Buffer {
+				b := mustNewBuffer(size)
+				b[0][0].Rune = '界'
+				return b
+			}(),
+		},
+		{
+			desc:    "not enough space for a wide rune on the line",
+			buffer:  mustNewBuffer(image.Point{3, 3}),
+			point:   image.Point{2, 0},
+			r:       '界',
+			wantErr: true,
+		},
+		{
+			desc:      "sets half-width rune in a cell",
+			buffer:    mustNewBuffer(image.Point{3, 3}),
+			point:     image.Point{1, 1},
+			r:         'A',
+			wantCells: 1,
+			want: func() Buffer {
+				b := mustNewBuffer(size)
+				b[1][1].Rune = 'A'
+				return b
+			}(),
+		},
+		{
+			desc:      "sets full-width rune in a cell",
+			buffer:    mustNewBuffer(image.Point{3, 3}),
+			point:     image.Point{1, 2},
+			r:         '界',
+			wantCells: 2,
+			want: func() Buffer {
+				b := mustNewBuffer(size)
+				b[1][2].Rune = '界'
+				return b
+			}(),
+		},
+		{
+			desc:   "sets cell options",
+			buffer: mustNewBuffer(image.Point{3, 3}),
+			point:  image.Point{1, 2},
+			r:      'A',
+			opts: []Option{
+				FgColor(ColorRed),
+				BgColor(ColorBlue),
+			},
+			wantCells: 1,
+			want: func() Buffer {
+				b := mustNewBuffer(size)
+				cell := b[1][2]
+				cell.Rune = 'A'
+				cell.Opts = NewOptions(FgColor(ColorRed), BgColor(ColorBlue))
+				return b
+			}(),
+		},
+		{
+			desc: "overwrites only provided options",
+			buffer: func() Buffer {
+				b := mustNewBuffer(size)
+				cell := b[1][2]
+				cell.Opts = NewOptions(BgColor(ColorBlue))
+				return b
+			}(),
+			point: image.Point{1, 2},
+			r:     'A',
+			opts: []Option{
+				FgColor(ColorRed),
+			},
+			wantCells: 1,
+			want: func() Buffer {
+				b := mustNewBuffer(size)
+				cell := b[1][2]
+				cell.Rune = 'A'
+				cell.Opts = NewOptions(FgColor(ColorRed), BgColor(ColorBlue))
+				return b
+			}(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			gotCells, err := tc.buffer.SetCell(tc.point, tc.r, tc.opts...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("SetCell => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if gotCells != tc.wantCells {
+				t.Errorf("SetCell => unexpected cell count, got %d, want %d", gotCells, tc.wantCells)
+			}
+
+			got := tc.buffer
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("SetCell=> unexpected buffer, diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsPartial(t *testing.T) {
+	tests := []struct {
+		desc    string
+		buffer  Buffer
+		point   image.Point
+		want    bool
+		wantErr bool
+	}{
+		{
+			desc:    "point falls before the buffer",
+			buffer:  mustNewBuffer(image.Point{1, 1}),
+			point:   image.Point{-1, -1},
+			wantErr: true,
+		},
+		{
+			desc:    "point falls after the buffer",
+			buffer:  mustNewBuffer(image.Point{1, 1}),
+			point:   image.Point{1, 1},
+			wantErr: true,
+		},
+		{
+			desc:   "the first cell cannot be partial",
+			buffer: mustNewBuffer(image.Point{1, 1}),
+			point:  image.Point{0, 0},
+			want:   false,
+		},
+		{
+			desc:   "previous cell on the same line contains no rune",
+			buffer: mustNewBuffer(image.Point{3, 3}),
+			point:  image.Point{1, 0},
+			want:   false,
+		},
+		{
+			desc: "previous cell on the same line contains half-width rune",
+			buffer: func() Buffer {
+				b := mustNewBuffer(image.Point{3, 3})
+				b[0][0].Rune = 'A'
+				return b
+			}(),
+			point: image.Point{1, 0},
+			want:  false,
+		},
+		{
+			desc: "previous cell on the same line contains full-width rune",
+			buffer: func() Buffer {
+				b := mustNewBuffer(image.Point{3, 3})
+				b[0][0].Rune = '世'
+				return b
+			}(),
+			point: image.Point{1, 0},
+			want:  true,
+		},
+		{
+			desc:   "previous cell on previous line contains no rune",
+			buffer: mustNewBuffer(image.Point{3, 3}),
+			point:  image.Point{0, 1},
+			want:   false,
+		},
+		{
+			desc: "previous cell on previous line contains half-width rune",
+			buffer: func() Buffer {
+				b := mustNewBuffer(image.Point{3, 3})
+				b[2][0].Rune = 'A'
+				return b
+			}(),
+			point: image.Point{0, 1},
+			want:  false,
+		},
+		{
+			desc: "previous cell on previous line contains full-width rune",
+			buffer: func() Buffer {
+				b := mustNewBuffer(image.Point{3, 3})
+				b[2][0].Rune = '世'
+				return b
+			}(),
+			point: image.Point{0, 1},
+			want:  true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := tc.buffer.IsPartial(tc.point)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("IsPartial => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if got != tc.want {
+				t.Errorf("IsPartial => got %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRemWidth(t *testing.T) {
+	tests := []struct {
+		desc    string
+		size    image.Point
+		point   image.Point
+		want    int
+		wantErr bool
+	}{
+		{
+			desc:    "point falls before the buffer",
+			size:    image.Point{1, 1},
+			point:   image.Point{-1, -1},
+			wantErr: true,
+		},
+		{
+			desc:    "point falls after the buffer",
+			size:    image.Point{1, 1},
+			point:   image.Point{1, 1},
+			wantErr: true,
+		},
+		{
+			desc:  "remaining width from the first cell on the line",
+			size:  image.Point{3, 3},
+			point: image.Point{0, 1},
+			want:  3,
+		},
+		{
+			desc:  "remaining width from the last cell on the line",
+			size:  image.Point{3, 3},
+			point: image.Point{2, 2},
+			want:  1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			b, err := NewBuffer(tc.size)
+			if err != nil {
+				t.Fatalf("NewBuffer => unexpected error: %v", err)
+			}
+			got, err := b.RemWidth(tc.point)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("RemWidth => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+			if got != tc.want {
+				t.Errorf("RemWidth => got %d, want %d", got, tc.want)
+			}
+		})
+	}
+}

@@ -163,8 +163,12 @@ func Border(c *canvas.Canvas, border image.Rectangle, opts ...BorderOption) erro
 				continue
 			}
 
-			if err := c.SetCell(p, r, opt.cellOpts...); err != nil {
+			cells, err := c.SetCell(p, r, opt.cellOpts...)
+			if err != nil {
 				return err
+			}
+			if cells != 1 {
+				panic(fmt.Sprintf("invalid border rune %q, this rune occupies %d cells, border implementation only supports half-width runes that occupy exactly one cell", r, cells))
 			}
 		}
 	}

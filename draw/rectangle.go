@@ -78,8 +78,12 @@ func Rectangle(c *canvas.Canvas, r image.Rectangle, opts ...RectangleOption) err
 
 	for col := r.Min.X; col < r.Max.X; col++ {
 		for row := r.Min.Y; row < r.Max.Y; row++ {
-			if err := c.SetCell(image.Point{col, row}, opt.char, opt.cellOpts...); err != nil {
+			cells, err := c.SetCell(image.Point{col, row}, opt.char, opt.cellOpts...)
+			if err != nil {
 				return err
+			}
+			if cells != 1 {
+				return fmt.Errorf("invalid rectangle character %q, this character occupies %d cells, the implementation only supports half-width runes that occupy exactly one cell", opt.char, cells)
 			}
 		}
 	}

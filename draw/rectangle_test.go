@@ -50,6 +50,15 @@ func TestRectangle(t *testing.T) {
 			},
 		},
 		{
+			desc:   "fails when the rectangle character occupies multiple cells",
+			canvas: image.Rect(0, 0, 2, 2),
+			rect:   image.Rect(0, 0, 1, 1),
+			opts: []RectangleOption{
+				RectChar('界'),
+			},
+			wantErr: true,
+		},
+		{
 			desc:   "sets cell options",
 			canvas: image.Rect(0, 0, 2, 2),
 			rect:   image.Rect(0, 0, 1, 1),

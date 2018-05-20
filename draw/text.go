@@ -17,10 +17,11 @@ package draw
 // text.go contains code that prints UTF-8 encoded strings on the canvas.
 
 import (
+	"bytes"
 	"fmt"
 	"image"
-	"unicode/utf8"
 
+	runewidth "github.com/mattn/go-runewidth"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
 )
@@ -103,22 +104,44 @@ func TextOverrunMode(om OverrunMode) TextOption {
 	})
 }
 
+// trimToCells trims the provided text so that it fits the specified amount of cells.
+func trimToCells(text string, maxCells int, om OverrunMode) string {
+	if maxCells < 1 {
+		return ""
+	}
+
+	var b bytes.Buffer
+	cells := 0
+	for _, r := range text {
+		rw := runewidth.RuneWidth(r)
+		if cells+rw >= maxCells {
+			switch {
+			case om == OverrunModeTrim && rw == 1:
+				b.WriteRune(r)
+			case om == OverrunModeThreeDot:
+				b.WriteRune('…')
+			}
+			break
+		}
+		b.WriteRune(r)
+		cells += rw
+	}
+	return b.String()
+}
+
 // bounds enforces the text bounds based on the specified overrun mode.
 // Returns test that can be safely drawn within the bounds.
-func bounds(text string, maxRunes int, om OverrunMode) (string, error) {
-	runes := utf8.RuneCountInString(text)
-	if runes <= maxRunes {
+func bounds(text string, maxCells int, om OverrunMode) (string, error) {
+	cells := runewidth.StringWidth(text)
+	if cells <= maxCells {
 		return text, nil
 	}
 
 	switch om {
 	case OverrunModeStrict:
-		return "", fmt.Errorf("the requested text %q takes %d runes to draw, space is available for only %d runes and overrun mode is %v", text, runes, maxRunes, om)
-	case OverrunModeTrim:
-		return text[:maxRunes], nil
-
-	case OverrunModeThreeDot:
-		return fmt.Sprintf("%s…", text[:maxRunes-1]), nil
+		return "", fmt.Errorf("the requested text %q takes %d cells to draw, space is available for only %d cells and overrun mode is %v", text, cells, maxCells, om)
+	case OverrunModeTrim, OverrunModeThreeDot:
+		return trimToCells(text, maxCells, om), nil
 	default:
 		return "", fmt.Errorf("unsupported overrun mode %v", om)
 	}
@@ -147,18 +170,19 @@ func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) 
 		wantMaxX = opt.maxX
 	}
 
-	maxRunes := wantMaxX - start.X
-	trimmed, err := bounds(text, maxRunes, opt.overrunMode)
+	maxCells := wantMaxX - start.X
+	trimmed, err := bounds(text, maxCells, opt.overrunMode)
 	if err != nil {
 		return err
 	}
 
 	cur := start
 	for _, r := range trimmed {
-		if err := c.SetCell(cur, r, opt.cellOpts...); err != nil {
+		cells, err := c.SetCell(cur, r, opt.cellOpts...)
+		if err != nil {
 			return err
 		}
-		cur = image.Point{cur.X + 1, cur.Y}
+		cur = image.Point{cur.X + cells, cur.Y}
 	}
 	return nil
 }

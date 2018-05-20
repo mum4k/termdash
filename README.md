@@ -69,9 +69,17 @@ development](doc/widget_development.md) section.
 
 ### The Gauge
 
-Run the [gaugedemo](widgets/gauge/demo/gaugedemo.go).
+Displays the progress of an operation. Run the
+[gaugedemo](widgets/gauge/demo/gaugedemo.go).
 
-[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/png" width="100%">](widgets/gauge/demo/gaugedemo.go)
+[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
+
+### The Text
+
+[<img src="./images/textdemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
+
+Displays text content, supports trimming and scrolling of content. Run the
+[textdemo](widgets/text/demo/textdemo.go).
 
 ## Disclaimer
 

@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"image"
 	"sync"
-	"unicode/utf8"
 
+	runewidth "github.com/mattn/go-runewidth"
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
@@ -30,7 +30,6 @@ import (
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
-	"golang.org/x/exp/utf8string"
 )
 
 // progressType indicates how was the current progress provided by the caller.
@@ -184,64 +183,62 @@ func (g *Gauge) gaugeText() string {
 }
 
 // drawText draws the text enumerating the progress and the text label.
-func (g *Gauge) drawText(cvs *canvas.Canvas) error {
+func (g *Gauge) drawText(cvs *canvas.Canvas, progress image.Rectangle) error {
 	text := g.gaugeText()
 	if text == "" {
 		return nil
 	}
 
 	ar := g.usable(cvs)
-	textStart, err := align.Text(ar, text, g.opts.hTextAlign, g.opts.vTextAlign)
+	trimmed, err := draw.TrimText(text, ar.Dx(), draw.OverrunModeThreeDot)
 	if err != nil {
 		return err
 	}
-	textEndX := textStart.X + utf8.RuneCountInString(text)
-	if textEndX >= ar.Max.X { // The text will be trimmed.
-		textEndX = ar.Max.X - 1
+
+	cur, err := align.Text(ar, trimmed, g.opts.hTextAlign, g.opts.vTextAlign)
+	if err != nil {
+		return err
 	}
-	gaugeEndX := g.width(ar)
 
-	switch {
-	case gaugeEndX < textStart.X:
-		// The text entirely falls outside of the drawn gauge.
-		return draw.Text(cvs, text, textStart,
-			draw.TextOverrunMode(draw.OverrunModeThreeDot),
-			draw.TextCellOpts(cell.FgColor(g.opts.emptyTextColor)),
-			draw.TextMaxX(ar.Max.X),
-		)
-
-	case gaugeEndX >= textEndX:
-		// The text entirely falls inside of the drawn gauge.
-		return draw.Text(cvs, text, textStart,
-			draw.TextOverrunMode(draw.OverrunModeThreeDot),
-			draw.TextCellOpts(cell.FgColor(g.opts.filledTextColor)),
-			draw.TextMaxX(ar.Max.X),
-		)
-
-	default:
-		// Part of the text falls inside of the drawn gauge and part outside.
-		utfText := utf8string.NewString(text)
-		insideCount := ar.Min.X + gaugeEndX - textStart.X
-		insideText := utfText.Slice(0, insideCount)
-		outsideText := utfText.Slice(insideCount, utfText.RuneCount())
-
-		if err := draw.Text(cvs, insideText, textStart,
-			draw.TextOverrunMode(draw.OverrunModeTrim),
-			draw.TextCellOpts(cell.FgColor(g.opts.filledTextColor)),
-		); err != nil {
-			return err
+	for _, r := range trimmed {
+		if !cur.In(ar) {
+			break
 		}
 
-		outsideStart := image.Point{textStart.X + insideCount, textStart.Y}
-		if outsideStart.In(ar) {
-			if err := draw.Text(cvs, outsideText, outsideStart,
-				draw.TextOverrunMode(draw.OverrunModeThreeDot),
-				draw.TextCellOpts(cell.FgColor(g.opts.emptyTextColor)),
-				draw.TextMaxX(ar.Max.X),
+		next := image.Point{cur.X + 1, cur.Y}
+		rw := runewidth.RuneWidth(r)
+		// If the current rune is full-width and only one of its cells falls
+		// within the filled area of the gauge, extend the gauge by one cell to
+		// fully cover the full-width rune.
+		if rw == 2 && next.In(ar) && cur.In(progress) && !next.In(progress) {
+			fixup := image.Rect(
+				next.X,
+				ar.Min.Y,
+				next.X+1,
+				ar.Max.Y,
+			)
+			if err := draw.Rectangle(cvs, fixup,
+				draw.RectChar(g.opts.gaugeChar),
+				draw.RectCellOpts(cell.BgColor(g.opts.color)),
 			); err != nil {
 				return err
 			}
+
 		}
+
+		var cellOpts []cell.Option
+		if cur.In(progress) {
+			cellOpts = append(cellOpts, cell.FgColor(g.opts.filledTextColor))
+		} else {
+			cellOpts = append(cellOpts, cell.FgColor(g.opts.emptyTextColor))
+		}
+
+		cells, err := cvs.SetCell(cur, r, cellOpts...)
+		if err != nil {
+			return err
+		}
+
+		cur = image.Point{cur.X + cells, cur.Y}
 	}
 	return nil
 }
@@ -278,7 +275,7 @@ func (g *Gauge) Draw(cvs *canvas.Canvas) error {
 			return err
 		}
 	}
-	return g.drawText(cvs)
+	return g.drawText(cvs, progress)
 }
 
 // Keyboard input isn't supported on the Gauge widget.

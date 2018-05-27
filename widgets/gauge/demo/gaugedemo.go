@@ -108,7 +108,7 @@ func main() {
 	go playGauge(ctx, noProgress, 5, 250*time.Millisecond, playTypePercent)
 	withLabel := gauge.New(
 		gauge.Height(3),
-		gauge.TextLabel("with text label and no border"),
+		gauge.TextLabel("你好，世界! text label and no border"),
 		gauge.Color(cell.ColorRed),
 		gauge.FilledTextColor(cell.ColorBlack),
 		gauge.EmptyTextColor(cell.ColorYellow),

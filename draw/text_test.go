@@ -24,6 +24,188 @@ import (
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
+func TestTrimText(t *testing.T) {
+	tests := []struct {
+		desc     string
+		text     string
+		maxCells int
+		om       OverrunMode
+		want     string
+		wantErr  bool
+	}{
+		{
+			desc:     "text is empty",
+			text:     "",
+			maxCells: 1,
+			om:       OverrunModeTrim,
+			want:     "",
+		},
+		{
+			desc:     "zero max cells",
+			text:     "ab",
+			maxCells: 0,
+			om:       OverrunModeTrim,
+			wantErr:  true,
+		},
+		{
+			desc:     "unsupported overrun mode",
+			text:     "ab",
+			maxCells: 1,
+			om:       OverrunMode(-1),
+			wantErr:  true,
+		},
+		{
+			desc:     "half-width runes, OverrunModeStrict, text fits exactly",
+			text:     "ab",
+			maxCells: 2,
+			om:       OverrunModeStrict,
+			want:     "ab",
+		},
+		{
+			desc:     "half-width runes, OverrunModeTrim, text fits exactly",
+			text:     "ab",
+			maxCells: 2,
+			om:       OverrunModeTrim,
+			want:     "ab",
+		},
+		{
+			desc:     "half-width runes, OverrunModeThreeDot, text fits exactly",
+			text:     "ab",
+			maxCells: 2,
+			om:       OverrunModeThreeDot,
+			want:     "ab",
+		},
+		{
+			desc:     "full-width runes, OverrunModeStrict, text fits exactly",
+			text:     "你好",
+			maxCells: 4,
+			om:       OverrunModeStrict,
+			want:     "你好",
+		},
+		{
+			desc:     "full-width runes, OverrunModeTrim, text fits exactly",
+			text:     "你好",
+			maxCells: 4,
+			om:       OverrunModeTrim,
+			want:     "你好",
+		},
+		{
+			desc:     "full-width runes, OverrunModeThreeDot, text fits exactly",
+			text:     "你好",
+			maxCells: 4,
+			om:       OverrunModeThreeDot,
+			want:     "你好",
+		},
+		{
+			desc:     "half-width runes, OverrunModeStrict, text overruns",
+			text:     "ab",
+			maxCells: 1,
+			om:       OverrunModeStrict,
+			wantErr:  true,
+		},
+		{
+			desc:     "half-width runes, OverrunModeTrim, text overruns",
+			text:     "ab",
+			maxCells: 1,
+			om:       OverrunModeTrim,
+			want:     "a",
+		},
+		{
+			desc:     "half-width runes, OverrunModeThreeDot, text overruns at the beginning",
+			text:     "ab",
+			maxCells: 1,
+			om:       OverrunModeThreeDot,
+			want:     "…",
+		},
+		{
+			desc:     "half-width runes, OverrunModeThreeDot, text overruns in the middle",
+			text:     "abc",
+			maxCells: 2,
+			om:       OverrunModeThreeDot,
+			want:     "a…",
+		},
+		{
+			desc:     "full-width runes, OverrunModeStrict, text overruns",
+			text:     "你好",
+			maxCells: 1,
+			om:       OverrunModeStrict,
+			wantErr:  true,
+		},
+		{
+			desc:     "full-width runes, OverrunModeTrim, text overruns at the beginning on rune boundary",
+			text:     "你好",
+			maxCells: 2,
+			om:       OverrunModeTrim,
+			want:     "你",
+		},
+		{
+			desc:     "full-width runes, OverrunModeThreeDot, text overruns at the beginning on rune boundary",
+			text:     "你好",
+			maxCells: 2,
+			om:       OverrunModeThreeDot,
+			want:     "…",
+		},
+		{
+			desc:     "full-width runes, OverrunModeTrim, text overruns in the middle on rune boundary",
+			text:     "你好你好",
+			maxCells: 4,
+			om:       OverrunModeTrim,
+			want:     "你好",
+		},
+		{
+			desc:     "full-width runes, OverrunModeThreeDot, text overruns in the middle on rune boundary",
+			text:     "你好你好",
+			maxCells: 4,
+			om:       OverrunModeThreeDot,
+			want:     "你…",
+		},
+		{
+			desc:     "full-width runes, OverrunModeTrim, text overruns at the beginning, cuts rune in half",
+			text:     "你好",
+			maxCells: 1,
+			om:       OverrunModeTrim,
+			want:     "",
+		},
+		{
+			desc:     "full-width runes, OverrunModeThreeDot, text overruns at the beginning, cuts rune in half",
+			text:     "你好",
+			maxCells: 1,
+			om:       OverrunModeThreeDot,
+			want:     "…",
+		},
+		{
+			desc:     "full-width runes, OverrunModeTrim, text overruns in the middle, cuts rune in half",
+			text:     "你好你好",
+			maxCells: 3,
+			om:       OverrunModeTrim,
+			want:     "你",
+		},
+		{
+			desc:     "full-width runes, OverrunModeThreeDot, text overruns in the middle, cuts rune in half",
+			text:     "你好你好",
+			maxCells: 3,
+			om:       OverrunModeThreeDot,
+			want:     "你…",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := TrimText(tc.text, tc.maxCells, tc.om)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("TrimText => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if got != tc.want {
+				t.Errorf("TrimText =>\n  got: %q\nwant: %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestText(t *testing.T) {
 	tests := []struct {
 		desc    string

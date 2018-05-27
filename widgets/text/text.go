@@ -50,9 +50,10 @@ type Text struct {
 	// lastWidth stores the width of the last canvas the widget drew on.
 	// Used to determine if the previous line wrapping was invalidated.
 	lastWidth int
-	// newText indicates if new text was added to the widget.
-	// Used to determine if the previous line wrapping was invalidated.
-	newText bool
+	// contentChanged indicates if the text content of the widget changed since
+	// the last drawing. Used to determine if the previous line wrapping was
+	// invalidated.
+	contentChanged bool
 	// lines stores the starting locations in bytes of all the lines in the
 	// buffer. I.e. positions of newline characters and of any calculated line wraps.
 	lines []int
@@ -83,7 +84,7 @@ func (t *Text) Reset() {
 	t.givenWOpts = newGivenWOpts()
 	t.scroll = newScrollTracker(t.opts)
 	t.lastWidth = 0
-	t.newText = true
+	t.contentChanged = true
 	t.lines = nil
 }
 
@@ -106,7 +107,7 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	if _, err := t.buff.WriteString(text); err != nil {
 		return err
 	}
-	t.newText = true
+	t.contentChanged = true
 	return nil
 }
 
@@ -221,7 +222,7 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 
 	text := t.buff.String()
 	width := cvs.Area().Dx()
-	if t.newText || t.lastWidth != width {
+	if t.contentChanged || t.lastWidth != width {
 		// The previous text preprocessing (line wrapping) is invalidated when
 		// new text is added or the width of the canvas changed.
 		t.lines = findLines(text, width, t.opts)
@@ -235,7 +236,7 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 	if err := t.draw(text, cvs); err != nil {
 		return err
 	}
-	t.newText = false
+	t.contentChanged = false
 	return nil
 }
 

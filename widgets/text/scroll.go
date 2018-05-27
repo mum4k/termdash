@@ -19,6 +19,23 @@ package text
 import "math"
 
 // scrollTracker tracks the current scrolling position for the Text widget.
+//
+// The text widget displays the contained text buffer as lines of text that fit
+// the widget's canvas. The main goal of this object is to inform the text
+// widget which should be the first drawn line from the buffer. This depends on
+// two things, the scrolling position based on user inputs and whether the text
+// widget is configured to roll the content up as new text is added by the
+// client.
+//
+// The rolling Vs. scrolling state is tracked in an FSM implemented in this
+// file.
+//
+// The client can scroll the content by either a keyboard or a mouse event. The
+// widget receives these events concurrently with requests to redraw the
+// content, so this objects keeps a track of all the scrolling events that
+// happened since the last redraw and consumes them when calculating which is
+// the first drawn line on the next redraw event.
+//
 // This is not thread safe.
 type scrollTracker struct {
 	// scroll stores user requests to scroll up (negative) or down (positive).
@@ -120,11 +137,12 @@ func rollingPaused(st *scrollTracker, lines, height int) rollState {
 	return rollingPaused
 }
 
-// lastLineVisible returns true if the last line is visible given drawing that
-// starts from the first line, the number of lines and the height of the
-// canvas.
-func lastLineVisible(first, lines, height int) bool {
-	return lines-first <= height
+// lastLineVisible returns true if the last text line from within the buffer of
+// the text widget is visible on the canvas when drawing of the text starts
+// from the specified start line, there is the provided total amount of lines
+// and the canvas has the height.
+func lastLineVisible(start, lines, height int) bool {
+	return lines-start <= height
 }
 
 // normalizeScroll returns normalized position of the first line that should be

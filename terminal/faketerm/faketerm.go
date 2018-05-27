@@ -121,7 +121,12 @@ func (t *Terminal) String() string {
 	for row := 0; row < size.Y; row++ {
 		for col := 0; col < size.X; col++ {
 			r := t.buffer[col][row].Rune
-			if r == 0 {
+			p := image.Point{col, row}
+			partial, err := t.buffer.IsPartial(p)
+			if err != nil {
+				panic(fmt.Errorf("unable to determine if point %v is a partial rune: %v", p, err))
+			}
+			if r == 0 && !partial {
 				r = ' '
 			}
 			b.WriteRune(r)

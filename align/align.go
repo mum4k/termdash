@@ -19,7 +19,8 @@ import (
 	"fmt"
 	"image"
 	"strings"
-	"unicode/utf8"
+
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 // Horizontal indicates the type of horizontal alignment.
@@ -147,10 +148,10 @@ func Text(rect image.Rectangle, text string, h Horizontal, v Vertical) (image.Po
 		return image.ZP, fmt.Errorf("the provided text contains a newline character: %q", text)
 	}
 
-	runes := utf8.RuneCountInString(text)
+	cells := runewidth.StringWidth(text)
 	var textLen int
-	if runes < rect.Dx() {
-		textLen = runes
+	if cells < rect.Dx() {
+		textLen = cells
 	} else {
 		textLen = rect.Dx()
 	}

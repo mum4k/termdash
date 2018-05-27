@@ -275,12 +275,20 @@ func TestText(t *testing.T) {
 			want:   image.Point{1, 2},
 		},
 		{
-			desc:   "aligns text middle and center",
+			desc:   "aligns half-width text rune middle and center",
 			rect:   image.Rect(1, 1, 4, 4),
 			text:   "a",
 			hAlign: HorizontalCenter,
 			vAlign: VerticalMiddle,
 			want:   image.Point{2, 2},
+		},
+		{
+			desc:   "aligns full-width text rune middle and center",
+			rect:   image.Rect(1, 1, 4, 4),
+			text:   "界",
+			hAlign: HorizontalCenter,
+			vAlign: VerticalMiddle,
+			want:   image.Point{1, 2},
 		},
 		{
 			desc:   "aligns text middle and right",

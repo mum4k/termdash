@@ -76,6 +76,16 @@ func TestText(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:   "text falls outside of the canvas because the rune is full-width on OverrunModeStrict",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "界",
+			start:  image.Point{0, 0},
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
 			desc:   "text falls outside of the canvas on OverrunModeTrim",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "ab",
@@ -88,6 +98,21 @@ func TestText(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "text falls outside of the canvas because the rune is full-width on OverrunModeTrim",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "界",
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeTrim),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -111,6 +136,41 @@ func TestText(t *testing.T) {
 			},
 		},
 		{
+			desc:   "OverrunModeTrim trims longer text with full-width runes, trim falls before the rune",
+			canvas: image.Rect(0, 0, 2, 1),
+			text:   "ab界",
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeTrim),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'b')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "OverrunModeTrim trims longer text with full-width runes, trim falls on the rune",
+			canvas: image.Rect(0, 0, 2, 1),
+			text:   "a界",
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeTrim),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "text falls outside of the canvas on OverrunModeThreeDot",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "ab",
@@ -128,9 +188,62 @@ func TestText(t *testing.T) {
 			},
 		},
 		{
+			desc:   "text falls outside of the canvas because the rune is full-width on OverrunModeThreeDot",
+			canvas: image.Rect(0, 0, 1, 1),
+			text:   "界",
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeThreeDot),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '…')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "OverrunModeThreeDot trims longer text",
 			canvas: image.Rect(0, 0, 2, 1),
 			text:   "abcdef",
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeThreeDot),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, '…')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "OverrunModeThreeDot trims longer text with full-width runes, trim falls before the rune",
+			canvas: image.Rect(0, 0, 2, 1),
+			text:   "ab界",
+			start:  image.Point{0, 0},
+			opts: []TextOption{
+				TextOverrunMode(OverrunModeThreeDot),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, 'a')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, '…')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "OverrunModeThreeDot trims longer text with full-width runes, trim falls on the rune",
+			canvas: image.Rect(0, 0, 2, 1),
+			text:   "a界",
 			start:  image.Point{0, 0},
 			opts: []TextOption{
 				TextOverrunMode(OverrunModeThreeDot),
@@ -227,7 +340,7 @@ func TestText(t *testing.T) {
 			},
 		},
 		{
-			desc:   "draws unicode character",
+			desc:   "draws a half-width unicode character",
 			canvas: image.Rect(0, 0, 1, 1),
 			text:   "⇄",
 			start:  image.Point{0, 0},
@@ -241,7 +354,7 @@ func TestText(t *testing.T) {
 			},
 		},
 		{
-			desc:   "draws multiple unicode characters",
+			desc:   "draws multiple half-width unicode characters",
 			canvas: image.Rect(0, 0, 3, 3),
 			text:   "⇄࿃°",
 			start:  image.Point{0, 0},
@@ -252,6 +365,24 @@ func TestText(t *testing.T) {
 				testcanvas.MustSetCell(c, image.Point{0, 0}, '⇄')
 				testcanvas.MustSetCell(c, image.Point{1, 0}, '࿃')
 				testcanvas.MustSetCell(c, image.Point{2, 0}, '°')
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws multiple full-width unicode characters",
+			canvas: image.Rect(0, 0, 10, 3),
+			text:   "你好，世界",
+			start:  image.Point{0, 0},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '你')
+				testcanvas.MustSetCell(c, image.Point{2, 0}, '好')
+				testcanvas.MustSetCell(c, image.Point{4, 0}, '，')
+				testcanvas.MustSetCell(c, image.Point{6, 0}, '世')
+				testcanvas.MustSetCell(c, image.Point{8, 0}, '界')
 				testcanvas.MustApply(c, ft)
 				return ft
 			},

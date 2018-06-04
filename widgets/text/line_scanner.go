@@ -19,6 +19,8 @@ package text
 import (
 	"strings"
 	"text/scanner"
+
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 // wrapNeeded returns true if wrapping is needed for the rune at the horizontal
@@ -29,7 +31,8 @@ func wrapNeeded(r rune, cvsPosX, cvsWidth int, opts *options) bool {
 		// canvas, i.e. they take no horizontal space.
 		return false
 	}
-	return cvsPosX >= cvsWidth && opts.wrapAtRunes
+	rw := runewidth.RuneWidth(r)
+	return cvsPosX > cvsWidth-rw && opts.wrapAtRunes
 }
 
 // findLines finds the starting positions of all lines in the text when the
@@ -103,9 +106,7 @@ func scanStart(ls *lineScanner) scannerState {
 // scanLine scans a line until it finds its end.
 func scanLine(ls *lineScanner) scannerState {
 	for {
-		tok := ls.scanner.Scan()
-		//switch tok := ls.scanner.Scan(); {
-		switch {
+		switch tok := ls.scanner.Scan(); {
 		case tok == scanner.EOF:
 			return nil
 
@@ -117,7 +118,7 @@ func scanLine(ls *lineScanner) scannerState {
 
 		default:
 			// Move horizontally within the line for each scanned character.
-			ls.cvsPosX++
+			ls.cvsPosX += runewidth.RuneWidth(tok)
 		}
 	}
 }
@@ -136,7 +137,7 @@ func scanLineBreak(ls *lineScanner) scannerState {
 func scanLineWrap(ls *lineScanner) scannerState {
 	// The character on which we wrapped will be printed and is the start of
 	// new line.
-	ls.cvsPosX = 1
+	ls.cvsPosX = runewidth.StringWidth(ls.scanner.TokenText())
 	ls.lines = append(ls.lines, ls.scanner.Position.Offset)
 	return scanLine
 }

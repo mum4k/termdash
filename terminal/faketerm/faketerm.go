@@ -23,7 +23,6 @@ import (
 	"log"
 	"sync"
 
-	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
@@ -179,17 +178,9 @@ func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	ar, err := area.FromSize(t.buffer.Size())
-	if err != nil {
+	if _, err := t.buffer.SetCell(p, r, opts...); err != nil {
 		return err
 	}
-	if !p.In(ar) {
-		return fmt.Errorf("cell at point %+v falls out of the terminal area %+v", p, ar)
-	}
-
-	cell := t.buffer[p.X][p.Y]
-	cell.Rune = r
-	cell.Apply(opts...)
 	return nil
 }
 

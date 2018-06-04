@@ -75,6 +75,21 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
+			desc:   "draws line of full-width runes",
+			canvas: image.Rect(0, 0, 10, 1),
+			writes: func(widget *Text) error {
+				return widget.Write("你好，世界")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "你好，世界", image.Point{0, 0})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "multiple writes append",
 			canvas: image.Rect(0, 0, 12, 1),
 			writes: func(widget *Text) error {
@@ -167,9 +182,9 @@ func TestTextDraws(t *testing.T) {
 		},
 		{
 			desc:   "trims long lines",
-			canvas: image.Rect(0, 0, 10, 3),
+			canvas: image.Rect(0, 0, 10, 4),
 			writes: func(widget *Text) error {
-				return widget.Write("hello world\nshort\nand long again")
+				return widget.Write("hello world\nshort\nexactly 10\nand long again")
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -177,6 +192,24 @@ func TestTextDraws(t *testing.T) {
 
 				testdraw.MustText(c, "hello wor…", image.Point{0, 0})
 				testdraw.MustText(c, "short", image.Point{0, 1})
+				testdraw.MustText(c, "exactly 10", image.Point{0, 2})
+				testdraw.MustText(c, "and long …", image.Point{0, 3})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "trims long lines with full-width runes",
+			canvas: image.Rect(0, 0, 10, 3),
+			writes: func(widget *Text) error {
+				return widget.Write("hello wor你\nhello wor你d\nand long 世")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "hello wor…", image.Point{0, 0})
+				testdraw.MustText(c, "hello wor…", image.Point{0, 1})
 				testdraw.MustText(c, "and long …", image.Point{0, 2})
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -378,7 +411,7 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "wraps lines at rune boundaries",
+			desc:   "wraps lines at half-width rune boundaries",
 			canvas: image.Rect(0, 0, 10, 5),
 			opts: []Option{
 				WrapAtRunes(),
@@ -395,6 +428,29 @@ func TestTextDraws(t *testing.T) {
 				testdraw.MustText(c, "short", image.Point{0, 2})
 				testdraw.MustText(c, "and long a", image.Point{0, 3})
 				testdraw.MustText(c, "gain", image.Point{0, 4})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "wraps lines at full-width rune boundaries",
+			canvas: image.Rect(0, 0, 10, 6),
+			opts: []Option{
+				WrapAtRunes(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("hello wor你\nhello wor你d\nand long 世")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "hello wor", image.Point{0, 0})
+				testdraw.MustText(c, "你", image.Point{0, 1})
+				testdraw.MustText(c, "hello wor", image.Point{0, 2})
+				testdraw.MustText(c, "你d", image.Point{0, 3})
+				testdraw.MustText(c, "and long ", image.Point{0, 4})
+				testdraw.MustText(c, "世", image.Point{0, 5})
 				testcanvas.MustApply(c, ft)
 				return ft
 			},

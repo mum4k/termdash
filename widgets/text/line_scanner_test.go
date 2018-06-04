@@ -31,7 +31,7 @@ func TestWrapNeeded(t *testing.T) {
 		want     bool
 	}{
 		{
-			desc:     "point within canvas",
+			desc:     "half-width rune, falls within canvas",
 			r:        'a',
 			point:    image.Point{2, 0},
 			cvsWidth: 3,
@@ -39,7 +39,15 @@ func TestWrapNeeded(t *testing.T) {
 			want:     false,
 		},
 		{
-			desc:     "point outside of canvas, wrapping not configured",
+			desc:     "full-width rune, falls within canvas",
+			r:        '世',
+			point:    image.Point{1, 0},
+			cvsWidth: 3,
+			opts:     &options{},
+			want:     false,
+		},
+		{
+			desc:     "half-width rune, falls outside of canvas, wrapping not configured",
 			r:        'a',
 			point:    image.Point{3, 0},
 			cvsWidth: 3,
@@ -47,8 +55,36 @@ func TestWrapNeeded(t *testing.T) {
 			want:     false,
 		},
 		{
-			desc:     "point outside of canvas, wrapping configured",
+			desc:     "full-width rune, starts outside of canvas, wrapping not configured",
+			r:        '世',
+			point:    image.Point{3, 0},
+			cvsWidth: 3,
+			opts:     &options{},
+			want:     false,
+		},
+		{
+			desc:     "half-width rune, falls outside of canvas, wrapping configured",
 			r:        'a',
+			point:    image.Point{3, 0},
+			cvsWidth: 3,
+			opts: &options{
+				wrapAtRunes: true,
+			},
+			want: true,
+		},
+		{
+			desc:     "full-width rune, starts in and falls outside of canvas, wrapping configured",
+			r:        '世',
+			point:    image.Point{2, 0},
+			cvsWidth: 3,
+			opts: &options{
+				wrapAtRunes: true,
+			},
+			want: true,
+		},
+		{
+			desc:     "full-width rune, starts outside of canvas, wrapping configured",
+			r:        '世',
 			point:    image.Point{3, 0},
 			cvsWidth: 3,
 			opts: &options{
@@ -175,15 +211,32 @@ func TestFindLines(t *testing.T) {
 			want: []int{0, 4, 8},
 		},
 		{
-			desc:     "wrapping enabled, newlines, doesn't fit in canvas width, wide unicode characters",
+			desc:     "wrapping enabled, newlines, doesn't fit in width, full-width unicode characters",
 			text:     "你好\n世界",
-			cvsWidth: 1,
+			cvsWidth: 2,
 			opts: &options{
 				wrapAtRunes: true,
 			},
 			want: []int{0, 3, 7, 10},
 		},
-
+		{
+			desc:     "wraps before a full-width character that starts in and falls out",
+			text:     "a你b",
+			cvsWidth: 2,
+			opts: &options{
+				wrapAtRunes: true,
+			},
+			want: []int{0, 1, 4},
+		},
+		{
+			desc:     "wraps before a full-width character that falls out",
+			text:     "ab你b",
+			cvsWidth: 2,
+			opts: &options{
+				wrapAtRunes: true,
+			},
+			want: []int{0, 2, 5},
+		},
 		{
 			desc:     "handles leading and trailing newlines",
 			text:     "\n\n\nhello\n\n\n",

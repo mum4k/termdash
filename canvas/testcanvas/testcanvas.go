@@ -40,9 +40,13 @@ func MustApply(c *canvas.Canvas, t *faketerm.Terminal) {
 	}
 }
 
-// MustSetCell sets the cell value or panics.
-func MustSetCell(c *canvas.Canvas, p image.Point, r rune, opts ...cell.Option) {
-	if err := c.SetCell(p, r, opts...); err != nil {
+// MustSetCell sets the cell value or panics. Returns the number of cells the
+// rune occupies, wide runes can occupy multiple cells when printed on the
+// terminal. See http://www.unicode.org/reports/tr11/.
+func MustSetCell(c *canvas.Canvas, p image.Point, r rune, opts ...cell.Option) int {
+	cells, err := c.SetCell(p, r, opts...)
+	if err != nil {
 		panic(fmt.Sprintf("canvas.SetCell => unexpected error: %v", err))
 	}
+	return cells
 }

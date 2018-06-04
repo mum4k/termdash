@@ -111,84 +111,105 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	return nil
 }
 
-// lineTrimNeeded returns true if the text on this line needs to be trimmed.
-// I.e. if the Text gadget was configured to trim lines, the current point falls
-// outside of the canvas and the current rune doesn't start a new line.
-func (t *Text) lineTrimNeeded(cur image.Point, cvs *canvas.Canvas, r rune) bool {
-	if cur.X < cvs.Area().Dx() || r == '\n' {
-		return false
-	}
-	return !t.opts.wrapAtRunes
-}
-
 // minLinesForMarkers are the minimum amount of lines required on the canvas in
 // order to draw the scroll markers ('⇧' and '⇩').
 const minLinesForMarkers = 3
 
-// draw draws the text context on the canvas starting at the specified line.
-// Argument starts are the starting positions of all the lines in the text.
-func (t *Text) draw(text string, cvs *canvas.Canvas, starts []int, fromLine int) error {
-	var cur image.Point // Tracks the current drawing position on the canvas.
-	lines := len(starts)
+// drawScrollUp draws the scroll up marker on the first line if there is more
+// text "above" the canvas due to the scrolling position. Returns true if the
+// marker was drawn.
+func (t *Text) drawScrollUp(cvs *canvas.Canvas, cur image.Point, fromLine int) (bool, error) {
 	height := cvs.Area().Dy()
+	if cur.Y == 0 && height >= minLinesForMarkers && fromLine > 0 {
+		cells, err := cvs.SetCell(cur, '⇧')
+		if err != nil {
+			return false, err
+		}
+		if cells != 1 {
+			panic(fmt.Errorf("invalid scroll up marker, it occupies %d cells, the implementation only supports scroll markers that occupy exactly one cell", cells))
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+// drawScrollDown draws the scroll down marker on the last line if there is
+// more text "below" the canvas due to the scrolling position. Returns true if
+// the marker was drawn.
+func (t *Text) drawScrollDown(cvs *canvas.Canvas, cur image.Point, fromLine int) (bool, error) {
+	height := cvs.Area().Dy()
+	lines := len(t.lines)
+	if cur.Y == height-1 && height >= minLinesForMarkers && height < lines-fromLine {
+		cells, err := cvs.SetCell(cur, '⇩')
+		if err != nil {
+			return false, err
+		}
+		if cells != 1 {
+			panic(fmt.Errorf("invalid scroll down marker, it occupies %d cells, the implementation only supports scroll markers that occupy exactly one cell", cells))
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+// draw draws the text context on the canvas starting at the specified line.
+func (t *Text) draw(text string, cvs *canvas.Canvas) error {
+	var cur image.Point // Tracks the current drawing position on the canvas.
+	height := cvs.Area().Dy()
+	fromLine := t.scroll.firstLine(len(t.lines), height)
 	optRange := t.givenWOpts.forPosition(0) // Text options for the current byte.
-	startPos := starts[fromLine]
+	startPos := t.lines[fromLine]
 	for i, r := range text {
 		if i < startPos {
 			continue
 		}
 
-		// Draw the scroll up marker on the first line if there is more text
-		// above the canvas.
-		if cur.Y == 0 && height >= minLinesForMarkers && fromLine > 0 {
-			if err := cvs.SetCell(cur, '⇧'); err != nil {
-				return err
-			}
+		// Scroll up marker.
+		scrlUp, err := t.drawScrollUp(cvs, cur, fromLine)
+		if err != nil {
+			return err
+		}
+		if scrlUp {
 			cur = image.Point{0, cur.Y + 1} // Move to the next line.
-			startPos = starts[fromLine+1]   // Skip one line of text, the marker replaced it.
+			startPos = t.lines[fromLine+1]  // Skip one line of text, the marker replaced it.
 			continue
 		}
 
+		// Line wrapping.
 		if r == '\n' || wrapNeeded(r, cur.X, cvs.Area().Dx(), t.opts) {
 			cur = image.Point{0, cur.Y + 1} // Move to the next line.
 		}
 
-		// Draw the scroll down marker on the last line if there is more text
-		// below the canvas.
-		if cur.Y == height-1 && height >= minLinesForMarkers && height < lines-fromLine {
-			if height >= minLinesForMarkers {
-				if err := cvs.SetCell(cur, '⇩'); err != nil {
-					return err
-				}
-			}
-			break
+		// Scroll down marker.
+		scrlDown, err := t.drawScrollDown(cvs, cur, fromLine)
+		if err != nil {
+			return err
+		}
+		if scrlDown || cur.Y >= height {
+			break // Trim all lines falling after the canvas.
+		}
+
+		tr, err := lineTrim(cvs, cur, r, t.opts)
+		if err != nil {
+			return err
+		}
+		cur = tr.curPoint
+		if tr.trimmed {
+			continue // Skip over any characters trimmed on the current line.
 		}
 
 		if r == '\n' {
 			continue // Don't print the newline runes, just interpret them above.
 		}
 
-		if t.lineTrimNeeded(cur, cvs, r) {
-			// Trim by replacing the last printed rune.
-			prev := image.Point{cur.X - 1, cur.Y}
-			if prev.In(cvs.Area()) {
-				if err := cvs.SetCell(prev, '…'); err != nil {
-					return err
-				}
-			}
-		}
-
-		if !cur.In(cvs.Area()) {
-			continue // Skip any runes belonging to the trimmed area on a line.
-		}
-
 		if i >= optRange.high { // Get the next write options.
 			optRange = t.givenWOpts.forPosition(i)
 		}
-		if err := cvs.SetCell(cur, r, optRange.opts.cellOpts); err != nil {
+		cells, err := cvs.SetCell(cur, r, optRange.opts.cellOpts)
+		if err != nil {
 			return err
 		}
-		cur = image.Point{cur.X + 1, cur.Y} // Move within the same line.
+		cur = image.Point{cur.X + cells, cur.Y} // Move within the same line.
 	}
 	return nil
 }
@@ -212,9 +233,7 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 		return nil // Nothing to draw if there's no text.
 	}
 
-	height := cvs.Area().Dy()
-	fromLine := t.scroll.firstLine(len(t.lines), height)
-	if err := t.draw(text, cvs, t.lines, fromLine); err != nil {
+	if err := t.draw(text, cvs); err != nil {
 		return err
 	}
 	t.contentChanged = false
@@ -255,6 +274,7 @@ func (t *Text) Mouse(m *terminalapi.Mouse) error {
 
 func (t *Text) Options() widgetapi.Options {
 	return widgetapi.Options{
+		// At least one line with at least one full-width rune.
 		MinimumSize:  image.Point{1, 1},
 		WantMouse:    !t.opts.disableScrolling,
 		WantKeyboard: !t.opts.disableScrolling,

@@ -78,10 +78,10 @@ Displays the progress of an operation. Run the
 
 ### The Text
 
-[<img src="./images/textdemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
-
 Displays text content, supports trimming and scrolling of content. Run the
 [textdemo](widgets/text/demo/textdemo.go).
+
+[<img src="./images/textdemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
 
 ## Disclaimer
 

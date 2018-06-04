@@ -155,8 +155,8 @@ func (b Buffer) IsPartial(p image.Point) (bool, error) {
 	}
 }
 
-// RemWidth returns the remaining with (horizontal cells) available from and
-// inclusive of the specified point.
+// RemWidth returns the remaining width (horizontal row of cells) available
+// from and inclusive of the specified point.
 func (b Buffer) RemWidth(p image.Point) (int, error) {
 	size := b.Size()
 	ar, err := area.FromSize(size)

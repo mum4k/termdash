@@ -132,7 +132,7 @@ func TrimText(text string, maxCells int, om OverrunMode) (string, error) {
 			switch {
 			case om == OverrunModeTrim:
 				// Only write the rune if it still fits, i.e. don't cut
-				// full-width runes in halt.
+				// full-width runes in half.
 				if cur+rw == maxCells {
 					b.WriteRune(r)
 				}

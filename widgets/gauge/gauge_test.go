@@ -368,7 +368,7 @@ func TestGauge(t *testing.T) {
 			},
 		},
 		{
-			desc: "gauge with text label",
+			desc: "gauge with text label, half-width runes",
 			gauge: New(
 				Char('o'),
 				HideTextProgress(),
@@ -386,6 +386,84 @@ func TestGauge(t *testing.T) {
 				)
 				testdraw.MustText(c, "(label)", image.Point{1, 1},
 					draw.TextCellOpts(cell.FgColor(cell.ColorBlack)),
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "gauge with text label, full-width runes",
+			gauge: New(
+				Char('o'),
+				HideTextProgress(),
+				TextLabel("你好"),
+			),
+			percent: &percentCall{p: 100},
+			canvas:  image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 10, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustText(c, "(你好)", image.Point{2, 1},
+					draw.TextCellOpts(cell.FgColor(cell.ColorBlack)),
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "gauge with text label, full-width runes, gauge falls on rune boundary",
+			gauge: New(
+				Char('o'),
+				HideTextProgress(),
+				TextLabel("你好"),
+			),
+			percent: &percentCall{p: 50},
+			canvas:  image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 5, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustText(c, "(你", image.Point{2, 1},
+					draw.TextCellOpts(cell.FgColor(cell.ColorBlack)),
+				)
+				testdraw.MustText(c, "好)", image.Point{5, 1},
+					draw.TextCellOpts(cell.FgColor(cell.ColorDefault)),
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "gauge with text label, full-width runes, gauge extended to cover full rune",
+			gauge: New(
+				Char('o'),
+				HideTextProgress(),
+				TextLabel("你好"),
+			),
+			percent: &percentCall{p: 40},
+			canvas:  image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 5, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustText(c, "(你", image.Point{2, 1},
+					draw.TextCellOpts(cell.FgColor(cell.ColorBlack)),
+				)
+				testdraw.MustText(c, "好)", image.Point{5, 1},
+					draw.TextCellOpts(cell.FgColor(cell.ColorDefault)),
 				)
 				testcanvas.MustApply(c, ft)
 				return ft

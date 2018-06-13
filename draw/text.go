@@ -104,47 +104,48 @@ func TextOverrunMode(om OverrunMode) TextOption {
 	})
 }
 
-// trimToCells trims the provided text so that it fits the specified amount of cells.
-func trimToCells(text string, maxCells int, om OverrunMode) string {
+// TrimText trims the provided text so that it fits the specified amount of cells.
+func TrimText(text string, maxCells int, om OverrunMode) (string, error) {
 	if maxCells < 1 {
-		return ""
+		return "", fmt.Errorf("maxCells(%d) cannot be less than one", maxCells)
 	}
 
-	var b bytes.Buffer
-	cells := 0
-	for _, r := range text {
-		rw := runewidth.RuneWidth(r)
-		if cells+rw >= maxCells {
-			switch {
-			case om == OverrunModeTrim && rw == 1:
-				b.WriteRune(r)
-			case om == OverrunModeThreeDot:
-				b.WriteRune('…')
-			}
-			break
-		}
-		b.WriteRune(r)
-		cells += rw
-	}
-	return b.String()
-}
-
-// bounds enforces the text bounds based on the specified overrun mode.
-// Returns test that can be safely drawn within the bounds.
-func bounds(text string, maxCells int, om OverrunMode) (string, error) {
-	cells := runewidth.StringWidth(text)
-	if cells <= maxCells {
+	textCells := runewidth.StringWidth(text)
+	if textCells <= maxCells {
+		// Nothing to do if the text fits.
 		return text, nil
 	}
 
 	switch om {
 	case OverrunModeStrict:
-		return "", fmt.Errorf("the requested text %q takes %d cells to draw, space is available for only %d cells and overrun mode is %v", text, cells, maxCells, om)
+		return "", fmt.Errorf("the requested text %q takes %d cells to draw, space is available for only %d cells and overrun mode is %v", text, textCells, maxCells, om)
 	case OverrunModeTrim, OverrunModeThreeDot:
-		return trimToCells(text, maxCells, om), nil
 	default:
-		return "", fmt.Errorf("unsupported overrun mode %v", om)
+		return "", fmt.Errorf("unsupported overrun mode %d", om)
 	}
+
+	var b bytes.Buffer
+	cur := 0
+	for _, r := range text {
+		rw := runewidth.RuneWidth(r)
+		if cur+rw >= maxCells {
+			switch {
+			case om == OverrunModeTrim:
+				// Only write the rune if it still fits, i.e. don't cut
+				// full-width runes in half.
+				if cur+rw == maxCells {
+					b.WriteRune(r)
+				}
+			case om == OverrunModeThreeDot:
+				b.WriteRune('…')
+			}
+			break
+		}
+
+		b.WriteRune(r)
+		cur += rw
+	}
+	return b.String(), nil
 }
 
 // Text prints the provided text on the canvas starting at the provided point.
@@ -171,7 +172,7 @@ func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) 
 	}
 
 	maxCells := wantMaxX - start.X
-	trimmed, err := bounds(text, maxCells, opt.overrunMode)
+	trimmed, err := TrimText(text, maxCells, opt.overrunMode)
 	if err != nil {
 		return err
 	}

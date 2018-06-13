@@ -56,12 +56,18 @@ func Diff(want, got *Terminal) string {
 	var optDiffs []*optDiff
 	for row := 0; row < size.Y; row++ {
 		for col := 0; col < size.X; col++ {
+			p := image.Point{col, row}
+			partial, err := got.BackBuffer().IsPartial(p)
+			if err != nil {
+				panic(fmt.Errorf("unable to determine if point %v is a partial rune: %v", p, err))
+			}
+
 			gotCell := got.BackBuffer()[col][row]
 			wantCell := want.BackBuffer()[col][row]
 			r := gotCell.Rune
 			if r != wantCell.Rune {
 				r = '࿃'
-			} else if r == 0 {
+			} else if r == 0 && !partial {
 				r = ' '
 			}
 			b.WriteRune(r)

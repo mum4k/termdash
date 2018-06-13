@@ -51,7 +51,7 @@ func RectCellOpts(opts ...cell.Option) RectangleOption {
 	})
 }
 
-// DefaultRectChar  is the default value for the RectChar option.
+// DefaultRectChar is the default value for the RectChar option.
 const DefaultRectChar = ' '
 
 // RectChar sets the character used in each of the cells of the rectangle.
@@ -63,7 +63,9 @@ func RectChar(c rune) RectangleOption {
 
 // Rectangle draws a filled rectangle on the canvas.
 func Rectangle(c *canvas.Canvas, r image.Rectangle, opts ...RectangleOption) error {
-	opt := &rectOptions{}
+	opt := &rectOptions{
+		char: DefaultRectChar,
+	}
 	for _, o := range opts {
 		o.set(opt)
 	}

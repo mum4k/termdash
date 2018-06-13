@@ -49,6 +49,7 @@ type options struct {
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
+		gaugeChar:       DefaultChar,
 		hTextAlign:      DefaultHorizontalTextAlign,
 		vTextAlign:      DefaultVerticalTextAlign,
 		color:           DefaultColor,

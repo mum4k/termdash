@@ -35,15 +35,21 @@ func TestBorder(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			desc:    "border is larger than canvas",
-			canvas:  image.Rect(0, 0, 1, 1),
-			border:  image.Rect(0, 0, 2, 2),
+			desc:   "border is larger than canvas",
+			canvas: image.Rect(0, 0, 1, 1),
+			border: image.Rect(0, 0, 2, 2),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
 			wantErr: true,
 		},
 		{
-			desc:    "border is too small",
-			canvas:  image.Rect(0, 0, 2, 2),
-			border:  image.Rect(0, 0, 1, 1),
+			desc:   "border is too small",
+			canvas: image.Rect(0, 0, 2, 2),
+			border: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
 			wantErr: true,
 		},
 		{
@@ -52,6 +58,9 @@ func TestBorder(t *testing.T) {
 			border: image.Rect(0, 0, 2, 2),
 			opts: []BorderOption{
 				BorderLineStyle(LineStyle(-1)),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
 			},
 			wantErr: true,
 		},
@@ -194,6 +203,9 @@ func TestBorder(t *testing.T) {
 			border: image.Rect(0, 0, 4, 4),
 			opts: []BorderOption{
 				BorderTitle("abc", OverrunModeStrict),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
 			},
 			wantErr: true,
 		},

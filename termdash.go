@@ -25,6 +25,7 @@ package termdash
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -51,7 +52,8 @@ func (o option) set(td *termdash) {
 }
 
 // RedrawInterval sets how often termdash redraws the container and all the widgets.
-// Defaults to DefaultRedrawInterval.
+// Defaults to DefaultRedrawInterval. Use the controller to disable the
+// periodic redraw.
 func RedrawInterval(t time.Duration) Option {
 	return option(func(td *termdash) {
 		td.redrawInterval = t
@@ -88,12 +90,59 @@ func MouseSubscriber(f func(*terminalapi.Mouse)) Option {
 }
 
 // Run runs the terminal dashboard with the provided container on the terminal.
+// Redraws the terminal periodically. If you prefer a manual redraw, use the
+// Controller instead.
 // Blocks until the context expires.
 func Run(ctx context.Context, t terminalapi.Terminal, c *container.Container, opts ...Option) error {
 	td := newTermdash(t, c, opts...)
 	defer td.stop()
 
 	return td.start(ctx)
+}
+
+// Controller controls a termdash instance.
+// The controller instance is only valid until Close() is called.
+// The controller is not thread-safe.
+type Controller struct {
+	td     *termdash
+	cancel context.CancelFunc
+}
+
+// NewController initializes termdash and returns an instance of the controller.
+// Periodic redrawing is disabled when using the controller, the RedrawInterval
+// option is ignored.
+// Close the controller when it isn't needed anymore.
+func NewController(t terminalapi.Terminal, c *container.Container, opts ...Option) (*Controller, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	ctrl := &Controller{
+		td:     newTermdash(t, c, opts...),
+		cancel: cancel,
+	}
+
+	// stops when Close() is called.
+	go ctrl.td.processEvents(ctx)
+	if err := ctrl.td.periodicRedraw(); err != nil {
+		return nil, err
+	}
+	return ctrl, nil
+}
+
+// Redraw triggers redraw of the terminal.
+func (c *Controller) Redraw() error {
+	if c.td == nil {
+		return errors.New("the termdash instance is no longer running, this controller is now invalid")
+	}
+
+	c.td.mu.Lock()
+	defer c.td.mu.Unlock()
+	return c.td.redraw()
+}
+
+// Close closes the Controller and its termdash instance.
+func (c *Controller) Close() {
+	c.cancel()
+	c.td.stop()
+	c.td = nil
 }
 
 // termdash is a terminal based dashboard.

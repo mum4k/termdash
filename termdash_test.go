@@ -34,7 +34,7 @@ import (
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
-// Example shows how to setup and run termdash.
+// Example shows how to setup and run termdash with periodic redraw.
 func Example() {
 	// Create the terminal.
 	t, err := termbox.New()
@@ -66,6 +66,41 @@ func Example() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := Run(ctx, t, c); err != nil {
+		panic(err)
+	}
+}
+
+// Example shows how to setup and run termdash with manually triggered redraw.
+func Example_triggered() {
+	// Create the terminal.
+	t, err := termbox.New()
+	if err != nil {
+		panic(err)
+	}
+	defer t.Close()
+
+	wOpts := widgetapi.Options{
+		MinimumSize:  fakewidget.MinimumSize,
+		WantKeyboard: true,
+		WantMouse:    true,
+	}
+
+	// Create the container with a widget.
+	c := container.New(
+		t,
+		container.PlaceWidget(fakewidget.New(wOpts)),
+	)
+
+	// Create the controller and disable periodic redraw.
+	ctrl, err := NewController(t, c)
+	if err != nil {
+		panic(err)
+	}
+	// Close the controller and termdash once it isn't required anymore.
+	defer ctrl.Close()
+
+	// Redraw the terminal manually.
+	if err := ctrl.Redraw(); err != nil {
 		panic(err)
 	}
 }
@@ -142,26 +177,6 @@ func TestRun(t *testing.T) {
 				return ft
 			},
 			wantErr: true,
-		},
-		{
-			desc: "resizes the terminal",
-			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
-			},
-			events: []terminalapi.Event{
-				&terminalapi.Resize{Size: image.Point{70, 10}},
-			},
-			want: func(size image.Point) *faketerm.Terminal {
-				ft := faketerm.MustNew(image.Point{70, 10})
-
-				fakewidget.MustDraw(
-					ft,
-					testcanvas.MustNew(ft.Area()),
-					widgetapi.Options{},
-				)
-				return ft
-			},
 		},
 		{
 			desc: "forwards mouse events to container",
@@ -340,9 +355,213 @@ func TestRun(t *testing.T) {
 					t.Errorf("after => unexpected error: %v", err)
 				}
 			}
+
+			if err := untilEmpty(5*time.Second, eq); err != nil {
+				t.Fatalf("untilEmpty => %v", err)
+			}
+
 			if diff := faketerm.Diff(tc.want(got.Size()), got); diff != "" {
 				t.Errorf("Run => %v", diff)
 			}
 		})
+	}
+}
+
+func TestController(t *testing.T) {
+	tests := []struct {
+		desc      string
+		size      image.Point
+		opts      []Option
+		events    []terminalapi.Event
+		apiEvents func(*fakewidget.Mirror) // Calls to the API of the widget.
+		controls  func(*Controller) error
+		want      func(size image.Point) *faketerm.Terminal
+		wantErr   bool
+	}{
+		{
+			desc: "event triggers a redraw",
+			size: image.Point{60, 10},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(ft.Area()),
+					widgetapi.Options{
+						WantKeyboard: true,
+						WantMouse:    true,
+					},
+					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				)
+				return ft
+
+			},
+		},
+		{
+			desc: "controller triggers redraw",
+			size: image.Point{60, 10},
+			apiEvents: func(mi *fakewidget.Mirror) {
+				mi.Text("hello")
+			},
+			controls: func(ctrl *Controller) error {
+				return ctrl.Redraw()
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				mirror := fakewidget.New(widgetapi.Options{})
+				mirror.Text("hello")
+				fakewidget.MustDrawWithMirror(
+					mirror,
+					ft,
+					testcanvas.MustNew(ft.Area()),
+				)
+				return ft
+			},
+		},
+		{
+			desc: "ignores periodic redraw via the controller",
+			size: image.Point{60, 10},
+			opts: []Option{
+				RedrawInterval(1),
+			},
+			apiEvents: func(mi *fakewidget.Mirror) {
+				mi.Text("hello")
+			},
+			controls: func(ctrl *Controller) error {
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(ft.Area()),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+		},
+		{
+			desc: "does not redraw unless triggered when periodic disabled",
+			size: image.Point{60, 10},
+			apiEvents: func(mi *fakewidget.Mirror) {
+				mi.Text("hello")
+			},
+			controls: func(ctrl *Controller) error {
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(ft.Area()),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+		},
+		{
+			desc: "fails when redraw fails",
+			size: image.Point{1, 1},
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
+			desc: "resizes the terminal",
+			size: image.Point{60, 10},
+			events: []terminalapi.Event{
+				&terminalapi.Resize{Size: image.Point{70, 10}},
+			},
+			controls: func(ctrl *Controller) error {
+				return ctrl.Redraw()
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(image.Point{70, 10})
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(ft.Area()),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			eq := eventqueue.New()
+			for _, ev := range tc.events {
+				eq.Push(ev)
+			}
+
+			got, err := faketerm.New(tc.size, faketerm.WithEventQueue(eq))
+			if err != nil {
+				t.Fatalf("faketerm.New => unexpected error: %v", err)
+			}
+
+			mi := fakewidget.New(widgetapi.Options{
+				WantKeyboard: true,
+				WantMouse:    true,
+			})
+			cont := container.New(
+				got,
+				container.PlaceWidget(mi),
+			)
+
+			ctrl, err := NewController(got, cont, tc.opts...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("NewController => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+			defer ctrl.Close()
+
+			if tc.apiEvents != nil {
+				tc.apiEvents(mi)
+			}
+
+			if tc.controls != nil {
+				if err := tc.controls(ctrl); err != nil {
+					t.Errorf("controls => unexpected error: %v", err)
+				}
+			}
+			if err := untilEmpty(5*time.Second, eq); err != nil {
+				t.Fatalf("untilEmpty => %v", err)
+			}
+
+			if diff := faketerm.Diff(tc.want(got.Size()), got); diff != "" {
+				t.Errorf("Run => %v", diff)
+			}
+		})
+	}
+}
+
+// untilEmpty waits until the queue empties.
+// Waits at most the specified duration.
+func untilEmpty(timeout time.Duration, q *eventqueue.Unbound) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	tick := time.NewTimer(5 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-tick.C:
+			if q.Empty() {
+				return nil
+			}
+
+		case <-ctx.Done():
+			return fmt.Errorf("while waiting for the event queue to empty: %v", ctx.Err())
+		}
 	}
 }

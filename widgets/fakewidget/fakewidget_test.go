@@ -46,6 +46,7 @@ func TestMirror(t *testing.T) {
 		desc        string
 		keyEvents   []keyEvents   // Keyboard events to send before calling Draw().
 		mouseEvents []mouseEvents // Mouse events to send before calling Draw().
+		apiEvents   func(*Mirror) // External events via the widget's API.
 		cvs         *canvas.Canvas
 		want        func(size image.Point) *faketerm.Terminal
 		wantErr     bool
@@ -74,6 +75,21 @@ func TestMirror(t *testing.T) {
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
 				testdraw.MustText(cvs, "(7,3)", image.Point{1, 1})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws the box, canvas size and custom text",
+			apiEvents: func(mi *Mirror) {
+				mi.Text("hi")
+			},
+			cvs: testcanvas.MustNew(image.Rect(0, 0, 9, 3)),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, cvs.Area())
+				testdraw.MustText(cvs, "(9,3)hi", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -226,6 +242,10 @@ func TestMirror(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			w := New(widgetapi.Options{})
+
+			if tc.apiEvents != nil {
+				tc.apiEvents(w)
+			}
 
 			for _, keyEv := range tc.keyEvents {
 				err := w.Keyboard(keyEv.k)

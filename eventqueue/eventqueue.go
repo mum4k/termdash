@@ -75,6 +75,13 @@ func (u *Unbound) wake() {
 	}
 }
 
+// Empty determines if the queue is empty.
+func (u *Unbound) Empty() bool {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	return u.empty()
+}
+
 // empty determines if the queue is empty.
 func (u *Unbound) empty() bool {
 	return u.first == nil

@@ -13,6 +13,14 @@ type Option interface {
 	set(*options)
 }
 
+// option implements Option.
+type option func(*options)
+
+// set implements Option.set.
+func (o option) set(opts *options) {
+	o(opts)
+}
+
 // options holds the provided options.
 type options struct {
 	barChar     rune
@@ -31,14 +39,6 @@ func newOptions() *options {
 		barChar: DefaultChar,
 		barGap:  DefaultBarGap,
 	}
-}
-
-// option implements Option.
-type option func(*options)
-
-// set implements Option.set.
-func (o option) set(opts *options) {
-	o(opts)
 }
 
 // DefaultChar is the default value for the Char option.

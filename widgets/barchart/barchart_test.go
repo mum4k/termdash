@@ -102,7 +102,13 @@ func TestGauge(t *testing.T) {
 				)
 
 				// Labels.
-				testdraw.MustText(c, "1 2 3", image.Point{0, 10}, draw.TextCellOpts(
+				testdraw.MustText(c, "1", image.Point{0, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "2", image.Point{2, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "3", image.Point{4, 10}, draw.TextCellOpts(
 					cell.FgColor(DefaultLabelColor),
 				))
 				testcanvas.MustApply(c, ft)
@@ -145,7 +151,13 @@ func TestGauge(t *testing.T) {
 				)
 
 				// Labels.
-				testdraw.MustText(c, "1 … 3", image.Point{0, 10}, draw.TextCellOpts(
+				testdraw.MustText(c, "1", image.Point{0, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "…", image.Point{2, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "3", image.Point{4, 10}, draw.TextCellOpts(
 					cell.FgColor(DefaultLabelColor),
 				))
 				testcanvas.MustApply(c, ft)
@@ -188,11 +200,29 @@ func TestGauge(t *testing.T) {
 					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
 				)
 				// Labels.
-				testdraw.MustText(c, "1 2 3", image.Point{0, 10}, draw.TextCellOpts(
+				testdraw.MustText(c, "1", image.Point{0, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "2", image.Point{2, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "3", image.Point{4, 10}, draw.TextCellOpts(
 					cell.FgColor(DefaultLabelColor),
 				))
 				// Values.
-				testdraw.MustText(c, "1 2 5 …", image.Point{0, 9}, draw.TextCellOpts(
+				testdraw.MustText(c, "1", image.Point{0, 9}, draw.TextCellOpts(
+					cell.FgColor(DefaultValueColor),
+					cell.BgColor(DefaultBarColor),
+				))
+				testdraw.MustText(c, "2", image.Point{2, 9}, draw.TextCellOpts(
+					cell.FgColor(DefaultValueColor),
+					cell.BgColor(DefaultBarColor),
+				))
+				testdraw.MustText(c, "5", image.Point{4, 9}, draw.TextCellOpts(
+					cell.FgColor(DefaultValueColor),
+					cell.BgColor(DefaultBarColor),
+				))
+				testdraw.MustText(c, "…", image.Point{6, 9}, draw.TextCellOpts(
 					cell.FgColor(DefaultValueColor),
 					cell.BgColor(DefaultBarColor),
 				))
@@ -292,7 +322,7 @@ func TestGauge(t *testing.T) {
 					draw.RectChar('o'),
 					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
 				)
-				testdraw.MustRectangle(c, image.Rect(4, 8, 5, 10),
+				testdraw.MustRectangle(c, image.Rect(3, 8, 4, 10),
 					draw.RectChar('o'),
 					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
 				)
@@ -372,9 +402,6 @@ func TestGauge(t *testing.T) {
 					draw.RectChar('o'),
 					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
 				)
-				testdraw.MustText(c, "3", image.Point{4, 10}, draw.TextCellOpts(
-					cell.FgColor(DefaultLabelColor),
-				))
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -415,7 +442,7 @@ func TestGauge(t *testing.T) {
 					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
 				)
 				testdraw.MustText(c, "3", image.Point{4, 9}, draw.TextCellOpts(
-					cell.FgColor(DefaultLabelColor),
+					cell.FgColor(DefaultValueColor),
 					cell.BgColor(DefaultBarColor),
 				))
 				testcanvas.MustApply(c, ft)

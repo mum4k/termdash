@@ -74,7 +74,6 @@ func main() {
 		}),
 	)
 	go playBarChart(ctx, bc, 500*time.Millisecond)
-	empty := barchart.New()
 
 	c := container.New(
 		t,
@@ -86,9 +85,7 @@ func main() {
 					container.Top(
 						container.PlaceWidget(bc),
 					),
-					container.Bottom(
-						container.PlaceWidget(empty),
-					),
+					container.Bottom(),
 				),
 			),
 			container.Right(),

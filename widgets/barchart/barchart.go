@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package barchart implements a widget that displays multiple bars displaying
+// Package barchart implements a widget that draws multiple bars displaying
 // values and their relative ratios.
 package barchart
 
@@ -33,7 +33,7 @@ import (
 // BarChart displays multiple bars showing relative ratios of values.
 //
 // Each bar can have a text label under it explaining the meaning of the value
-// it displays and can display the value itself inside the bar.
+// and can display the value itself inside the bar.
 //
 // Implements widgetapi.Widget. This object is thread-safe.
 type BarChart struct {
@@ -74,7 +74,7 @@ func (bc *BarChart) Draw(cvs *canvas.Canvas) error {
 			return err
 		}
 
-		if r.Dy() > 0 {
+		if r.Dy() > 0 { // Value might be so small so that the rectangle is zero.
 			if err := draw.Rectangle(cvs, r,
 				draw.RectCellOpts(cell.BgColor(bc.barColor(i))),
 				draw.RectChar(bc.opts.barChar),
@@ -109,6 +109,7 @@ const (
 
 // drawText draws the provided text inside or under the i-th bar.
 func (bc *BarChart) drawText(cvs *canvas.Canvas, i int, text string, color cell.Color, loc textLoc) error {
+	// Rectangle representing area in which the text will be aligned.
 	var barCol image.Rectangle
 
 	r, err := bc.barRect(cvs, i, bc.max)
@@ -155,7 +156,7 @@ func (bc *BarChart) barWidth(cvs *canvas.Canvas) int {
 	return rem / len(bc.values)
 }
 
-// barHeight determines the height of the i-th bar if it has the specified value.
+// barHeight determines the height of the i-th bar based on the value it is displaying.
 func (bc *BarChart) barHeight(cvs *canvas.Canvas, i, value int) int {
 	available := cvs.Area().Dy()
 	if len(bc.opts.labels) > 0 {
@@ -167,8 +168,8 @@ func (bc *BarChart) barHeight(cvs *canvas.Canvas, i, value int) int {
 	return int(float32(available) * ratio)
 }
 
-// barRect returns a rectangle that represents the i-th bar on the canvas if it
-// has the specified value.
+// barRect returns a rectangle that represents the i-th bar on the canvas that
+// displays the specified value.
 func (bc *BarChart) barRect(cvs *canvas.Canvas, i, value int) (image.Rectangle, error) {
 	bw := bc.barWidth(cvs)
 	minX := bw * i
@@ -188,22 +189,25 @@ func (bc *BarChart) barRect(cvs *canvas.Canvas, i, value int) (image.Rectangle, 
 }
 
 // barColor safely determines the color for the i-th bar.
+// Colors are optional and don't have to be specified for all the bars.
 func (bc *BarChart) barColor(i int) cell.Color {
-	if len(bc.opts.barColors) < i+1 {
-		return DefaultBarColor
+	if len(bc.opts.barColors) > i {
+		return bc.opts.barColors[i]
 	}
-	return bc.opts.barColors[i]
+	return DefaultBarColor
 }
 
 // valColor safely determines the color for the i-th value.
+// Colors are optional and don't have to be specified for all the values.
 func (bc *BarChart) valColor(i int) cell.Color {
-	if len(bc.opts.valueColors) < i+1 {
-		return DefaultValueColor
+	if len(bc.opts.valueColors) > i {
+		return bc.opts.valueColors[i]
 	}
-	return bc.opts.valueColors[i]
+	return DefaultValueColor
 }
 
 // label safely determines the label and its color for the i-th bar.
+// Labels are optional and don't have to be specified for all the bars.
 func (bc *BarChart) label(i int) (string, cell.Color) {
 	var label string
 	if len(bc.opts.labels) > i {

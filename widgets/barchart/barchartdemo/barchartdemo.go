@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -67,6 +68,22 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	bc := barchart.New(
+		barchart.BarColors([]cell.Color{
+			cell.ColorBlue,
+			cell.ColorRed,
+			cell.ColorYellow,
+			cell.ColorBlue,
+			cell.ColorGreen,
+			cell.ColorRed,
+		}),
+		barchart.ValueColors([]cell.Color{
+			cell.ColorRed,
+			cell.ColorYellow,
+			cell.ColorBlue,
+			cell.ColorGreen,
+			cell.ColorRed,
+			cell.ColorBlue,
+		}),
 		barchart.ShowValues(),
 		barchart.Labels([]string{
 			"CPU1",

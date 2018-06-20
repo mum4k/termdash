@@ -52,6 +52,62 @@ func TestGauge(t *testing.T) {
 			},
 		},
 		{
+			desc: "fails for zero max",
+			bc: New(
+				Char('o'),
+			),
+			update: func(bc *BarChart) error {
+				return bc.Values([]int{0, 2, 5, 10}, 0)
+			},
+			canvas: image.Rect(0, 0, 3, 10),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantUpdateErr: true,
+		},
+		{
+			desc: "fails for negative max",
+			bc: New(
+				Char('o'),
+			),
+			update: func(bc *BarChart) error {
+				return bc.Values([]int{0, 2, 5, 10}, -1)
+			},
+			canvas: image.Rect(0, 0, 3, 10),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantUpdateErr: true,
+		},
+		{
+			desc: "fails when negative value",
+			bc: New(
+				Char('o'),
+			),
+			update: func(bc *BarChart) error {
+				return bc.Values([]int{0, -2, 5, 10}, 10)
+			},
+			canvas: image.Rect(0, 0, 3, 10),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantUpdateErr: true,
+		},
+		{
+			desc: "fails for value larger than max",
+			bc: New(
+				Char('o'),
+			),
+			update: func(bc *BarChart) error {
+				return bc.Values([]int{0, 2, 5, 11}, 10)
+			},
+			canvas: image.Rect(0, 0, 3, 10),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantUpdateErr: true,
+		},
+		{
 			desc: "displays bars",
 			bc: New(
 				Char('o'),

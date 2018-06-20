@@ -69,27 +69,18 @@ func main() {
 	bc := barchart.New(
 		barchart.ShowValues(),
 		barchart.Labels([]string{
-			"foo",
-			"bar",
+			"CPU1",
+			"",
+			"CPU3",
 		}),
 	)
-	go playBarChart(ctx, bc, 500*time.Millisecond)
+	go playBarChart(ctx, bc, 1*time.Second)
 
 	c := container.New(
 		t,
 		container.Border(draw.LineStyleLight),
 		container.BorderTitle("PRESS Q TO QUIT"),
-		container.SplitVertical(
-			container.Left(
-				container.SplitHorizontal(
-					container.Top(
-						container.PlaceWidget(bc),
-					),
-					container.Bottom(),
-				),
-			),
-			container.Right(),
-		),
+		container.PlaceWidget(bc),
 	)
 
 	quitter := func(k *terminalapi.Keyboard) {

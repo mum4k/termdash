@@ -529,13 +529,13 @@ func TestController(t *testing.T) {
 				tc.apiEvents(mi)
 			}
 
+			if err := untilEmpty(5*time.Second, eq); err != nil {
+				t.Fatalf("untilEmpty => %v", err)
+			}
 			if tc.controls != nil {
 				if err := tc.controls(ctrl); err != nil {
 					t.Errorf("controls => unexpected error: %v", err)
 				}
-			}
-			if err := untilEmpty(5*time.Second, eq); err != nil {
-				t.Fatalf("untilEmpty => %v", err)
 			}
 
 			if diff := faketerm.Diff(tc.want(got.Size()), got); diff != "" {

@@ -555,7 +555,7 @@ func TestGauge(t *testing.T) {
 			}
 
 			if diff := faketerm.Diff(tc.want(c.Size()), got); diff != "" {
-				t.Errorf("Rectangle => %v", diff)
+				t.Errorf("Draw => %v", diff)
 			}
 		})
 	}

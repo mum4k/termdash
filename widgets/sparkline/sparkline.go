@@ -17,7 +17,7 @@ import (
 // SparkLine draws a graph showing a series of values as vertical bars.
 //
 // Bars can have sub-cell height. The graphs scale adjusts dynamically based on
-// the largest displayed value or has a statically set maximum.
+// the largest visible value.
 //
 // Implements widgetapi.Widget. This object is thread-safe.
 type SparkLine struct {
@@ -61,33 +61,24 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 		blocks := toBlocks(v, max, ar.Dy())
 		curY := ar.Max.Y - 1
 		for i := 0; i < blocks.full; i++ {
-			cells, err := cvs.SetCell(
+			if _, err := cvs.SetCell(
 				image.Point{curX, curY},
-				sparks[len(sparks)-1],
+				sparks[len(sparks)-1], // Last spark represents full cell.
 				cell.FgColor(sl.opts.color),
-			)
-			if err != nil {
+			); err != nil {
 				return err
 			}
 
-			if cells != 1 {
-				panic(fmt.Sprintf("set an unexpected number of cells %d while filling a full block, expected one", cells))
-			}
 			curY--
 		}
 
 		if blocks.partSpark != 0 {
-			cells, err := cvs.SetCell(
+			if _, err := cvs.SetCell(
 				image.Point{curX, curY},
 				blocks.partSpark,
 				cell.FgColor(sl.opts.color),
-			)
-			if err != nil {
+			); err != nil {
 				return err
-			}
-
-			if cells != 1 {
-				panic(fmt.Sprintf("set an unexpected number of cells %d while filling a partial block, expected one", cells))
 			}
 		}
 
@@ -95,6 +86,7 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 	}
 
 	if sl.opts.label != "" {
+		// Label is placed immediately above the SparkLine.
 		lStart := image.Point{ar.Min.X, ar.Min.Y - 1}
 		if err := draw.Text(cvs, sl.opts.label, lStart,
 			draw.TextCellOpts(sl.opts.labelCellOpts...),
@@ -111,9 +103,14 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 // integers.
 // The last added data point will be the one displayed all the way on the right
 // of the SparkLine.
-func (sl *SparkLine) Add(data ...int) error {
+// Provided options override values set when New() was called.
+func (sl *SparkLine) Add(data []int, opts ...Option) error {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
+
+	for _, opt := range opts {
+		opt.set(sl.opts)
+	}
 
 	for i, d := range data {
 		if d < 0 {
@@ -124,11 +121,12 @@ func (sl *SparkLine) Add(data ...int) error {
 	return nil
 }
 
-// Clear removes all the data points in the sparkline, effectively returning to
+// Clear removes all the data points in the SparkLine, effectively returning to
 // an empty graph.
 func (sl *SparkLine) Clear() {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
+
 	sl.data = nil
 }
 
@@ -145,8 +143,9 @@ func (*SparkLine) Mouse(m *terminalapi.Mouse) error {
 // area returns the area of the canvas available to the SparkLine.
 func (sl *SparkLine) area(cvs *canvas.Canvas) image.Rectangle {
 	cvsAr := cvs.Area()
-
 	maxY := cvsAr.Max.Y
+
+	// Height is determined based on options (fixed height / label).
 	var minY int
 	if sl.opts.height > 0 {
 		minY = maxY - sl.opts.height
@@ -165,10 +164,10 @@ func (sl *SparkLine) area(cvs *canvas.Canvas) image.Rectangle {
 	)
 }
 
-// minSize returns the minimum canvas size for the sparkline based on the options.
+// minSize returns the minimum canvas size for the SparkLine based on the options.
 func (sl *SparkLine) minSize() image.Point {
-	// At least one data point.
-	const minWidth = 1
+	const minWidth = 1 // At least one data point.
+
 	var minHeight int
 	if sl.opts.height > 0 {
 		minHeight = sl.opts.height
@@ -190,7 +189,7 @@ func (sl *SparkLine) Options() widgetapi.Options {
 	min := sl.minSize()
 	var max image.Point
 	if sl.opts.height > 0 {
-		max = min
+		max = min // Fix the height to the one specified.
 	}
 
 	return widgetapi.Options{

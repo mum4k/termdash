@@ -1,14 +1,16 @@
 package sparkline
 
-import "math"
-
 // sparks.go contains code that determines which characters should be used to
 // represent a value on the SparkLine.
 
+import (
+	"fmt"
+	"math"
+
+	runewidth "github.com/mattn/go-runewidth"
+)
+
 // sparks are the characters used to draw the SparkLine.
-// Note that the last character representing fully populated cell isn't ever
-// used. If we need to fill the cell fully, we use a space character with background
-// color set. This ensures we have no gaps between cells.
 var sparks = []rune{'▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'}
 
 // visibleMax determines the maximum visible data point given the canvas width.
@@ -32,13 +34,14 @@ func visibleMax(data []int, width int) ([]int, int) {
 	return data, max
 }
 
-// blocks represents blocks that display one value on a SparkLine.
+// blocks represents the building blocks that display one value on a SparkLine.
+// I.e. one vertical bar.
 type blocks struct {
 	// full is the number of fully populated blocks.
 	full int
 
 	// partSpark is the spark character from sparks that should be used in the
-	// topmost block. Equals to zero if no part blocks should be displayed.
+	// topmost block. Equals to zero if no partial block should be displayed.
 	partSpark rune
 }
 
@@ -50,7 +53,7 @@ func toBlocks(value, max, vertCells int) blocks {
 		return blocks{}
 	}
 
-	// How many of the smallesr spark elements fit into a cell.
+	// How many of the smallest spark elements fit into a cell.
 	cellSparks := len(sparks)
 
 	// Scale is how much of the max does one smallest spark element represent,
@@ -72,11 +75,23 @@ func toBlocks(value, max, vertCells int) blocks {
 }
 
 // round returns the nearest integer, rounding half away from zero.
-// Copied from Go 1.10, package math for backwards compatibility with go 1.8.
+// Copied from the math package of Go 1.10 for backwards compatibility with Go
+// 1.8 where the math.Round function doesn't exist yet.
 func round(x float64) float64 {
 	t := math.Trunc(x)
 	if math.Abs(x-t) >= 0.5 {
 		return t + math.Copysign(1, x)
 	}
 	return t
+}
+
+// init ensures that all spark characters are half-width runes.
+// The SparkLine widget assumes that each value can be represented in a column
+// that has a width of one cell.
+func init() {
+	for i, s := range sparks {
+		if got := runewidth.RuneWidth(s); got > 1 {
+			panic(fmt.Sprintf("all sparks must be half-width runes (width of one), spark[%d] has width %d", i, got))
+		}
+	}
 }

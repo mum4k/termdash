@@ -39,7 +39,7 @@ func TestSparkLine(t *testing.T) {
 			desc:      "fails on negative data points",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 3, -1, 2)
+				return sl.Add([]int{0, 3, -1, 2})
 			},
 			canvas: image.Rect(0, 0, 1, 1),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -51,7 +51,7 @@ func TestSparkLine(t *testing.T) {
 			desc:      "single height sparkline",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1, 2, 3, 4, 5, 6, 7, 8)
+				return sl.Add([]int{0, 1, 2, 3, 4, 5, 6, 7, 8})
 			},
 			canvas: image.Rect(0, 0, 9, 1),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -66,12 +66,27 @@ func TestSparkLine(t *testing.T) {
 			},
 		},
 		{
+			desc:      "sparkline can be cleared",
+			sparkLine: New(),
+			update: func(sl *SparkLine) error {
+				if err := sl.Add([]int{0, 1, 2, 3, 4, 5, 6, 7, 8}); err != nil {
+					return err
+				}
+				sl.Clear()
+				return nil
+			},
+			canvas: image.Rect(0, 0, 9, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
 			desc: "sets sparkline color",
 			sparkLine: New(
 				Color(cell.ColorMagenta),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1, 2, 3, 4, 5, 6, 7, 8)
+				return sl.Add([]int{0, 1, 2, 3, 4, 5, 6, 7, 8})
 			},
 			canvas: image.Rect(0, 0, 9, 1),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -86,10 +101,29 @@ func TestSparkLine(t *testing.T) {
 			},
 		},
 		{
+			desc:      "sets sparkline color on a call to Add",
+			sparkLine: New(),
+			update: func(sl *SparkLine) error {
+				return sl.Add([]int{0, 1, 2, 3, 4, 5, 6, 7, 8}, Color(cell.ColorMagenta))
+			},
+			canvas: image.Rect(0, 0, 9, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "▁▂▃▄▅▆▇█", image.Point{1, 0}, draw.TextCellOpts(
+					cell.FgColor(cell.ColorMagenta),
+				))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+
+		{
 			desc:      "draws data points from the right",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(7, 8)
+				return sl.Add([]int{7, 8})
 			},
 			canvas: image.Rect(0, 0, 9, 1),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -110,7 +144,7 @@ func TestSparkLine(t *testing.T) {
 				Label("Hello"),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1, 2, 3, 8, 3, 2, 1, 1)
+				return sl.Add([]int{0, 1, 2, 3, 8, 3, 2, 1, 1})
 			},
 			canvas: image.Rect(0, 0, 9, 2),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -132,7 +166,7 @@ func TestSparkLine(t *testing.T) {
 				Label("Hello world"),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(8)
+				return sl.Add([]int{8})
 			},
 			canvas: image.Rect(0, 0, 9, 2),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -152,7 +186,7 @@ func TestSparkLine(t *testing.T) {
 			desc:      "stretches up to the height of the container",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 100, 50, 85)
+				return sl.Add([]int{0, 100, 50, 85})
 			},
 			canvas: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -188,7 +222,7 @@ func TestSparkLine(t *testing.T) {
 				Label("zoo"),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 90, 30, 85)
+				return sl.Add([]int{0, 90, 30, 85})
 			},
 			canvas: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -222,7 +256,7 @@ func TestSparkLine(t *testing.T) {
 				Height(2),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 100, 50, 85)
+				return sl.Add([]int{0, 100, 50, 85})
 			},
 			canvas: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -250,7 +284,7 @@ func TestSparkLine(t *testing.T) {
 				Height(2),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 100, 50, 0)
+				return sl.Add([]int{0, 100, 50, 0})
 			},
 			canvas: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -281,7 +315,7 @@ func TestSparkLine(t *testing.T) {
 				),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1)
+				return sl.Add([]int{0, 1})
 			},
 			canvas: image.Rect(0, 0, 9, 2),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -304,7 +338,7 @@ func TestSparkLine(t *testing.T) {
 			desc:      "displays only data points that fit the width",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1, 2, 3, 4, 5, 6, 7, 8)
+				return sl.Add([]int{0, 1, 2, 3, 4, 5, 6, 7, 8})
 			},
 			canvas: image.Rect(0, 0, 3, 1),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -323,7 +357,7 @@ func TestSparkLine(t *testing.T) {
 			desc:      "data points not visible don't affect the determined max data point",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(10, 4, 8)
+				return sl.Add([]int{10, 4, 8})
 			},
 			canvas: image.Rect(0, 0, 2, 1),
 			want: func(size image.Point) *faketerm.Terminal {

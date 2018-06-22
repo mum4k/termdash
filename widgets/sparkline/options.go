@@ -28,7 +28,9 @@ type options struct {
 
 // newOptions returns options with the default values set.
 func newOptions() *options {
-	return &options{}
+	return &options{
+		color: DefaultColor,
+	}
 }
 
 // Label adds a label above the SparkLine.

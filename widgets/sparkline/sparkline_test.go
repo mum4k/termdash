@@ -45,19 +45,20 @@ func TestSparkLine(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
+			wantUpdateErr: true,
 		},
 		{
 			desc:      "single height sparkline",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1, 2, 3, 4, 5, 6, 7)
+				return sl.Add(0, 1, 2, 3, 4, 5, 6, 7, 8)
 			},
-			canvas: image.Rect(0, 0, 8, 1),
+			canvas: image.Rect(0, 0, 9, 1),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testdraw.MustText(c, " ▁▂▃▄▅▆▇", image.Point{0, 0}, draw.TextCellOpts(
+				testdraw.MustText(c, "▁▂▃▄▅▆▇█", image.Point{1, 0}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
 				testcanvas.MustApply(c, ft)
@@ -70,55 +71,15 @@ func TestSparkLine(t *testing.T) {
 				Color(cell.ColorMagenta),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1, 2, 3, 4, 5, 6, 7)
+				return sl.Add(0, 1, 2, 3, 4, 5, 6, 7, 8)
 			},
-			canvas: image.Rect(0, 0, 8, 1),
+			canvas: image.Rect(0, 0, 9, 1),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testdraw.MustText(c, " ▁▂▃▄▅▆▇", image.Point{0, 0}, draw.TextCellOpts(
+				testdraw.MustText(c, "▁▂▃▄▅▆▇█", image.Point{1, 0}, draw.TextCellOpts(
 					cell.FgColor(cell.ColorMagenta),
-				))
-				testcanvas.MustApply(c, ft)
-				return ft
-			},
-		},
-		{
-			desc:      "full cell has background set",
-			sparkLine: New(),
-			update: func(sl *SparkLine) error {
-				return sl.Add(8)
-			},
-			canvas: image.Rect(0, 0, 1, 1),
-			want: func(size image.Point) *faketerm.Terminal {
-				ft := faketerm.MustNew(size)
-				c := testcanvas.MustNew(ft.Area())
-
-				testdraw.MustText(c, "█", image.Point{0, 0}, draw.TextCellOpts(
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				))
-				testcanvas.MustApply(c, ft)
-				return ft
-			},
-		},
-		{
-			desc: "full cell has background set to custom color",
-			sparkLine: New(
-				Color(cell.ColorMagenta),
-			),
-			update: func(sl *SparkLine) error {
-				return sl.Add(8)
-			},
-			canvas: image.Rect(0, 0, 1, 1),
-			want: func(size image.Point) *faketerm.Terminal {
-				ft := faketerm.MustNew(size)
-				c := testcanvas.MustNew(ft.Area())
-
-				testdraw.MustText(c, "█", image.Point{0, 0}, draw.TextCellOpts(
-					cell.FgColor(cell.ColorMagenta),
-					cell.BgColor(cell.ColorMagenta),
 				))
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -128,14 +89,14 @@ func TestSparkLine(t *testing.T) {
 			desc:      "draws data points from the right",
 			sparkLine: New(),
 			update: func(sl *SparkLine) error {
-				return sl.Add(6, 7)
+				return sl.Add(7, 8)
 			},
 			canvas: image.Rect(0, 0, 9, 1),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testdraw.MustText(c, "       ▆▇", image.Point{0, 0}, draw.TextCellOpts(
+				testdraw.MustText(c, "▇█", image.Point{7, 0}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
 
@@ -149,7 +110,7 @@ func TestSparkLine(t *testing.T) {
 				Label("Hello"),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 1, 2, 3, 7, 3, 2, 0, 1)
+				return sl.Add(0, 1, 2, 3, 8, 3, 2, 1, 1)
 			},
 			canvas: image.Rect(0, 0, 9, 2),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -157,7 +118,7 @@ func TestSparkLine(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testdraw.MustText(c, "Hello", image.Point{0, 0})
-				testdraw.MustText(c, " ▁▂▃▇▃▂ ▁", image.Point{0, 1}, draw.TextCellOpts(
+				testdraw.MustText(c, "▁▂▃█▃▂▁▁", image.Point{1, 1}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
 
@@ -171,7 +132,7 @@ func TestSparkLine(t *testing.T) {
 				Label("Hello world"),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(7)
+				return sl.Add(8)
 			},
 			canvas: image.Rect(0, 0, 9, 2),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -179,7 +140,7 @@ func TestSparkLine(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testdraw.MustText(c, "Hello wo…", image.Point{0, 0})
-				testdraw.MustText(c, "        ▇", image.Point{0, 1}, draw.TextCellOpts(
+				testdraw.MustText(c, "█", image.Point{8, 1}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
 
@@ -198,46 +159,24 @@ func TestSparkLine(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testdraw.MustText(c, " █ ▃", image.Point{0, 0}, draw.TextCellOpts(
+				testdraw.MustText(c, "█", image.Point{1, 0}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{1, 0}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-
-				testdraw.MustText(c, " █ █", image.Point{0, 1}, draw.TextCellOpts(
+				testdraw.MustText(c, "▃", image.Point{3, 0}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{1, 1}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-				testcanvas.MustSetCell(c, image.Point{3, 1}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-
-				testdraw.MustText(c, " ███", image.Point{0, 2}, draw.TextCellOpts(
+				testdraw.MustText(c, "█", image.Point{1, 1}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testdraw.MustRectangle(c, image.Rect(1, 2, 4, 3),
-					draw.RectChar('█'),
-					draw.RectCellOpts(
-						cell.FgColor(DefaultColor),
-						cell.BgColor(DefaultColor),
-					),
-				)
-				testdraw.MustText(c, " ███", image.Point{0, 3}, draw.TextCellOpts(
+				testdraw.MustText(c, "█", image.Point{3, 1}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testdraw.MustRectangle(c, image.Rect(1, 3, 4, 4),
-					draw.RectChar('█'),
-					draw.RectCellOpts(
-						cell.FgColor(DefaultColor),
-						cell.BgColor(DefaultColor),
-					),
-				)
+				testdraw.MustText(c, "███", image.Point{1, 2}, draw.TextCellOpts(
+					cell.FgColor(DefaultColor),
+				))
+				testdraw.MustText(c, "███", image.Point{1, 3}, draw.TextCellOpts(
+					cell.FgColor(DefaultColor),
+				))
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -246,47 +185,32 @@ func TestSparkLine(t *testing.T) {
 		{
 			desc: "stretches up to the height of the container with label",
 			sparkLine: New(
-				Label("Hello"),
+				Label("zoo"),
 			),
 			update: func(sl *SparkLine) error {
 				return sl.Add(0, 90, 30, 85)
 			},
-			canvas: image.Rect(0, 0, 9, 4),
+			canvas: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testdraw.MustText(c, "Hello", image.Point{0, 0})
-				testdraw.MustText(c, " █ ▇", image.Point{0, 1}, draw.TextCellOpts(
+				testdraw.MustText(c, "zoo", image.Point{0, 0})
+				testdraw.MustText(c, "█", image.Point{1, 1}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{1, 1}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-
-				testdraw.MustText(c, " █ █", image.Point{0, 2}, draw.TextCellOpts(
+				testdraw.MustText(c, "▇", image.Point{3, 1}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{1, 2}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-				testcanvas.MustSetCell(c, image.Point{3, 2}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-
-				testdraw.MustText(c, " ███", image.Point{0, 3}, draw.TextCellOpts(
+				testdraw.MustText(c, "█", image.Point{1, 2}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testdraw.MustRectangle(c, image.Rect(1, 3, 4, 4),
-					draw.RectChar('█'),
-					draw.RectCellOpts(
-						cell.FgColor(DefaultColor),
-						cell.BgColor(DefaultColor),
-					),
-				)
+				testdraw.MustText(c, "█", image.Point{3, 2}, draw.TextCellOpts(
+					cell.FgColor(DefaultColor),
+				))
+				testdraw.MustText(c, "███", image.Point{1, 3}, draw.TextCellOpts(
+					cell.FgColor(DefaultColor),
+				))
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -300,29 +224,20 @@ func TestSparkLine(t *testing.T) {
 			update: func(sl *SparkLine) error {
 				return sl.Add(0, 100, 50, 85)
 			},
-			canvas: image.Rect(0, 0, 9, 4),
+			canvas: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testdraw.MustText(c, " █ ▆", image.Point{0, 2}, draw.TextCellOpts(
+				testdraw.MustText(c, "█", image.Point{1, 2}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{1, 2}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-
-				testdraw.MustText(c, " ███", image.Point{0, 3}, draw.TextCellOpts(
+				testdraw.MustText(c, "▆", image.Point{3, 2}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testdraw.MustRectangle(c, image.Rect(1, 3, 4, 4),
-					draw.RectChar('█'),
-					draw.RectCellOpts(
-						cell.FgColor(DefaultColor),
-						cell.BgColor(DefaultColor),
-					),
-				)
+				testdraw.MustText(c, "███", image.Point{1, 3}, draw.TextCellOpts(
+					cell.FgColor(DefaultColor),
+				))
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -335,34 +250,22 @@ func TestSparkLine(t *testing.T) {
 				Height(2),
 			),
 			update: func(sl *SparkLine) error {
-				return sl.Add(0, 100, 50, 85)
+				return sl.Add(0, 100, 50, 0)
 			},
-			canvas: image.Rect(0, 0, 9, 4),
+			canvas: image.Rect(0, 0, 4, 4),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
 				testdraw.MustText(c, "zoo", image.Point{0, 1}, draw.TextCellOpts(
+					cell.FgColor(cell.ColorDefault),
+				))
+				testdraw.MustText(c, "█", image.Point{1, 2}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testdraw.MustText(c, " █ ▆", image.Point{0, 2}, draw.TextCellOpts(
+				testdraw.MustText(c, "██", image.Point{1, 3}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{1, 2}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
-
-				testdraw.MustText(c, " ███", image.Point{0, 3}, draw.TextCellOpts(
-					cell.FgColor(DefaultColor),
-				))
-				testdraw.MustRectangle(c, image.Rect(1, 3, 4, 4),
-					draw.RectChar('█'),
-					draw.RectCellOpts(
-						cell.FgColor(DefaultColor),
-						cell.BgColor(DefaultColor),
-					),
-				)
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -389,7 +292,7 @@ func TestSparkLine(t *testing.T) {
 					cell.FgColor(cell.ColorBlue),
 					cell.BgColor(cell.ColorYellow),
 				))
-				testdraw.MustText(c, "        ▁", image.Point{0, 1}, draw.TextCellOpts(
+				testdraw.MustText(c, "█", image.Point{8, 1}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
 
@@ -411,10 +314,6 @@ func TestSparkLine(t *testing.T) {
 				testdraw.MustText(c, "▆▇█", image.Point{0, 0}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{2, 0}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -434,10 +333,6 @@ func TestSparkLine(t *testing.T) {
 				testdraw.MustText(c, "▄█", image.Point{0, 0}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
-				testcanvas.MustSetCell(c, image.Point{1, 0}, '█',
-					cell.FgColor(DefaultColor),
-					cell.BgColor(DefaultColor),
-				)
 
 				testcanvas.MustApply(c, ft)
 				return ft

@@ -12,9 +12,11 @@ import "math"
 var sparks = []rune{'▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'}
 
 // visibleMax determines the maximum visible data point given the canvas width.
-func visibleMax(data []int, width int) int {
+// Returns a slice that contains only visible data points and the maximum value
+// among them.
+func visibleMax(data []int, width int) ([]int, int) {
 	if width <= 0 || len(data) == 0 {
-		return 0
+		return nil, 0
 	}
 
 	if width < len(data) {
@@ -27,7 +29,7 @@ func visibleMax(data []int, width int) int {
 			max = v
 		}
 	}
-	return max
+	return data, max
 }
 
 // blocks represents blocks that display one value on a SparkLine.

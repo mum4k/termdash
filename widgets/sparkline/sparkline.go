@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -45,6 +47,62 @@ func New(opts ...Option) *SparkLine {
 func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
+
+	ar := sl.area(cvs)
+	visible, max := visibleMax(sl.data, ar.Dx())
+	var curX int
+	if len(visible) < ar.Dx() {
+		curX = ar.Max.X - len(visible)
+	} else {
+		curX = ar.Min.X
+	}
+
+	for _, v := range visible {
+		blocks := toBlocks(v, max, ar.Dy())
+		curY := ar.Max.Y - 1
+		for i := 0; i < blocks.full; i++ {
+			cells, err := cvs.SetCell(
+				image.Point{curX, curY},
+				sparks[len(sparks)-1],
+				cell.FgColor(sl.opts.color),
+			)
+			if err != nil {
+				return err
+			}
+
+			if cells != 1 {
+				panic(fmt.Sprintf("set an unexpected number of cells %d while filling a full block, expected one", cells))
+			}
+			curY--
+		}
+
+		if blocks.partSpark != 0 {
+			cells, err := cvs.SetCell(
+				image.Point{curX, curY},
+				blocks.partSpark,
+				cell.FgColor(sl.opts.color),
+			)
+			if err != nil {
+				return err
+			}
+
+			if cells != 1 {
+				panic(fmt.Sprintf("set an unexpected number of cells %d while filling a partial block, expected one", cells))
+			}
+		}
+
+		curX++
+	}
+
+	if sl.opts.label != "" {
+		lStart := image.Point{ar.Min.X, ar.Min.Y - 1}
+		if err := draw.Text(cvs, sl.opts.label, lStart,
+			draw.TextCellOpts(sl.opts.labelCellOpts...),
+			draw.TextOverrunMode(draw.OverrunModeThreeDot),
+		); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -82,6 +140,29 @@ func (*SparkLine) Keyboard(k *terminalapi.Keyboard) error {
 // Mouse input isn't supported on the SparkLine widget.
 func (*SparkLine) Mouse(m *terminalapi.Mouse) error {
 	return errors.New("the SparkLine widget doesn't support mouse events")
+}
+
+// area returns the area of the canvas available to the SparkLine.
+func (sl *SparkLine) area(cvs *canvas.Canvas) image.Rectangle {
+	cvsAr := cvs.Area()
+
+	maxY := cvsAr.Max.Y
+	var minY int
+	if sl.opts.height > 0 {
+		minY = maxY - sl.opts.height
+	} else {
+		minY = cvsAr.Min.Y
+
+		if sl.opts.label != "" {
+			minY++ // Reserve one line for the label.
+		}
+	}
+	return image.Rect(
+		cvsAr.Min.X,
+		minY,
+		cvsAr.Max.X,
+		maxY,
+	)
 }
 
 // minSize returns the minimum canvas size for the sparkline based on the options.

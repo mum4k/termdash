@@ -8,65 +8,77 @@ import (
 
 func TestVisibleMax(t *testing.T) {
 	tests := []struct {
-		desc  string
-		data  []int
-		width int
-		want  int
+		desc     string
+		data     []int
+		width    int
+		wantData []int
+		wantMax  int
 	}{
 		{
-			desc:  "zero for no data",
-			width: 3,
-			want:  0,
+			desc:     "zero for no data",
+			width:    3,
+			wantData: nil,
+			wantMax:  0,
 		},
 		{
-			desc:  "zero for zero width",
-			data:  []int{0, 1},
-			width: 0,
-			want:  0,
+			desc:     "zero for zero width",
+			data:     []int{0, 1},
+			width:    0,
+			wantData: nil,
+			wantMax:  0,
 		},
 		{
-			desc:  "zero for negative width",
-			data:  []int{0, 1},
-			width: -1,
-			want:  0,
+			desc:     "zero for negative width",
+			data:     []int{0, 1},
+			width:    -1,
+			wantData: nil,
+			wantMax:  0,
 		},
 		{
-			desc:  "all values are zero",
-			data:  []int{0, 0, 0},
-			width: 3,
-			want:  0,
+			desc:     "all values are zero",
+			data:     []int{0, 0, 0},
+			width:    3,
+			wantData: []int{0, 0, 0},
+			wantMax:  0,
 		},
 		{
-			desc:  "all values are visible",
-			data:  []int{8, 0, 1},
-			width: 3,
-			want:  8,
+			desc:     "all values are visible",
+			data:     []int{8, 0, 1},
+			width:    3,
+			wantData: []int{8, 0, 1},
+			wantMax:  8,
 		},
 		{
-			desc:  "width greater than number of values",
-			data:  []int{8, 0, 1},
-			width: 10,
-			want:  8,
+			desc:     "width greater than number of values",
+			data:     []int{8, 0, 1},
+			width:    10,
+			wantData: []int{8, 0, 1},
+			wantMax:  8,
 		},
 		{
-			desc:  "only some values are visible",
-			data:  []int{8, 2, 1},
-			width: 2,
-			want:  2,
+			desc:     "only some values are visible",
+			data:     []int{8, 2, 1},
+			width:    2,
+			wantData: []int{2, 1},
+			wantMax:  2,
 		},
 		{
-			desc:  "only one value is visible",
-			data:  []int{8, 2, 1},
-			width: 1,
-			want:  1,
+			desc:     "only one value is visible",
+			data:     []int{8, 2, 1},
+			width:    1,
+			wantData: []int{1},
+			wantMax:  1,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := visibleMax(tc.data, tc.width)
-			if got != tc.want {
-				t.Errorf("visibleMax => got %v, want %v", got, tc.want)
+			gotData, gotMax := visibleMax(tc.data, tc.width)
+			if diff := pretty.Compare(tc.wantData, gotData); diff != "" {
+				t.Errorf("visibleMax => unexpected visible data, diff (-want, +got):\n%s", diff)
+			}
+			if gotMax != tc.wantMax {
+				t.Errorf("visibleMax => gotMax %v, wantMax %v", gotMax, tc.wantMax)
 			}
 		})
 	}

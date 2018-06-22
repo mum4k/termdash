@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -44,14 +45,48 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	bc := sparkline.New()
-	go playSparkLine(ctx, bc, 1*time.Second)
+	green := sparkline.New(
+		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
+	)
+	go playSparkLine(ctx, green, 250*time.Millisecond)
+	red := sparkline.New(
+		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
+		sparkline.Color(cell.ColorRed),
+	)
+	go playSparkLine(ctx, red, 500*time.Millisecond)
+	yellow := sparkline.New(
+		sparkline.Label("Yellow SparkLine", cell.FgColor(cell.ColorGreen)),
+		sparkline.Color(cell.ColorYellow),
+	)
+	go playSparkLine(ctx, yellow, 1*time.Second)
 
 	c := container.New(
 		t,
 		container.Border(draw.LineStyleLight),
 		container.BorderTitle("PRESS Q TO QUIT"),
-		container.PlaceWidget(bc),
+		container.SplitVertical(
+			container.Left(
+				container.SplitHorizontal(
+					container.Top(),
+					container.Bottom(
+						container.Border(draw.LineStyleLight),
+						container.BorderTitle("SparkLine group"),
+						container.SplitHorizontal(
+							container.Top(
+								container.PlaceWidget(green),
+							),
+							container.Bottom(
+								container.PlaceWidget(red),
+							),
+						),
+					),
+				),
+			),
+			container.Right(
+				container.Border(draw.LineStyleLight),
+				container.PlaceWidget(yellow),
+			),
+		),
 	)
 
 	quitter := func(k *terminalapi.Keyboard) {

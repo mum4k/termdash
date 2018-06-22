@@ -45,7 +45,7 @@ func New(opts ...Option) *SparkLine {
 func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
-	return errors.New("unimplemented")
+	return nil
 }
 
 // Add adds data points to the SparkLine.
@@ -86,7 +86,8 @@ func (*SparkLine) Mouse(m *terminalapi.Mouse) error {
 
 // minSize returns the minimum canvas size for the sparkline based on the options.
 func (sl *SparkLine) minSize() image.Point {
-	const minWidth = 1 // At least one data point.
+	// At least one data point.
+	const minWidth = 1
 	var minHeight int
 	if sl.opts.height > 0 {
 		minHeight = sl.opts.height

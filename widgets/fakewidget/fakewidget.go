@@ -45,7 +45,9 @@ var MinimumSize = image.Point{24, 5}
 // Mirror is a fake widget. The fake widget draws a border around its assigned
 // canvas and writes the size of its assigned canvas on the first line of the
 // canvas. It writes the last received keyboard event onto the second line. It
-// writes the last received mouse event onto the third line.
+// writes the last received mouse event onto the third line. If a non-empty
+// string is provided via the Text() method, that text will be written right
+// after the canvas size on the first line.
 //
 // The widget requests the same options that are provided to the constructor.
 // If the options or canvas size don't allow for the three lines mentioned
@@ -56,6 +58,9 @@ var MinimumSize = image.Point{24, 5}
 type Mirror struct {
 	// lines are the three lines that will be drawn on the canvas.
 	lines []string
+
+	// text is the text provided by the last call to Text().
+	text string
 
 	// mu protects lines.
 	mu sync.RWMutex
@@ -88,7 +93,7 @@ func (mi *Mirror) Draw(cvs *canvas.Canvas) error {
 		return err
 	}
 
-	mi.lines[sizeLine] = cvs.Size().String()
+	mi.lines[sizeLine] = fmt.Sprintf("%s%s", cvs.Size().String(), mi.text)
 	usable := area.ExcludeBorder(cvs.Area())
 	start := cvs.Area().Intersect(usable).Min
 	for i := 0; i < outputLines; i++ {
@@ -103,6 +108,12 @@ func (mi *Mirror) Draw(cvs *canvas.Canvas) error {
 	}
 
 	return nil
+}
+
+// Text stores a text that should be displayed right after the canvas size on
+// the first line of the output.
+func (mi *Mirror) Text(txt string) {
+	mi.text = txt
 }
 
 // Keyboard draws the received key on the canvas.
@@ -147,17 +158,29 @@ func (mi *Mirror) Options() widgetapi.Options {
 // widget onto the provided canvas and forwarding the given events.
 func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) error {
 	mirror := New(opts)
+	return DrawWithMirror(mirror, t, cvs, events...)
+}
+
+// MustDraw is like Draw, but panics on all errors.
+func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) {
+	if err := Draw(t, cvs, opts, events...); err != nil {
+		panic(fmt.Sprintf("Draw => %v", err))
+	}
+}
+
+// DrawWithMirror is like Draw, but uses the provided Mirror instead of creating one.
+func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, events ...terminalapi.Event) error {
 	for _, ev := range events {
 		switch e := ev.(type) {
 		case *terminalapi.Mouse:
-			if !opts.WantMouse {
+			if !mirror.opts.WantMouse {
 				continue
 			}
 			if err := mirror.Mouse(e); err != nil {
 				return err
 			}
 		case *terminalapi.Keyboard:
-			if !opts.WantKeyboard {
+			if !mirror.opts.WantKeyboard {
 				continue
 			}
 			if err := mirror.Keyboard(e); err != nil {
@@ -174,9 +197,9 @@ func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, ev
 	return cvs.Apply(t)
 }
 
-// MustDraw is like Draw, but panics on all errors.
-func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) {
-	if err := Draw(t, cvs, opts, events...); err != nil {
-		panic(fmt.Sprintf("Draw => %v", err))
+// MustDrawWithMirror is like DrawWithMirror, but panics on all errors.
+func MustDrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, events ...terminalapi.Event) {
+	if err := DrawWithMirror(mirror, t, cvs, events...); err != nil {
+		panic(fmt.Sprintf("DrawWithMirror => %v", err))
 	}
 }

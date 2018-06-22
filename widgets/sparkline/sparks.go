@@ -56,7 +56,7 @@ func toBlocks(value, max, vertCells int) blocks {
 	scale := float64(cellSparks) * float64(vertCells) / float64(max)
 
 	// How many smallest spark elements are needed to represent the value.
-	elements := int(math.Round(float64(value) * scale))
+	elements := int(round(float64(value) * scale))
 
 	b := blocks{
 		full: elements / cellSparks,
@@ -67,4 +67,14 @@ func toBlocks(value, max, vertCells int) blocks {
 		b.partSpark = sparks[part-1]
 	}
 	return b
+}
+
+// round returns the nearest integer, rounding half away from zero.
+// Copied from Go 1.10, package math for backwards compatibility with go 1.8.
+func round(x float64) float64 {
+	t := math.Trunc(x)
+	if math.Abs(x-t) >= 0.5 {
+		return t + math.Copysign(1, x)
+	}
+	return t
 }

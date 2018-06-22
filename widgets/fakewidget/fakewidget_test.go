@@ -46,6 +46,7 @@ func TestMirror(t *testing.T) {
 		desc        string
 		keyEvents   []keyEvents   // Keyboard events to send before calling Draw().
 		mouseEvents []mouseEvents // Mouse events to send before calling Draw().
+		apiEvents   func(*Mirror) // External events via the widget's API.
 		cvs         *canvas.Canvas
 		want        func(size image.Point) *faketerm.Terminal
 		wantErr     bool
@@ -74,6 +75,21 @@ func TestMirror(t *testing.T) {
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, cvs.Area())
 				testdraw.MustText(cvs, "(7,3)", image.Point{1, 1})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws the box, canvas size and custom text",
+			apiEvents: func(mi *Mirror) {
+				mi.Text("hi")
+			},
+			cvs: testcanvas.MustNew(image.Rect(0, 0, 9, 3)),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, cvs.Area())
+				testdraw.MustText(cvs, "(9,3)hi", image.Point{1, 1})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -227,6 +243,10 @@ func TestMirror(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			w := New(widgetapi.Options{})
 
+			if tc.apiEvents != nil {
+				tc.apiEvents(w)
+			}
+
 			for _, keyEv := range tc.keyEvents {
 				err := w.Keyboard(keyEv.k)
 				if (err != nil) != keyEv.wantErr {
@@ -268,5 +288,73 @@ func TestOptions(t *testing.T) {
 	got := w.Options()
 	if diff := pretty.Compare(want, got); diff != "" {
 		t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)
+	}
+}
+
+func TestDraw(t *testing.T) {
+	tests := []struct {
+		desc    string
+		opts    widgetapi.Options
+		cvs     *canvas.Canvas
+		events  []terminalapi.Event
+		want    func(size image.Point) *faketerm.Terminal
+		wantErr bool
+	}{
+		{
+			desc: "canvas too small to draw a box",
+			cvs:  testcanvas.MustNew(image.Rect(0, 0, 1, 1)),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
+			desc: "draws the box and canvas size",
+			cvs:  testcanvas.MustNew(image.Rect(0, 0, 9, 3)),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, cvs.Area())
+				testdraw.MustText(cvs, "(9,3)", image.Point{1, 1})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws both keyboard and mouse events",
+			opts: widgetapi.Options{
+				WantKeyboard: true,
+				WantMouse:    true,
+			},
+			cvs: testcanvas.MustNew(image.Rect(0, 0, 17, 5)),
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				&terminalapi.Mouse{Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, cvs.Area())
+				testdraw.MustText(cvs, "(17,5)", image.Point{1, 1})
+				testdraw.MustText(cvs, "KeyEnter", image.Point{1, 2})
+				testdraw.MustText(cvs, "(0,0)ButtonLeft", image.Point{1, 3})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := faketerm.MustNew(tc.cvs.Size())
+			err := Draw(got, tc.cvs, tc.opts, tc.events...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Draw => got error:%v, wantErr: %v", err, tc.wantErr)
+			}
+
+			if diff := faketerm.Diff(tc.want(tc.cvs.Size()), got); diff != "" {
+				t.Errorf("Draw => %v", diff)
+			}
+		})
 	}
 }

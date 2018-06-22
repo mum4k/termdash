@@ -25,12 +25,14 @@ import (
 
 func TestQueue(t *testing.T) {
 	tests := []struct {
-		desc     string
-		pushes   []terminalapi.Event
-		wantPops []terminalapi.Event
+		desc      string
+		pushes    []terminalapi.Event
+		wantEmpty bool // Checked after pushes and before pops.
+		wantPops  []terminalapi.Event
 	}{
 		{
-			desc: "empty queue returns nil",
+			desc:      "empty queue returns nil",
+			wantEmpty: true,
 			wantPops: []terminalapi.Event{
 				nil,
 			},
@@ -42,6 +44,7 @@ func TestQueue(t *testing.T) {
 				terminalapi.NewError("error2"),
 				terminalapi.NewError("error3"),
 			},
+			wantEmpty: false,
 			wantPops: []terminalapi.Event{
 				terminalapi.NewError("error1"),
 				terminalapi.NewError("error2"),
@@ -57,6 +60,11 @@ func TestQueue(t *testing.T) {
 			defer q.Close()
 			for _, ev := range tc.pushes {
 				q.Push(ev)
+			}
+
+			gotEmpty := q.Empty()
+			if gotEmpty != tc.wantEmpty {
+				t.Errorf("Empty => got %v, want %v", gotEmpty, tc.wantEmpty)
 			}
 
 			for i, want := range tc.wantPops {

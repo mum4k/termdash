@@ -41,7 +41,7 @@ func playSparkLine(ctx context.Context, sl *sparkline.SparkLine, delay time.Dura
 		select {
 		case <-ticker.C:
 			v := int(rand.Int31n(max + 1))
-			if err := sl.Add(v); err != nil {
+			if err := sl.Add([]int{v}); err != nil {
 				panic(err)
 			}
 

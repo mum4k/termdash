@@ -61,6 +61,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	green := sparkline.New(
 		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
+		sparkline.Color(cell.ColorGreen),
 	)
 	go playSparkLine(ctx, green, 250*time.Millisecond)
 	red := sparkline.New(

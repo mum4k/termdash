@@ -350,14 +350,14 @@ func TestRun(t *testing.T) {
 				return
 			}
 
+			if err := untilEmpty(5*time.Second, eq); err != nil {
+				t.Fatalf("untilEmpty => %v", err)
+			}
+
 			if tc.after != nil {
 				if err := tc.after(); err != nil {
 					t.Errorf("after => unexpected error: %v", err)
 				}
-			}
-
-			if err := untilEmpty(5*time.Second, eq); err != nil {
-				t.Fatalf("untilEmpty => %v", err)
 			}
 
 			if diff := faketerm.Diff(tc.want(got.Size()), got); diff != "" {
@@ -523,7 +523,6 @@ func TestController(t *testing.T) {
 			if err != nil {
 				return
 			}
-			defer ctrl.Close()
 
 			if tc.apiEvents != nil {
 				tc.apiEvents(mi)
@@ -537,6 +536,7 @@ func TestController(t *testing.T) {
 					t.Errorf("controls => unexpected error: %v", err)
 				}
 			}
+			ctrl.Close()
 
 			if diff := faketerm.Diff(tc.want(got.Size()), got); diff != "" {
 				t.Errorf("Run => %v", diff)

@@ -43,3 +43,10 @@ func MustRectangle(c *canvas.Canvas, r image.Rectangle, opts ...draw.RectangleOp
 		panic(fmt.Sprintf("draw.Rectangle => unexpected error: %v", err))
 	}
 }
+
+// MustHVLines draws the vertical / horizontal lines or panics.
+func MustHVLines(c *canvas.Canvas, lines []draw.HVLine, opts ...draw.HVLineOption) {
+	if err := draw.HVLines(c, lines, opts...); err != nil {
+		panic(fmt.Sprintf("draw.HVLines => unexpected error: %v", err))
+	}
+}

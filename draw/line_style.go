@@ -53,13 +53,11 @@ func init() {
 	}
 }
 
-// TODO(mum4k): Check inside init() that all of these are half-width runes.
-
 // lineParts returns the line component characters for the provided line style.
 func lineParts(ls LineStyle) (map[linePart]rune, error) {
 	parts, ok := lineStyleChars[ls]
 	if !ok {
-		return nil, fmt.Errorf("unsupported line style %v", ls)
+		return nil, fmt.Errorf("unsupported line style %d", ls)
 	}
 	return parts, nil
 }

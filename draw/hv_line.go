@@ -49,8 +49,6 @@ func HVLineStyle(ls LineStyle) HVLineOption {
 }
 
 // HVLineCellOpts sets options on the cells that contain the line.
-// Where two lines cross, the cell representing the crossing point inherits
-// options set on the line that was drawn last.
 func HVLineCellOpts(cOpts ...cell.Option) HVLineOption {
 	return hVLineOption(func(opts *hVLineOptions) {
 		opts.cellOpts = cOpts
@@ -65,7 +63,7 @@ type HVLine struct {
 
 // HVLines draws horizontal or vertical lines. Handles drawing of the correct
 // characters for locations where any two lines cross (e.g. a corner, a T shape
-// a cross). Each line must be at least one cell long. Both start and end
+// or a cross). Each line must be at least one cell long. Both start and end
 // must be on the same horizontal (same X coordinate) or same vertical (same Y
 // coordinate) line.
 func HVLines(c *canvas.Canvas, lines []HVLine, opts ...HVLineOption) error {
@@ -130,10 +128,6 @@ type hVLine struct {
 	// end is the ending point of the line.
 	end image.Point
 
-	// parts are characters that represent parts of the line of the style
-	// chosen in the options.
-	parts map[linePart]rune
-
 	// mainPart is either parts[vLine] or parts[hLine] depending on whether
 	// this is horizontal or vertical line.
 	mainPart rune
@@ -143,7 +137,7 @@ type hVLine struct {
 }
 
 // newHVLine creates a new hVLine instance.
-// Swaps start and end iof necessary, so that horizontal drawing is always left
+// Swaps start and end if necessary, so that horizontal drawing is always left
 // to right and vertical is always top down.
 func newHVLine(c *canvas.Canvas, start, end image.Point, opts *hVLineOptions) (*hVLine, error) {
 	if ar := c.Area(); !start.In(ar) || !end.In(ar) {
@@ -180,7 +174,6 @@ func newHVLine(c *canvas.Canvas, start, end image.Point, opts *hVLineOptions) (*
 	return &hVLine{
 		start:    start,
 		end:      end,
-		parts:    parts,
 		mainPart: mainPart,
 		opts:     opts,
 	}, nil
@@ -188,10 +181,10 @@ func newHVLine(c *canvas.Canvas, start, end image.Point, opts *hVLineOptions) (*
 
 // horizontal determines if this is a horizontal line.
 func (hvl *hVLine) horizontal() bool {
-	return hvl.mainPart == hvl.parts[hLine]
+	return hvl.mainPart == lineStyleChars[hvl.opts.lineStyle][hLine]
 }
 
 // vertical determines if this is a vertical line.
 func (hvl *hVLine) vertical() bool {
-	return hvl.mainPart == hvl.parts[vLine]
+	return hvl.mainPart == lineStyleChars[hvl.opts.lineStyle][vLine]
 }

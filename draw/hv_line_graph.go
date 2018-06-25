@@ -23,8 +23,12 @@ import (
 
 // hVLineEdge is an edge between two points on the graph.
 type hVLineEdge struct {
+	// from is the starting node of this edge.
+	// From is guaranteed to be less than to.
 	from image.Point
-	to   image.Point
+
+	// to is the ending point of this edge.
+	to image.Point
 }
 
 // newHVLineEdge returns a new edge between the two points.
@@ -41,7 +45,9 @@ type hVLineNode struct {
 	// p is the point where this node is.
 	p image.Point
 
-	// edges are the edges from this node to the neighboring nodes.
+	// edges are the edges between this node and the surrounding nodes.
+	// The code only supports horizontal and vertical lines so there can only
+	// ever be edges to nodes on these planes.
 	edges map[hVLineEdge]bool
 }
 
@@ -83,22 +89,28 @@ func (n *hVLineNode) hasRight() bool {
 
 // rune, given the selected line style returns the correct line character to
 // represent this node.
+// Only handles nodes with two or more edges, as returned by multiEdgeNodes().
 func (n *hVLineNode) rune(ls LineStyle) (rune, error) {
+	parts, err := lineParts(ls)
+	if err != nil {
+		return -1, err
+	}
+
 	switch len(n.edges) {
 	case 2:
 		switch {
 		case n.hasLeft() && n.hasRight():
-			return lineStyleChars[ls][hLine], nil
+			return parts[hLine], nil
 		case n.hasUp() && n.hasDown():
-			return lineStyleChars[ls][vLine], nil
+			return parts[vLine], nil
 		case n.hasDown() && n.hasRight():
-			return lineStyleChars[ls][topLeftCorner], nil
+			return parts[topLeftCorner], nil
 		case n.hasDown() && n.hasLeft():
-			return lineStyleChars[ls][topRightCorner], nil
+			return parts[topRightCorner], nil
 		case n.hasUp() && n.hasRight():
-			return lineStyleChars[ls][bottomLeftCorner], nil
+			return parts[bottomLeftCorner], nil
 		case n.hasUp() && n.hasLeft():
-			return lineStyleChars[ls][bottomRightCorner], nil
+			return parts[bottomRightCorner], nil
 		default:
 			return -1, fmt.Errorf("unexpected two edges in node representing point %v: %v", n.p, n.edges)
 		}
@@ -106,20 +118,20 @@ func (n *hVLineNode) rune(ls LineStyle) (rune, error) {
 	case 3:
 		switch {
 		case n.hasUp() && n.hasLeft() && n.hasRight():
-			return lineStyleChars[ls][hAndUp], nil
+			return parts[hAndUp], nil
 		case n.hasDown() && n.hasLeft() && n.hasRight():
-			return lineStyleChars[ls][hAndDown], nil
+			return parts[hAndDown], nil
 		case n.hasUp() && n.hasDown() && n.hasRight():
-			return lineStyleChars[ls][vAndRight], nil
+			return parts[vAndRight], nil
 		case n.hasUp() && n.hasDown() && n.hasLeft():
-			return lineStyleChars[ls][vAndLeft], nil
+			return parts[vAndLeft], nil
 
 		default:
 			return -1, fmt.Errorf("unexpected three edges in node representing point %v: %v", n.p, n.edges)
 		}
 
 	case 4:
-		return lineStyleChars[ls][vAndH], nil
+		return parts[vAndH], nil
 	default:
 		return -1, fmt.Errorf("unexpected number of edges(%d) in node representing point %v", len(n.edges), n.p)
 	}

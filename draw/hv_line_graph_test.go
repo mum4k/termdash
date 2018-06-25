@@ -213,6 +213,12 @@ func TestNodeRune(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:    "fails on unsupported line style",
+			node:    &hVLineNode{},
+			ls:      LineStyle(-1),
+			wantErr: true,
+		},
+		{
 			desc: "horizontal line",
 			node: &hVLineNode{
 				p: image.Point{1, 1},

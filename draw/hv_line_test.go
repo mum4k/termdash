@@ -21,7 +21,7 @@ func TestHVLines(t *testing.T) {
 	}{
 		{
 			desc:   "fails when line isn't horizontal or vertical",
-			canvas: image.Rect(0, 0, 1, 1),
+			canvas: image.Rect(0, 0, 2, 2),
 			lines: []HVLine{
 				{
 					start: image.Point{0, 0},

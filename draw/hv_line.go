@@ -22,6 +22,13 @@ type hVLineOptions struct {
 	lineStyle LineStyle
 }
 
+// newHVLineOptions returns a new hVLineOptions instance.
+func newHVLineOptions() *hVLineOptions {
+	return &hVLineOptions{
+		lineStyle: DefaultHVLineStyle,
+	}
+}
+
 // hVLineOption implements HVLineOption.
 type hVLineOption func(*hVLineOptions)
 
@@ -62,17 +69,24 @@ type HVLine struct {
 // must be on the same horizontal (same X coordinate) or same vertical (same Y
 // coordinate) line.
 func HVLines(c *canvas.Canvas, lines []HVLine, opts ...HVLineOption) error {
+	opt := newHVLineOptions()
+	for _, o := range opts {
+		o.set(opt)
+	}
+
+	g := newHVLineGraph()
 	for _, l := range lines {
-		line, err := newHVLine(c, l.start, l.end, opts...)
+		line, err := newHVLine(c, l.start, l.end, opt)
 		if err != nil {
 			return err
 		}
+		g.addLine(line)
 
 		switch {
 		case line.horizontal():
 			for curX := line.start.X; ; curX++ {
 				cur := image.Point{curX, line.start.Y}
-				if _, err := c.SetCell(cur, line.mainPart, line.opts.cellOpts...); err != nil {
+				if _, err := c.SetCell(cur, line.mainPart, opt.cellOpts...); err != nil {
 					return err
 				}
 
@@ -84,7 +98,7 @@ func HVLines(c *canvas.Canvas, lines []HVLine, opts ...HVLineOption) error {
 		case line.vertical():
 			for curY := line.start.Y; ; curY++ {
 				cur := image.Point{line.start.X, curY}
-				if _, err := c.SetCell(cur, line.mainPart, line.opts.cellOpts...); err != nil {
+				if _, err := c.SetCell(cur, line.mainPart, opt.cellOpts...); err != nil {
 					return err
 				}
 
@@ -94,6 +108,17 @@ func HVLines(c *canvas.Canvas, lines []HVLine, opts ...HVLineOption) error {
 			}
 		}
 	}
+
+	for _, n := range g.multiEdgeNodes() {
+		r, err := n.rune(opt.lineStyle)
+		if err != nil {
+			return err
+		}
+		if _, err := c.SetCell(n.p, r, opt.cellOpts...); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -120,19 +145,12 @@ type hVLine struct {
 // newHVLine creates a new hVLine instance.
 // Swaps start and end iof necessary, so that horizontal drawing is always left
 // to right and vertical is always top down.
-func newHVLine(c *canvas.Canvas, start, end image.Point, opts ...HVLineOption) (*hVLine, error) {
+func newHVLine(c *canvas.Canvas, start, end image.Point, opts *hVLineOptions) (*hVLine, error) {
 	if ar := c.Area(); !start.In(ar) || !end.In(ar) {
 		return nil, fmt.Errorf("both the start%v and the end%v must be in the canvas area: %v", start, end, ar)
 	}
 
-	opt := &hVLineOptions{
-		lineStyle: DefaultHVLineStyle,
-	}
-	for _, o := range opts {
-		o.set(opt)
-	}
-
-	parts, err := lineParts(opt.lineStyle)
+	parts, err := lineParts(opts.lineStyle)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +182,7 @@ func newHVLine(c *canvas.Canvas, start, end image.Point, opts ...HVLineOption) (
 		end:      end,
 		parts:    parts,
 		mainPart: mainPart,
-		opts:     opt,
+		opts:     opts,
 	}, nil
 }
 

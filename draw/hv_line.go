@@ -57,13 +57,15 @@ func HVLineCellOpts(cOpts ...cell.Option) HVLineOption {
 
 // HVLine represents one horizontal or vertical line.
 type HVLine struct {
+	// start is the cell where the line starts.
 	start image.Point
-	end   image.Point
+	// end is the cell where the line ends.
+	end image.Point
 }
 
 // HVLines draws horizontal or vertical lines. Handles drawing of the correct
 // characters for locations where any two lines cross (e.g. a corner, a T shape
-// or a cross). Each line must be at least one cell long. Both start and end
+// or a cross). Each line must be at least two cells long. Both start and end
 // must be on the same horizontal (same X coordinate) or same vertical (same Y
 // coordinate) line.
 func HVLines(c *canvas.Canvas, lines []HVLine, opts ...HVLineOption) error {

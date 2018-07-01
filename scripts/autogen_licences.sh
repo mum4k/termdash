@@ -30,7 +30,7 @@ fi
 DIRECTORY="$1"
 
 WRITE=""
-if [ "$#" -ge 3 ]; then
+if [ "$#" -ge 2 ]; then
   WRITE="$2"
 fi
 

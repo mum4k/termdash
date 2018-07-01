@@ -98,7 +98,7 @@ func (c *Canvas) Cell(p image.Point) (*cell.Cell, error) {
 type setCellFunc func(image.Point, rune, ...cell.Option) error
 
 // copyTo is the internal implementation of code that copies the content of a
-// canvas. If a on zero offset is provided, all the copied points are offset by
+// canvas. If a non zero offset is provided, all the copied points are offset by
 // this amount.
 // The dstSetCell function is called for every point in this canvas when
 // copying it to the destination.
@@ -169,11 +169,11 @@ func (c *Canvas) CopyTo(dst *Canvas) error {
 	// based. Canvas is not zero based if it is positioned elsewhere, i.e.
 	// providing a smaller view of another canvas.
 	// E.g. a widget can assign a smaller portion of its canvas to a component
-	// and in order to restrict drawing of this component to a smaller area, it
-	// can create a sub-canvas. This sub-canvas can be smaller and have a
-	// specific starting position other than image.Point{0, 0}.
-	// Copying this sub-canvas back onto the parent accounts for this offset.
-	//offset := c.area.Min.Sub(dst.area.Min)
+	// in order to restrict drawing of this component to a smaller area. To do
+	// this it can create a sub-canvas. This sub-canvas can have a specific
+	// starting position other than image.Point{0, 0} relative to the parent
+	// canvas. Copying this sub-canvas back onto the parent accounts for this
+	// offset.
 	offset := c.area.Min
 	return c.copyTo(offset, fn)
 }

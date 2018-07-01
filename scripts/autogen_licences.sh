@@ -42,7 +42,7 @@ fi
 
 
 if [ ! -d "${INSTALL_DIR}" ]; then
-  git clone git@github.com:mbrukman/autogen.git "${BIN_DIR}/autogen"
+  git clone https://github.com/mbrukman/autogen.git "${BIN_DIR}/autogen"
   if [ $? -ne 0 ]; then
     echo "Failed to run git clone."
     exit 1

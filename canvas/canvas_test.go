@@ -531,3 +531,206 @@ func TestCell(t *testing.T) {
 		})
 	}
 }
+
+// mustNew creates a new Canvas or panics.
+func mustNew(ar image.Rectangle) *Canvas {
+	c, err := New(ar)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
+// mustFill fills the canvas with the specified runes or panics.
+func mustFill(c *Canvas, r rune) {
+	ar := c.Area()
+	for col := 0; col < ar.Max.X; col++ {
+		for row := 0; row < ar.Max.Y; row++ {
+			if _, err := c.SetCell(image.Point{col, row}, r); err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
+// mustSetCell sets cell at the specified point of the canvas or panics.
+func mustSetCell(c *Canvas, p image.Point, r rune, opts ...cell.Option) {
+	if _, err := c.SetCell(p, r, opts...); err != nil {
+		panic(err)
+	}
+}
+
+func TestCopyTo(t *testing.T) {
+	tests := []struct {
+		desc    string
+		src     *Canvas
+		dst     *Canvas
+		want    *Canvas
+		wantErr bool
+	}{
+		{
+			desc: "fails when the canvas doesn't fit",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 3, 3))
+				mustFill(c, 'X')
+				return c
+			}(),
+			dst:     mustNew(image.Rect(0, 0, 2, 2)),
+			want:    mustNew(image.Rect(0, 0, 3, 3)),
+			wantErr: true,
+		},
+		{
+			desc: "fails when the area lies outside of the destination canvas",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(3, 3, 4, 4))
+				mustFill(c, 'X')
+				return c
+			}(),
+			dst:     mustNew(image.Rect(0, 0, 3, 3)),
+			want:    mustNew(image.Rect(0, 0, 3, 3)),
+			wantErr: true,
+		},
+		{
+			desc: "copies zero based same size canvases",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 3, 3))
+				mustFill(c, 'X')
+				return c
+			}(),
+			dst: mustNew(image.Rect(0, 0, 3, 3)),
+			want: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 3, 3))
+				mustSetCell(c, image.Point{0, 0}, 'X')
+				mustSetCell(c, image.Point{1, 0}, 'X')
+				mustSetCell(c, image.Point{2, 0}, 'X')
+
+				mustSetCell(c, image.Point{0, 1}, 'X')
+				mustSetCell(c, image.Point{1, 1}, 'X')
+				mustSetCell(c, image.Point{2, 1}, 'X')
+
+				mustSetCell(c, image.Point{0, 2}, 'X')
+				mustSetCell(c, image.Point{1, 2}, 'X')
+				mustSetCell(c, image.Point{2, 2}, 'X')
+				return c
+			}(),
+		},
+		{
+			desc: "copies non-zero based same size canvases",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(3, 3, 6, 6))
+				mustFill(c, 'X')
+				return c
+			}(),
+			dst: mustNew(image.Rect(3, 3, 6, 6)),
+			want: func() *Canvas {
+				c := mustNew(image.Rect(3, 3, 6, 6))
+				mustSetCell(c, image.Point{0, 0}, 'X')
+				mustSetCell(c, image.Point{1, 0}, 'X')
+				mustSetCell(c, image.Point{2, 0}, 'X')
+
+				mustSetCell(c, image.Point{0, 1}, 'X')
+				mustSetCell(c, image.Point{1, 1}, 'X')
+				mustSetCell(c, image.Point{2, 1}, 'X')
+
+				mustSetCell(c, image.Point{0, 2}, 'X')
+				mustSetCell(c, image.Point{1, 2}, 'X')
+				mustSetCell(c, image.Point{2, 2}, 'X')
+				return c
+			}(),
+		},
+		{
+			desc: "accounts for offset between canvases",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(3, 3, 6, 6))
+				mustFill(c, 'X')
+				return c
+			}(),
+			dst: mustNew(image.Rect(0, 0, 10, 10)),
+			want: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 10, 10))
+				mustSetCell(c, image.Point{3, 3}, 'X')
+				mustSetCell(c, image.Point{4, 3}, 'X')
+				mustSetCell(c, image.Point{5, 3}, 'X')
+
+				mustSetCell(c, image.Point{3, 4}, 'X')
+				mustSetCell(c, image.Point{4, 4}, 'X')
+				mustSetCell(c, image.Point{5, 4}, 'X')
+
+				mustSetCell(c, image.Point{3, 5}, 'X')
+				mustSetCell(c, image.Point{4, 5}, 'X')
+				mustSetCell(c, image.Point{5, 5}, 'X')
+				return c
+			}(),
+		},
+		{
+			desc: "copies cell options",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 1, 1))
+				mustSetCell(c, image.Point{0, 0}, 'X',
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
+				)
+				return c
+			}(),
+			dst: mustNew(image.Rect(0, 0, 3, 1)),
+			want: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 3, 1))
+				mustSetCell(c, image.Point{0, 0}, 'X',
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
+				)
+				return c
+			}(),
+		},
+		{
+			desc: "copies cells with full-width runes",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 3, 3))
+				mustSetCell(c, image.Point{0, 0}, '界')
+				mustSetCell(c, image.Point{1, 1}, '界')
+				return c
+			}(),
+			dst: mustNew(image.Rect(0, 0, 3, 3)),
+			want: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 3, 3))
+				mustSetCell(c, image.Point{0, 0}, '界')
+				mustSetCell(c, image.Point{1, 1}, '界')
+				return c
+			}(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.src.CopyTo(tc.dst)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("CopyTo => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			ftSize := image.Point{10, 10}
+			got, err := faketerm.New(ftSize)
+			if err != nil {
+				t.Fatalf("faketerm.New(tc.dst.Size()) => unexpected error: %v", err)
+			}
+			if err := tc.dst.Apply(got); err != nil {
+				t.Fatalf("tc.dst.Apply => unexpected error: %v", err)
+			}
+
+			want, err := faketerm.New(ftSize)
+			if err != nil {
+				t.Fatalf("faketerm.New(tc.want.Size()) => unexpected error: %v", err)
+			}
+
+			if err := tc.want.Apply(want); err != nil {
+				t.Fatalf("tc.want.Apply => unexpected error: %v", err)
+			}
+
+			if diff := faketerm.Diff(want, got); diff != "" {
+				t.Errorf("CopyTo => %v", diff)
+			}
+		})
+	}
+}

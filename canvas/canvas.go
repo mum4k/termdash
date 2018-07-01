@@ -94,6 +94,38 @@ func (c *Canvas) Cell(p image.Point) (*cell.Cell, error) {
 	return c.buffer[p.X][p.Y].Copy(), nil
 }
 
+// setCellFunc is a function that sets cell content on a terminal or a canvas.
+type setCellFunc func(image.Point, rune, ...cell.Option) error
+
+// copyTo is the internal implementation of code that copies the content of a
+// canvas. If a on zero offset is provided, all the copied points are offset by
+// this amount.
+// The dstSetCell function is called for every point in this canvas when
+// copying it to the destination.
+func (c *Canvas) copyTo(offset image.Point, dstSetCell setCellFunc) error {
+	for col := range c.buffer {
+		for row := range c.buffer[col] {
+			partial, err := c.buffer.IsPartial(image.Point{col, row})
+			if err != nil {
+				return err
+			}
+			if partial {
+				// Skip over partial cells, i.e. cells that follow a cell
+				// containing a full-width rune. A full-width rune takes only
+				// one cell in the buffer, but two on the terminal.
+				// See http://www.unicode.org/reports/tr11/.
+				continue
+			}
+			cell := c.buffer[col][row]
+			p := image.Point{col, row}.Add(offset)
+			if err := dstSetCell(p, cell.Rune, cell.Opts); err != nil {
+				return fmt.Errorf("setCellFunc%v => error: %v", p, err)
+			}
+		}
+	}
+	return nil
+}
+
 // Apply applies the canvas to the corresponding area of the terminal.
 // Guarantees to stay within limits of the area the canvas was created with.
 func (c *Canvas) Apply(t terminalapi.Terminal) error {
@@ -111,29 +143,37 @@ func (c *Canvas) Apply(t terminalapi.Terminal) error {
 		return fmt.Errorf("the canvas area %+v doesn't fit onto the terminal %+v", bufArea, termArea)
 	}
 
-	for col := range c.buffer {
-		for row := range c.buffer[col] {
-			partial, err := c.buffer.IsPartial(image.Point{col, row})
-			if err != nil {
-				return err
-			}
-			if partial {
-				// Skip over partial cells, i.e. cells that follow a cell
-				// containing a full-width rune. A full-width rune takes only
-				// one cell in the buffer, but two on the terminal.
-				// See http://www.unicode.org/reports/tr11/.
-				continue
-			}
-			cell := c.buffer[col][row]
-			// The image.Point{0, 0} of this canvas isn't always exactly at
-			// image.Point{0, 0} on the terminal.
-			// Depends on area assigned by the container.
-			offset := c.area.Min
-			p := image.Point{col, row}.Add(offset)
-			if err := t.SetCell(p, cell.Rune, cell.Opts); err != nil {
-				return fmt.Errorf("terminal.SetCell(%+v) => error: %v", p, err)
-			}
-		}
+	// The image.Point{0, 0} of this canvas isn't always exactly at
+	// image.Point{0, 0} on the terminal.
+	// Depends on area assigned by the container.
+	offset := c.area.Min
+	return c.copyTo(offset, t.SetCell)
+}
+
+// CopyTo copies the content of this canvas onto the destination canvas, taking
+// the absolute coordinates on the target terminal into account. I.e. neither
+// the area of the source nor the destination canvas need to be zero based.
+// The area of this canvas must fully fit inside the destination canvas.
+func (c *Canvas) CopyTo(dst *Canvas) error {
+	if !c.area.In(dst.area) {
+		return fmt.Errorf("the canvas area %v doesn't fit or lie inside the destination canvas area %v", c.area, dst.area)
 	}
-	return nil
+
+	fn := setCellFunc(func(p image.Point, r rune, opts ...cell.Option) error {
+		if _, err := dst.SetCell(p, r, opts...); err != nil {
+			return fmt.Errorf("dst.SetCell => %v", err)
+		}
+		return nil
+	})
+
+	// Neither of the two canvases (source and destination) have to be zero
+	// based. Canvas is not zero based if it is positioned elsewhere, i.e.
+	// providing a smaller view of another canvas.
+	// E.g. a widget can assign a smaller portion of its canvas to a component
+	// and in order to restrict drawing of this component to a smaller area, it
+	// can create a sub-canvas. This sub-canvas can be smaller and have a
+	// specific starting position other than image.Point{0, 0}.
+	// Copying this sub-canvas back onto the parent accounts for this offset.
+	offset := c.area.Min.Sub(dst.area.Min)
+	return c.copyTo(offset, fn)
 }

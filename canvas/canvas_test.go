@@ -615,50 +615,30 @@ func TestCopyTo(t *testing.T) {
 			}(),
 		},
 		{
-			desc: "copies non-zero based same size canvases",
+			desc: "copies smaller canvas with an offset",
 			src: func() *Canvas {
-				c := mustNew(image.Rect(3, 3, 6, 6))
+				c := mustNew(image.Rect(1, 1, 2, 2))
+				mustFill(c, 'X')
+				return c
+			}(),
+			dst: mustNew(image.Rect(0, 0, 3, 3)),
+			want: func() *Canvas {
+				c := mustNew(image.Rect(0, 0, 3, 3))
+				mustSetCell(c, image.Point{1, 1}, 'X')
+				return c
+			}(),
+		},
+		{
+			desc: "copies smaller canvas with an offset into a canvas with offset from terminal",
+			src: func() *Canvas {
+				c := mustNew(image.Rect(1, 1, 2, 2))
 				mustFill(c, 'X')
 				return c
 			}(),
 			dst: mustNew(image.Rect(3, 3, 6, 6)),
 			want: func() *Canvas {
 				c := mustNew(image.Rect(3, 3, 6, 6))
-				mustSetCell(c, image.Point{0, 0}, 'X')
-				mustSetCell(c, image.Point{1, 0}, 'X')
-				mustSetCell(c, image.Point{2, 0}, 'X')
-
-				mustSetCell(c, image.Point{0, 1}, 'X')
 				mustSetCell(c, image.Point{1, 1}, 'X')
-				mustSetCell(c, image.Point{2, 1}, 'X')
-
-				mustSetCell(c, image.Point{0, 2}, 'X')
-				mustSetCell(c, image.Point{1, 2}, 'X')
-				mustSetCell(c, image.Point{2, 2}, 'X')
-				return c
-			}(),
-		},
-		{
-			desc: "accounts for offset between canvases",
-			src: func() *Canvas {
-				c := mustNew(image.Rect(3, 3, 6, 6))
-				mustFill(c, 'X')
-				return c
-			}(),
-			dst: mustNew(image.Rect(0, 0, 10, 10)),
-			want: func() *Canvas {
-				c := mustNew(image.Rect(0, 0, 10, 10))
-				mustSetCell(c, image.Point{3, 3}, 'X')
-				mustSetCell(c, image.Point{4, 3}, 'X')
-				mustSetCell(c, image.Point{5, 3}, 'X')
-
-				mustSetCell(c, image.Point{3, 4}, 'X')
-				mustSetCell(c, image.Point{4, 4}, 'X')
-				mustSetCell(c, image.Point{5, 4}, 'X')
-
-				mustSetCell(c, image.Point{3, 5}, 'X')
-				mustSetCell(c, image.Point{4, 5}, 'X')
-				mustSetCell(c, image.Point{5, 5}, 'X')
 				return c
 			}(),
 		},

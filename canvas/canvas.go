@@ -150,13 +150,12 @@ func (c *Canvas) Apply(t terminalapi.Terminal) error {
 	return c.copyTo(offset, t.SetCell)
 }
 
-// CopyTo copies the content of this canvas onto the destination canvas, taking
-// the absolute coordinates on the target terminal into account. I.e. neither
-// the area of the source nor the destination canvas need to be zero based.
-// The area of this canvas must fully fit inside the destination canvas.
+// CopyTo copies the content of this canvas onto the destination canvas.
+// This canvas can have an offset when compared to the destination canvas, i.e.
+// the area of this canvas doesn't have to be zero-based.
 func (c *Canvas) CopyTo(dst *Canvas) error {
-	if !c.area.In(dst.area) {
-		return fmt.Errorf("the canvas area %v doesn't fit or lie inside the destination canvas area %v", c.area, dst.area)
+	if !c.area.In(dst.Area()) {
+		return fmt.Errorf("the canvas area %v doesn't fit or lie inside the destination canvas area %v", c.area, dst.Area())
 	}
 
 	fn := setCellFunc(func(p image.Point, r rune, opts ...cell.Option) error {
@@ -174,6 +173,7 @@ func (c *Canvas) CopyTo(dst *Canvas) error {
 	// can create a sub-canvas. This sub-canvas can be smaller and have a
 	// specific starting position other than image.Point{0, 0}.
 	// Copying this sub-canvas back onto the parent accounts for this offset.
-	offset := c.area.Min.Sub(dst.area.Min)
+	//offset := c.area.Min.Sub(dst.area.Min)
+	offset := c.area.Min
 	return c.copyTo(offset, fn)
 }

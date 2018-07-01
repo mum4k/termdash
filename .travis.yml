@@ -10,5 +10,6 @@ script:
         - go test -race ./...
         - go vet ./...
         - diff -u <(echo -n) <(gofmt -d -s .)
+        - diff -u <(echo -n) <(scripts/autogen_licences.sh .)
 after_success:
         - ./scripts/coverage.sh

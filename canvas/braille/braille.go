@@ -1,17 +1,3 @@
-// Copyright 2018 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 /*
 Package braille provides a canvas that uses braille characters.
 
@@ -67,7 +53,7 @@ const (
 
 // pixelRunes maps points addressing individual pixels in a cell into character
 // offset. I.e. the correct character to set pixel(0,0) is
-// brailleCharOffset+pixelRunes[image.Point{0,0}].
+// brailleCharOffset|pixelRunes[image.Point{0,0}].
 var pixelRunes = map[image.Point]rune{
 	{0, 0}: 0x01, {1, 0}: 0x08,
 	{0, 1}: 0x02, {1, 1}: 0x10,
@@ -81,13 +67,13 @@ var pixelRunes = map[image.Point]rune{
 //
 // The braille canvas is an abstraction built on top of a regular character
 // canvas. After setting and toggling pixels on the braille canvas, it should
-// be copied to a regular character canvas which results in setting of braille
-// pattern characters on the regular canvas or applied to a terminal directly.
-// See the example for more details.
+// be copied to a regular character canvas or applied to a terminal which
+// results in setting of braille pattern characters.
+// See the examples for more details.
 //
 // The created braille canvas can be smaller and even misaligned relatively to
-// the regular character canvas or terminal, allowing the callers to created a
-// "view".
+// the regular character canvas or terminal, allowing the callers to create a
+// "view" of just a portion of the canvas or terminal.
 type Canvas struct {
 	// regular is the regular character canvas the braille canvas is based on.
 	regular *canvas.Canvas
@@ -125,7 +111,7 @@ func (c *Canvas) Clear() error {
 
 // SetPixel turns on pixel at the specified point.
 // The provided cell options will be applied to the entire cell (all of its
-// pixels).
+// pixels). This method is idempotent.
 func (c *Canvas) SetPixel(p image.Point, opts ...cell.Option) error {
 	cp, err := c.cellPoint(p)
 	if err != nil {
@@ -154,7 +140,7 @@ func (c *Canvas) SetPixel(p image.Point, opts ...cell.Option) error {
 
 // ClearPixel turns off pixel at the specified point.
 // The provided cell options will be applied to the entire cell (all of its
-// pixels).
+// pixels). This method is idempotent.
 func (c *Canvas) ClearPixel(p image.Point, opts ...cell.Option) error {
 	cp, err := c.cellPoint(p)
 	if err != nil {
@@ -165,10 +151,8 @@ func (c *Canvas) ClearPixel(p image.Point, opts ...cell.Option) error {
 		return err
 	}
 
-	if !isBraille(cell.Rune) {
-		return fmt.Errorf("point%v targets cell%v which contains rune(%#x) '%c' that isn't a braille pattern character", p, cp, cell.Rune, cell.Rune)
-	}
-	if !pixelSet(cell.Rune, p) {
+	// Clear is idempotent.
+	if !isBraille(cell.Rune) || !pixelSet(cell.Rune, p) {
 		return nil
 	}
 

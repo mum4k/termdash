@@ -1,17 +1,3 @@
-// Copyright 2018 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package braille
 
 import (
@@ -26,8 +12,50 @@ import (
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
-func Example() {
-	// TODO(mum4k): Finish this.
+func Example_copiedToCanvas() {
+	// Given a parent canvas the widget receives from the infrastructure:
+	parent, err := canvas.New(image.Rect(0, 0, 3, 3))
+	if err != nil {
+		panic(err)
+	}
+
+	// The widget can create a braille canvas with the same or smaller area:
+	braille, err := New(parent.Area())
+	if err != nil {
+		panic(err)
+	}
+
+	// After setting / clearing / toggling of pixels on the braille canvas, it
+	// can be copied back to the parent canvas.
+	if err := braille.SetPixel(image.Point{0, 0}); err != nil {
+		panic(err)
+	}
+	if err := braille.CopyTo(parent); err != nil {
+		panic(err)
+	}
+}
+
+func Example_applidToTerminal() {
+	// When working with a terminal directly:
+	ft, err := faketerm.New(image.Point{3, 3})
+	if err != nil {
+		panic(err)
+	}
+
+	// The widget can create a braille canvas with the same or smaller area:
+	braille, err := New(ft.Area())
+	if err != nil {
+		panic(err)
+	}
+
+	// After setting / clearing / toggling of pixels on the braille canvas, it
+	// can be applied to the terminal.
+	if err := braille.SetPixel(image.Point{0, 0}); err != nil {
+		panic(err)
+	}
+	if err := braille.Apply(ft); err != nil {
+		panic(err)
+	}
 }
 
 func TestNew(t *testing.T) {
@@ -104,6 +132,25 @@ func TestBraille(t *testing.T) {
 			desc: "set pixel 0,0",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {
+				return c.SetPixel(image.Point{0, 0})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '⠁')
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "set is idempotent",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				if err := c.SetPixel(image.Point{0, 0}); err != nil {
+					return err
+				}
 				return c.SetPixel(image.Point{0, 0})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -377,7 +424,7 @@ func TestBraille(t *testing.T) {
 			},
 		},
 		{
-			desc: "clear fails when cell doesn't contain braille pattern character",
+			desc: "clear is idempotent when cell doesn't contain braille pattern character",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {
 				return c.ClearPixel(image.Point{0, 0})
@@ -385,7 +432,6 @@ func TestBraille(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
-			wantErr: true,
 		},
 		{
 			desc: "clear fails on point outside of the canvas",
@@ -399,7 +445,7 @@ func TestBraille(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "clear is idempotent",
+			desc: "clear is idempotent when the pixel is already cleared",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {
 				if err := c.SetPixel(image.Point{0, 0}); err != nil {

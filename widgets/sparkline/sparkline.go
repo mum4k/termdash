@@ -113,10 +113,18 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 }
 
 // Add adds data points to the SparkLine.
+// Each data point is represented by one bar on the SparkLine. Zero value data
+// points are valid and are represented by an empty space on the SparkLine
+// (i.e. a missing bar).
+//
 // At least one data point must be provided. All data points must be positive
 // integers.
+//
 // The last added data point will be the one displayed all the way on the right
-// of the SparkLine.
+// of the SparkLine. If there are more data points than we can fit bars to the
+// width of the SparkLine, only the last n data points that fit will be
+// visible.
+//
 // Provided options override values set when New() was called.
 func (sl *SparkLine) Add(data []int, opts ...Option) error {
 	sl.mu.Lock()

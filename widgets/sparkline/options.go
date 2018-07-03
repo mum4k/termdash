@@ -65,7 +65,7 @@ func Height(h int) Option {
 }
 
 // DefaultColor is the default value for the Color option.
-const DefaultColor = cell.ColorBlue
+const DefaultColor = cell.ColorGreen
 
 // Color sets the color of the SparkLine.
 // Defaults to DefaultColor if not set.

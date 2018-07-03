@@ -91,6 +91,13 @@ sub-cell height. Run the
 
 [<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
 
+### The BarChart
+
+Displays multiple bars showing relative ratios of values. Run the
+[barchartdemo](widgets/barchart/barchartdemo/barchartdemo.go).
+
+[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif">](widgets/barchart/barchartdemo/barchartdemo.go)
+
 
 ## Disclaimer
 

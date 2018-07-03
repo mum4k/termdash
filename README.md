@@ -81,7 +81,16 @@ Displays the progress of an operation. Run the
 Displays text content, supports trimming and scrolling of content. Run the
 [textdemo](widgets/text/demo/textdemo.go).
 
-[<img src="./images/textdemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
+[<img src="./images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
+
+### The SparkLine
+
+Draws a graph showing a series of values as vertical bars. The bars can have
+sub-cell height. Run the
+[sparklinedemo](widgets/sparkline/sparklinedemo/sparklinedemo.go).
+
+[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
+
 
 ## Disclaimer
 

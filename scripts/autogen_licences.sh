@@ -28,7 +28,11 @@ if [ "$#" -eq 0 ]; then
 fi
 
 DIRECTORY="$1"
-WRITE="$2"
+
+WRITE=""
+if [ "$#" -ge 2 ]; then
+  WRITE="$2"
+fi
 
 if [ ! -d "${BIN_DIR}" ]; then
   echo "Directory ${BIN_DIR} doesn't exist."
@@ -38,7 +42,7 @@ fi
 
 
 if [ ! -d "${INSTALL_DIR}" ]; then
-  git clone git@github.com:mbrukman/autogen.git "${BIN_DIR}/autogen"
+  git clone https://github.com/mbrukman/autogen.git "${BIN_DIR}/autogen"
   if [ $? -ne 0 ]; then
     echo "Failed to run git clone."
     exit 1
@@ -49,16 +53,23 @@ if [ "${WRITE}" == "WRITE" ]; then
   DRY_RUN=""
 else
   DRY_RUN="echo "
-  echo "The WRITE argument not specified, dry run mode."
-  echo "Would have executed:"
 fi
 
 ADD_LICENCE="${DRY_RUN}${AUTOGEN} -i --no-top-level-comment"
 FIND_FILES="find ${DIRECTORY} -type f -name \*.go"
 LICENCE="Licensed under the Apache License"
 
+MISSING=0
+
 for FILE in `eval ${FIND_FILES}`; do
   if ! grep -q "${LICENCE}" "${FILE}"; then
+    MISSING=1
     eval "${ADD_LICENCE} ${FILE}"
   fi
 done
+
+if [[ ! -z "$DRY_RUN" ]] && [ $MISSING -eq 1 ]; then
+      echo -e "\nFound files with missing licences. To fix, run the commands above."
+      echo "Or just execute:"
+      echo "$0 . WRITE"
+fi

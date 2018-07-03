@@ -95,9 +95,12 @@ func MouseSubscriber(f func(*terminalapi.Mouse)) Option {
 // Blocks until the context expires.
 func Run(ctx context.Context, t terminalapi.Terminal, c *container.Container, opts ...Option) error {
 	td := newTermdash(t, c, opts...)
-	defer td.stop()
 
-	return td.start(ctx)
+	err := td.start(ctx)
+	// Only return the status (error or nil) after the termdash event
+	// processing goroutine actually exits.
+	td.stop()
+	return err
 }
 
 // Controller controls a termdash instance.

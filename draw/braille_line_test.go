@@ -249,6 +249,70 @@ func TestBrailleLine(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "draws horizontal line, octant E",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{1, 0},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustSetPixel(bc, image.Point{1, 0})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws horizontal line, octant W",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{1, 0},
+			end:    image.Point{0, 0},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustSetPixel(bc, image.Point{1, 0})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws vertical line, octant S",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{0, 1},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustSetPixel(bc, image.Point{0, 1})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws vertical line, octant N",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{0, 1},
+			end:    image.Point{0, 0},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustSetPixel(bc, image.Point{0, 1})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

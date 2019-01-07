@@ -1,0 +1,103 @@
+package axes
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/kylelemons/godebug/pretty"
+)
+
+func TestValue(t *testing.T) {
+	tests := []struct {
+		desc            string
+		float           float64
+		nonZeroDecimals int
+		want            *Value
+	}{
+		{
+			desc:            "handles zeroes",
+			float:           0,
+			nonZeroDecimals: 0,
+			want: &Value{
+				Value:           0,
+				Rounded:         0,
+				ZeroDecimals:    0,
+				NonZeroDecimals: 0,
+			},
+		},
+		{
+			desc:            "rounds to requested precision",
+			float:           1.01234,
+			nonZeroDecimals: 2,
+			want: &Value{
+				Value:           1.01234,
+				Rounded:         1.013,
+				ZeroDecimals:    1,
+				NonZeroDecimals: 2,
+			},
+		},
+		{
+			desc:            "no rounding when not requested",
+			float:           1.01234,
+			nonZeroDecimals: 0,
+			want: &Value{
+				Value:           1.01234,
+				Rounded:         1.01234,
+				ZeroDecimals:    1,
+				NonZeroDecimals: 0,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := NewValue(tc.float, tc.nonZeroDecimals)
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("NewValue => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestText(t *testing.T) {
+	tests := []struct {
+		value           float64
+		nonZeroDecimals int
+		wantRounded     float64
+		wantText        string
+	}{
+		{0, 2, 0, "0"},
+		{10, 2, 10, "10"},
+		{-10, 2, -10, "-10"},
+		{0.5, 2, 0.5, "0.50"},
+		{-0.5, 2, -0.5, "-0.50"},
+		{100.5, 2, 100.5, "100.50"},
+		{-100.5, 2, -100.5, "-100.50"},
+		{0.12345, 1, 0.2, "0.2"},
+		{0.12345, 2, 0.13, "0.13"},
+		{0.123, 4, 0.123, "0.1230"},
+		{-0.12345, 2, -0.12, "-0.12"},
+		{999.12345, 2, 999.13, "999.13"},
+		{-999.12345, 2, -999.12, "-999.12"},
+		{999.00012345, 2, 999.00013, "999.00013"},
+		{-999.00012345, 2, -999.00012, "-999.00012"},
+		{100000.1, 2, 100000.1, "100000.10"},
+		{1000000.1, 2, 1000000.1, "1.00e+06"},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%v_%v", tc.value, tc.nonZeroDecimals), func(t *testing.T) {
+			v := NewValue(tc.value, tc.nonZeroDecimals)
+			gotRounded := v.Rounded
+			if gotRounded != tc.wantRounded {
+				t.Errorf("newValue(%v, %v).Rounded => got %v, want %v", tc.value, tc.nonZeroDecimals, gotRounded, tc.wantRounded)
+			}
+
+			gotText := v.Text()
+			if gotText != tc.wantText {
+				t.Errorf("newValue(%v, %v).Text => got %q, want %q", tc.value, tc.nonZeroDecimals, gotText, tc.wantText)
+			}
+
+		})
+	}
+}

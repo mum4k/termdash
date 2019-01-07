@@ -51,11 +51,11 @@ import (
 )
 
 const (
-	// colMult is the resolution multiplier for the width, i.e. two pixels per cell.
-	colMult = 2
+	// ColMult is the resolution multiplier for the width, i.e. two pixels per cell.
+	ColMult = 2
 
-	// rowMult is the resolution multiplier for the height, i.e. four pixels per cell.
-	rowMult = 4
+	// RowMult is the resolution multiplier for the height, i.e. four pixels per cell.
+	RowMult = 4
 
 	// brailleCharOffset is the offset of the braille pattern unicode characters.
 	// From: http://www.alanwood.net/unicode/braille_patterns.html
@@ -107,7 +107,7 @@ func New(ar image.Rectangle) (*Canvas, error) {
 // Size returns the size of the braille canvas in pixels.
 func (c *Canvas) Size() image.Point {
 	s := c.regular.Size()
-	return image.Point{s.X * colMult, s.Y * rowMult}
+	return image.Point{s.X * ColMult, s.Y * RowMult}
 }
 
 // Area returns the area of the braille canvas in pixels.
@@ -115,7 +115,7 @@ func (c *Canvas) Size() image.Point {
 // than the area used to create the braille canvas.
 func (c *Canvas) Area() image.Rectangle {
 	ar := c.regular.Area()
-	return image.Rect(0, 0, ar.Dx()*colMult, ar.Dx()*rowMult)
+	return image.Rect(0, 0, ar.Dx()*ColMult, ar.Dx()*RowMult)
 }
 
 // Clear clears all the content on the canvas.
@@ -213,7 +213,7 @@ func (c *Canvas) CopyTo(dst *canvas.Canvas) error {
 // cellPoint determines the point (coordinate) of the character cell given
 // coordinates in pixels.
 func (c *Canvas) cellPoint(p image.Point) (image.Point, error) {
-	cp := image.Point{p.X / colMult, p.Y / rowMult}
+	cp := image.Point{p.X / ColMult, p.Y / RowMult}
 	if ar := c.regular.Area(); !cp.In(ar) {
 		return image.ZP, fmt.Errorf("pixel at%v would be in a character cell at%v which falls outside of the canvas area %v", p, cp, ar)
 	}
@@ -232,5 +232,5 @@ func pixelSet(r rune, p image.Point) bool {
 
 // pixelPoint translates point within canvas to point within the target cell.
 func pixelPoint(p image.Point) image.Point {
-	return image.Point{p.X % colMult, p.Y % rowMult}
+	return image.Point{p.X % ColMult, p.Y % RowMult}
 }

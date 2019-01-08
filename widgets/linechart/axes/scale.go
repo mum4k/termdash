@@ -18,9 +18,9 @@ package axes
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/mum4k/termdash/canvas/braille"
+	"github.com/mum4k/termdash/numbers"
 )
 
 // YScale is the scale of the Y axis.
@@ -91,7 +91,7 @@ func (ys *YScale) ValueToPixel(v float64) (int, error) {
 		diff := -1 * ys.Min.Rounded
 		v += diff
 	}
-	return int(math.Round(v / ys.Step.Rounded)), nil
+	return int(numbers.Round(v / ys.Step.Rounded)), nil
 }
 
 // CellLabel given a cell position on the canvas, determines value of the label

@@ -25,6 +25,7 @@ import (
 )
 
 func TestLineChartDraws(t *testing.T) {
+	t.Skip() // Unimplemented.
 	tests := []struct {
 		desc         string
 		canvas       image.Rectangle

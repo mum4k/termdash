@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package numbers implements numerical calculations required when drawing a line chart.
+// Package numbers implements various numerical functions.
 package numbers
 
 import (
@@ -93,4 +93,15 @@ func zeroBeforeDecimal(f float64) float64 {
 
 	floor := math.Floor(f)
 	return (f - floor) * sign
+}
+
+// Round returns the nearest integer, rounding half away from zero.
+// Copied from the math package of Go 1.10 for backwards compatibility with Go
+// 1.8 where the math.Round function doesn't exist yet.
+func Round(x float64) float64 {
+	t := math.Trunc(x)
+	if math.Abs(x-t) >= 0.5 {
+		return t + math.Copysign(1, x)
+	}
+	return t
 }

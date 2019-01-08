@@ -37,15 +37,6 @@ type YDetails struct {
 	Labels []*Label
 }
 
-// Label is one value label on an axis.
-type Label struct {
-	// Text for the label.
-	Text string
-
-	// Position of the label within the canvas.
-	Pos image.Point
-}
-
 // Y tracks the state of the Y axis throughout the lifetime of a line chart.
 // Implements lazy resize of the axis to decrease visual "jumping".
 // This object is not thread-safe.
@@ -103,8 +94,8 @@ func (y *Y) Details(cvsHeight int) (*YDetails, error) {
 	for cell := 0; cell < cvsHeight; cell += 1 + labelSpace {
 		//v := float64(cell) / scale
 		labels = append(labels, &Label{
-			Text: "",
-			Pos:  image.Point{0, cvsHeight - cell - 1},
+			//Text: "",
+			Pos: image.Point{0, cvsHeight - cell - 1},
 
 			// TODO: align.
 		})

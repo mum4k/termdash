@@ -32,9 +32,9 @@ type YScale struct {
 	// Step is the step in the value between pixels.
 	Step *Value
 
-	// cvsHeight is the height of the canvas the scale was calculated for.
-	cvsHeight int
-	// brailleHeight is the height of the braille canvas based on the cvsHeight.
+	// CvsHeight is the height of the canvas the scale was calculated for.
+	CvsHeight int
+	// brailleHeight is the height of the braille canvas based on the CvsHeight.
 	brailleHeight int
 }
 
@@ -51,26 +51,27 @@ func NewYScale(min, max float64, cvsHeight, nonZeroDecimals int) *YScale {
 		Min:           NewValue(min, nonZeroDecimals),
 		Max:           NewValue(max, nonZeroDecimals),
 		Step:          step,
-		cvsHeight:     cvsHeight,
+		CvsHeight:     cvsHeight,
 		brailleHeight: brailleHeight,
 	}
 }
 
 // PixelToValue given a Y coordinate of the pixel, returns its value according
 // to the scale. The coordinate must be within bounds of the canvas height
-// provided to NewYScale.
-func (ys *YScale) PixelToValue(p int) (float64, error) {
-	if min, max := 0, ys.brailleHeight; p < min || p >= max {
-		return 0, fmt.Errorf("invalid pixel %d, must be in range %d <= p < %d", p, min, max)
+// provided to NewYScale. Y coordinates grow down.
+func (ys *YScale) PixelToValue(y int) (float64, error) {
+	pos, err := yToPosition(y, ys.brailleHeight)
+	if err != nil {
+		return 0, err
 	}
 
 	switch {
-	case p == 0:
+	case pos == 0:
 		return ys.Min.Rounded, nil
-	case p == ys.brailleHeight-1:
+	case pos == ys.brailleHeight-1:
 		return ys.Max.Rounded, nil
 	default:
-		v := float64(p) * ys.Step.Rounded
+		v := float64(pos) * ys.Step.Rounded
 		if ys.Min.Value < 0 {
 			diff := -1 * ys.Min.Rounded
 			v -= diff
@@ -81,7 +82,8 @@ func (ys *YScale) PixelToValue(p int) (float64, error) {
 
 // ValueToPixel given a value, determines the Y coordinate of the pixel that
 // most closely represents the value on the line chart according to the scale.
-// The value must be within the bounds provided to NewYScale.
+// The value must be within the bounds provided to NewYScale. Y coordinates
+// grow down.
 func (ys *YScale) ValueToPixel(v float64) (int, error) {
 	if min, max := ys.Min.Value, ys.Max.Rounded; v < min || v > max {
 		return 0, fmt.Errorf("invalid value %v, must be in range %v <= v <= %v", v, min, max)
@@ -91,21 +93,51 @@ func (ys *YScale) ValueToPixel(v float64) (int, error) {
 		diff := -1 * ys.Min.Rounded
 		v += diff
 	}
-	return int(numbers.Round(v / ys.Step.Rounded)), nil
+	pos := int(numbers.Round(v / ys.Step.Rounded))
+	return positionToY(pos, ys.brailleHeight)
 }
 
-// CellLabel given a cell position on the canvas, determines value of the label
-// that should be next to it. The cell position must be within the cvsHeight
-// provided to NewYScale.
-func (ys *YScale) CellLabel(cell int) (*Value, error) {
-	if min, max := 0, ys.cvsHeight; cell < min || cell >= max {
-		return nil, fmt.Errorf("invalid cell %d, must be in range %d <= p < %d", cell, min, max)
+// CellLabel given a Y coordinate of a cell the canvas, determines value of the
+// label that should be next to it. The Y coordinate must be within the
+// cvsHeight provided to NewYScale. Y coordinates grow down.
+func (ys *YScale) CellLabel(y int) (*Value, error) {
+	pos, err := yToPosition(y, ys.CvsHeight)
+	if err != nil {
+		return nil, err
 	}
 
-	pixel := cell * braille.RowMult
-	v, err := ys.PixelToValue(pixel)
+	pixelY, err := positionToY(pos*braille.RowMult, ys.brailleHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := ys.PixelToValue(pixelY)
 	if err != nil {
 		return nil, err
 	}
 	return NewValue(v, ys.Min.NonZeroDecimals), nil
+}
+
+// positionToY, given a position within the height, returns the Y coordinate of
+// the position. Positions grow up, coordinates grow down.
+//
+// Positions     Y Coordinates
+//         2  |  0
+//         1  |  1
+//         0  |  2
+func positionToY(pos int, height int) (int, error) {
+	max := height - 1
+	if min := 0; pos < min || pos > max {
+		return 0, fmt.Errorf("position %d out of bounds %d <= pos <= %d", pos, min, max)
+	}
+	return max - pos, nil
+}
+
+// yToPosition is the reverse of positionToY.
+func yToPosition(y int, height int) (int, error) {
+	max := height - 1
+	if min := 0; y < min || y > max {
+		return 0, fmt.Errorf("Y coordinate %d out of bounds %d <= Y <= %d", y, min, max)
+	}
+	return -1*y + max, nil
 }

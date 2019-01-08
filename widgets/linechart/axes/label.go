@@ -1,17 +1,3 @@
-// Copyright 2019 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package axes
 
 // label.go contains code that calculates the positions of labels on the axes.
@@ -37,6 +23,9 @@ type Label struct {
 // canvas until the Y axis (not including the Y axis). This is the area where
 // the labels will be placed and aligned.
 // Labels are returned in an increasing value order.
+// Label value is not trimmed to the provided labelWidth, the label width is
+// only used to align the labels. Alignment is done with the asusmption that
+// longer labels will be trimmed.
 func yLabels(scale *YScale, labelWidth int) ([]*Label, error) {
 	if min := 2; scale.CvsHeight < min {
 		return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", scale.CvsHeight, min)

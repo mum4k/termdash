@@ -15,6 +15,7 @@
 package axes
 
 import (
+	"image"
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
@@ -26,70 +27,100 @@ type updateY struct {
 }
 
 func TestY(t *testing.T) {
-	t.Skip() // Unimplemented.
 	tests := []struct {
-		desc           string
-		minVal         float64
-		maxVal         float64
-		update         *updateY
-		cvsHeight      int
-		wantWidth      int
-		want           *YDetails
-		wantNewErr     bool
-		wantUpdateErr  bool
-		wantWidthErr   bool
-		wantDetailsErr bool
+		desc      string
+		minVal    float64
+		maxVal    float64
+		update    *updateY
+		cvsHeight int
+		maxWidth  int
+		wantWidth int
+		want      *YDetails
+		wantErr   bool
 	}{
 		{
-			desc:      "zero based positive ints",
+			desc:      "fails on canvas too small",
 			minVal:    0,
 			maxVal:    3,
-			cvsHeight: 4,
+			cvsHeight: 1,
+			maxWidth:  2,
 			wantWidth: 2,
+			wantErr:   true,
+		},
+		{
+			desc:      "fails on maxWidth less than required width",
+			minVal:    0,
+			maxVal:    3,
+			cvsHeight: 2,
+			maxWidth:  1,
+			wantWidth: 2,
+			wantErr:   true,
+		},
+		{
+			desc:      "maxWidth equals required width",
+			minVal:    0,
+			maxVal:    3,
+			cvsHeight: 2,
+			wantWidth: 2,
+			maxWidth:  2,
 			want: &YDetails{
 				Width: 2,
-				//Labels: []*Label{
-				//	{"0", image.Point{0, 3}},
-				//	{"3", image.Point{0, 0}},
-				//},
+				Scale: NewYScale(0, 3, 2, nonZeroDecimals),
+				Labels: []*Label{
+					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
+				},
+			},
+		},
+		{
+			desc:      "maxWidth just accommodates the longest label",
+			minVal:    0,
+			maxVal:    3,
+			cvsHeight: 2,
+			wantWidth: 2,
+			maxWidth:  5,
+			want: &YDetails{
+				Width: 5,
+				Scale: NewYScale(0, 3, 2, nonZeroDecimals),
+				Labels: []*Label{
+					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
+					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
+				},
+			},
+		},
+		{
+			desc:      "maxWidth is more than we need",
+			minVal:    0,
+			maxVal:    3,
+			cvsHeight: 2,
+			wantWidth: 2,
+			maxWidth:  6,
+			want: &YDetails{
+				Width: 5,
+				Scale: NewYScale(0, 3, 2, nonZeroDecimals),
+				Labels: []*Label{
+					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
+					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
+				},
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			y, err := NewY(tc.minVal, tc.maxVal)
-			if (err != nil) != tc.wantNewErr {
-				t.Errorf("NewY => unexpected error: %v, wantErr: %v", err, tc.wantNewErr)
-			}
-			if err != nil {
-				return
-			}
-
+			y := NewY(tc.minVal, tc.maxVal)
 			if tc.update != nil {
-				err := y.Update(tc.update.minVal, tc.update.maxVal)
-				if (err != nil) != tc.wantUpdateErr {
-					t.Errorf("Update => unexpected error: %v, wantErr: %v", err, tc.wantUpdateErr)
-				}
-				if err != nil {
-					return
-				}
+				y.Update(tc.update.minVal, tc.update.maxVal)
 			}
 
-			gotWidth, err := y.RequiredWidth()
-			if (err != nil) != tc.wantWidthErr {
-				t.Errorf("RequiredWidth => unexpected error: %v, wantErr: %v", err, tc.wantWidthErr)
-			}
-			if err != nil {
-				return
-			}
+			gotWidth := y.RequiredWidth()
 			if gotWidth != tc.wantWidth {
 				t.Errorf("RequiredWidth => got %v, want %v", gotWidth, tc.wantWidth)
 			}
 
-			got, err := y.Details(tc.cvsHeight)
-			if (err != nil) != tc.wantDetailsErr {
-				t.Errorf("Details => unexpected error: %v, wantErr: %v", err, tc.wantDetailsErr)
+			got, err := y.Details(tc.cvsHeight, tc.maxWidth)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Details => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
 			if err != nil {
 				return

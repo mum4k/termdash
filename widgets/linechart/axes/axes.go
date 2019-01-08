@@ -15,14 +15,17 @@
 // Package axes calculates the required layout and draws the X and Y axes of a line chart.
 package axes
 
-import (
-	"image"
-)
+import "fmt"
 
-// nonZeroDecimals determines the overall precision of values displayed on the
-// graph, it indicates the number of non-zero decimal places the values will be
-// rounded up to.
-const nonZeroDecimals = 2
+const (
+	// nonZeroDecimals determines the overall precision of values displayed on the
+	// graph, it indicates the number of non-zero decimal places the values will be
+	// rounded up to.
+	nonZeroDecimals = 2
+
+	// yAxisWidth is width of the Y axis.
+	yAxisWidth = 1
+)
 
 // YDetails contain information about the Y axis that will be drawn onto the
 // canvas.
@@ -52,57 +55,75 @@ type Y struct {
 // NewY returns a new Y instance.
 // The minVal and maxVal represent the minimum and maximum value that will be
 // displayed on the line chart among all of the series.
-func NewY(minVal, maxVal float64) (*Y, error) {
+func NewY(minVal, maxVal float64) *Y {
 	y := &Y{}
-	if err := y.Update(minVal, maxVal); err != nil {
-		return nil, err
-	}
-	return y, nil
-}
-
-// RequiredWidth calculates the minimum width required in order to draw the Y axis.
-func (y *Y) RequiredWidth() (int, error) {
-	minT, maxT := y.min.Text(), y.max.Text()
-	var widest int
-	if minW, maxW := len(minT), len(maxT); minW > maxW {
-		widest = minW
-	} else {
-		widest = maxW
-	}
-	const axisWidth = 1
-	return widest + axisWidth, nil
+	y.Update(minVal, maxVal)
+	return y
 }
 
 // Update updates the stored minVal and maxVal.
-func (y *Y) Update(minVal, maxVal float64) error {
+func (y *Y) Update(minVal, maxVal float64) {
 	y.min, y.max = NewValue(minVal, nonZeroDecimals), NewValue(maxVal, nonZeroDecimals)
-	return nil
+}
+
+// RequiredWidth calculates the minimum width required in order to draw the Y axis.
+func (y *Y) RequiredWidth() int {
+	// This is an estimation only, it is possible that more labels in the
+	// middle will be generated and might be wider than this. Such cases are
+	// handled on the call to Details when the size of canvas is known.
+	return widestLabel([]*Label{
+		{Value: y.min},
+		{Value: y.max},
+	}) + yAxisWidth
 }
 
 // Details retrieves details about the Y axis required to draw it on the provided canvas.
-// of the provided height.
-func (y *Y) Details(cvsHeight int) (*YDetails, error) {
-	w, err := y.RequiredWidth()
+// of the provided height. The maxWidth indicates the maximum width available
+// for the Y axis and its labels. This is guaranteed to be at least what
+// RequiredWidth returned.
+func (y *Y) Details(cvsHeight int, maxWidth int) (*YDetails, error) {
+	if req := y.RequiredWidth(); maxWidth < req {
+		return nil, fmt.Errorf("the received maxWidth %d is smaller than the reported required width %d", maxWidth, req)
+	}
+	scale := NewYScale(y.min.Value, y.max.Value, cvsHeight, nonZeroDecimals)
+
+	// See how the labels would look like on the entire maxWidth.
+	maxLabelWidth := maxWidth - yAxisWidth
+	labels, err := yLabels(scale, maxLabelWidth)
 	if err != nil {
 		return nil, err
 	}
 
-	const labelSpace = 2 // In cells.
-	var labels []*Label
-
-	//scale := y.max.Value / float64(cvsHeight)
-	for cell := 0; cell < cvsHeight; cell += 1 + labelSpace {
-		//v := float64(cell) / scale
-		labels = append(labels, &Label{
-			//Text: "",
-			Pos: image.Point{0, cvsHeight - cell - 1},
-
-			// TODO: align.
-		})
+	var width int
+	// Determine the largest label, which might be less than maxWidth.
+	// Such case would allow us to save more space for the line chart itself.
+	widest := widestLabel(labels)
+	if widest < maxLabelWidth {
+		// Save the space and recalculate the labels, since they need to be realigned.
+		l, err := yLabels(scale, widest)
+		if err != nil {
+			return nil, err
+		}
+		labels = l
+		width = widest + yAxisWidth // One for the axis itself.
+	} else {
+		width = maxWidth
 	}
 
 	return &YDetails{
-		Width:  w,
+		Width:  width,
+		Scale:  scale,
 		Labels: labels,
 	}, nil
+}
+
+// widestLabel returns the width of the widest label.
+func widestLabel(labels []*Label) int {
+	var widest int
+	for _, label := range labels {
+		if l := len(label.Value.Text()); l > widest {
+			widest = l
+		}
+	}
+	return widest
 }

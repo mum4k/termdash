@@ -41,7 +41,16 @@ type YScale struct {
 // NewYScale calculates the scale of the Y axis, given the boundary values and
 // the height of the canvas. The nonZeroDecimals dictates rounding of the
 // calculated scale, see NewValue for details.
-func NewYScale(min, max float64, cvsHeight, nonZeroDecimals int) *YScale {
+// Max must be greater or equal to min. The cvsHeight must be a positive
+// number.
+func NewYScale(min, max float64, cvsHeight, nonZeroDecimals int) (*YScale, error) {
+	if max < min {
+		return nil, fmt.Errorf("max(%v) cannot be less than min(%v)", max, min)
+	}
+	if min := 1; cvsHeight < min {
+		return nil, fmt.Errorf("cvsHeight cannot be less than %d, got %d", min, cvsHeight)
+	}
+
 	brailleHeight := cvsHeight * braille.RowMult
 	usablePixels := brailleHeight - 1 // One pixel reserved for value zero.
 
@@ -53,7 +62,7 @@ func NewYScale(min, max float64, cvsHeight, nonZeroDecimals int) *YScale {
 		Step:          step,
 		CvsHeight:     cvsHeight,
 		brailleHeight: brailleHeight,
-	}
+	}, nil
 }
 
 // PixelToValue given a Y coordinate of the pixel, returns its value according
@@ -87,6 +96,9 @@ func (ys *YScale) PixelToValue(y int) (float64, error) {
 func (ys *YScale) ValueToPixel(v float64) (int, error) {
 	if min, max := ys.Min.Value, ys.Max.Rounded; v < min || v > max {
 		return 0, fmt.Errorf("invalid value %v, must be in range %v <= v <= %v", v, min, max)
+	}
+	if ys.Step.Rounded == 0 {
+		return 0, nil
 	}
 
 	if ys.Min.Value < 0 {
@@ -137,6 +149,8 @@ type XScale struct {
 // points in the series and the width on the canvas that is available to the X
 // axis. The nonZeroDecimals dictates rounding of the calculated scale, see
 // NewValue for details.
+// The numPoints must be zero or positive number. The axisWidth must be a
+// positive number.
 func NewXScale(numPoints int, axisWidth, nonZeroDecimals int) (*XScale, error) {
 	if numPoints < 0 {
 		return nil, fmt.Errorf("numPoints cannot be negative, got %d", numPoints)
@@ -150,6 +164,9 @@ func NewXScale(numPoints int, axisWidth, nonZeroDecimals int) (*XScale, error) {
 
 	const min float64 = 0
 	max := float64(numPoints - 1)
+	if max < 0 {
+		max = 0
+	}
 	diff := max - min
 	step := NewValue(diff/float64(usablePixels), nonZeroDecimals)
 	return &XScale{
@@ -187,6 +204,9 @@ func (xs *XScale) ValueToPixel(v int) (int, error) {
 	fv := float64(v)
 	if min, max := xs.Min.Value, xs.Max.Rounded; fv < min || fv > max {
 		return 0, fmt.Errorf("invalid value %v, must be in range %v <= v <= %v", v, min, max)
+	}
+	if xs.Step.Rounded == 0 {
+		return 0, nil
 	}
 	return int(numbers.Round(fv / xs.Step.Rounded)), nil
 }

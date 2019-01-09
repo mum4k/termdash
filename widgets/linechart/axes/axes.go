@@ -85,7 +85,10 @@ func (y *Y) Details(cvsHeight int, maxWidth int) (*YDetails, error) {
 	if req := y.RequiredWidth(); maxWidth < req {
 		return nil, fmt.Errorf("the received maxWidth %d is smaller than the reported required width %d", maxWidth, req)
 	}
-	scale := NewYScale(y.min.Value, y.max.Value, cvsHeight, nonZeroDecimals)
+	scale, err := NewYScale(y.min.Value, y.max.Value, cvsHeight, nonZeroDecimals)
+	if err != nil {
+		return nil, err
+	}
 
 	// See how the labels would look like on the entire maxWidth.
 	maxLabelWidth := maxWidth - yAxisWidth

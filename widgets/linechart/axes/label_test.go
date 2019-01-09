@@ -98,7 +98,10 @@ func TestYLabels(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			scale := NewYScale(tc.min, tc.max, tc.cvsHeight, nonZeroDecimals)
+			scale, err := NewYScale(tc.min, tc.max, tc.cvsHeight, nonZeroDecimals)
+			if err != nil {
+				t.Fatalf("NewYScale => unexpected error: %v", err)
+			}
 			t.Logf("scale step: %v", scale.Step.Rounded)
 			got, err := yLabels(scale, tc.labelWidth)
 			if (err != nil) != tc.wantErr {

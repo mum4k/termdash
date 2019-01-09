@@ -65,7 +65,7 @@ func TestY(t *testing.T) {
 			maxWidth:  2,
 			want: &YDetails{
 				Width: 2,
-				Scale: NewYScale(0, 3, 2, nonZeroDecimals),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -81,7 +81,7 @@ func TestY(t *testing.T) {
 			maxWidth:  5,
 			want: &YDetails{
 				Width: 5,
-				Scale: NewYScale(0, 3, 2, nonZeroDecimals),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -97,7 +97,7 @@ func TestY(t *testing.T) {
 			maxWidth:  6,
 			want: &YDetails{
 				Width: 5,
-				Scale: NewYScale(0, 3, 2, nonZeroDecimals),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},

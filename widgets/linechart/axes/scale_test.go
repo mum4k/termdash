@@ -21,6 +21,24 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 )
 
+// mustNewYScale returns a new YScale or panics.
+func mustNewYScale(min, max float64, cvsHeight, nonZeroDecimals int) *YScale {
+	s, err := NewYScale(min, max, cvsHeight, nonZeroDecimals)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
+// mustNewXScale returns a new XScale or panics.
+func mustNewXScale(numPoints int, axisWidth, nonZeroDecimals int) *XScale {
+	s, err := NewXScale(numPoints, axisWidth, nonZeroDecimals)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
 func TestYScale(t *testing.T) {
 	tests := []struct {
 		desc            string
@@ -29,7 +47,24 @@ func TestYScale(t *testing.T) {
 		cvsHeight       int
 		nonZeroDecimals int
 		want            *YScale
+		wantErr         bool
 	}{
+		{
+			desc:            "fails when max is less than min",
+			min:             0,
+			max:             -1,
+			cvsHeight:       4,
+			nonZeroDecimals: 2,
+			wantErr:         true,
+		},
+		{
+			desc:            "fails when canvas height too small",
+			min:             0,
+			max:             1,
+			cvsHeight:       0,
+			nonZeroDecimals: 2,
+			wantErr:         true,
+		},
 		{
 			desc:            "min and max are zero",
 			min:             0,
@@ -90,7 +125,13 @@ func TestYScale(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := NewYScale(tc.min, tc.max, tc.cvsHeight, tc.nonZeroDecimals)
+			got, err := NewYScale(tc.min, tc.max, tc.cvsHeight, tc.nonZeroDecimals)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("NewYScale => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("NewYScale => unexpected diff (-want, +got):\n%s", diff)
 			}
@@ -174,6 +215,22 @@ func TestYScaleMethods(t *testing.T) {
 			},
 			cellLabelTests: []cellLabelTest{
 				{4, nil, true},
+			},
+		},
+		{
+			desc:            "works without data points",
+			min:             0,
+			max:             0,
+			cvsHeight:       1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{0, 0, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
 			},
 		},
 		{
@@ -302,7 +359,11 @@ func TestYScaleMethods(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		scale := NewYScale(test.min, test.max, test.cvsHeight, test.nonZeroDecimals)
+		scale, err := NewYScale(test.min, test.max, test.cvsHeight, test.nonZeroDecimals)
+		if err != nil {
+			t.Fatalf("NewYScale => unexpected error: %v", err)
+		}
+
 		t.Run(fmt.Sprintf("PixelToValue:%s", test.desc), func(t *testing.T) {
 			for _, tc := range test.pixelToValueTests {
 				got, err := scale.PixelToValue(tc.pixel)
@@ -413,6 +474,21 @@ func TestXScaleMethods(t *testing.T) {
 			},
 			cellLabelTests: []cellLabelTest{
 				{2, nil, true},
+			},
+		},
+		{
+			desc:            "works without data points",
+			numPoints:       0,
+			axisWidth:       1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{0, 0, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
 			},
 		},
 		{

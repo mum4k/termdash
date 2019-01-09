@@ -119,7 +119,7 @@ type cellLabelTest struct {
 	wantErr bool
 }
 
-func TestPixelToValueAndViceVersa(t *testing.T) {
+func TestYScaleMethods(t *testing.T) {
 	tests := []struct {
 		desc              string
 		min               float64
@@ -321,6 +321,185 @@ func TestPixelToValueAndViceVersa(t *testing.T) {
 		t.Run(fmt.Sprintf("ValueToPixel:%s", test.desc), func(t *testing.T) {
 			for _, tc := range test.valueToPixelTests {
 				got, err := scale.ValueToPixel(tc.value)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("ValueToPixel => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+				if err != nil {
+					continue
+				}
+				if got != tc.want {
+					t.Errorf("ValueToPixel(%v) => %v, want %v", tc.value, got, tc.want)
+				}
+			}
+		})
+
+		t.Run(fmt.Sprintf("CellLabel:%s", test.desc), func(t *testing.T) {
+			for _, tc := range test.cellLabelTests {
+				got, err := scale.CellLabel(tc.cell)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("CellLabel => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+				if err != nil {
+					continue
+				}
+				if diff := pretty.Compare(tc.want, got); diff != "" {
+					t.Errorf("CellLabel(%v) => unexpected diff (-want, +got):\n%s", tc.cell, diff)
+				}
+			}
+		})
+	}
+}
+
+func TestXScaleMethods(t *testing.T) {
+	tests := []struct {
+		desc              string
+		numPoints         int
+		axisWidth         int
+		nonZeroDecimals   int
+		pixelToValueTests []pixelToValueTest
+		valueToPixelTests []valueToPixelTest
+		cellLabelTests    []cellLabelTest
+		wantErr           bool
+	}{
+		{
+			desc:      "fails when numPoints negative",
+			numPoints: -1,
+			axisWidth: 1,
+			wantErr:   true,
+		},
+		{
+			desc:      "fails when axisWidth zero",
+			numPoints: 1,
+			axisWidth: 0,
+			wantErr:   true,
+		},
+		{
+			desc:            "fails on negative pixel",
+			numPoints:       1,
+			axisWidth:       1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{-1, 0, true},
+			},
+		},
+		{
+			desc:            "fails on pixel out of range",
+			numPoints:       1,
+			axisWidth:       1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{2, 0, true},
+			},
+		},
+		{
+			desc:            "fails on value or cell too small",
+			numPoints:       1,
+			axisWidth:       1,
+			nonZeroDecimals: 2,
+			valueToPixelTests: []valueToPixelTest{
+				{-1, 0, true},
+			},
+			cellLabelTests: []cellLabelTest{
+				{-1, nil, true},
+			},
+		},
+		{
+			desc:            "fails on value or cell too large",
+			numPoints:       1,
+			axisWidth:       1,
+			nonZeroDecimals: 2,
+			valueToPixelTests: []valueToPixelTest{
+				{1, 0, true},
+			},
+			cellLabelTests: []cellLabelTest{
+				{2, nil, true},
+			},
+		},
+		{
+			desc:            "integer scale, all points fit",
+			numPoints:       6,
+			axisWidth:       3,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{0, 0, false},
+				{1, 1, false},
+				{2, 2, false},
+				{3, 3, false},
+				{4, 4, false},
+				{5, 5, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 0, false},
+				{1, 1, false},
+				{2, 2, false},
+				{3, 3, false},
+				{4, 4, false},
+				{5, 5, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
+			},
+		},
+		{
+			desc:            "float scale, multiple points per pixel",
+			numPoints:       12,
+			axisWidth:       3,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{0, 0, false},
+				{1, 2.21, false},
+				{2, 4.42, false},
+				{3, 6.63, false},
+				{4, 8.84, false},
+				{5, 11, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 0, false},
+				{1, 0, false},
+				{2, 1, false},
+				{3, 1, false},
+				{4, 2, false},
+				{5, 2, false},
+				{6, 3, false},
+				{7, 3, false},
+				{8, 4, false},
+				{9, 4, false},
+				{10, 5, false},
+				{11, 5, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		scale, err := NewXScale(test.numPoints, test.axisWidth, test.nonZeroDecimals)
+		if (err != nil) != test.wantErr {
+			t.Errorf("NewXScale => unexpected error: %v, wantErr: %v", err, test.wantErr)
+		}
+		if err != nil {
+			continue
+		}
+
+		t.Run(fmt.Sprintf("PixelToValue:%s", test.desc), func(t *testing.T) {
+			for _, tc := range test.pixelToValueTests {
+				got, err := scale.PixelToValue(tc.pixel)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("PixelToValue => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+				if err != nil {
+					continue
+				}
+				if got != tc.want {
+					t.Errorf("PixelToValue(%v) => %v, want %v", tc.pixel, got, tc.want)
+				}
+			}
+		})
+
+		t.Run(fmt.Sprintf("ValueToPixel:%s", test.desc), func(t *testing.T) {
+			for _, tc := range test.valueToPixelTests {
+				got, err := scale.ValueToPixel(int(tc.value))
 				if (err != nil) != tc.wantErr {
 					t.Errorf("ValueToPixel => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 				}

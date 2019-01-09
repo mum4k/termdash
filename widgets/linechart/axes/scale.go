@@ -40,7 +40,7 @@ type YScale struct {
 
 // NewYScale calculates the scale of the Y axis, given the boundary values and
 // the height of the canvas. The nonZeroDecimals dictates rounding of the
-// calculates scale, see NewValue for details.
+// calculated scale, see NewValue for details.
 func NewYScale(min, max float64, cvsHeight, nonZeroDecimals int) *YScale {
 	brailleHeight := cvsHeight * braille.RowMult
 	usablePixels := brailleHeight - 1 // One pixel reserved for value zero.
@@ -97,8 +97,8 @@ func (ys *YScale) ValueToPixel(v float64) (int, error) {
 	return positionToY(pos, ys.brailleHeight)
 }
 
-// CellLabel given a Y coordinate of a cell the canvas, determines value of the
-// label that should be next to it. The Y coordinate must be within the
+// CellLabel given a Y coordinate of a cell on the canvas, determines value of
+// the label that should be next to it. The Y coordinate must be within the
 // cvsHeight provided to NewYScale. Y coordinates grow down.
 func (ys *YScale) CellLabel(y int) (*Value, error) {
 	pos, err := yToPosition(y, ys.CvsHeight)
@@ -116,6 +116,93 @@ func (ys *YScale) CellLabel(y int) (*Value, error) {
 		return nil, err
 	}
 	return NewValue(v, ys.Min.NonZeroDecimals), nil
+}
+
+// XScale is the scale of the X axis.
+type XScale struct {
+	// Min is the minimum value on the axis.
+	Min *Value
+	// Max is the maximum value on the axis.
+	Max *Value
+	// Step is the step in the value between pixels.
+	Step *Value
+
+	// AxisWidth is the width of the canvas that is available to the X axis.
+	AxisWidth int
+	// brailleWidth is the height of the braille canvas based on the AxisWidth.
+	brailleWidth int
+}
+
+// NewXScale calculates the scale of the X axis, given the number of data
+// points in the series and the width on the canvas that is available to the X
+// axis. The nonZeroDecimals dictates rounding of the calculated scale, see
+// NewValue for details.
+func NewXScale(numPoints int, axisWidth, nonZeroDecimals int) (*XScale, error) {
+	if numPoints < 0 {
+		return nil, fmt.Errorf("numPoints cannot be negative, got %d", numPoints)
+	}
+	if min := 1; axisWidth < min {
+		return nil, fmt.Errorf("axisWidth must be at least %d, got %d", min, axisWidth)
+	}
+
+	brailleWidth := axisWidth * braille.ColMult
+	usablePixels := brailleWidth - 1 // One pixel reserved for value zero.
+
+	const min float64 = 0
+	max := float64(numPoints - 1)
+	diff := max - min
+	step := NewValue(diff/float64(usablePixels), nonZeroDecimals)
+	return &XScale{
+		Min:          NewValue(min, nonZeroDecimals),
+		Max:          NewValue(max, nonZeroDecimals),
+		Step:         step,
+		AxisWidth:    axisWidth,
+		brailleWidth: brailleWidth,
+	}, nil
+}
+
+// PixelToValue given a X coordinate of the pixel, returns its value according
+// to the scale. The coordinate must be within bounds of the canvas width
+// provided to NewXScale. X coordinates grow right.
+func (xs *XScale) PixelToValue(x int) (float64, error) {
+	if min, max := 0, xs.brailleWidth; x < min || x >= max {
+		return 0, fmt.Errorf("invalid x coordinate %d, must be in range %v < x < %v", x, min, max)
+	}
+
+	switch {
+	case x == 0:
+		return xs.Min.Rounded, nil
+	case x == xs.brailleWidth-1:
+		return xs.Max.Rounded, nil
+	default:
+		return float64(x) * xs.Step.Rounded, nil
+	}
+}
+
+// ValueToPixel given a value, determines the X coordinate of the pixel that
+// most closely represents the value on the line chart according to the scale.
+// The value must be within the bounds provided to NewXScale. X coordinates
+// grow right.
+func (xs *XScale) ValueToPixel(v int) (int, error) {
+	fv := float64(v)
+	if min, max := xs.Min.Value, xs.Max.Rounded; fv < min || fv > max {
+		return 0, fmt.Errorf("invalid value %v, must be in range %v <= v <= %v", v, min, max)
+	}
+	return int(numbers.Round(fv / xs.Step.Rounded)), nil
+}
+
+// CellLabel given an X coordinate of a cell on the canvas, determines value of the
+// label that should be next to it. The X coordinate must be within the
+// axisWidth provided to NewXScale. X coordinates grow right.
+func (xs *XScale) CellLabel(x int) (*Value, error) {
+	if min, max := 0, xs.AxisWidth; x < min || x >= max {
+		return nil, fmt.Errorf("invalid cell coordinate %d, must be in range %v <= x < %v", x, min, max)
+	}
+	v, err := xs.PixelToValue(x * braille.RowMult)
+	if err != nil {
+		return nil, err
+	}
+	return NewValue(v, xs.Min.NonZeroDecimals), nil
 }
 
 // positionToY, given a position within the height, returns the Y coordinate of

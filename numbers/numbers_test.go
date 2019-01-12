@@ -147,3 +147,55 @@ func TestRound(t *testing.T) {
 		}
 	}
 }
+
+func TestMinMax(t *testing.T) {
+	tests := []struct {
+		desc    string
+		values  []float64
+		wantMin float64
+		wantMax float64
+	}{
+		{
+			desc: "no values",
+		},
+		{
+			desc:    "all values the same",
+			values:  []float64{1.1, 1.1},
+			wantMin: 1.1,
+			wantMax: 1.1,
+		},
+		{
+			desc:    "all values the same and negative",
+			values:  []float64{-1.1, -1.1},
+			wantMin: -1.1,
+			wantMax: -1.1,
+		},
+		{
+			desc:    "min and max among positive values",
+			values:  []float64{1.1, 1.2, 1.3},
+			wantMin: 1.1,
+			wantMax: 1.3,
+		},
+		{
+			desc:    "min and max among positive and zero values",
+			values:  []float64{1.1, 0, 1.3},
+			wantMin: 0,
+			wantMax: 1.3,
+		},
+		{
+			desc:    "min and max among negative, positive and zero values",
+			values:  []float64{1.1, 0, 1.3, -11.3, 22.5},
+			wantMin: -11.3,
+			wantMax: 22.5,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			gotMin, gotMax := MinMax(tc.values)
+			if gotMin != tc.wantMin || gotMax != tc.wantMax {
+				t.Errorf("MinMax => (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
+			}
+		})
+	}
+}

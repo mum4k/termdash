@@ -94,32 +94,30 @@ func rowLabel(scale *YScale, y int, labelWidth int) (*Label, error) {
 
 // xSpace represents an available space among the X axis.
 type xSpace struct {
-	// min is the current coordinate.
+	// min is the current relative coordinate.
+	// These are zero based, i.e. not adjusted to axisStart.
 	cur int
-	// max is the maximum coordinate.
+	// max is the maximum relative coordinate.
+	// These are zero based, i.e. not adjusted to axisStart.
 	// The xSpace instance contains points 0 <= x < max
 	max int
 
-	// the y coordinate of this space.
-	y int
+	// axisStart is the actual position of the X axis zero point on the canvas.
+	axisStart image.Point
 }
 
 // newXSpace returns a new xSpace instance initialized for the provided width.
-func newXSpace(axisWidth, cvsHeight int) (*xSpace, error) {
-	y, err := positionToY(0, cvsHeight)
-	if err != nil {
-		return nil, err
-	}
+func newXSpace(axisStart image.Point, axisWidth int) *xSpace {
 	return &xSpace{
-		cur: 0,
-		max: axisWidth,
-		y:   y,
-	}, nil
+		cur:       0,
+		max:       axisWidth,
+		axisStart: axisStart,
+	}
 }
 
 // Implements fmt.Stringer.
 func (xs *xSpace) String() string {
-	return fmt.Sprintf("xSpace(size:%d)-cur:%v-max:%v", xs.Remaining(), image.Point{xs.cur, xs.y}, image.Point{xs.max, xs.y})
+	return fmt.Sprintf("xSpace(size:%d)-cur:%v-max:%v", xs.Remaining(), image.Point{xs.cur, xs.axisStart.Y}, image.Point{xs.max, xs.axisStart.Y})
 }
 
 // Remaining returns the remaining size on the X axis.
@@ -127,9 +125,17 @@ func (xs *xSpace) Remaining() int {
 	return xs.max - xs.cur
 }
 
-// Current returns the current point.
-func (xs *xSpace) Current() image.Point {
-	return image.Point{xs.cur, xs.y}
+// Relative returns the relative coordinate within the space, these are zero
+// based.
+func (xs *xSpace) Relative() image.Point {
+	return image.Point{xs.cur, xs.axisStart.Y}
+}
+
+// Absolute returns the absolute coordinate on the canvas where a label should
+// be placed. The is the coordinate that represents the current relative
+// coordinate of the space.
+func (xs *xSpace) Absolute() image.Point {
+	return image.Point{xs.cur + xs.axisStart.X, xs.axisStart.Y}
 }
 
 // Sub subtracts the specified size from the beginning of the available
@@ -143,19 +149,13 @@ func (xs *xSpace) Sub(size int) error {
 }
 
 // xLabels returns labels that should be placed under the X axis.
+// The axisStart is the point where the X axis starts (its zero value) and is
+// used to determine label placement.
 // Labels are returned in an increasing value order.
 // Returned labels shouldn't be trimmed, their count is adjusted so that they
 // fit under the width of the axis.
-func xLabels(scale *XScale, cvsHeight int) ([]*Label, error) {
-	if min := 2; cvsHeight < min {
-		return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", cvsHeight, min)
-	}
-
-	space, err := newXSpace(scale.AxisWidth, cvsHeight)
-	if err != nil {
-		return nil, fmt.Errorf("newXSpace => %v", err)
-	}
-
+func xLabels(scale *XScale, axisStart image.Point) ([]*Label, error) {
+	space := newXSpace(axisStart, scale.AxisWidth)
 	const minSpacing = 3
 	var res []*Label
 
@@ -179,7 +179,7 @@ func xLabels(scale *XScale, cvsHeight int) ([]*Label, error) {
 			return nil, err
 		}
 
-		skip := nextCell - space.Current().X
+		skip := nextCell - space.Relative().X
 		if skip < minSpacing {
 			skip = minSpacing
 		}
@@ -198,7 +198,7 @@ func xLabels(scale *XScale, cvsHeight int) ([]*Label, error) {
 // The space is adjusted according to how much space was taken by the label.
 // Returns nil, nil if the label doesn't fit in the space.
 func colLabel(scale *XScale, space *xSpace) (*Label, error) {
-	pos := space.Current()
+	pos := space.Relative()
 	v, err := scale.CellLabel(pos.X)
 	if err != nil {
 		return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
@@ -209,12 +209,13 @@ func colLabel(scale *XScale, space *xSpace) (*Label, error) {
 		return nil, nil
 	}
 
+	abs := space.Absolute()
 	if err := space.Sub(labelLen); err != nil {
 		return nil, err
 	}
 
 	return &Label{
 		Value: v,
-		Pos:   pos,
+		Pos:   abs,
 	}, nil
 }

@@ -15,7 +15,10 @@
 // Package axes calculates the required layout and draws the X and Y axes of a line chart.
 package axes
 
-import "fmt"
+import (
+	"fmt"
+	"image"
+)
 
 const (
 	// nonZeroDecimals determines the overall precision of values displayed on the
@@ -77,7 +80,7 @@ func (y *Y) RequiredWidth() int {
 	}) + yAxisWidth
 }
 
-// Details retrieves details about the Y axis required to draw it on the provided canvas.
+// Details retrieves details about the Y axis required to draw it on a canvas
 // of the provided height. The maxWidth indicates the maximum width available
 // for the Y axis and its labels. This is guaranteed to be at least what
 // RequiredWidth returned.
@@ -129,4 +132,34 @@ func widestLabel(labels []*Label) int {
 		}
 	}
 	return widest
+}
+
+// XDetails contain information about the X axis that will be drawn onto the
+// canvas.
+type XDetails struct {
+	// Scale is the scale of the X axis.
+	Scale *XScale
+
+	// Labels are the labels for values on the X axis in an increasing order.
+	Labels []*Label
+}
+
+// NewXDetails retrieves details about the X axis required to draw it on a canvas
+// of the provided height. The axisStart is the zero point of the X axis on the
+// canvas and the axisWidth is its width in cells. The numPoints is the number
+// of points in the largest series that will be plotted.
+func NewXDetails(numPoints int, axisStart image.Point, axisWidth int) (*XDetails, error) {
+	scale, err := NewXScale(numPoints, axisWidth, nonZeroDecimals)
+	if err != nil {
+		return nil, err
+	}
+
+	labels, err := xLabels(scale, axisStart)
+	if err != nil {
+		return nil, err
+	}
+	return &XDetails{
+		Scale:  scale,
+		Labels: labels,
+	}, nil
 }

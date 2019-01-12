@@ -100,9 +100,6 @@ func (ys *YScale) PixelToValue(y int) (float64, error) {
 // The value must be within the bounds provided to NewYScale. Y coordinates
 // grow down.
 func (ys *YScale) ValueToPixel(v float64) (int, error) {
-	if min, max := ys.Min.Value, ys.Max.Rounded; v < min || v > max {
-		return 0, fmt.Errorf("invalid value %v, must be in range %v <= v <= %v", v, min, max)
-	}
 	if ys.Step.Rounded == 0 {
 		return 0, nil
 	}
@@ -234,9 +231,6 @@ func (xs *XScale) ValueToCell(v int) (int, error) {
 // axisWidth provided to NewXScale. X coordinates grow right.
 // The returned value is rounded to the nearest int, rounding half away from zero.
 func (xs *XScale) CellLabel(x int) (*Value, error) {
-	if min, max := 0, xs.AxisWidth; x < min || x >= max {
-		return nil, fmt.Errorf("invalid cell coordinate %d, must be in range %v <= x < %v", x, min, max)
-	}
 	v, err := xs.PixelToValue(x * braille.ColMult)
 	if err != nil {
 		return nil, err

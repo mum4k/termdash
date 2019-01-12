@@ -57,6 +57,15 @@ func TestY(t *testing.T) {
 			wantErr:   true,
 		},
 		{
+			desc:      "fails when max is less than min",
+			minVal:    0,
+			maxVal:    -1,
+			cvsHeight: 2,
+			maxWidth:  3,
+			wantWidth: 3,
+			wantErr:   true,
+		},
+		{
 			desc:      "maxWidth equals required width",
 			minVal:    0,
 			maxVal:    3,
@@ -127,6 +136,78 @@ func TestY(t *testing.T) {
 			}
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Details => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestNewXDetails(t *testing.T) {
+	tests := []struct {
+		desc      string
+		numPoints int
+		axisStart image.Point
+		axisWidth int
+		want      *XDetails
+		wantErr   bool
+	}{
+		{
+			desc:      "fails when numPoints is negative",
+			numPoints: -1,
+			axisStart: image.Point{0, 1},
+			axisWidth: 1,
+			wantErr:   true,
+		},
+		{
+			desc:      "fails when axisWidth is too small",
+			numPoints: 1,
+			axisStart: image.Point{0, 1},
+			axisWidth: 0,
+			wantErr:   true,
+		},
+		{
+			desc:      "works with no data points",
+			numPoints: 0,
+			axisStart: image.Point{0, 1},
+			axisWidth: 1,
+			want: &XDetails{
+				Scale: mustNewXScale(0, 1, nonZeroDecimals),
+				Labels: []*Label{
+					{
+						Value: NewValue(0, nonZeroDecimals),
+						Pos:   image.Point{0, 1},
+					},
+				},
+			},
+		},
+		{
+			desc:      "axis doesn't start at point zero",
+			numPoints: 0,
+			axisStart: image.Point{11, 2},
+			axisWidth: 1,
+			want: &XDetails{
+				Scale: mustNewXScale(0, 1, nonZeroDecimals),
+				Labels: []*Label{
+					{
+						Value: NewValue(0, nonZeroDecimals),
+						Pos:   image.Point{11, 2},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := NewXDetails(tc.numPoints, tc.axisStart, tc.axisWidth)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("NewXDetails => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("NewXDetails => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

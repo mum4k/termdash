@@ -144,23 +144,15 @@ func TestXLabels(t *testing.T) {
 		desc      string
 		numPoints int
 		axisWidth int
-		cvsHeight int
+		axisStart image.Point
 		want      []*Label
 		wantErr   bool
 	}{
-
-		{
-			desc:      "fails when canvas height is too small",
-			numPoints: 1,
-			axisWidth: 1,
-			cvsHeight: 1,
-			wantErr:   true,
-		},
 		{
 			desc:      "only one point",
 			numPoints: 1,
 			axisWidth: 1,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 			},
@@ -169,7 +161,7 @@ func TestXLabels(t *testing.T) {
 			desc:      "two points, only one label fits",
 			numPoints: 2,
 			axisWidth: 1,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 			},
@@ -178,17 +170,27 @@ func TestXLabels(t *testing.T) {
 			desc:      "two points, two labels fit exactly",
 			numPoints: 2,
 			axisWidth: 5,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 				{NewValue(1, nonZeroDecimals), image.Point{4, 1}},
 			},
 		},
 		{
+			desc:      "labels are placed according to axisStart",
+			numPoints: 2,
+			axisWidth: 5,
+			axisStart: image.Point{3, 5},
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{3, 5}},
+				{NewValue(1, nonZeroDecimals), image.Point{7, 5}},
+			},
+		},
+		{
 			desc:      "skip to next value exhausts the space completely",
 			numPoints: 11,
 			axisWidth: 4,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 			},
@@ -197,7 +199,7 @@ func TestXLabels(t *testing.T) {
 			desc:      "second label doesn't fit due to its length",
 			numPoints: 100,
 			axisWidth: 5,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 			},
@@ -206,7 +208,7 @@ func TestXLabels(t *testing.T) {
 			desc:      "two points, two labels, more space than minSpacing so end label adjusted",
 			numPoints: 2,
 			axisWidth: 6,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 				{NewValue(1, nonZeroDecimals), image.Point{5, 1}},
@@ -216,7 +218,7 @@ func TestXLabels(t *testing.T) {
 			desc:      "at most as many labels as there are points",
 			numPoints: 2,
 			axisWidth: 100,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 				{NewValue(1, nonZeroDecimals), image.Point{98, 1}},
@@ -226,7 +228,7 @@ func TestXLabels(t *testing.T) {
 			desc:      "some labels in the middle",
 			numPoints: 4,
 			axisWidth: 100,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 				{NewValue(1, nonZeroDecimals), image.Point{31, 1}},
@@ -238,7 +240,7 @@ func TestXLabels(t *testing.T) {
 			desc:      "more points than pixels",
 			numPoints: 100,
 			axisWidth: 6,
-			cvsHeight: 2,
+			axisStart: image.Point{0, 1},
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 				{NewValue(72, nonZeroDecimals), image.Point{4, 1}},
@@ -253,7 +255,7 @@ func TestXLabels(t *testing.T) {
 				t.Fatalf("NewXScale => unexpected error: %v", err)
 			}
 			t.Logf("scale step: %v", scale.Step.Rounded)
-			got, err := xLabels(scale, tc.cvsHeight)
+			got, err := xLabels(scale, tc.axisStart)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("xLabels => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

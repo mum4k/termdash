@@ -58,8 +58,9 @@ func yLabels(scale *YScale, labelWidth int) ([]*Label, error) {
 		labels = append(labels, label)
 	}
 
-	// Always place at least two labels, first and last.
-	if len(labels) < 2 {
+	// If we have data, place at least two labels, first and last.
+	haveData := scale.Min.Rounded != 0 || scale.Max.Rounded != 0
+	if len(labels) < 2 && haveData {
 		const maxRow = 0
 		label, err := rowLabel(scale, maxRow, labelWidth)
 		if err != nil {
@@ -84,11 +85,134 @@ func rowLabel(scale *YScale, y int, labelWidth int) (*Label, error) {
 	}
 
 	ar := rowLabelArea(y, labelWidth)
+	pos, err := align.Text(ar, v.Text(), align.HorizontalRight, align.VerticalMiddle)
+	return &Label{
+		Value: v,
+		Pos:   pos,
+	}, nil
+}
+
+// xSpace represents an available space among the X axis.
+type xSpace struct {
+	// min is the current coordinate.
+	cur int
+	// max is the maximum coordinate.
+	// The xSpace instance contains points 0 <= x < max
+	max int
+
+	// the y coordinate of this space.
+	y int
+}
+
+// newXSpace returns a new xSpace instance initialized for the provided width.
+func newXSpace(axisWidth, cvsHeight int) (*xSpace, error) {
+	y, err := positionToY(0, cvsHeight)
 	if err != nil {
-		return nil, fmt.Errorf("unable to align label value for row %d: %v", y, err)
+		return nil, err
+	}
+	return &xSpace{
+		cur: 0,
+		max: axisWidth,
+		y:   y,
+	}, nil
+}
+
+// Implements fmt.Stringer.
+func (xs *xSpace) String() string {
+	return fmt.Sprintf("xSpace(size:%d)-cur:%v-max:%v", xs.Remaining(), image.Point{xs.cur, xs.y}, image.Point{xs.max, xs.y})
+}
+
+// Remaining returns the remaining size on the X axis.
+func (xs *xSpace) Remaining() int {
+	return xs.max - xs.cur
+}
+
+// Current returns the current point.
+func (xs *xSpace) Current() image.Point {
+	return image.Point{xs.cur, xs.y}
+}
+
+// Sub subtracts the specified size from the beginning of the available
+// space.
+func (xs *xSpace) Sub(size int) error {
+	if xs.Remaining() < size {
+		return fmt.Errorf("unable to subtract %d from the start, not enough size in %v", size, xs)
+	}
+	xs.cur += size
+	return nil
+}
+
+// xLabels returns labels that should be placed under the X axis.
+// Labels are returned in an increasing value order.
+// Returned labels shouldn't be trimmed, their count is adjusted so that they
+// fit under the width of the axis.
+func xLabels(scale *XScale, cvsHeight int) ([]*Label, error) {
+	if min := 2; cvsHeight < min {
+		return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", cvsHeight, min)
 	}
 
-	pos, err := align.Text(ar, v.Text(), align.HorizontalRight, align.VerticalMiddle)
+	space, err := newXSpace(scale.AxisWidth, cvsHeight)
+	if err != nil {
+		return nil, fmt.Errorf("newXSpace => %v", err)
+	}
+
+	const minSpacing = 3
+	var res []*Label
+
+	next := 0
+	for haveLabels := 0; haveLabels <= int(scale.Max.Value); haveLabels = len(res) {
+		label, err := colLabel(scale, space)
+		if err != nil {
+			return nil, err
+		}
+		if label == nil {
+			break
+		}
+		res = append(res, label)
+
+		next++
+		if next > int(scale.Max.Value) {
+			break
+		}
+		nextCell, err := scale.ValueToCell(next)
+		if err != nil {
+			return nil, err
+		}
+
+		skip := nextCell - space.Current().X
+		if skip < minSpacing {
+			skip = minSpacing
+		}
+
+		if space.Remaining() <= skip {
+			break
+		}
+		if err := space.Sub(skip); err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+// colLabel returns a label placed either at the beginning of the space.
+// The space is adjusted according to how much space was taken by the label.
+// Returns nil, nil if the label doesn't fit in the space.
+func colLabel(scale *XScale, space *xSpace) (*Label, error) {
+	pos := space.Current()
+	v, err := scale.CellLabel(pos.X)
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
+	}
+
+	labelLen := len(v.Text())
+	if labelLen > space.Remaining() {
+		return nil, nil
+	}
+
+	if err := space.Sub(labelLen); err != nil {
+		return nil, err
+	}
+
 	return &Label{
 		Value: v,
 		Pos:   pos,

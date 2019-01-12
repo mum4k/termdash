@@ -39,15 +39,45 @@ func mustNewXScale(numPoints int, axisWidth, nonZeroDecimals int) *XScale {
 	return s
 }
 
+// pixelToValueTest is a test case for PixelToValue.
+type pixelToValueTest struct {
+	pixel   int
+	want    float64
+	wantErr bool
+}
+
+// valueToPixelTest is a test case for ValueToPixel.
+type valueToPixelTest struct {
+	value   float64
+	want    int
+	wantErr bool
+}
+
+// valueToCellTest is a test case for ValueToCell.
+type valueToCellTest struct {
+	value   int
+	want    int
+	wantErr bool
+}
+
+// cellLabelTest is a test case for CellLabel.
+type cellLabelTest struct {
+	cell    int
+	want    *Value
+	wantErr bool
+}
+
 func TestYScale(t *testing.T) {
 	tests := []struct {
-		desc            string
-		min             float64
-		max             float64
-		cvsHeight       int
-		nonZeroDecimals int
-		want            *YScale
-		wantErr         bool
+		desc              string
+		min               float64
+		max               float64
+		cvsHeight         int
+		nonZeroDecimals   int
+		pixelToValueTests []pixelToValueTest
+		valueToPixelTests []valueToPixelTest
+		cellLabelTests    []cellLabelTest
+		wantErr           bool
 	}{
 		{
 			desc:            "fails when max is less than min",
@@ -65,112 +95,6 @@ func TestYScale(t *testing.T) {
 			nonZeroDecimals: 2,
 			wantErr:         true,
 		},
-		{
-			desc:            "min and max are zero",
-			min:             0,
-			max:             0,
-			cvsHeight:       4,
-			nonZeroDecimals: 2,
-			want: &YScale{
-				Min:           NewValue(0, 2),
-				Max:           NewValue(0, 2),
-				Step:          NewValue(0, 2),
-				CvsHeight:     4,
-				brailleHeight: 16,
-			},
-		},
-		{
-			desc:            "zero based scale",
-			min:             0,
-			max:             10,
-			cvsHeight:       4,
-			nonZeroDecimals: 2,
-			want: &YScale{
-				Min:           NewValue(0, 2),
-				Max:           NewValue(10, 2),
-				Step:          NewValue(float64(10)/15, 2),
-				CvsHeight:     4,
-				brailleHeight: 16,
-			},
-		},
-		{
-			desc:            "min is negative",
-			min:             -10,
-			max:             10,
-			cvsHeight:       4,
-			nonZeroDecimals: 2,
-			want: &YScale{
-				Min:           NewValue(-10, 2),
-				Max:           NewValue(10, 2),
-				Step:          NewValue(float64(20)/15, 2),
-				CvsHeight:     4,
-				brailleHeight: 16,
-			},
-		},
-		{
-			desc:            "greater than one",
-			min:             0,
-			max:             5,
-			cvsHeight:       1,
-			nonZeroDecimals: 1,
-			want: &YScale{
-				Min:           NewValue(0, 1),
-				Max:           NewValue(5, 1),
-				Step:          NewValue(float64(5)/3, 1),
-				CvsHeight:     1,
-				brailleHeight: 4,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got, err := NewYScale(tc.min, tc.max, tc.cvsHeight, tc.nonZeroDecimals)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("NewYScale => unexpected error: %v, wantErr: %v", err, tc.wantErr)
-			}
-			if err != nil {
-				return
-			}
-			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("NewYScale => unexpected diff (-want, +got):\n%s", diff)
-			}
-		})
-	}
-}
-
-// pixelToValueTest is a test case for PixelToValue.
-type pixelToValueTest struct {
-	pixel   int
-	want    float64
-	wantErr bool
-}
-
-// valueToPixelTest is a test case for ValueToPixel.
-type valueToPixelTest struct {
-	value   float64
-	want    int
-	wantErr bool
-}
-
-// cellLabelTest is a test case for CellLabel.
-type cellLabelTest struct {
-	cell    int
-	want    *Value
-	wantErr bool
-}
-
-func TestYScaleMethods(t *testing.T) {
-	tests := []struct {
-		desc              string
-		min               float64
-		max               float64
-		cvsHeight         int
-		nonZeroDecimals   int
-		pixelToValueTests []pixelToValueTest
-		valueToPixelTests []valueToPixelTest
-		cellLabelTests    []cellLabelTest
-	}{
 		{
 			desc:            "fails on negative pixel",
 			min:             0,
@@ -233,6 +157,57 @@ func TestYScaleMethods(t *testing.T) {
 				{0, NewValue(0, 2), false},
 			},
 		},
+		{
+			desc:            "min and max are non-zero positive and equal, scale is zero based",
+			min:             6,
+			max:             6,
+			cvsHeight:       1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{3, 0, false},
+				{2, 2, false},
+				{1, 4, false},
+				{0, 6, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 3, false},
+				{0.5, 3, false},
+				{1, 2, false},
+				{1.5, 2, false},
+				{2, 2, false},
+				{4, 1, false},
+				{6, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
+			},
+		},
+		{
+			desc:            "min is non-zero positive, not equal to max, scale is zero based",
+			min:             1,
+			max:             6,
+			cvsHeight:       1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{3, 0, false},
+				{2, 2, false},
+				{1, 4, false},
+				{0, 6, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 3, false},
+				{0.5, 3, false},
+				{1, 2, false},
+				{1.5, 2, false},
+				{2, 2, false},
+				{4, 1, false},
+				{6, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
+			},
+		},
+
 		{
 			desc:            "integer scale",
 			min:             0,
@@ -335,6 +310,28 @@ func TestYScaleMethods(t *testing.T) {
 			},
 		},
 		{
+			desc:            "negative integer scale, max is also negative, scale has max of zero",
+			min:             -6,
+			max:             -1,
+			cvsHeight:       1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{3, -6, false},
+				{2, -4, false},
+				{1, -2, false},
+				{0, 0, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{-6, 3, false},
+				{-4, 2, false},
+				{-2, 1, false},
+				{0, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(-6, 2), false},
+			},
+		},
+		{
 			desc:            "zero based float scale",
 			min:             0,
 			max:             0.3,
@@ -360,8 +357,11 @@ func TestYScaleMethods(t *testing.T) {
 
 	for _, test := range tests {
 		scale, err := NewYScale(test.min, test.max, test.cvsHeight, test.nonZeroDecimals)
+		if (err != nil) != test.wantErr {
+			t.Errorf("NewYScale => unexpected error: %v, wantErr: %v", err, test.wantErr)
+		}
 		if err != nil {
-			t.Fatalf("NewYScale => unexpected error: %v", err)
+			continue
 		}
 
 		t.Run(fmt.Sprintf("PixelToValue:%s", test.desc), func(t *testing.T) {
@@ -411,7 +411,7 @@ func TestYScaleMethods(t *testing.T) {
 	}
 }
 
-func TestXScaleMethods(t *testing.T) {
+func TestXScale(t *testing.T) {
 	tests := []struct {
 		desc              string
 		numPoints         int
@@ -419,6 +419,7 @@ func TestXScaleMethods(t *testing.T) {
 		nonZeroDecimals   int
 		pixelToValueTests []pixelToValueTest
 		valueToPixelTests []valueToPixelTest
+		valueToCellTests  []valueToCellTest
 		cellLabelTests    []cellLabelTest
 		wantErr           bool
 	}{
@@ -460,6 +461,9 @@ func TestXScaleMethods(t *testing.T) {
 			valueToPixelTests: []valueToPixelTest{
 				{-1, 0, true},
 			},
+			valueToCellTests: []valueToCellTest{
+				{-1, 0, true},
+			},
 			cellLabelTests: []cellLabelTest{
 				{-1, nil, true},
 			},
@@ -470,6 +474,9 @@ func TestXScaleMethods(t *testing.T) {
 			axisWidth:       1,
 			nonZeroDecimals: 2,
 			valueToPixelTests: []valueToPixelTest{
+				{1, 0, true},
+			},
+			valueToCellTests: []valueToCellTest{
 				{1, 0, true},
 			},
 			cellLabelTests: []cellLabelTest{
@@ -512,8 +519,18 @@ func TestXScaleMethods(t *testing.T) {
 				{4, 4, false},
 				{5, 5, false},
 			},
+			valueToCellTests: []valueToCellTest{
+				{0, 0, false},
+				{1, 0, false},
+				{2, 1, false},
+				{3, 1, false},
+				{4, 2, false},
+				{5, 2, false},
+			},
 			cellLabelTests: []cellLabelTest{
 				{0, NewValue(0, 2), false},
+				{1, NewValue(2, 2), false},
+				{2, NewValue(4, 2), false},
 			},
 		},
 		{
@@ -543,8 +560,57 @@ func TestXScaleMethods(t *testing.T) {
 				{10, 5, false},
 				{11, 5, false},
 			},
+			valueToCellTests: []valueToCellTest{
+				{0, 0, false},
+				{1, 0, false},
+				{2, 0, false},
+				{3, 0, false},
+				{4, 1, false},
+				{5, 1, false},
+				{6, 1, false},
+				{7, 1, false},
+				{8, 2, false},
+				{9, 2, false},
+				{10, 2, false},
+				{11, 2, false},
+			},
 			cellLabelTests: []cellLabelTest{
 				{0, NewValue(0, 2), false},
+				{1, NewValue(4, 2), false},
+				{2, NewValue(9, 2), false},
+			},
+		},
+		{
+			desc:            "float scale, multiple pixels per point",
+			numPoints:       2,
+			axisWidth:       5,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{0, 0, false},
+				{1, 0.12, false},
+				{2, 0.24, false},
+				{3, 0.36, false},
+				{4, 0.48, false},
+				{5, 0.6, false},
+				{6, 0.72, false},
+				{7, 0.84, false},
+				{8, 0.96, false},
+				{9, 1, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 0, false},
+				{1, 8, false},
+			},
+			valueToCellTests: []valueToCellTest{
+				{0, 0, false},
+				{1, 4, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
+				{1, NewValue(0, 2), false},
+				{2, NewValue(0, 2), false},
+				{3, NewValue(1, 2), false},
+				{4, NewValue(1, 2), false},
 			},
 		},
 	}
@@ -584,6 +650,21 @@ func TestXScaleMethods(t *testing.T) {
 				}
 				if got != tc.want {
 					t.Errorf("ValueToPixel(%v) => %v, want %v", tc.value, got, tc.want)
+				}
+			}
+		})
+
+		t.Run(fmt.Sprintf("ValueToCell:%s", test.desc), func(t *testing.T) {
+			for _, tc := range test.valueToCellTests {
+				got, err := scale.ValueToCell(tc.value)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("ValueToCell => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+				if err != nil {
+					continue
+				}
+				if got != tc.want {
+					t.Errorf("ValueToCell(%v) => %v, want %v", tc.value, got, tc.want)
 				}
 			}
 		})

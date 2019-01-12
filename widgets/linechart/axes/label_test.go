@@ -49,6 +49,27 @@ func TestYLabels(t *testing.T) {
 			wantErr:    true,
 		},
 		{
+			desc:       "works when there are no data points",
+			min:        0,
+			max:        0,
+			cvsHeight:  2,
+			labelWidth: 1,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+			},
+		},
+		{
+			desc:       "works when min equals max",
+			min:        5,
+			max:        5,
+			cvsHeight:  2,
+			labelWidth: 1,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(2.88, nonZeroDecimals), image.Point{0, 0}},
+			},
+		},
+		{
 			desc:       "only two rows on the canvas, labels min and max",
 			min:        0,
 			max:        5,
@@ -112,6 +133,135 @@ func TestYLabels(t *testing.T) {
 			}
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("yLabels => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestXLabels(t *testing.T) {
+	const nonZeroDecimals = 2
+	tests := []struct {
+		desc      string
+		numPoints int
+		axisWidth int
+		cvsHeight int
+		want      []*Label
+		wantErr   bool
+	}{
+
+		{
+			desc:      "fails when canvas height is too small",
+			numPoints: 1,
+			axisWidth: 1,
+			cvsHeight: 1,
+			wantErr:   true,
+		},
+		{
+			desc:      "only one point",
+			numPoints: 1,
+			axisWidth: 1,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+			},
+		},
+		{
+			desc:      "two points, only one label fits",
+			numPoints: 2,
+			axisWidth: 1,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+			},
+		},
+		{
+			desc:      "two points, two labels fit exactly",
+			numPoints: 2,
+			axisWidth: 5,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(1, nonZeroDecimals), image.Point{4, 1}},
+			},
+		},
+		{
+			desc:      "skip to next value exhausts the space completely",
+			numPoints: 11,
+			axisWidth: 4,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+			},
+		},
+		{
+			desc:      "second label doesn't fit due to its length",
+			numPoints: 100,
+			axisWidth: 5,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+			},
+		},
+		{
+			desc:      "two points, two labels, more space than minSpacing so end label adjusted",
+			numPoints: 2,
+			axisWidth: 6,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(1, nonZeroDecimals), image.Point{5, 1}},
+			},
+		},
+		{
+			desc:      "at most as many labels as there are points",
+			numPoints: 2,
+			axisWidth: 100,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(1, nonZeroDecimals), image.Point{98, 1}},
+			},
+		},
+		{
+			desc:      "some labels in the middle",
+			numPoints: 4,
+			axisWidth: 100,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(1, nonZeroDecimals), image.Point{31, 1}},
+				{NewValue(2, nonZeroDecimals), image.Point{62, 1}},
+				{NewValue(3, nonZeroDecimals), image.Point{94, 1}},
+			},
+		},
+		{
+			desc:      "more points than pixels",
+			numPoints: 100,
+			axisWidth: 6,
+			cvsHeight: 2,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(72, nonZeroDecimals), image.Point{4, 1}},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			scale, err := NewXScale(tc.numPoints, tc.axisWidth, nonZeroDecimals)
+			if err != nil {
+				t.Fatalf("NewXScale => unexpected error: %v", err)
+			}
+			t.Logf("scale step: %v", scale.Step.Rounded)
+			got, err := xLabels(scale, tc.cvsHeight)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("xLabels => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("xLabels => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

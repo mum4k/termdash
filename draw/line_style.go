@@ -14,12 +14,17 @@
 
 package draw
 
-import "fmt"
+import (
+	"fmt"
+
+	runewidth "github.com/mattn/go-runewidth"
+)
 
 // line_style.go contains the Unicode characters used for drawing lines of
 // different styles.
 
 // lineStyleChars maps the line styles to the corresponding component characters.
+// Source: http://en.wikipedia.org/wiki/Box-drawing_character.
 var lineStyleChars = map[LineStyle]map[linePart]rune{
 	LineStyleLight: {
 		hLine:             '─',
@@ -28,14 +33,31 @@ var lineStyleChars = map[LineStyle]map[linePart]rune{
 		topRightCorner:    '┐',
 		bottomLeftCorner:  '└',
 		bottomRightCorner: '┘',
+		hAndUp:            '┴',
+		hAndDown:          '┬',
+		vAndLeft:          '┤',
+		vAndRight:         '├',
+		vAndH:             '┼',
 	},
+}
+
+// init verifies that all line parts are half-width runes (occupy only one
+// cell).
+func init() {
+	for ls, parts := range lineStyleChars {
+		for part, r := range parts {
+			if got := runewidth.RuneWidth(r); got > 1 {
+				panic(fmt.Errorf("line style %v line part %v is a rune %c with width %v, all parts must be half-width runes (width of one)", ls, part, r, got))
+			}
+		}
+	}
 }
 
 // lineParts returns the line component characters for the provided line style.
 func lineParts(ls LineStyle) (map[linePart]rune, error) {
 	parts, ok := lineStyleChars[ls]
 	if !ok {
-		return nil, fmt.Errorf("unsupported line style %v", ls)
+		return nil, fmt.Errorf("unsupported line style %d", ls)
 	}
 	return parts, nil
 }
@@ -80,6 +102,11 @@ var linePartNames = map[linePart]string{
 	topRightCorner:    "linePartTopRightCorner",
 	bottomLeftCorner:  "linePartBottomLeftCorner",
 	bottomRightCorner: "linePartBottomRightCorner",
+	hAndUp:            "linePartHAndUp",
+	hAndDown:          "linePartHAndDown",
+	vAndLeft:          "linePartVAndLeft",
+	vAndRight:         "linePartVAndRight",
+	vAndH:             "linePartVAndH",
 }
 
 const (
@@ -89,4 +116,9 @@ const (
 	topRightCorner
 	bottomLeftCorner
 	bottomRightCorner
+	hAndUp
+	hAndDown
+	vAndLeft
+	vAndRight
+	vAndH
 )

@@ -20,6 +20,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/draw"
 )
 
@@ -41,5 +42,19 @@ func MustText(c *canvas.Canvas, text string, start image.Point, opts ...draw.Tex
 func MustRectangle(c *canvas.Canvas, r image.Rectangle, opts ...draw.RectangleOption) {
 	if err := draw.Rectangle(c, r, opts...); err != nil {
 		panic(fmt.Sprintf("draw.Rectangle => unexpected error: %v", err))
+	}
+}
+
+// MustHVLines draws the vertical / horizontal lines or panics.
+func MustHVLines(c *canvas.Canvas, lines []draw.HVLine, opts ...draw.HVLineOption) {
+	if err := draw.HVLines(c, lines, opts...); err != nil {
+		panic(fmt.Sprintf("draw.HVLines => unexpected error: %v", err))
+	}
+}
+
+// MustBrailleLine draws the braille line or panics.
+func MustBrailleLine(bc *braille.Canvas, start, end image.Point, opts ...draw.BrailleLineOption) {
+	if err := draw.BrailleLine(bc, start, end, opts...); err != nil {
+		panic(fmt.Sprintf("draw.BrailleLine => unexpected error: %v", err))
 	}
 }

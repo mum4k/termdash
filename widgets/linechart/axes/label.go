@@ -38,11 +38,11 @@ type Label struct {
 // the labels will be placed and aligned.
 // Labels are returned in an increasing value order.
 // Label value is not trimmed to the provided labelWidth, the label width is
-// only used to align the labels. Alignment is done with the asusmption that
+// only used to align the labels. Alignment is done with the assumption that
 // longer labels will be trimmed.
 func yLabels(scale *YScale, labelWidth int) ([]*Label, error) {
-	if min := 2; scale.CvsHeight < min {
-		return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", scale.CvsHeight, min)
+	if min := 2; scale.GraphHeight < min {
+		return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", scale.GraphHeight, min)
 	}
 	if min := 1; labelWidth < min {
 		return nil, fmt.Errorf("cannot place labels in label area width %d, minimum is %d", labelWidth, min)
@@ -51,7 +51,7 @@ func yLabels(scale *YScale, labelWidth int) ([]*Label, error) {
 	var labels []*Label
 	const labelSpacing = 4
 	seen := map[string]bool{}
-	for y := scale.CvsHeight - 1; y >= 0; y -= labelSpacing {
+	for y := scale.GraphHeight - 1; y >= 0; y -= labelSpacing {
 		label, err := rowLabel(scale, y, labelWidth)
 		if err != nil {
 			return nil, err
@@ -111,10 +111,10 @@ type xSpace struct {
 }
 
 // newXSpace returns a new xSpace instance initialized for the provided width.
-func newXSpace(axisStart image.Point, axisWidth int) *xSpace {
+func newXSpace(axisStart image.Point, graphWidth int) *xSpace {
 	return &xSpace{
 		cur:       0,
-		max:       axisWidth,
+		max:       graphWidth,
 		axisStart: axisStart,
 	}
 }
@@ -159,7 +159,7 @@ func (xs *xSpace) Sub(size int) error {
 // Returned labels shouldn't be trimmed, their count is adjusted so that they
 // fit under the width of the axis.
 func xLabels(scale *XScale, axisStart image.Point) ([]*Label, error) {
-	space := newXSpace(axisStart, scale.AxisWidth)
+	space := newXSpace(axisStart, scale.GraphWidth)
 	const minSpacing = 3
 	var res []*Label
 

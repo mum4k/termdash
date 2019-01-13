@@ -32,26 +32,27 @@ type YScale struct {
 	// Step is the step in the value between pixels.
 	Step *Value
 
-	// CvsHeight is the height of the canvas the scale was calculated for.
-	CvsHeight int
-	// brailleHeight is the height of the braille canvas based on the CvsHeight.
+	// GraphHeight is the height in cells of the area on the canvas that is
+	// dedicated to the graph itself.
+	GraphHeight int
+	// brailleHeight is the height of the braille canvas based on the GraphHeight.
 	brailleHeight int
 }
 
 // NewYScale calculates the scale of the Y axis, given the boundary values and
-// the height of the canvas. The nonZeroDecimals dictates rounding of the
+// the height of the graph. The nonZeroDecimals dictates rounding of the
 // calculated scale, see NewValue for details.
-// Max must be greater or equal to min. The cvsHeight must be a positive
+// Max must be greater or equal to min. The graphHeight must be a positive
 // number.
-func NewYScale(min, max float64, cvsHeight, nonZeroDecimals int) (*YScale, error) {
+func NewYScale(min, max float64, graphHeight, nonZeroDecimals int) (*YScale, error) {
 	if max < min {
 		return nil, fmt.Errorf("max(%v) cannot be less than min(%v)", max, min)
 	}
-	if min := 1; cvsHeight < min {
-		return nil, fmt.Errorf("cvsHeight cannot be less than %d, got %d", min, cvsHeight)
+	if min := 1; graphHeight < min {
+		return nil, fmt.Errorf("graphHeight cannot be less than %d, got %d", min, graphHeight)
 	}
 
-	brailleHeight := cvsHeight * braille.RowMult
+	brailleHeight := graphHeight * braille.RowMult
 	usablePixels := brailleHeight - 1 // One pixel reserved for value zero.
 
 	if min > 0 { // If we only have positive data points, make the scale zero based (min).
@@ -66,13 +67,13 @@ func NewYScale(min, max float64, cvsHeight, nonZeroDecimals int) (*YScale, error
 		Min:           NewValue(min, nonZeroDecimals),
 		Max:           NewValue(max, nonZeroDecimals),
 		Step:          step,
-		CvsHeight:     cvsHeight,
+		GraphHeight:   graphHeight,
 		brailleHeight: brailleHeight,
 	}, nil
 }
 
 // PixelToValue given a Y coordinate of the pixel, returns its value according
-// to the scale. The coordinate must be within bounds of the canvas height
+// to the scale. The coordinate must be within bounds of the graph height
 // provided to NewYScale. Y coordinates grow down.
 func (ys *YScale) PixelToValue(y int) (float64, error) {
 	pos, err := yToPosition(y, ys.brailleHeight)
@@ -114,9 +115,9 @@ func (ys *YScale) ValueToPixel(v float64) (int, error) {
 
 // CellLabel given a Y coordinate of a cell on the canvas, determines value of
 // the label that should be next to it. The Y coordinate must be within the
-// cvsHeight provided to NewYScale. Y coordinates grow down.
+// graphHeight provided to NewYScale. Y coordinates grow down.
 func (ys *YScale) CellLabel(y int) (*Value, error) {
-	pos, err := yToPosition(y, ys.CvsHeight)
+	pos, err := yToPosition(y, ys.GraphHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -142,9 +143,10 @@ type XScale struct {
 	// Step is the step in the value between pixels.
 	Step *Value
 
-	// AxisWidth is the width of the canvas that is available to the X axis.
-	AxisWidth int
-	// brailleWidth is the height of the braille canvas based on the AxisWidth.
+	// GraphWidth is the width in cells of the area on the canvas that is
+	// dedicated to the graph.
+	GraphWidth int
+	// brailleWidth is the width of the braille canvas based on the GraphWidth.
 	brailleWidth int
 }
 
@@ -152,17 +154,17 @@ type XScale struct {
 // points in the series and the width on the canvas that is available to the X
 // axis. The nonZeroDecimals dictates rounding of the calculated scale, see
 // NewValue for details.
-// The numPoints must be zero or positive number. The axisWidth must be a
+// The numPoints must be zero or positive number. The graphWidth must be a
 // positive number.
-func NewXScale(numPoints int, axisWidth, nonZeroDecimals int) (*XScale, error) {
+func NewXScale(numPoints int, graphWidth, nonZeroDecimals int) (*XScale, error) {
 	if numPoints < 0 {
 		return nil, fmt.Errorf("numPoints cannot be negative, got %d", numPoints)
 	}
-	if min := 1; axisWidth < min {
-		return nil, fmt.Errorf("axisWidth must be at least %d, got %d", min, axisWidth)
+	if min := 1; graphWidth < min {
+		return nil, fmt.Errorf("graphWidth must be at least %d, got %d", min, graphWidth)
 	}
 
-	brailleWidth := axisWidth * braille.ColMult
+	brailleWidth := graphWidth * braille.ColMult
 	usablePixels := brailleWidth - 1 // One pixel reserved for value zero.
 
 	const min float64 = 0
@@ -176,7 +178,7 @@ func NewXScale(numPoints int, axisWidth, nonZeroDecimals int) (*XScale, error) {
 		Min:          NewValue(min, nonZeroDecimals),
 		Max:          NewValue(max, nonZeroDecimals),
 		Step:         step,
-		AxisWidth:    axisWidth,
+		GraphWidth:   graphWidth,
 		brailleWidth: brailleWidth,
 	}, nil
 }
@@ -228,7 +230,7 @@ func (xs *XScale) ValueToCell(v int) (int, error) {
 
 // CellLabel given an X coordinate of a cell on the canvas, determines value of the
 // label that should be next to it. The X coordinate must be within the
-// axisWidth provided to NewXScale. X coordinates grow right.
+// graphWidth provided to NewXScale. X coordinates grow right.
 // The returned value is rounded to the nearest int, rounding half away from zero.
 func (xs *XScale) CellLabel(x int) (*Value, error) {
 	v, err := xs.PixelToValue(x * braille.ColMult)

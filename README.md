@@ -98,6 +98,13 @@ Displays multiple bars showing relative ratios of values. Run the
 
 [<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif">](widgets/barchart/barchartdemo/barchartdemo.go)
 
+### The LineChart
+
+Displays series of values as line charts. Run the
+[linechartdemo](widgets/linechart/linechartdemo/linechartdemo.go).
+
+[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif">](widgets/linechart/linechartdemo/linechartdemo.go)
+
 
 ## Disclaimer
 

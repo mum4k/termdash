@@ -19,9 +19,9 @@ package sparkline
 
 import (
 	"fmt"
-	"math"
 
 	runewidth "github.com/mattn/go-runewidth"
+	"github.com/mum4k/termdash/numbers"
 )
 
 // sparks are the characters used to draw the SparkLine.
@@ -75,7 +75,7 @@ func toBlocks(value, max, vertCells int) blocks {
 	scale := float64(cellSparks) * float64(vertCells) / float64(max)
 
 	// How many smallest spark elements are needed to represent the value.
-	elements := int(round(float64(value) * scale))
+	elements := int(numbers.Round(float64(value) * scale))
 
 	b := blocks{
 		full: elements / cellSparks,
@@ -86,17 +86,6 @@ func toBlocks(value, max, vertCells int) blocks {
 		b.partSpark = sparks[part-1]
 	}
 	return b
-}
-
-// round returns the nearest integer, rounding half away from zero.
-// Copied from the math package of Go 1.10 for backwards compatibility with Go
-// 1.8 where the math.Round function doesn't exist yet.
-func round(x float64) float64 {
-	t := math.Trunc(x)
-	if math.Abs(x-t) >= 0.5 {
-		return t + math.Copysign(1, x)
-	}
-	return t
 }
 
 // init ensures that all spark characters are half-width runes.

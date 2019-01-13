@@ -81,7 +81,8 @@ func (y *Y) RequiredWidth() int {
 }
 
 // Details retrieves details about the Y axis required to draw it on a canvas
-// of the provided height. The maxWidth indicates the maximum width available
+// of the provided height. The cvsHeight should be the height of the area with
+// the line chart. The maxWidth indicates the maximum width available
 // for the Y axis and its labels. This is guaranteed to be at least what
 // RequiredWidth returned.
 func (y *Y) Details(cvsHeight int, maxWidth int) (*YDetails, error) {

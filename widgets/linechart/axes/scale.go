@@ -88,7 +88,7 @@ func (ys *YScale) PixelToValue(y int) (float64, error) {
 	default:
 		v := float64(pos) * ys.Step.Rounded
 		if ys.Min.Value < 0 {
-			diff := -1 * ys.Min.Rounded
+			diff := -1 * ys.Min.Value
 			v -= diff
 		}
 		return v, nil
@@ -105,7 +105,7 @@ func (ys *YScale) ValueToPixel(v float64) (int, error) {
 	}
 
 	if ys.Min.Value < 0 {
-		diff := -1 * ys.Min.Rounded
+		diff := -1 * ys.Min.Value
 		v += diff
 	}
 	pos := int(numbers.Round(v / ys.Step.Rounded))

@@ -17,13 +17,38 @@ package linechart
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"sync"
 
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/canvas/braille"
+	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/numbers"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/widgets/linechart/axes"
 )
+
+// seriesValues represent values stored in the series.
+type seriesValues struct {
+	// values are the values in the series.
+	values []float64
+	// min is the smallest value, zero if values is empty.
+	min float64
+	// max is the largest value, zero if values is empty.
+	max float64
+}
+
+// newSeriesValues returns a new seriesValues instance.
+func newSeriesValues(values []float64) *seriesValues {
+	min, max := numbers.MinMax(values)
+	return &seriesValues{
+		values: values,
+		min:    min,
+		max:    max,
+	}
+}
 
 // LineChart draws line charts.
 //
@@ -41,6 +66,16 @@ type LineChart struct {
 	// mu protects the LineChart widget.
 	mu sync.Mutex
 
+	// series are the series that will be plotted.
+	// Keyed by the name of the series and updated by calling Series.
+	series map[string]*seriesValues
+
+	// yAxis is the Y axis of the line chart.
+	yAxis *axes.Y
+
+	// reqWidth is the last reported required with on a call to Options.
+	reqWidth int
+
 	// opts are the provided options.
 	opts *options
 }
@@ -49,7 +84,9 @@ type LineChart struct {
 func New(opts ...Option) *LineChart {
 	opt := newOptions(opts...)
 	return &LineChart{
-		opts: opt,
+		series: map[string]*seriesValues{},
+		yAxis:  axes.NewY(0, 0),
+		opts:   opt,
 	}
 }
 
@@ -57,10 +94,17 @@ func New(opts ...Option) *LineChart {
 // provided label.
 // Subsequent calls with the same label replace any previously provided values.
 func (lc *LineChart) Series(label string, values []float64) error {
+	if label == "" {
+		return errors.New("the label cannot be empty")
+	}
+
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
 
-	return errors.New("unimplemented")
+	series := newSeriesValues(values)
+	lc.series[label] = series
+	lc.yAxis = axes.NewY(series.min, series.max)
+	return nil
 }
 
 // Draw draws the values as line charts.
@@ -69,7 +113,88 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
 
-	return errors.New("unimplemented")
+	// The Y axis and its labels cannot take the entire canvas width, reserve one column for the line chart.
+	maxWidth := cvs.Area().Dx() - 1
+	yd, err := lc.yAxis.Details(cvs.Area().Dy()-2, maxWidth)
+	if err != nil {
+		return fmt.Errorf("lc.yAxis.Details => %v", err)
+	}
+
+	yStart := image.Point{yd.Width - 1, 0}
+	xStart := image.Point{yStart.X, cvs.Area().Max.Y - 2} // One for X labels.
+	yEnd := image.Point{yStart.X, xStart.Y}
+
+	xWidth := cvs.Area().Dx() - yStart.X - 1
+	xEnd := image.Point{xStart.X + xWidth - 1, xStart.Y}
+	xd, err := axes.NewXDetails(lc.maxPoints(), xStart, xWidth)
+	if err != nil {
+		return fmt.Errorf("NewXDetails => %v", err)
+	}
+
+	lines := []draw.HVLine{
+		{Start: yStart, End: yEnd},
+		{Start: xStart, End: xEnd},
+	}
+	if err := draw.HVLines(cvs, lines); err != nil {
+		return fmt.Errorf("failed to draw the axes: %v", err)
+	}
+
+	for _, l := range yd.Labels {
+		if err := draw.Text(cvs, l.Value.Text(), l.Pos,
+			draw.TextMaxX(yStart.X),
+			draw.TextOverrunMode(draw.OverrunModeThreeDot),
+		); err != nil {
+			return fmt.Errorf("failed to draw the Y labels: %v", err)
+		}
+	}
+
+	for _, l := range xd.Labels {
+		if err := draw.Text(cvs, l.Value.Text(), l.Pos); err != nil {
+			return fmt.Errorf("failed to draw the X labels: %v", err)
+		}
+	}
+
+	ba := image.Rect(yStart.X+1, yStart.Y, cvs.Area().Max.X, xEnd.Y)
+	bc, err := braille.New(ba)
+	if err != nil {
+		return fmt.Errorf("braille.New => %v", err)
+	}
+	for name, sv := range lc.series {
+		if len(sv.values) <= 1 {
+			continue
+		}
+
+		prev := sv.values[0]
+		for i := 1; i < len(sv.values); i++ {
+			startX, err := xd.Scale.ValueToPixel(i - 1)
+			if err != nil {
+				return fmt.Errorf("failure for series %v[%d], xd.Scale.ValueToPixel => %v", name, i-1, err)
+			}
+			endX, err := xd.Scale.ValueToPixel(i)
+			if err != nil {
+				return fmt.Errorf("failure for series %v[%d], xd.Scale.ValueToPixel => %v", name, i, err)
+			}
+
+			startY, err := yd.Scale.ValueToPixel(prev)
+			if err != nil {
+				return fmt.Errorf("failure for series %v[%d], yd.Scale.ValueToPixel => %v", name, i-1, err)
+			}
+			v := sv.values[i]
+			endY, err := yd.Scale.ValueToPixel(v)
+			if err != nil {
+				return fmt.Errorf("failure for series %v[%d], yd.Scale.ValueToPixel => %v", name, i, err)
+			}
+
+			if err := draw.BrailleLine(bc, image.Point{startX, startY}, image.Point{endX, endY}); err != nil {
+				return fmt.Errorf("draw.BrailleLine => %v", err)
+			}
+			prev = v
+		}
+	}
+	if err := bc.CopyTo(cvs); err != nil {
+		return fmt.Errorf("bc.Apply => %v", err)
+	}
+	return nil
 }
 
 // Implements widgetapi.Widget.Keyboard.
@@ -84,11 +209,28 @@ func (lc *LineChart) Mouse(m *terminalapi.Mouse) error {
 
 // Options implements widgetapi.Widget.Options.
 func (lc *LineChart) Options() widgetapi.Options {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+
+	// At the very least we need:
+	// - n columns for the Y axis and its values as reported by it.
+	// - 2 rows for the X axis and its values.
+	lc.reqWidth = lc.yAxis.RequiredWidth() + 1
+	const reqHeight = 3
 	return widgetapi.Options{
-		// At the very least we need:
-		// - 2 columns for the Y axis and its values.
-		// - 2 rows for the X axis and its values.
-		// - 1 row for the line chart.
-		MinimumSize: image.Point{2, 3},
+		// - 1 row and column for the line chart.
+		MinimumSize: image.Point{lc.reqWidth, reqHeight},
 	}
+}
+
+// maxPoints returns the largest number of points among all the series.
+// lc.mu must be held when calling this method.
+func (lc *LineChart) maxPoints() int {
+	max := 0
+	for _, sv := range lc.series {
+		if num := len(sv.values); num > max {
+			max = num
+		}
+	}
+	return max
 }

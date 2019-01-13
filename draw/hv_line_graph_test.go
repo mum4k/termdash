@@ -36,12 +36,12 @@ func TestMultiEdgeNodes(t *testing.T) {
 			desc: "single-edge nodes only",
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 1},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 1},
 				},
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 1},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 1},
 				},
 			},
 		},
@@ -49,12 +49,12 @@ func TestMultiEdgeNodes(t *testing.T) {
 			desc: "lines don't cross",
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 			},
 			want: []*hVLineNode{
@@ -78,12 +78,12 @@ func TestMultiEdgeNodes(t *testing.T) {
 			desc: "lines cross, node has two edges",
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 1},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 1},
 				},
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{1, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{1, 0},
 				},
 			},
 			want: []*hVLineNode{
@@ -100,12 +100,12 @@ func TestMultiEdgeNodes(t *testing.T) {
 			desc: "lines cross, node has three edges",
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 				{
-					start: image.Point{0, 1},
-					end:   image.Point{1, 1},
+					Start: image.Point{0, 1},
+					End:   image.Point{1, 1},
 				},
 			},
 			want: []*hVLineNode{
@@ -123,12 +123,12 @@ func TestMultiEdgeNodes(t *testing.T) {
 			desc: "lines cross, node has four edges",
 			lines: []HVLine{
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 				{
-					start: image.Point{0, 1},
-					end:   image.Point{2, 1},
+					Start: image.Point{0, 1},
+					End:   image.Point{2, 1},
 				},
 			},
 			want: []*hVLineNode{
@@ -154,7 +154,7 @@ func TestMultiEdgeNodes(t *testing.T) {
 
 			g := newHVLineGraph()
 			for i, l := range tc.lines {
-				line, err := newHVLine(c, l.start, l.end, newHVLineOptions())
+				line, err := newHVLine(c, l.Start, l.End, newHVLineOptions())
 				if err != nil {
 					t.Fatalf("newHVLine[%d] => unexpected error: %v", i, err)
 				}

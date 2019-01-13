@@ -38,8 +38,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 2, 2),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{1, 1},
+					Start: image.Point{0, 0},
+					End:   image.Point{1, 1},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -52,8 +52,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 1, 1),
 			lines: []HVLine{
 				{
-					start: image.Point{2, 0},
-					end:   image.Point{0, 0},
+					Start: image.Point{2, 0},
+					End:   image.Point{0, 0},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -66,8 +66,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 1, 1),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -80,8 +80,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 1, 1),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 0},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -94,8 +94,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 1),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -116,8 +116,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 1),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 			},
 			opts: []HVLineOption{
@@ -141,8 +141,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 1),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 			},
 			opts: []HVLineOption{
@@ -178,8 +178,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 1),
 			lines: []HVLine{
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{0, 0},
+					Start: image.Point{1, 0},
+					End:   image.Point{0, 0},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -199,8 +199,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -221,8 +221,8 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{1, 1},
-					end:   image.Point{1, 0},
+					Start: image.Point{1, 1},
+					End:   image.Point{1, 0},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -242,12 +242,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 				{
-					start: image.Point{0, 1},
-					end:   image.Point{2, 1},
+					Start: image.Point{0, 1},
+					End:   image.Point{2, 1},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -272,12 +272,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -302,12 +302,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 				{
-					start: image.Point{1, 1},
-					end:   image.Point{2, 1},
+					Start: image.Point{1, 1},
+					End:   image.Point{2, 1},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -331,12 +331,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -360,12 +360,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{2, 0},
-					end:   image.Point{2, 2},
+					Start: image.Point{2, 0},
+					End:   image.Point{2, 2},
 				},
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -389,12 +389,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 				{
-					start: image.Point{0, 2},
-					end:   image.Point{2, 2},
+					Start: image.Point{0, 2},
+					End:   image.Point{2, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -418,12 +418,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{2, 0},
-					end:   image.Point{2, 2},
+					Start: image.Point{2, 0},
+					End:   image.Point{2, 2},
 				},
 				{
-					start: image.Point{0, 2},
-					end:   image.Point{2, 2},
+					Start: image.Point{0, 2},
+					End:   image.Point{2, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -447,12 +447,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 2},
-					end:   image.Point{2, 2},
+					Start: image.Point{0, 2},
+					End:   image.Point{2, 2},
 				},
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -476,12 +476,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -505,12 +505,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 1},
-					end:   image.Point{2, 1},
+					Start: image.Point{0, 1},
+					End:   image.Point{2, 1},
 				},
 				{
-					start: image.Point{2, 0},
-					end:   image.Point{2, 2},
+					Start: image.Point{2, 0},
+					End:   image.Point{2, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -534,12 +534,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 1},
-					end:   image.Point{2, 1},
+					Start: image.Point{0, 1},
+					End:   image.Point{2, 1},
 				},
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -563,12 +563,12 @@ func TestHVLines(t *testing.T) {
 			canvas: image.Rect(0, 0, 3, 3),
 			lines: []HVLine{
 				{
-					start: image.Point{0, 1},
-					end:   image.Point{2, 1},
+					Start: image.Point{0, 1},
+					End:   image.Point{2, 1},
 				},
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -593,29 +593,29 @@ func TestHVLines(t *testing.T) {
 			lines: []HVLine{
 				// Three horizontal lines.
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{2, 0},
+					Start: image.Point{0, 0},
+					End:   image.Point{2, 0},
 				},
 				{
-					start: image.Point{0, 1},
-					end:   image.Point{2, 1},
+					Start: image.Point{0, 1},
+					End:   image.Point{2, 1},
 				},
 				{
-					start: image.Point{0, 2},
-					end:   image.Point{2, 2},
+					Start: image.Point{0, 2},
+					End:   image.Point{2, 2},
 				},
 				// Three vertical lines.
 				{
-					start: image.Point{0, 0},
-					end:   image.Point{0, 2},
+					Start: image.Point{0, 0},
+					End:   image.Point{0, 2},
 				},
 				{
-					start: image.Point{1, 0},
-					end:   image.Point{1, 2},
+					Start: image.Point{1, 0},
+					End:   image.Point{1, 2},
 				},
 				{
-					start: image.Point{2, 0},
-					end:   image.Point{2, 2},
+					Start: image.Point{2, 0},
+					End:   image.Point{2, 2},
 				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {

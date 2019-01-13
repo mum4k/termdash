@@ -174,7 +174,7 @@ func TestNewXDetails(t *testing.T) {
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
-						Pos:   image.Point{0, 1},
+						Pos:   image.Point{0, 2},
 					},
 				},
 			},
@@ -189,7 +189,7 @@ func TestNewXDetails(t *testing.T) {
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
-						Pos:   image.Point{11, 2},
+						Pos:   image.Point{11, 3},
 					},
 				},
 			},

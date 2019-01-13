@@ -59,6 +59,16 @@ func TestYLabels(t *testing.T) {
 			},
 		},
 		{
+			desc:       "only one label on tall canvas without data points",
+			min:        0,
+			max:        0,
+			cvsHeight:  25,
+			labelWidth: 1,
+			want: []*Label{
+				{NewValue(0, nonZeroDecimals), image.Point{0, 24}},
+			},
+		},
+		{
 			desc:       "works when min equals max",
 			min:        5,
 			max:        5,
@@ -154,7 +164,7 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 1,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
 			},
 		},
 		{
@@ -163,7 +173,7 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 1,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
 			},
 		},
 		{
@@ -172,8 +182,8 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 5,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
-				{NewValue(1, nonZeroDecimals), image.Point{4, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(1, nonZeroDecimals), image.Point{4, 2}},
 			},
 		},
 		{
@@ -182,8 +192,8 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 5,
 			axisStart: image.Point{3, 5},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{3, 5}},
-				{NewValue(1, nonZeroDecimals), image.Point{7, 5}},
+				{NewValue(0, nonZeroDecimals), image.Point{3, 6}},
+				{NewValue(1, nonZeroDecimals), image.Point{7, 6}},
 			},
 		},
 		{
@@ -192,7 +202,7 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 4,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
 			},
 		},
 		{
@@ -201,7 +211,7 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 5,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
 			},
 		},
 		{
@@ -210,8 +220,8 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 6,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
-				{NewValue(1, nonZeroDecimals), image.Point{5, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(1, nonZeroDecimals), image.Point{5, 2}},
 			},
 		},
 		{
@@ -220,8 +230,8 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 100,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
-				{NewValue(1, nonZeroDecimals), image.Point{98, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(1, nonZeroDecimals), image.Point{98, 2}},
 			},
 		},
 		{
@@ -230,10 +240,10 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 100,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
-				{NewValue(1, nonZeroDecimals), image.Point{31, 1}},
-				{NewValue(2, nonZeroDecimals), image.Point{62, 1}},
-				{NewValue(3, nonZeroDecimals), image.Point{94, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(1, nonZeroDecimals), image.Point{31, 2}},
+				{NewValue(2, nonZeroDecimals), image.Point{62, 2}},
+				{NewValue(3, nonZeroDecimals), image.Point{94, 2}},
 			},
 		},
 		{
@@ -242,8 +252,8 @@ func TestXLabels(t *testing.T) {
 			axisWidth: 6,
 			axisStart: image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
-				{NewValue(72, nonZeroDecimals), image.Point{4, 1}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(72, nonZeroDecimals), image.Point{4, 2}},
 			},
 		},
 	}

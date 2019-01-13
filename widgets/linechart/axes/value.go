@@ -38,6 +38,11 @@ type Value struct {
 	NonZeroDecimals int
 }
 
+// String implements fmt.Stringer.
+func (v *Value) String() string {
+	return fmt.Sprintf("Value{%v, %v}", v.Value, v.Rounded)
+}
+
 // NewValue returns a new instance representing the provided value, rounding
 // the value up to the specified number of non-zero decimal places.
 func NewValue(v float64, nonZeroDecimals int) *Value {

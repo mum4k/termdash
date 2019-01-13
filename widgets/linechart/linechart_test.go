@@ -85,21 +85,46 @@ func TestLineChartDraws(t *testing.T) {
 func TestOptions(t *testing.T) {
 	tests := []struct {
 		desc string
-		opts []Option
-		want widgetapi.Options
+		// if not nil, executed before obtaining the options.
+		addSeries func(*LineChart) error
+		want      widgetapi.Options
 	}{
 		{
-			desc: "returns options",
+			desc: "reserves space for axis without series",
 			want: widgetapi.Options{
-				MinimumSize: image.Point{2, 3},
+				MinimumSize: image.Point{3, 3},
+			},
+		},
+		{
+			desc: "reserves space for longer Y labels",
+			addSeries: func(lc *LineChart) error {
+				return lc.Series("series", []float64{0, 100})
+			},
+			want: widgetapi.Options{
+				MinimumSize: image.Point{5, 3},
+			},
+		},
+		{
+			desc: "reserves space for negative Y labels",
+			addSeries: func(lc *LineChart) error {
+				return lc.Series("series", []float64{-100, 100})
+			},
+			want: widgetapi.Options{
+				MinimumSize: image.Point{6, 3},
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			text := New(tc.opts...)
-			got := text.Options()
+			lc := New()
+
+			if tc.addSeries != nil {
+				if err := tc.addSeries(lc); err != nil {
+					t.Fatalf("tc.addSeries => %v", err)
+				}
+			}
+			got := lc.Options()
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)
 			}

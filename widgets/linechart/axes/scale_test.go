@@ -353,6 +353,19 @@ func TestYScale(t *testing.T) {
 				{0, NewValue(0, 2), false},
 			},
 		},
+		{
+			desc:            "requested value is negative, rounded isn't",
+			min:             -0.19866933079506122,
+			max:             0.19866933079506122,
+			cvsHeight:       28,
+			nonZeroDecimals: 2,
+			valueToPixelTests: []valueToPixelTest{
+				{-0.19866933079506122, 111, false},
+			},
+			pixelToValueTests: []pixelToValueTest{
+				{111, -0.19, false},
+			},
+		},
 	}
 
 	for _, test := range tests {

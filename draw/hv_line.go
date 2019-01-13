@@ -71,10 +71,10 @@ func HVLineCellOpts(cOpts ...cell.Option) HVLineOption {
 
 // HVLine represents one horizontal or vertical line.
 type HVLine struct {
-	// start is the cell where the line starts.
-	start image.Point
-	// end is the cell where the line ends.
-	end image.Point
+	// Start is the cell where the line starts.
+	Start image.Point
+	// End is the cell where the line ends.
+	End image.Point
 }
 
 // HVLines draws horizontal or vertical lines. Handles drawing of the correct
@@ -90,7 +90,7 @@ func HVLines(c *canvas.Canvas, lines []HVLine, opts ...HVLineOption) error {
 
 	g := newHVLineGraph()
 	for _, l := range lines {
-		line, err := newHVLine(c, l.start, l.end, opt)
+		line, err := newHVLine(c, l.Start, l.End, opt)
 		if err != nil {
 			return err
 		}

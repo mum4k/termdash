@@ -50,12 +50,16 @@ func yLabels(scale *YScale, labelWidth int) ([]*Label, error) {
 
 	var labels []*Label
 	const labelSpacing = 4
+	seen := map[string]bool{}
 	for y := scale.CvsHeight - 1; y >= 0; y -= labelSpacing {
 		label, err := rowLabel(scale, y, labelWidth)
 		if err != nil {
 			return nil, err
 		}
-		labels = append(labels, label)
+		if !seen[label.Value.Text()] {
+			labels = append(labels, label)
+			seen[label.Value.Text()] = true
+		}
 	}
 
 	// If we have data, place at least two labels, first and last.
@@ -128,14 +132,14 @@ func (xs *xSpace) Remaining() int {
 // Relative returns the relative coordinate within the space, these are zero
 // based.
 func (xs *xSpace) Relative() image.Point {
-	return image.Point{xs.cur, xs.axisStart.Y}
+	return image.Point{xs.cur, xs.axisStart.Y + 1}
 }
 
 // Absolute returns the absolute coordinate on the canvas where a label should
 // be placed. The is the coordinate that represents the current relative
 // coordinate of the space.
 func (xs *xSpace) Absolute() image.Point {
-	return image.Point{xs.cur + xs.axisStart.X, xs.axisStart.Y}
+	return image.Point{xs.cur + xs.axisStart.X, xs.axisStart.Y + 1}
 }
 
 // Sub subtracts the specified size from the beginning of the available

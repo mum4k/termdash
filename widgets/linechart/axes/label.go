@@ -157,14 +157,16 @@ func (xs *xSpace) Sub(size int) error {
 // Labels are returned in an increasing value order.
 // Returned labels shouldn't be trimmed, their count is adjusted so that they
 // fit under the width of the axis.
-func xLabels(scale *XScale, graphZero image.Point) ([]*Label, error) {
+// The customLabels map value positions in the series to the desired custom
+// label. These are preferred if present.
+func xLabels(scale *XScale, graphZero image.Point, customLabels map[int]string) ([]*Label, error) {
 	space := newXSpace(graphZero, scale.GraphWidth)
 	const minSpacing = 3
 	var res []*Label
 
 	next := 0
 	for haveLabels := 0; haveLabels <= int(scale.Max.Value); haveLabels = len(res) {
-		label, err := colLabel(scale, space)
+		label, err := colLabel(scale, space, next, customLabels)
 		if err != nil {
 			return nil, err
 		}
@@ -200,14 +202,20 @@ func xLabels(scale *XScale, graphZero image.Point) ([]*Label, error) {
 // colLabel returns a label placed either at the beginning of the space.
 // The space is adjusted according to how much space was taken by the label.
 // Returns nil, nil if the label doesn't fit in the space.
-func colLabel(scale *XScale, space *xSpace) (*Label, error) {
-	pos := space.Relative()
-	v, err := scale.CellLabel(pos.X)
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
+func colLabel(scale *XScale, space *xSpace, labelNum int, customLabels map[int]string) (*Label, error) {
+	var val *Value
+	if custom, ok := customLabels[labelNum]; ok {
+		val = NewTextValue(custom)
+	} else {
+		pos := space.Relative()
+		v, err := scale.CellLabel(pos.X)
+		if err != nil {
+			return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
+		}
+		val = v
 	}
 
-	labelLen := len(v.Text())
+	labelLen := len(val.Text())
 	if labelLen > space.Remaining() {
 		return nil, nil
 	}
@@ -218,7 +226,7 @@ func colLabel(scale *XScale, space *xSpace) (*Label, error) {
 	}
 
 	return &Label{
-		Value: v,
+		Value: val,
 		Pos:   abs,
 	}, nil
 }

@@ -115,3 +115,12 @@ func TestText(t *testing.T) {
 		})
 	}
 }
+
+func TestNewTextValue(t *testing.T) {
+	const want = "foo"
+	v := NewTextValue(want)
+	got := v.Text()
+	if got != want {
+		t.Errorf("v.Text => got %q, want %q", got, want)
+	}
+}

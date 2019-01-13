@@ -165,7 +165,9 @@ type XDetails struct {
 // of the provided area. The yStart is the point where the Y axis starts.
 // The numPoints is the number of points in the largest series that will be
 // plotted.
-func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle) (*XDetails, error) {
+// customLabels are the desired labels for the X axis, these are preferred if
+// provided.
+func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, customLabels map[int]string) (*XDetails, error) {
 	if min := 3; cvsAr.Dy() < min {
 		return nil, fmt.Errorf("the canvas isn't tall enough to accommodate the X axis, its labels and the line chart, got height %d, minimum is %d", cvsAr.Dy(), min)
 	}
@@ -180,7 +182,7 @@ func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle) (*XDe
 	// One point horizontally for the Y axis.
 	// Two points vertically, one for the X axis and one for its labels.
 	graphZero := image.Point{yStart.X + 1, cvsAr.Dy() - 3}
-	labels, err := xLabels(scale, graphZero)
+	labels, err := xLabels(scale, graphZero, customLabels)
 	if err != nil {
 		return nil, err
 	}

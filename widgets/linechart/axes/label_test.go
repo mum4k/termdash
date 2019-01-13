@@ -151,12 +151,13 @@ func TestYLabels(t *testing.T) {
 func TestXLabels(t *testing.T) {
 	const nonZeroDecimals = 2
 	tests := []struct {
-		desc       string
-		numPoints  int
-		graphWidth int
-		graphZero  image.Point
-		want       []*Label
-		wantErr    bool
+		desc         string
+		numPoints    int
+		graphWidth   int
+		graphZero    image.Point
+		customLabels map[int]string
+		want         []*Label
+		wantErr      bool
 	}{
 		{
 			desc:       "only one point",
@@ -247,6 +248,50 @@ func TestXLabels(t *testing.T) {
 			},
 		},
 		{
+			desc:       "custom labels provided",
+			numPoints:  4,
+			graphWidth: 100,
+			graphZero:  image.Point{0, 1},
+			customLabels: map[int]string{
+				0: "a",
+				1: "b",
+				2: "c",
+				3: "d",
+			},
+			want: []*Label{
+				{NewTextValue("a"), image.Point{0, 3}},
+				{NewTextValue("b"), image.Point{31, 3}},
+				{NewTextValue("c"), image.Point{62, 3}},
+				{NewTextValue("d"), image.Point{94, 3}},
+			},
+		},
+		{
+			desc:       "only some custom labels provided",
+			numPoints:  4,
+			graphWidth: 100,
+			graphZero:  image.Point{0, 1},
+			customLabels: map[int]string{
+				0: "a",
+				3: "d",
+			},
+			want: []*Label{
+				{NewTextValue("a"), image.Point{0, 3}},
+				{NewValue(1, nonZeroDecimals), image.Point{31, 3}},
+				{NewValue(2, nonZeroDecimals), image.Point{62, 3}},
+				{NewTextValue("d"), image.Point{94, 3}},
+			},
+		},
+		{
+			desc:       "not displayed if custom labels don't fit",
+			numPoints:  2,
+			graphWidth: 6,
+			graphZero:  image.Point{0, 1},
+			customLabels: map[int]string{
+				0: "a very very long custom label",
+			},
+			want: []*Label{},
+		},
+		{
 			desc:       "more points than pixels",
 			numPoints:  100,
 			graphWidth: 6,
@@ -265,7 +310,7 @@ func TestXLabels(t *testing.T) {
 				t.Fatalf("NewXScale => unexpected error: %v", err)
 			}
 			t.Logf("scale step: %v", scale.Step.Rounded)
-			got, err := xLabels(scale, tc.graphZero)
+			got, err := xLabels(scale, tc.graphZero, tc.customLabels)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("xLabels => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

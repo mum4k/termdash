@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -51,7 +52,18 @@ func playLineChart(ctx context.Context, lc *linechart.LineChart, delay time.Dura
 		case <-ticker.C:
 			i = (i + 1) % len(inputs)
 			rotated := append(inputs[i:], inputs[:i]...)
-			if err := lc.Series("sine", rotated); err != nil {
+			if err := lc.Series("first", rotated,
+				linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
+				linechart.SeriesXLabels(map[int]string{
+					0: "zero",
+				}),
+			); err != nil {
+				panic(err)
+			}
+
+			i2 := (i + 100) % len(inputs)
+			rotated2 := append(inputs[i2:], inputs[:i2]...)
+			if err := lc.Series("second", rotated2, linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite))); err != nil {
 				panic(err)
 			}
 
@@ -70,7 +82,11 @@ func main() {
 
 	const redrawInterval = 25 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
-	lc := linechart.New()
+	lc := linechart.New(
+		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
+		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
+		linechart.XLabelCellOpts(cell.FgColor(cell.ColorCyan)),
+	)
 	go playLineChart(ctx, lc, redrawInterval/3)
 	c := container.New(
 		t,

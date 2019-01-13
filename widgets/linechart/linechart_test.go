@@ -22,6 +22,7 @@ import (
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/braille/testbraille"
 	"github.com/mum4k/termdash/canvas/testcanvas"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/terminal/faketerm"
@@ -39,10 +40,26 @@ func TestLineChartDraws(t *testing.T) {
 		wantErr      bool
 	}{
 		{
-			desc:   "write fails without name for the series",
+			desc:   "series fails without name for the series",
 			canvas: image.Rect(0, 0, 3, 4),
 			writes: func(lc *LineChart) error {
 				return lc.Series("", nil)
+			},
+			wantWriteErr: true,
+		},
+		{
+			desc:   "series fails when custom label has negative key",
+			canvas: image.Rect(0, 0, 3, 4),
+			writes: func(lc *LineChart) error {
+				return lc.Series("series", nil, SeriesXLabels(map[int]string{-1: "text"}))
+			},
+			wantWriteErr: true,
+		},
+		{
+			desc:   "series fails when custom label has empty value",
+			canvas: image.Rect(0, 0, 3, 4),
+			writes: func(lc *LineChart) error {
+				return lc.Series("series", nil, SeriesXLabels(map[int]string{1: ""}))
 			},
 			wantWriteErr: true,
 		},
@@ -79,6 +96,66 @@ func TestLineChartDraws(t *testing.T) {
 			},
 		},
 		{
+			desc:   "sets axes cell options",
+			canvas: image.Rect(0, 0, 3, 4),
+			opts: []Option{
+				AxesCellOpts(
+					cell.BgColor(cell.ColorRed),
+					cell.FgColor(cell.ColorGreen),
+				),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{1, 0}, End: image.Point{1, 2}},
+					{Start: image.Point{1, 2}, End: image.Point{2, 2}},
+				}
+				testdraw.MustHVLines(c, lines, draw.HVLineCellOpts(cell.BgColor(cell.ColorRed), cell.FgColor(cell.ColorGreen)))
+
+				// Zero value labels.
+				testdraw.MustText(c, "0", image.Point{0, 1})
+				testdraw.MustText(c, "0", image.Point{2, 3})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "sets label cell options",
+			canvas: image.Rect(0, 0, 3, 4),
+			opts: []Option{
+				XLabelCellOpts(
+					cell.BgColor(cell.ColorYellow),
+					cell.FgColor(cell.ColorBlue),
+				),
+				YLabelCellOpts(
+					cell.BgColor(cell.ColorRed),
+					cell.FgColor(cell.ColorGreen),
+				),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{1, 0}, End: image.Point{1, 2}},
+					{Start: image.Point{1, 2}, End: image.Point{2, 2}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Zero value labels.
+				testdraw.MustText(c, "0", image.Point{0, 1}, draw.TextCellOpts(cell.BgColor(cell.ColorRed), cell.FgColor(cell.ColorGreen)))
+				testdraw.MustText(c, "0", image.Point{2, 3}, draw.TextCellOpts(cell.BgColor(cell.ColorYellow), cell.FgColor(cell.ColorBlue)))
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "two Y and X labels",
 			canvas: image.Rect(0, 0, 20, 10),
 			writes: func(lc *LineChart) error {
@@ -105,6 +182,74 @@ func TestLineChartDraws(t *testing.T) {
 				graphAr := image.Rect(6, 0, 20, 8)
 				bc := testbraille.MustNew(graphAr)
 				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "custom X labels",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 100}, SeriesXLabels(map[int]string{
+					0: "start",
+					1: "end",
+				}))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "start", image.Point{6, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "sets series cell options",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 100}, SeriesCellOpts(cell.BgColor(cell.ColorRed), cell.FgColor(cell.ColorGreen)))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0}, draw.BrailleLineCellOpts(cell.BgColor(cell.ColorRed), cell.FgColor(cell.ColorGreen)))
 				testbraille.MustCopyTo(bc, c)
 
 				testcanvas.MustApply(c, ft)
@@ -217,13 +362,44 @@ func TestLineChartDraws(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "draw multiple series with different cell options, last series wins where they cross",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 50, 100}, SeriesCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
+					return err
+				}
+				return lc.Series("second", []float64{100, 0}, SeriesCellOpts(cell.FgColor(cell.ColorBlue)))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
 
-		// Sets axis colors.
-		// Sets label colors on Y axis.
-		// Sets label colors on X axis.
-		// Sets series color.
-		// Multiple series, same color.
-		// Multiple series, different color.
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{12, 9})
+				testdraw.MustText(c, "2", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{27, 0}, draw.BrailleLineCellOpts(cell.FgColor(cell.ColorRed)))
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{13, 31}, draw.BrailleLineCellOpts(cell.FgColor(cell.ColorBlue)))
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

@@ -36,6 +36,9 @@ type Value struct {
 	// NonZeroDecimals indicates the rounding precision used, it is provided on
 	// a call to newValue.
 	NonZeroDecimals int
+
+	// text value if this value was constructed using NewTextValue.
+	text string
 }
 
 // String implements fmt.Stringer.
@@ -55,8 +58,20 @@ func NewValue(v float64, nonZeroDecimals int) *Value {
 	}
 }
 
+// NewTextValue constructs a value out of the provided text.
+func NewTextValue(text string) *Value {
+	return &Value{
+		Value:   math.NaN(),
+		Rounded: math.NaN(),
+		text:    text,
+	}
+}
+
 // Text returns textual representation of the value.
 func (v *Value) Text() string {
+	if v.text != "" {
+		return v.text
+	}
 	if math.Ceil(v.Rounded) == v.Rounded {
 		return fmt.Sprintf("%.0f", v.Rounded)
 	}

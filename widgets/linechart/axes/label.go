@@ -106,22 +106,22 @@ type xSpace struct {
 	// The xSpace instance contains points 0 <= x < max
 	max int
 
-	// axisStart is the actual position of the X axis zero point on the canvas.
-	axisStart image.Point
+	// graphZero is the (0, 0) point on the graph.
+	graphZero image.Point
 }
 
 // newXSpace returns a new xSpace instance initialized for the provided width.
-func newXSpace(axisStart image.Point, graphWidth int) *xSpace {
+func newXSpace(graphZero image.Point, graphWidth int) *xSpace {
 	return &xSpace{
 		cur:       0,
 		max:       graphWidth,
-		axisStart: axisStart,
+		graphZero: graphZero,
 	}
 }
 
 // Implements fmt.Stringer.
 func (xs *xSpace) String() string {
-	return fmt.Sprintf("xSpace(size:%d)-cur:%v-max:%v", xs.Remaining(), image.Point{xs.cur, xs.axisStart.Y}, image.Point{xs.max, xs.axisStart.Y})
+	return fmt.Sprintf("xSpace(size:%d)-cur:%v-max:%v", xs.Remaining(), image.Point{xs.cur, xs.graphZero.Y}, image.Point{xs.max, xs.graphZero.Y})
 }
 
 // Remaining returns the remaining size on the X axis.
@@ -132,14 +132,14 @@ func (xs *xSpace) Remaining() int {
 // Relative returns the relative coordinate within the space, these are zero
 // based.
 func (xs *xSpace) Relative() image.Point {
-	return image.Point{xs.cur, xs.axisStart.Y + 1}
+	return image.Point{xs.cur, xs.graphZero.Y + 1}
 }
 
-// Absolute returns the absolute coordinate on the canvas where a label should
+// LabelPos returns the absolute coordinate on the canvas where a label should
 // be placed. The is the coordinate that represents the current relative
 // coordinate of the space.
-func (xs *xSpace) Absolute() image.Point {
-	return image.Point{xs.cur + xs.axisStart.X, xs.axisStart.Y + 1}
+func (xs *xSpace) LabelPos() image.Point {
+	return image.Point{xs.cur + xs.graphZero.X, xs.graphZero.Y + 2} // First down is the axis, second the label.
 }
 
 // Sub subtracts the specified size from the beginning of the available
@@ -153,13 +153,12 @@ func (xs *xSpace) Sub(size int) error {
 }
 
 // xLabels returns labels that should be placed under the X axis.
-// The axisStart is the point where the X axis starts (its zero value) and is
-// used to determine label placement.
+// The graphZero is the (0, 0) point of the graph area on the canvas.
 // Labels are returned in an increasing value order.
 // Returned labels shouldn't be trimmed, their count is adjusted so that they
 // fit under the width of the axis.
-func xLabels(scale *XScale, axisStart image.Point) ([]*Label, error) {
-	space := newXSpace(axisStart, scale.GraphWidth)
+func xLabels(scale *XScale, graphZero image.Point) ([]*Label, error) {
+	space := newXSpace(graphZero, scale.GraphWidth)
 	const minSpacing = 3
 	var res []*Label
 
@@ -213,7 +212,7 @@ func colLabel(scale *XScale, space *xSpace) (*Label, error) {
 		return nil, nil
 	}
 
-	abs := space.Absolute()
+	abs := space.LabelPos()
 	if err := space.Sub(labelLen); err != nil {
 		return nil, err
 	}

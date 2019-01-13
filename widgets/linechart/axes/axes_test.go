@@ -32,8 +32,7 @@ func TestY(t *testing.T) {
 		minVal    float64
 		maxVal    float64
 		update    *updateY
-		cvsHeight int
-		maxWidth  int
+		cvsAr     image.Rectangle
 		wantWidth int
 		want      *YDetails
 		wantErr   bool
@@ -42,17 +41,15 @@ func TestY(t *testing.T) {
 			desc:      "fails on canvas too small",
 			minVal:    0,
 			maxVal:    3,
-			cvsHeight: 1,
-			maxWidth:  2,
+			cvsAr:     image.Rect(0, 0, 3, 2),
 			wantWidth: 2,
 			wantErr:   true,
 		},
 		{
-			desc:      "fails on maxWidth less than required width",
+			desc:      "fails on cvsWidth less than required width",
 			minVal:    0,
 			maxVal:    3,
-			cvsHeight: 2,
-			maxWidth:  1,
+			cvsAr:     image.Rect(0, 0, 2, 4),
 			wantWidth: 2,
 			wantErr:   true,
 		},
@@ -60,20 +57,20 @@ func TestY(t *testing.T) {
 			desc:      "fails when max is less than min",
 			minVal:    0,
 			maxVal:    -1,
-			cvsHeight: 2,
-			maxWidth:  3,
+			cvsAr:     image.Rect(0, 0, 4, 4),
 			wantWidth: 3,
 			wantErr:   true,
 		},
 		{
-			desc:      "maxWidth equals required width",
+			desc:      "cvsWidth equals required width",
 			minVal:    0,
 			maxVal:    3,
-			cvsHeight: 2,
+			cvsAr:     image.Rect(0, 0, 3, 4),
 			wantWidth: 2,
-			maxWidth:  2,
 			want: &YDetails{
 				Width: 2,
+				Start: image.Point{1, 0},
+				End:   image.Point{1, 2},
 				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
@@ -82,14 +79,15 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:      "maxWidth just accommodates the longest label",
+			desc:      "cvsWidth just accommodates the longest label",
 			minVal:    0,
 			maxVal:    3,
-			cvsHeight: 2,
+			cvsAr:     image.Rect(0, 0, 6, 4),
 			wantWidth: 2,
-			maxWidth:  5,
 			want: &YDetails{
 				Width: 5,
+				Start: image.Point{4, 0},
+				End:   image.Point{4, 2},
 				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
@@ -98,14 +96,15 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:      "maxWidth is more than we need",
+			desc:      "cvsWidth is more than we need",
 			minVal:    0,
 			maxVal:    3,
-			cvsHeight: 2,
+			cvsAr:     image.Rect(0, 0, 7, 4),
 			wantWidth: 2,
-			maxWidth:  6,
 			want: &YDetails{
 				Width: 5,
+				Start: image.Point{4, 0},
+				End:   image.Point{4, 2},
 				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
@@ -127,7 +126,7 @@ func TestY(t *testing.T) {
 				t.Errorf("RequiredWidth => got %v, want %v", gotWidth, tc.wantWidth)
 			}
 
-			got, err := y.Details(tc.cvsHeight, tc.maxWidth)
+			got, err := y.Details(tc.cvsAr)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Details => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
@@ -145,51 +144,63 @@ func TestNewXDetails(t *testing.T) {
 	tests := []struct {
 		desc      string
 		numPoints int
-		axisStart image.Point
-		axisWidth int
+		yStart    image.Point
+		cvsWidth  int
+		cvsAr     image.Rectangle
 		want      *XDetails
 		wantErr   bool
 	}{
 		{
 			desc:      "fails when numPoints is negative",
 			numPoints: -1,
-			axisStart: image.Point{0, 1},
-			axisWidth: 1,
+			yStart:    image.Point{0, 0},
+			cvsAr:     image.Rect(0, 0, 2, 3),
 			wantErr:   true,
 		},
 		{
-			desc:      "fails when axisWidth is too small",
+			desc:      "fails when cvsAr isn't wide enough",
 			numPoints: 1,
-			axisStart: image.Point{0, 1},
-			axisWidth: 0,
+			yStart:    image.Point{0, 0},
+			cvsAr:     image.Rect(0, 0, 1, 3),
+			wantErr:   true,
+		},
+		{
+			desc:      "fails when cvsAr isn't tall enough",
+			numPoints: 1,
+			yStart:    image.Point{0, 0},
+			cvsAr:     image.Rect(0, 0, 3, 2),
 			wantErr:   true,
 		},
 		{
 			desc:      "works with no data points",
 			numPoints: 0,
-			axisStart: image.Point{0, 1},
-			axisWidth: 1,
+			yStart:    image.Point{0, 0},
+			cvsAr:     image.Rect(0, 0, 2, 3),
 			want: &XDetails{
+				Start: image.Point{0, 1},
+				End:   image.Point{1, 1},
 				Scale: mustNewXScale(0, 1, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
-						Pos:   image.Point{0, 2},
+						Pos:   image.Point{1, 2},
 					},
 				},
 			},
 		},
 		{
-			desc:      "axis doesn't start at point zero",
+			desc:      "accounts for non-zero yStart",
 			numPoints: 0,
-			axisStart: image.Point{11, 2},
-			axisWidth: 1,
+			yStart:    image.Point{2, 0},
+			cvsAr:     image.Rect(0, 0, 4, 5),
 			want: &XDetails{
+				Start: image.Point{2, 3},
+				End:   image.Point{3, 3},
 				Scale: mustNewXScale(0, 1, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
-						Pos:   image.Point{11, 3},
+						Pos:   image.Point{3, 4},
 					},
 				},
 			},
@@ -198,7 +209,7 @@ func TestNewXDetails(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, err := NewXDetails(tc.numPoints, tc.axisStart, tc.axisWidth)
+			got, err := NewXDetails(tc.numPoints, tc.yStart, tc.cvsAr)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("NewXDetails => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

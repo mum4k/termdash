@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"image"
 
+	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/faketerm"
@@ -44,5 +45,12 @@ func MustApply(bc *braille.Canvas, t *faketerm.Terminal) {
 func MustSetPixel(bc *braille.Canvas, p image.Point, opts ...cell.Option) {
 	if err := bc.SetPixel(p, opts...); err != nil {
 		panic(fmt.Sprintf("braille.SetPixel => unexpected error: %v", err))
+	}
+}
+
+// MustCopyTo copies the braille canvas onto the provided canvas or panics.
+func MustCopyTo(bc *braille.Canvas, dst *canvas.Canvas) {
+	if err := bc.CopyTo(dst); err != nil {
+		panic(fmt.Sprintf("bc.CopyTo => unexpected error: %v", err))
 	}
 }

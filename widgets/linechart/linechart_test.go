@@ -20,12 +20,15 @@ import (
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/canvas/braille/testbraille"
+	"github.com/mum4k/termdash/canvas/testcanvas"
+	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/terminal/faketerm"
 	"github.com/mum4k/termdash/widgetapi"
 )
 
 func TestLineChartDraws(t *testing.T) {
-	t.Skip() // Unimplemented.
 	tests := []struct {
 		desc         string
 		canvas       image.Rectangle
@@ -33,11 +36,194 @@ func TestLineChartDraws(t *testing.T) {
 		writes       func(*LineChart) error
 		want         func(size image.Point) *faketerm.Terminal
 		wantWriteErr bool
+		wantErr      bool
 	}{
 		{
-			desc:   "empty without series",
-			canvas: image.Rect(0, 0, 1, 1),
+			desc:   "write fails without name for the series",
+			canvas: image.Rect(0, 0, 3, 4),
+			writes: func(lc *LineChart) error {
+				return lc.Series("", nil)
+			},
+			wantWriteErr: true,
 		},
+		{
+			desc:    "draw fails when canvas not wide enough",
+			canvas:  image.Rect(0, 0, 2, 4),
+			wantErr: true,
+		},
+		{
+			desc:    "draw fails when canvas not tall enough",
+			canvas:  image.Rect(0, 0, 3, 3),
+			wantErr: true,
+		},
+		{
+			desc:   "empty without series",
+			canvas: image.Rect(0, 0, 3, 4),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{1, 0}, End: image.Point{1, 2}},
+					{Start: image.Point{1, 2}, End: image.Point{2, 2}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Zero value labels.
+				testdraw.MustText(c, "0", image.Point{0, 1})
+				testdraw.MustText(c, "0", image.Point{2, 3})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "two Y and X labels",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 100})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "multiple Y and X labels",
+			canvas: image.Rect(0, 0, 20, 11),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 50, 100})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 9}},
+					{Start: image.Point{5, 9}, End: image.Point{19, 9}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 8})
+				testdraw.MustText(c, "45.76", image.Point{0, 4})
+				testdraw.MustText(c, "91.52", image.Point{0, 0})
+				testdraw.MustText(c, "0", image.Point{6, 10})
+				testdraw.MustText(c, "1", image.Point{12, 10})
+				testdraw.MustText(c, "2", image.Point{19, 10})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 9)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 35}, image.Point{13, 18})
+				testdraw.MustBrailleLine(bc, image.Point{13, 18}, image.Point{27, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "Y labels are trimmed",
+			canvas: image.Rect(0, 0, 5, 4),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 100})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{3, 0}, End: image.Point{3, 2}},
+					{Start: image.Point{3, 2}, End: image.Point{4, 2}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{2, 1})
+				testdraw.MustText(c, "57…", image.Point{0, 0})
+				testdraw.MustText(c, "0", image.Point{4, 3})
+
+				// Braille line.
+				graphAr := image.Rect(4, 0, 5, 2)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 7}, image.Point{1, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draw multiple series",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 50, 100}); err != nil {
+					return err
+				}
+				return lc.Series("second", []float64{100, 0})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{12, 9})
+				testdraw.MustText(c, "2", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{27, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{13, 31})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+
+		// Sets axis colors.
+		// Sets label colors on Y axis.
+		// Sets label colors on X axis.
+		// Sets series color.
+		// Multiple series, same color.
+		// Multiple series, different color.
 	}
 
 	for _, tc := range tests {
@@ -58,8 +244,14 @@ func TestLineChartDraws(t *testing.T) {
 				}
 			}
 
-			if err := widget.Draw(c); err != nil {
-				t.Fatalf("Draw => unexpected error: %v", err)
+			{
+				err := widget.Draw(c)
+				if (err != nil) != tc.wantErr {
+					t.Fatalf("Draw => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+				if err != nil {
+					return
+				}
 			}
 
 			got, err := faketerm.New(c.Size())
@@ -92,7 +284,7 @@ func TestOptions(t *testing.T) {
 		{
 			desc: "reserves space for axis without series",
 			want: widgetapi.Options{
-				MinimumSize: image.Point{3, 3},
+				MinimumSize: image.Point{3, 4},
 			},
 		},
 		{
@@ -101,7 +293,7 @@ func TestOptions(t *testing.T) {
 				return lc.Series("series", []float64{0, 100})
 			},
 			want: widgetapi.Options{
-				MinimumSize: image.Point{5, 3},
+				MinimumSize: image.Point{5, 4},
 			},
 		},
 		{
@@ -110,7 +302,7 @@ func TestOptions(t *testing.T) {
 				return lc.Series("series", []float64{-100, 100})
 			},
 			want: widgetapi.Options{
-				MinimumSize: image.Point{6, 3},
+				MinimumSize: image.Point{6, 4},
 			},
 		},
 	}

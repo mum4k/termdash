@@ -154,7 +154,7 @@ func TestXLabels(t *testing.T) {
 		desc       string
 		numPoints  int
 		graphWidth int
-		axisStart  image.Point
+		graphZero  image.Point
 		want       []*Label
 		wantErr    bool
 	}{
@@ -162,98 +162,98 @@ func TestXLabels(t *testing.T) {
 			desc:       "only one point",
 			numPoints:  1,
 			graphWidth: 1,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
 			},
 		},
 		{
 			desc:       "two points, only one label fits",
 			numPoints:  2,
 			graphWidth: 1,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
 			},
 		},
 		{
 			desc:       "two points, two labels fit exactly",
 			numPoints:  2,
 			graphWidth: 5,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
-				{NewValue(1, nonZeroDecimals), image.Point{4, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
+				{NewValue(1, nonZeroDecimals), image.Point{4, 3}},
 			},
 		},
 		{
-			desc:       "labels are placed according to axisStart",
+			desc:       "labels are placed according to graphZero",
 			numPoints:  2,
 			graphWidth: 5,
-			axisStart:  image.Point{3, 5},
+			graphZero:  image.Point{3, 5},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{3, 6}},
-				{NewValue(1, nonZeroDecimals), image.Point{7, 6}},
+				{NewValue(0, nonZeroDecimals), image.Point{3, 7}},
+				{NewValue(1, nonZeroDecimals), image.Point{7, 7}},
 			},
 		},
 		{
 			desc:       "skip to next value exhausts the space completely",
 			numPoints:  11,
 			graphWidth: 4,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
 			},
 		},
 		{
 			desc:       "second label doesn't fit due to its length",
 			numPoints:  100,
 			graphWidth: 5,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
 			},
 		},
 		{
 			desc:       "two points, two labels, more space than minSpacing so end label adjusted",
 			numPoints:  2,
 			graphWidth: 6,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
-				{NewValue(1, nonZeroDecimals), image.Point{5, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
+				{NewValue(1, nonZeroDecimals), image.Point{5, 3}},
 			},
 		},
 		{
 			desc:       "at most as many labels as there are points",
 			numPoints:  2,
 			graphWidth: 100,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
-				{NewValue(1, nonZeroDecimals), image.Point{98, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
+				{NewValue(1, nonZeroDecimals), image.Point{98, 3}},
 			},
 		},
 		{
 			desc:       "some labels in the middle",
 			numPoints:  4,
 			graphWidth: 100,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
-				{NewValue(1, nonZeroDecimals), image.Point{31, 2}},
-				{NewValue(2, nonZeroDecimals), image.Point{62, 2}},
-				{NewValue(3, nonZeroDecimals), image.Point{94, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
+				{NewValue(1, nonZeroDecimals), image.Point{31, 3}},
+				{NewValue(2, nonZeroDecimals), image.Point{62, 3}},
+				{NewValue(3, nonZeroDecimals), image.Point{94, 3}},
 			},
 		},
 		{
 			desc:       "more points than pixels",
 			numPoints:  100,
 			graphWidth: 6,
-			axisStart:  image.Point{0, 1},
+			graphZero:  image.Point{0, 1},
 			want: []*Label{
-				{NewValue(0, nonZeroDecimals), image.Point{0, 2}},
-				{NewValue(72, nonZeroDecimals), image.Point{4, 2}},
+				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
+				{NewValue(72, nonZeroDecimals), image.Point{4, 3}},
 			},
 		},
 	}
@@ -265,7 +265,7 @@ func TestXLabels(t *testing.T) {
 				t.Fatalf("NewXScale => unexpected error: %v", err)
 			}
 			t.Logf("scale step: %v", scale.Step.Rounded)
-			got, err := xLabels(scale, tc.axisStart)
+			got, err := xLabels(scale, tc.graphZero)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("xLabels => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

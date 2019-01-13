@@ -36,6 +36,12 @@ type YDetails struct {
 	// Width in character cells of the Y axis and its character labels.
 	Width int
 
+	// Start is the point where the Y axis starts.
+	// Both coordinates of Start are less than End.
+	Start image.Point
+	// End is the point where the Y axis ends.
+	End image.Point
+
 	// Scale is the scale of the Y axis.
 	Scale *YScale
 
@@ -81,15 +87,17 @@ func (y *Y) RequiredWidth() int {
 }
 
 // Details retrieves details about the Y axis required to draw it on a canvas
-// of the provided height. The cvsHeight should be the height of the area with
-// the line chart. The maxWidth indicates the maximum width available
-// for the Y axis and its labels. This is guaranteed to be at least what
-// RequiredWidth returned.
-func (y *Y) Details(cvsHeight int, maxWidth int) (*YDetails, error) {
+// of the provided area.
+func (y *Y) Details(cvsAr image.Rectangle) (*YDetails, error) {
+	cvsWidth := cvsAr.Dx()
+	cvsHeight := cvsAr.Dy()
+	maxWidth := cvsWidth - 1 // Reserve one row for the line chart itself.
 	if req := y.RequiredWidth(); maxWidth < req {
 		return nil, fmt.Errorf("the received maxWidth %d is smaller than the reported required width %d", maxWidth, req)
 	}
-	scale, err := NewYScale(y.min.Value, y.max.Value, cvsHeight, nonZeroDecimals)
+
+	graphHeight := cvsHeight - 2 // One row for the X axis and one for its labels.
+	scale, err := NewYScale(y.min.Value, y.max.Value, graphHeight, nonZeroDecimals)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +127,8 @@ func (y *Y) Details(cvsHeight int, maxWidth int) (*YDetails, error) {
 
 	return &YDetails{
 		Width:  width,
+		Start:  image.Point{width - 1, 0},
+		End:    image.Point{width - 1, graphHeight},
 		Scale:  scale,
 		Labels: labels,
 	}, nil
@@ -138,6 +148,12 @@ func widestLabel(labels []*Label) int {
 // XDetails contain information about the X axis that will be drawn onto the
 // canvas.
 type XDetails struct {
+	// Start is the point where the X axis starts.
+	// Both coordinates of Start are less than End.
+	Start image.Point
+	// End is the point where the X axis ends.
+	End image.Point
+
 	// Scale is the scale of the X axis.
 	Scale *XScale
 
@@ -146,20 +162,31 @@ type XDetails struct {
 }
 
 // NewXDetails retrieves details about the X axis required to draw it on a canvas
-// of the provided height. The axisStart is the zero point of the X axis on the
-// canvas and the axisWidth is its width in cells. The numPoints is the number
-// of points in the largest series that will be plotted.
-func NewXDetails(numPoints int, axisStart image.Point, axisWidth int) (*XDetails, error) {
-	scale, err := NewXScale(numPoints, axisWidth, nonZeroDecimals)
+// of the provided area. The yStart is the point where the Y axis starts.
+// The numPoints is the number of points in the largest series that will be
+// plotted.
+func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle) (*XDetails, error) {
+	if min := 3; cvsAr.Dy() < min {
+		return nil, fmt.Errorf("the canvas isn't tall enough to accommodate the X axis, its labels and the line chart, got height %d, minimum is %d", cvsAr.Dy(), min)
+	}
+
+	// The space between the start of the axis and the end of the canvas.
+	graphWidth := cvsAr.Dx() - yStart.X - 1
+	scale, err := NewXScale(numPoints, graphWidth, nonZeroDecimals)
 	if err != nil {
 		return nil, err
 	}
 
-	labels, err := xLabels(scale, axisStart)
+	// One point horizontally for the Y axis.
+	// Two points vertically, one for the X axis and one for its labels.
+	graphZero := image.Point{yStart.X + 1, cvsAr.Dy() - 3}
+	labels, err := xLabels(scale, graphZero)
 	if err != nil {
 		return nil, err
 	}
 	return &XDetails{
+		Start:  image.Point{yStart.X, cvsAr.Dy() - 2}, // One row for the labels.
+		End:    image.Point{yStart.X + graphWidth, cvsAr.Dy() - 2},
 		Scale:  scale,
 		Labels: labels,
 	}, nil

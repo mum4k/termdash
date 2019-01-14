@@ -29,7 +29,7 @@ func (cm ColorMode) String() string {
 
 // colorModeNames maps ColorMode values to human readable names.
 var colorModeNames = map[ColorMode]string{
-	ColorMode8:         "ColorMode8",
+	ColorModeNormal:    "ColorModeNormal",
 	ColorMode256:       "ColorMode256",
 	ColorMode216:       "ColorMode216",
 	ColorModeGrayscale: "ColorModeGrayscale",
@@ -37,8 +37,24 @@ var colorModeNames = map[ColorMode]string{
 
 // Supported color modes.
 const (
-	ColorMode8 ColorMode = iota
+	// ColorModeNormal supports 8 "system" colors.
+	// These are defined as constants in the cell package.
+	ColorModeNormal ColorMode = iota
+
+	// ColorMode256 enables using any of the 256 terminal colors.
+	//     0-7: the 8 "system" colors accessible in ColorModeNormal.
+	//    8-15: the 8 "bright system" colors.
+	//  16-231: the 216 different terminal colors.
+	// 232-255: the 24 different shades of grey.
 	ColorMode256
+
+	// ColorMode216 supports only the third range of the ColorMode256, i.e the
+	// 216 different terminal colors. However in this mode the colors are zero
+	// based, so the called doesn't need to provide an offset.
 	ColorMode216
+
+	// ColorModeGrayscale supports only the fourth range of the ColorMode256,
+	// i.e the 24 different shades of grey. However in this mode the colors are
+	// zero based, so the called doesn't need to provide an offset.
 	ColorModeGrayscale
 )

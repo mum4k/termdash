@@ -95,16 +95,7 @@ func (t *Terminal) Size() image.Point {
 // Clear implements terminalapi.Terminal.Clear.
 func (t *Terminal) Clear(opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
-	fg, err := cellOptsToFg(o)
-	if err != nil {
-		return err
-	}
-
-	bg, err := cellOptsToBg(o)
-	if err != nil {
-		return err
-	}
-	return tbx.Clear(fg, bg)
+	return tbx.Clear(cellOptsToFg(o), cellOptsToBg(o))
 }
 
 // Flush implements terminalapi.Terminal.Flush.
@@ -125,16 +116,7 @@ func (t *Terminal) HideCursor() {
 // SetCell implements terminalapi.Terminal.SetCell.
 func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
-	fg, err := cellOptsToFg(o)
-	if err != nil {
-		return err
-	}
-
-	bg, err := cellOptsToBg(o)
-	if err != nil {
-		return err
-	}
-	tbx.SetCell(p.X, p.Y, r, fg, bg)
+	tbx.SetCell(p.X, p.Y, r, cellOptsToFg(o), cellOptsToBg(o))
 	return nil
 }
 

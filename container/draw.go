@@ -36,7 +36,10 @@ func drawTree(c *Container) error {
 	root.area = image.Rect(0, 0, size.X, size.Y)
 
 	preOrder(root, &errStr, visitFunc(func(c *Container) error {
-		first, second := c.split()
+		first, second, err := c.split()
+		if err != nil {
+			return err
+		}
 		if c.first != nil {
 			c.first.area = first
 		}

@@ -33,7 +33,7 @@ import (
 
 // Example demonstrates how to use the Container API.
 func Example() {
-	New(
+	if _, err := New(
 		/* terminal = */ nil,
 		SplitVertical(
 			Left(
@@ -51,6 +51,7 @@ func Example() {
 							),
 						),
 					),
+					SplitPercent(30),
 				),
 			),
 			Right(
@@ -58,20 +59,23 @@ func Example() {
 				PlaceWidget(fakewidget.New(widgetapi.Options{})),
 			),
 		),
-	)
+	); err != nil {
+		panic(err)
+	}
 }
 
 func TestNew(t *testing.T) {
 	tests := []struct {
-		desc      string
-		termSize  image.Point
-		container func(ft *faketerm.Terminal) *Container
-		want      func(size image.Point) *faketerm.Terminal
+		desc             string
+		termSize         image.Point
+		container        func(ft *faketerm.Terminal) (*Container, error)
+		wantContainerErr bool
+		want             func(size image.Point) *faketerm.Terminal
 	}{
 		{
 			desc:     "empty container",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(ft)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -81,7 +85,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:     "container with a border",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -102,7 +106,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:     "horizontal split, children have borders",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					SplitHorizontal(
@@ -125,9 +129,79 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "fails on horizontal split too small",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(0),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "fails on horizontal split too large",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(100),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "horizontal unequal split",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(20),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 10, 4))
+				testdraw.MustBorder(cvs, image.Rect(0, 4, 10, 20))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "horizontal split, parent and children have borders",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -158,7 +232,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:     "vertical split, children have borders",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					SplitVertical(
@@ -181,9 +255,79 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "fails on vertical split too small",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(0),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "fails on vertical split too large",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(100),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "vertical unequal split",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(20),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 4, 10))
+				testdraw.MustBorder(cvs, image.Rect(4, 0, 20, 10))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "vertical split, parent and children have borders",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -214,7 +358,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:     "multi level split",
 			termSize: image.Point{10, 16},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					SplitVertical(
@@ -255,7 +399,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:     "inherits border and focused color",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -296,7 +440,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:     "splitting a container removes the widget",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -328,7 +472,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:     "placing a widget removes container split",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					SplitVertical(
@@ -360,7 +504,14 @@ func TestNew(t *testing.T) {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}
 
-			if err := tc.container(got).Draw(); err != nil {
+			cont, err := tc.container(got)
+			if (err != nil) != tc.wantContainerErr {
+				t.Errorf("tc.container => unexpected error:%v, wantErr:%v", err, tc.wantContainerErr)
+			}
+			if err != nil {
+				return
+			}
+			if err := cont.Draw(); err != nil {
 				t.Fatalf("Draw => unexpected error: %v", err)
 			}
 
@@ -376,7 +527,7 @@ func TestKeyboard(t *testing.T) {
 	tests := []struct {
 		desc      string
 		termSize  image.Point
-		container func(ft *faketerm.Terminal) *Container
+		container func(ft *faketerm.Terminal) (*Container, error)
 		events    []terminalapi.Event
 		want      func(size image.Point) *faketerm.Terminal
 		wantErr   bool
@@ -384,7 +535,7 @@ func TestKeyboard(t *testing.T) {
 		{
 			desc:     "event not forwarded if container has no widget",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(ft)
 			},
 			events: []terminalapi.Event{
@@ -397,7 +548,7 @@ func TestKeyboard(t *testing.T) {
 		{
 			desc:     "event forwarded to focused container only",
 			termSize: image.Point{40, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					SplitVertical(
@@ -450,7 +601,7 @@ func TestKeyboard(t *testing.T) {
 		{
 			desc:     "event not forwarded if the widget didn't request it",
 			termSize: image.Point{40, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: false})),
@@ -473,7 +624,7 @@ func TestKeyboard(t *testing.T) {
 		{
 			desc:     "widget returns an error when processing the event",
 			termSize: image.Point{40, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: true})),
@@ -503,7 +654,10 @@ func TestKeyboard(t *testing.T) {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}
 
-			c := tc.container(got)
+			c, err := tc.container(got)
+			if err != nil {
+				t.Fatalf("tc.container => unexpected error: %v", err)
+			}
 			for _, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Mouse:
@@ -537,7 +691,7 @@ func TestMouse(t *testing.T) {
 	tests := []struct {
 		desc      string
 		termSize  image.Point
-		container func(ft *faketerm.Terminal) *Container
+		container func(ft *faketerm.Terminal) (*Container, error)
 		events    []terminalapi.Event
 		want      func(size image.Point) *faketerm.Terminal
 		wantErr   bool
@@ -545,7 +699,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "mouse click outside of the terminal is ignored",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: true})),
@@ -569,7 +723,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "event not forwarded if container has no widget",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(ft)
 			},
 			events: []terminalapi.Event{
@@ -583,7 +737,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "event forwarded to container at that point",
 			termSize: image.Point{50, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					SplitVertical(
@@ -636,7 +790,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "event not forwarded if the widget didn't request it",
 			termSize: image.Point{20, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: false})),
@@ -659,7 +813,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "event not forwarded if it falls on the container's border",
 			termSize: image.Point{20, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -693,7 +847,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "event not forwarded if it falls outside of widget's canvas",
 			termSize: image.Point{20, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(
@@ -723,7 +877,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "mouse poisition adjusted relative to widget's canvas, vertical offset",
 			termSize: image.Point{20, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(
@@ -754,7 +908,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "mouse poisition adjusted relative to widget's canvas, horizontal offset",
 			termSize: image.Point{30, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(
@@ -785,7 +939,7 @@ func TestMouse(t *testing.T) {
 		{
 			desc:     "widget returns an error when processing the event",
 			termSize: image.Point{40, 20},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: true})),
@@ -815,7 +969,10 @@ func TestMouse(t *testing.T) {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}
 
-			c := tc.container(got)
+			c, err := tc.container(got)
+			if err != nil {
+				t.Fatalf("tc.container => unexpected error: %v", err)
+			}
 			for _, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Mouse:

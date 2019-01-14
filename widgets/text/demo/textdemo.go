@@ -106,7 +106,7 @@ func main() {
 	}
 	go writeLines(ctx, rolled, 1*time.Second)
 
-	c := container.New(
+	c, err := container.New(
 		t,
 		container.Border(draw.LineStyleLight),
 		container.BorderTitle("PRESS Q TO QUIT"),
@@ -148,6 +148,9 @@ func main() {
 			),
 		),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {

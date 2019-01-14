@@ -120,44 +120,79 @@ func TestFromSize(t *testing.T) {
 
 func TestHSplit(t *testing.T) {
 	tests := []struct {
-		desc  string
-		area  image.Rectangle
-		want1 image.Rectangle
-		want2 image.Rectangle
+		desc       string
+		area       image.Rectangle
+		heightPerc int
+		wantTop    image.Rectangle
+		wantBot    image.Rectangle
+		wantErr    bool
 	}{
 		{
-			desc:  "zero area to begin with",
-			area:  image.ZR,
-			want1: image.ZR,
-			want2: image.ZR,
+			desc:       "fails on heightPerc too small",
+			area:       image.Rect(1, 1, 2, 2),
+			heightPerc: -1,
+			wantErr:    true,
 		},
 		{
-			desc:  "splitting results in zero height area",
-			area:  image.Rect(1, 1, 2, 2),
-			want1: image.ZR,
-			want2: image.ZR,
+			desc:       "fails on heightPerc too large",
+			area:       image.Rect(1, 1, 2, 2),
+			heightPerc: 101,
+			wantErr:    true,
 		},
 		{
-			desc:  "splits area with even height",
-			area:  image.Rect(1, 1, 3, 3),
-			want1: image.Rect(1, 1, 3, 2),
-			want2: image.Rect(1, 2, 3, 3),
+			desc:       "zero area to begin with",
+			area:       image.ZR,
+			heightPerc: 50,
+			wantTop:    image.ZR,
+			wantBot:    image.ZR,
 		},
 		{
-			desc:  "splits area with odd height",
-			area:  image.Rect(1, 1, 4, 4),
-			want1: image.Rect(1, 1, 4, 2),
-			want2: image.Rect(1, 2, 4, 4),
+			desc:       "splitting results in zero height area on the top",
+			area:       image.Rect(1, 1, 2, 2),
+			heightPerc: 0,
+			wantTop:    image.ZR,
+			wantBot:    image.Rect(1, 1, 2, 2),
+		},
+		{
+			desc:       "splitting results in zero height area on the bottom",
+			area:       image.Rect(1, 1, 2, 2),
+			heightPerc: 100,
+			wantTop:    image.Rect(1, 1, 2, 2),
+			wantBot:    image.ZR,
+		},
+		{
+			desc:       "splits area with even height",
+			area:       image.Rect(1, 1, 3, 3),
+			heightPerc: 50,
+			wantTop:    image.Rect(1, 1, 3, 2),
+			wantBot:    image.Rect(1, 2, 3, 3),
+		},
+		{
+			desc:       "splits area with odd height",
+			area:       image.Rect(1, 1, 4, 4),
+			heightPerc: 50,
+			wantTop:    image.Rect(1, 1, 4, 2),
+			wantBot:    image.Rect(1, 2, 4, 4),
+		},
+		{
+			desc:       "splits to unequal areas",
+			area:       image.Rect(0, 0, 4, 4),
+			heightPerc: 25,
+			wantTop:    image.Rect(0, 0, 4, 1),
+			wantBot:    image.Rect(0, 1, 4, 4),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got1, got2 := HSplit(tc.area)
-			if diff := pretty.Compare(tc.want1, got1); diff != "" {
+			gotTop, gotBot, err := HSplit(tc.area, tc.heightPerc)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("VSplit => unexpected error:%v, wantErr:%v", err, tc.wantErr)
+			}
+			if diff := pretty.Compare(tc.wantTop, gotTop); diff != "" {
 				t.Errorf("HSplit => first value unexpected diff (-want, +got):\n%s", diff)
 			}
-			if diff := pretty.Compare(tc.want2, got2); diff != "" {
+			if diff := pretty.Compare(tc.wantBot, gotBot); diff != "" {
 				t.Errorf("HSplit => second value unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
@@ -166,45 +201,83 @@ func TestHSplit(t *testing.T) {
 
 func TestVSplit(t *testing.T) {
 	tests := []struct {
-		desc  string
-		area  image.Rectangle
-		want1 image.Rectangle
-		want2 image.Rectangle
+		desc      string
+		area      image.Rectangle
+		widthPerc int
+		wantLeft  image.Rectangle
+		wantRight image.Rectangle
+		wantErr   bool
 	}{
 		{
-			desc:  "zero area to begin with",
-			area:  image.ZR,
-			want1: image.ZR,
-			want2: image.ZR,
+			desc:      "fails on widthPerc too small",
+			area:      image.Rect(1, 1, 2, 2),
+			widthPerc: -1,
+			wantErr:   true,
 		},
 		{
-			desc:  "splitting results in zero width area",
-			area:  image.Rect(1, 1, 2, 2),
-			want1: image.ZR,
-			want2: image.ZR,
+			desc:      "fails on widthPerc too large",
+			area:      image.Rect(1, 1, 2, 2),
+			widthPerc: 101,
+			wantErr:   true,
 		},
 		{
-			desc:  "splits area with even width",
-			area:  image.Rect(1, 1, 3, 3),
-			want1: image.Rect(1, 1, 2, 3),
-			want2: image.Rect(2, 1, 3, 3),
+			desc:      "zero area to begin with",
+			area:      image.ZR,
+			widthPerc: 50,
+			wantLeft:  image.ZR,
+			wantRight: image.ZR,
 		},
 		{
-			desc:  "splits area with odd width",
-			area:  image.Rect(1, 1, 4, 4),
-			want1: image.Rect(1, 1, 2, 4),
-			want2: image.Rect(2, 1, 4, 4),
+			desc:      "splitting results in zero width area on the left",
+			area:      image.Rect(1, 1, 2, 2),
+			widthPerc: 0,
+			wantLeft:  image.ZR,
+			wantRight: image.Rect(1, 1, 2, 2),
+		},
+		{
+			desc:      "splitting results in zero width area on the right",
+			area:      image.Rect(1, 1, 2, 2),
+			widthPerc: 100,
+			wantLeft:  image.Rect(1, 1, 2, 2),
+			wantRight: image.ZR,
+		},
+		{
+			desc:      "splits area with even width",
+			area:      image.Rect(1, 1, 3, 3),
+			widthPerc: 50,
+			wantLeft:  image.Rect(1, 1, 2, 3),
+			wantRight: image.Rect(2, 1, 3, 3),
+		},
+		{
+			desc:      "splits area with odd width",
+			area:      image.Rect(1, 1, 4, 4),
+			widthPerc: 50,
+			wantLeft:  image.Rect(1, 1, 2, 4),
+			wantRight: image.Rect(2, 1, 4, 4),
+		},
+		{
+			desc:      "splits to unequal areas",
+			area:      image.Rect(0, 0, 4, 4),
+			widthPerc: 25,
+			wantLeft:  image.Rect(0, 0, 1, 4),
+			wantRight: image.Rect(1, 0, 4, 4),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got1, got2 := VSplit(tc.area)
-			if diff := pretty.Compare(tc.want1, got1); diff != "" {
-				t.Errorf("VSplit => first value unexpected diff (-want, +got):\n%s", diff)
+			gotLeft, gotRight, err := VSplit(tc.area, tc.widthPerc)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("VSplit => unexpected error:%v, wantErr:%v", err, tc.wantErr)
 			}
-			if diff := pretty.Compare(tc.want2, got2); diff != "" {
-				t.Errorf("VSplit => second value unexpected diff (-want, +got):\n%s", diff)
+			if err != nil {
+				return
+			}
+			if diff := pretty.Compare(tc.wantLeft, gotLeft); diff != "" {
+				t.Errorf("VSplit => left value unexpected diff (-want, +got):\n%s", diff)
+			}
+			if diff := pretty.Compare(tc.wantRight, gotRight); diff != "" {
+				t.Errorf("VSplit => right value unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

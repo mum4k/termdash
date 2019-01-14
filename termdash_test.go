@@ -59,6 +59,7 @@ func Example() {
 			container.Right(
 				container.PlaceWidget(fakewidget.New(wOpts)),
 			),
+			container.SplitPercent(30),
 		),
 	)
 	if err != nil {

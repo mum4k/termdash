@@ -36,26 +36,44 @@ func FromSize(size image.Point) (image.Rectangle, error) {
 	return image.Rect(0, 0, size.X, size.Y), nil
 }
 
-// HSplit returns two new areas created by splitting the provided area in the
-// middle along the horizontal axis. Can return zero size areas.
-func HSplit(area image.Rectangle) (image.Rectangle, image.Rectangle) {
-	height := area.Dy() / 2
-	if height == 0 {
-		return image.ZR, image.ZR
+// HSplit returns two new areas created by splitting the provided area at the
+// specified percentage of its width. The percentage must be in the range
+// 0 <= heightPerc <= 100.
+// Can return zero size areas.
+func HSplit(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
+	if min, max := 0, 100; heightPerc < min || heightPerc > max {
+		return image.ZR, image.ZR, fmt.Errorf("invalid heightPerc %d, must be in range %d <= heightPerc <= %d", heightPerc, min, max)
 	}
-	return image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+height),
-		image.Rect(area.Min.X, area.Min.Y+height, area.Max.X, area.Max.Y)
+	height := area.Dy() * heightPerc / 100
+	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+height)
+	if top.Dy() == 0 {
+		top = image.ZR
+	}
+	bottom = image.Rect(area.Min.X, area.Min.Y+height, area.Max.X, area.Max.Y)
+	if bottom.Dy() == 0 {
+		bottom = image.ZR
+	}
+	return top, bottom, nil
 }
 
-// VSplit returns two new areas created by splitting the provided area in the
-// middle along the vertical axis. Can return zero size areas.
-func VSplit(area image.Rectangle) (image.Rectangle, image.Rectangle) {
-	width := area.Dx() / 2
-	if width == 0 {
-		return image.ZR, image.ZR
+// VSplit returns two new areas created by splitting the provided area at the
+// specified percentage of its width. The percentage must be in the range
+// 0 <= widthPerc <= 100.
+// Can return zero size areas.
+func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle, err error) {
+	if min, max := 0, 100; widthPerc < min || widthPerc > max {
+		return image.ZR, image.ZR, fmt.Errorf("invalid widthPerc %d, must be in range %d <= widthPerc <= %d", widthPerc, min, max)
 	}
-	return image.Rect(area.Min.X, area.Min.Y, area.Min.X+width, area.Max.Y),
-		image.Rect(area.Min.X+width, area.Min.Y, area.Max.X, area.Max.Y)
+	width := area.Dx() * widthPerc / 100
+	left = image.Rect(area.Min.X, area.Min.Y, area.Min.X+width, area.Max.Y)
+	if left.Dx() == 0 {
+		left = image.ZR
+	}
+	right = image.Rect(area.Min.X+width, area.Min.Y, area.Max.X, area.Max.Y)
+	if right.Dx() == 0 {
+		right = image.ZR
+	}
+	return left, right, nil
 }
 
 // abs returns the absolute value of x.

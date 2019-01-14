@@ -142,26 +142,32 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 
 // split splits the container's usable area into child areas.
 // Panics if the container isn't configured for a split.
-func (c *Container) split() (image.Rectangle, image.Rectangle) {
+func (c *Container) split() (image.Rectangle, image.Rectangle, error) {
 	ar := c.usable()
 	if c.opts.split == splitTypeVertical {
-		return area.VSplit(ar)
+		return area.VSplit(ar, c.opts.splitPercent)
 	}
-	return area.HSplit(ar)
+	return area.HSplit(ar, c.opts.splitPercent)
 }
 
 // createFirst creates and returns the first sub container of this container.
-func (c *Container) createFirst() *Container {
-	ar, _ := c.split()
+func (c *Container) createFirst() (*Container, error) {
+	ar, _, err := c.split()
+	if err != nil {
+		return nil, err
+	}
 	c.first = newChild(c, ar)
-	return c.first
+	return c.first, nil
 }
 
 // createSecond creates and returns the second sub container of this container.
-func (c *Container) createSecond() *Container {
-	_, ar := c.split()
+func (c *Container) createSecond() (*Container, error) {
+	_, ar, err := c.split()
+	if err != nil {
+		return nil, err
+	}
 	c.second = newChild(c, ar)
-	return c.second
+	return c.second, nil
 }
 
 // Draw draws this container and all of its sub containers.

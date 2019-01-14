@@ -17,6 +17,8 @@ package container
 // options.go defines container options.
 
 import (
+	"fmt"
+
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -45,7 +47,8 @@ type options struct {
 	inherited inherited
 
 	// split identifies how is this container split.
-	split splitType
+	split        splitType
+	splitPercent int
 
 	// widget is the widget in the container.
 	// A container can have either two sub containers (left and right) or a
@@ -78,8 +81,9 @@ func newOptions(parent *options) *options {
 		inherited: inherited{
 			focusedColor: cell.ColorYellow,
 		},
-		hAlign: align.HorizontalCenter,
-		vAlign: align.VerticalMiddle,
+		hAlign:       align.HorizontalCenter,
+		vAlign:       align.VerticalMiddle,
+		splitPercent: DefaultSplitPercent,
 	}
 	if parent != nil {
 		opts.inherited = parent.inherited
@@ -95,31 +99,95 @@ func (o option) set(c *Container) error {
 	return o(c)
 }
 
+// SplitOption is used when splitting containers.
+type SplitOption interface {
+	// setSplit sets the provided split option.
+	setSplit(*options) error
+}
+
+// splitOption implements SplitOption.
+type splitOption func(*options) error
+
+// setSplit implements SplitOption.setSplit.
+func (so splitOption) setSplit(opts *options) error {
+	return so(opts)
+}
+
+// DefaultSplitPercent is the default value for the SplitPercent option.
+const DefaultSplitPercent = 50
+
+// SplitPercent sets the relative size of the split as percentage of the available space.
+// When using SplitVertical, the provided size is applied to the new left
+// container, the new right container gets the reminder of the size.
+// When using SplitHorizontal, the provided size is applied to the new top
+// container, the new bottom container gets the reminder of the size.
+// The provided value must be a positive number in the range 0 < p < 100.
+// If not provided, defaults to DefaultSplitPercent.
+func SplitPercent(p int) SplitOption {
+	return splitOption(func(opts *options) error {
+		if min, max := 0, 100; p <= min || p >= max {
+			return fmt.Errorf("invalid split percentage %d, must be in range %d < p < %d", p, min, max)
+		}
+		opts.splitPercent = p
+		return nil
+	})
+}
+
 // SplitVertical splits the container along the vertical axis into two sub
 // containers. The use of this option removes any widget placed at this
 // container, containers with sub containers cannot contain widgets.
-func SplitVertical(l LeftOption, r RightOption) Option {
+func SplitVertical(l LeftOption, r RightOption, opts ...SplitOption) Option {
 	return option(func(c *Container) error {
 		c.opts.split = splitTypeVertical
 		c.opts.widget = nil
-		if err := applyOptions(c.createFirst(), l.lOpts()...); err != nil {
+		for _, opt := range opts {
+			if err := opt.setSplit(c.opts); err != nil {
+				return err
+			}
+		}
+
+		f, err := c.createFirst()
+		if err != nil {
 			return err
 		}
-		return applyOptions(c.createSecond(), r.rOpts()...)
+		if err := applyOptions(f, l.lOpts()...); err != nil {
+			return err
+		}
+
+		s, err := c.createSecond()
+		if err != nil {
+			return err
+		}
+		return applyOptions(s, r.rOpts()...)
 	})
 }
 
 // SplitHorizontal splits the container along the horizontal axis into two sub
 // containers. The use of this option removes any widget placed at this
 // container, containers with sub containers cannot contain widgets.
-func SplitHorizontal(t TopOption, b BottomOption) Option {
+func SplitHorizontal(t TopOption, b BottomOption, opts ...SplitOption) Option {
 	return option(func(c *Container) error {
 		c.opts.split = splitTypeHorizontal
 		c.opts.widget = nil
-		if err := applyOptions(c.createFirst(), t.tOpts()...); err != nil {
+		for _, opt := range opts {
+			if err := opt.setSplit(c.opts); err != nil {
+				return err
+			}
+		}
+
+		f, err := c.createFirst()
+		if err != nil {
 			return err
 		}
-		return applyOptions(c.createSecond(), b.bOpts()...)
+		if err := applyOptions(f, t.tOpts()...); err != nil {
+			return err
+		}
+
+		s, err := c.createSecond()
+		if err != nil {
+			return err
+		}
+		return applyOptions(s, b.bOpts()...)
 	})
 }
 

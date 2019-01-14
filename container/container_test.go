@@ -51,6 +51,7 @@ func Example() {
 							),
 						),
 					),
+					SplitPercent(30),
 				),
 			),
 			Right(
@@ -128,6 +129,76 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "fails on horizontal split too small",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(0),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "fails on horizontal split too large",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(100),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "horizontal unequal split",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(draw.LineStyleLight),
+						),
+						Bottom(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(20),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 10, 4))
+				testdraw.MustBorder(cvs, image.Rect(0, 4, 10, 20))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "horizontal split, parent and children have borders",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
@@ -179,6 +250,76 @@ func TestNew(t *testing.T) {
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, image.Rect(0, 0, 5, 10))
 				testdraw.MustBorder(cvs, image.Rect(5, 0, 10, 10))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "fails on vertical split too small",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(0),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "fails on vertical split too large",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(100),
+					),
+				)
+			},
+			wantContainerErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc:     "vertical unequal split",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(draw.LineStyleLight),
+						),
+						Right(
+							Border(draw.LineStyleLight),
+						),
+						SplitPercent(20),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 4, 10))
+				testdraw.MustBorder(cvs, image.Rect(4, 0, 20, 10))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},

@@ -24,7 +24,7 @@ import (
 // colorMode converts termdash color modes to the termbox format.
 func colorMode(cm terminalapi.ColorMode) (tbx.OutputMode, error) {
 	switch cm {
-	case terminalapi.ColorMode8:
+	case terminalapi.ColorModeNormal:
 		return tbx.OutputNormal, nil
 	case terminalapi.ColorMode256:
 		return tbx.Output256, nil

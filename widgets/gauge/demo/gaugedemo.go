@@ -115,7 +115,7 @@ func main() {
 	)
 	go playGauge(ctx, withLabel, 3, 500*time.Millisecond, playTypePercent)
 
-	c := container.New(
+	c, err := container.New(
 		t,
 		container.SplitVertical(
 			container.Left(
@@ -147,6 +147,9 @@ func main() {
 			),
 		),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {

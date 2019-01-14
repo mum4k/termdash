@@ -64,7 +64,7 @@ func (c *Container) String() string {
 
 // New returns a new root container that will use the provided terminal and
 // applies the provided options.
-func New(t terminalapi.Terminal, opts ...Option) *Container {
+func New(t terminalapi.Terminal, opts ...Option) (*Container, error) {
 	size := t.Size()
 	root := &Container{
 		term: t,
@@ -75,8 +75,10 @@ func New(t terminalapi.Terminal, opts ...Option) *Container {
 
 	// Initially the root is focused.
 	root.focusTracker = newFocusTracker(root)
-	applyOptions(root, opts...)
-	return root
+	if err := applyOptions(root, opts...); err != nil {
+		return nil, err
+	}
+	return root, nil
 }
 
 // newChild creates a new child container of the given parent.

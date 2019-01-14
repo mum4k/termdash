@@ -50,7 +50,7 @@ func Example() {
 	}
 
 	// Create the container with two fake widgets.
-	c := container.New(
+	c, err := container.New(
 		t,
 		container.SplitVertical(
 			container.Left(
@@ -61,6 +61,9 @@ func Example() {
 			),
 		),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	// Termdash runs until the context expires.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -86,10 +89,13 @@ func Example_triggered() {
 	}
 
 	// Create the container with a widget.
-	c := container.New(
+	c, err := container.New(
 		t,
 		container.PlaceWidget(fakewidget.New(wOpts)),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	// Create the controller and disable periodic redraw.
 	ctrl, err := NewController(t, c)
@@ -332,13 +338,16 @@ func TestRun(t *testing.T) {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}
 
-			cont := container.New(
+			cont, err := container.New(
 				got,
 				container.PlaceWidget(fakewidget.New(widgetapi.Options{
 					WantKeyboard: true,
 					WantMouse:    true,
 				})),
 			)
+			if err != nil {
+				t.Fatalf("container.New => unexpected error: %v", err)
+			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
 			err = Run(ctx, got, cont, tc.opts...)
@@ -511,10 +520,13 @@ func TestController(t *testing.T) {
 				WantKeyboard: true,
 				WantMouse:    true,
 			})
-			cont := container.New(
+			cont, err := container.New(
 				got,
 				container.PlaceWidget(mi),
 			)
+			if err != nil {
+				t.Fatalf("container.New => unexpected error: %v", err)
+			}
 
 			ctrl, err := NewController(got, cont, tc.opts...)
 			if (err != nil) != tc.wantErr {

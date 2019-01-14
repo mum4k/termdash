@@ -37,13 +37,13 @@ func TestPointCont(t *testing.T) {
 	tests := []struct {
 		desc      string
 		termSize  image.Point
-		container func(ft *faketerm.Terminal) *Container
+		container func(ft *faketerm.Terminal) (*Container, error)
 		cases     []pointCase
 	}{
 		{
 			desc:     "single container, no border",
 			termSize: image.Point{3, 3},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					BorderColor(cell.ColorBlue),
@@ -90,7 +90,7 @@ func TestPointCont(t *testing.T) {
 		{
 			desc:     "single container, border",
 			termSize: image.Point{3, 3},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -113,7 +113,7 @@ func TestPointCont(t *testing.T) {
 		{
 			desc:     "split containers, parent has no border",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					BorderColor(cell.ColorBlack),
@@ -160,7 +160,7 @@ func TestPointCont(t *testing.T) {
 		{
 			desc:     "split containers, parent has border",
 			termSize: image.Point{10, 10},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -229,7 +229,10 @@ func TestPointCont(t *testing.T) {
 				t.Fatalf("faketerm.New => unexpected error: %v", err)
 			}
 
-			cont := tc.container(ft)
+			cont, err := tc.container(ft)
+			if err != nil {
+				t.Fatalf("tc.container => unexpected error: %v", err)
+			}
 			for _, pc := range tc.cases {
 				gotCont := pointCont(cont, pc.point)
 				if (gotCont == nil) != pc.wantNil {
@@ -382,13 +385,16 @@ func TestFocusTrackerMouse(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			root := New(
+			root, err := New(
 				ft,
 				SplitVertical(
 					Left(),
 					Right(),
 				),
 			)
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
 
 			for _, ev := range tc.events {
 				root.Mouse(ev)

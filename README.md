@@ -6,6 +6,8 @@
 
 # termdash
 
+[<img src="./images/termdashdemo.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemodemo.go)
+
 This project implements a terminal based dashboard. The feature set is inspired
 by the [gizak/termui](http://github.com/gizak/termui) project, which in turn
 was inspired by a javascript based
@@ -74,14 +76,14 @@ development](doc/widget_development.md) section.
 Displays the progress of an operation. Run the
 [gaugedemo](widgets/gauge/demo/gaugedemo.go).
 
-[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
+[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
 
 ### The Text
 
 Displays text content, supports trimming and scrolling of content. Run the
 [textdemo](widgets/text/demo/textdemo.go).
 
-[<img src="./images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/gauge/demo/gaugedemo.go)
+[<img src="./images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/text/textdemo/textdemo.go)
 
 ### The SparkLine
 

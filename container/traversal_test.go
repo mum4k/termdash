@@ -30,7 +30,7 @@ func TestRoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("faketerm.New => unexpected error: %v", err)
 	}
-	want := New(
+	want, err := New(
 		ft,
 		SplitHorizontal(
 			Top(
@@ -42,6 +42,9 @@ func TestRoot(t *testing.T) {
 			Bottom(),
 		),
 	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
 
 	if got := rootCont(want); got != want {
 		t.Errorf("rootCont(root) => got %p, want %p", got, want)
@@ -58,7 +61,7 @@ func TestTraversal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("faketerm.New => unexpected error: %v", err)
 	}
-	cont := New(
+	cont, err := New(
 		ft,
 		BorderColor(cell.ColorBlack),
 		SplitVertical(
@@ -86,6 +89,9 @@ func TestTraversal(t *testing.T) {
 			),
 		),
 	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
 
 	tests := []struct {
 		desc       string

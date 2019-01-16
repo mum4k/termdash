@@ -32,14 +32,14 @@ func TestDrawWidget(t *testing.T) {
 	tests := []struct {
 		desc      string
 		termSize  image.Point
-		container func(ft *faketerm.Terminal) *Container
+		container func(ft *faketerm.Terminal) (*Container, error)
 		want      func(size image.Point) *faketerm.Terminal
 		wantErr   bool
 	}{
 		{
 			desc:     "draws widget with container border",
 			termSize: image.Point{9, 5},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -66,7 +66,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "draws widget with container border and title aligned on the left",
 			termSize: image.Point{9, 5},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -100,7 +100,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "draws widget with container border and title aligned in the center",
 			termSize: image.Point{9, 5},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -135,7 +135,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "draws widget with container border and title aligned on the right",
 			termSize: image.Point{9, 5},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -170,7 +170,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "draws widget with container border and title that is trimmed",
 			termSize: image.Point{9, 5},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -205,7 +205,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "draws widget without container border",
 			termSize: image.Point{9, 5},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
@@ -225,7 +225,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "widget.Draw returns an error",
 			termSize: image.Point{5, 5}, // Too small for the widget's box.
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -240,7 +240,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "container with border and no space isn't drawn",
 			termSize: image.Point{1, 1},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -257,7 +257,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "container without the requested space for its widget isn't drawn",
 			termSize: image.Point{1, 1},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(fakewidget.New(widgetapi.Options{
@@ -276,7 +276,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "widget's canvas is limited to the requested maximum size",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -308,7 +308,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "widget's canvas is limited to the requested maximum width",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -340,7 +340,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "widget's canvas is limited to the requested maximum height",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -372,7 +372,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "widget gets the requested aspect ratio",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -404,7 +404,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "widget's canvas is limited to the requested maximum size and ratio",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -436,7 +436,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "horizontal left align for the widget",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -467,7 +467,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "horizontal center align for the widget",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -498,7 +498,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "horizontal right align for the widget",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -529,7 +529,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "vertical top align for the widget",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -560,7 +560,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "vertical middle align for the widget",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -591,7 +591,7 @@ func TestDrawWidget(t *testing.T) {
 		{
 			desc:     "vertical bottom align for the widget",
 			termSize: image.Point{22, 22},
-			container: func(ft *faketerm.Terminal) *Container {
+			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
@@ -624,8 +624,11 @@ func TestDrawWidget(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			got := faketerm.MustNew(tc.termSize)
-			c := tc.container(got)
-			err := c.Draw()
+			c, err := tc.container(got)
+			if err != nil {
+				t.Fatalf("tc.container => unexpected error: %v", err)
+			}
+			err = c.Draw()
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Draw => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
@@ -647,7 +650,7 @@ func TestDrawHandlesTerminalResize(t *testing.T) {
 		t.Errorf("faketerm.New => unexpected error: %v", err)
 	}
 
-	cont := New(
+	cont, err := New(
 		got,
 		SplitVertical(
 			Left(
@@ -672,6 +675,9 @@ func TestDrawHandlesTerminalResize(t *testing.T) {
 			),
 		),
 	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
 
 	// The following tests aren't hermetic, they all access the same container
 	// and fake terminal in order to retain state between resizes.

@@ -80,7 +80,7 @@ func main() {
 	}
 	defer t.Close()
 
-	const redrawInterval = 25 * time.Millisecond
+	const redrawInterval = 250 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	lc := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
@@ -88,12 +88,15 @@ func main() {
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorCyan)),
 	)
 	go playLineChart(ctx, lc, redrawInterval/3)
-	c := container.New(
+	c, err := container.New(
 		t,
 		container.Border(draw.LineStyleLight),
 		container.BorderTitle("PRESS Q TO QUIT"),
 		container.PlaceWidget(lc),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {

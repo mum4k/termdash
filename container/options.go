@@ -17,6 +17,8 @@ package container
 // options.go defines container options.
 
 import (
+	"fmt"
+
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -24,16 +26,19 @@ import (
 )
 
 // applyOptions applies the options to the container.
-func applyOptions(c *Container, opts ...Option) {
+func applyOptions(c *Container, opts ...Option) error {
 	for _, opt := range opts {
-		opt.set(c)
+		if err := opt.set(c); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // Option is used to provide options to a container.
 type Option interface {
 	// set sets the provided option.
-	set(*Container)
+	set(*Container) error
 }
 
 // options stores the options provided to the container.
@@ -42,7 +47,8 @@ type options struct {
 	inherited inherited
 
 	// split identifies how is this container split.
-	split splitType
+	split        splitType
+	splitPercent int
 
 	// widget is the widget in the container.
 	// A container can have either two sub containers (left and right) or a
@@ -75,8 +81,9 @@ func newOptions(parent *options) *options {
 		inherited: inherited{
 			focusedColor: cell.ColorYellow,
 		},
-		hAlign: align.HorizontalCenter,
-		vAlign: align.VerticalMiddle,
+		hAlign:       align.HorizontalCenter,
+		vAlign:       align.VerticalMiddle,
+		splitPercent: DefaultSplitPercent,
 	}
 	if parent != nil {
 		opts.inherited = parent.inherited
@@ -85,34 +92,102 @@ func newOptions(parent *options) *options {
 }
 
 // option implements Option.
-type option func(*Container)
+type option func(*Container) error
 
 // set implements Option.set.
-func (o option) set(c *Container) {
-	o(c)
+func (o option) set(c *Container) error {
+	return o(c)
+}
+
+// SplitOption is used when splitting containers.
+type SplitOption interface {
+	// setSplit sets the provided split option.
+	setSplit(*options) error
+}
+
+// splitOption implements SplitOption.
+type splitOption func(*options) error
+
+// setSplit implements SplitOption.setSplit.
+func (so splitOption) setSplit(opts *options) error {
+	return so(opts)
+}
+
+// DefaultSplitPercent is the default value for the SplitPercent option.
+const DefaultSplitPercent = 50
+
+// SplitPercent sets the relative size of the split as percentage of the available space.
+// When using SplitVertical, the provided size is applied to the new left
+// container, the new right container gets the reminder of the size.
+// When using SplitHorizontal, the provided size is applied to the new top
+// container, the new bottom container gets the reminder of the size.
+// The provided value must be a positive number in the range 0 < p < 100.
+// If not provided, defaults to DefaultSplitPercent.
+func SplitPercent(p int) SplitOption {
+	return splitOption(func(opts *options) error {
+		if min, max := 0, 100; p <= min || p >= max {
+			return fmt.Errorf("invalid split percentage %d, must be in range %d < p < %d", p, min, max)
+		}
+		opts.splitPercent = p
+		return nil
+	})
 }
 
 // SplitVertical splits the container along the vertical axis into two sub
 // containers. The use of this option removes any widget placed at this
 // container, containers with sub containers cannot contain widgets.
-func SplitVertical(l LeftOption, r RightOption) Option {
-	return option(func(c *Container) {
+func SplitVertical(l LeftOption, r RightOption, opts ...SplitOption) Option {
+	return option(func(c *Container) error {
 		c.opts.split = splitTypeVertical
 		c.opts.widget = nil
-		applyOptions(c.createFirst(), l.lOpts()...)
-		applyOptions(c.createSecond(), r.rOpts()...)
+		for _, opt := range opts {
+			if err := opt.setSplit(c.opts); err != nil {
+				return err
+			}
+		}
+
+		f, err := c.createFirst()
+		if err != nil {
+			return err
+		}
+		if err := applyOptions(f, l.lOpts()...); err != nil {
+			return err
+		}
+
+		s, err := c.createSecond()
+		if err != nil {
+			return err
+		}
+		return applyOptions(s, r.rOpts()...)
 	})
 }
 
 // SplitHorizontal splits the container along the horizontal axis into two sub
 // containers. The use of this option removes any widget placed at this
 // container, containers with sub containers cannot contain widgets.
-func SplitHorizontal(t TopOption, b BottomOption) Option {
-	return option(func(c *Container) {
+func SplitHorizontal(t TopOption, b BottomOption, opts ...SplitOption) Option {
+	return option(func(c *Container) error {
 		c.opts.split = splitTypeHorizontal
 		c.opts.widget = nil
-		applyOptions(c.createFirst(), t.tOpts()...)
-		applyOptions(c.createSecond(), b.bOpts()...)
+		for _, opt := range opts {
+			if err := opt.setSplit(c.opts); err != nil {
+				return err
+			}
+		}
+
+		f, err := c.createFirst()
+		if err != nil {
+			return err
+		}
+		if err := applyOptions(f, t.tOpts()...); err != nil {
+			return err
+		}
+
+		s, err := c.createSecond()
+		if err != nil {
+			return err
+		}
+		return applyOptions(s, b.bOpts()...)
 	})
 }
 
@@ -120,10 +195,11 @@ func SplitHorizontal(t TopOption, b BottomOption) Option {
 // The use of this option removes any sub containers. Containers with sub
 // containers cannot have widgets.
 func PlaceWidget(w widgetapi.Widget) Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.widget = w
 		c.first = nil
 		c.second = nil
+		return nil
 	})
 }
 
@@ -131,8 +207,9 @@ func PlaceWidget(w widgetapi.Widget) Option {
 // container. Has no effect if the container contains no widget.
 // Defaults alignment in the center.
 func AlignHorizontal(h align.Horizontal) Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.hAlign = h
+		return nil
 	})
 }
 
@@ -140,51 +217,58 @@ func AlignHorizontal(h align.Horizontal) Option {
 // Has no effect if the container contains no widget.
 // Defaults to alignment in the middle.
 func AlignVertical(v align.Vertical) Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.vAlign = v
+		return nil
 	})
 }
 
 // Border configures the container to have a border of the specified style.
 func Border(ls draw.LineStyle) Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.border = ls
+		return nil
 	})
 }
 
 // BorderTitle sets a text title within the border.
 func BorderTitle(title string) Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.borderTitle = title
+		return nil
 	})
 }
 
 // BorderTitleAlignLeft aligns the border title on the left.
 func BorderTitleAlignLeft() Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.borderTitleHAlign = align.HorizontalLeft
+		return nil
 	})
 }
 
 // BorderTitleAlignCenter aligns the border title in the center.
 func BorderTitleAlignCenter() Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.borderTitleHAlign = align.HorizontalCenter
+		return nil
 	})
 }
 
 // BorderTitleAlignRight aligns the border title on the right.
 func BorderTitleAlignRight() Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.borderTitleHAlign = align.HorizontalRight
+		return nil
 	})
 }
 
 // BorderColor sets the color of the border around the container.
 // This option is inherited to sub containers created by container splits.
 func BorderColor(color cell.Color) Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.inherited.borderColor = color
+		return nil
 	})
 }
 
@@ -192,8 +276,9 @@ func BorderColor(color cell.Color) Option {
 // keyboard focus.
 // This option is inherited to sub containers created by container splits.
 func FocusedColor(color cell.Color) Option {
-	return option(func(c *Container) {
+	return option(func(c *Container) error {
 		c.opts.inherited.focusedColor = color
+		return nil
 	})
 }
 

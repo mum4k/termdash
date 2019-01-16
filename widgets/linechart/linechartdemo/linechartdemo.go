@@ -80,7 +80,7 @@ func main() {
 	}
 	defer t.Close()
 
-	const redrawInterval = 25 * time.Millisecond
+	const redrawInterval = 250 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	lc := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),

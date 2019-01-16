@@ -21,15 +21,15 @@ for more details.
 
 # Current feature set
 
-- Full support for window resizing throughout the infrastructure.
+- Full support for terminal window resizing throughout the infrastructure.
 - Customizable layout, widget placement, borders, colors, etc.
 - Focusable containers and widgets.
 - Processing of keyboard and mouse events.
 - Periodic and event driven screen redraw.
 - A library of widgets, see below.
 - UTF-8 for all text elements.
-- Drawing primitives for widget development with character and sub-character
-  resolution.
+- Drawing primitives (Go functions) for widget development with character and
+  sub-character resolution.
 
 # Installation
 

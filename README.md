@@ -6,49 +6,114 @@
 
 # termdash
 
-[<img src="./images/termdashdemo.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemodemo.go)
+[<img src="./images/termdashdemo.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
-This project implements a terminal based dashboard. The feature set is inspired
-by the [gizak/termui](http://github.com/gizak/termui) project, which in turn
-was inspired by a javascript based
-[yaronn/blessed-contrib](http://github.com/yaronn/blessed-contrib). Why the
-rewrite you ask?
+This project implements a cross-platform customizable terminal based dashboard.
+The feature set is inspired by the
+[gizak/termui](http://github.com/gizak/termui) project, which in turn was
+inspired by a javascript based
+[yaronn/blessed-contrib](http://github.com/yaronn/blessed-contrib).
 
-1. The above mentioned [gizak/termui](http://github.com/gizak/termui) is
-   abandoned and isn't maintained anymore.
-1. The project doesn't follow the design goals outlined below.
+This rewrite focuses on code readability, maintainability and testability, see
+the [design goals](doc/design_goals.md). It aims to achieve the following
+[requirements](doc/requirements.md). See the [high-level design](doc/hld.md)
+for more details.
 
-# Design goals
+# Current feature set
 
-This effort is focused on good software design and maintainability. By good
-design I mean:
+- Full support for window resizing throughout the infrastructure.
+- Customizable layout, widget placement, borders, colors, etc.
+- Focusable containers and widgets.
+- Processing of keyboard and mouse events.
+- Periodic and event driven screen redraw.
+- A library of widgets, see below.
+- UTF-8 for all text elements.
+- Drawing primitives for widget development with character and sub-character
+  resolution.
 
-1. Write readable, well documented code.
-1. Only beautiful, simple APIs, no exposed concurrency, channels, internals, etc.
-1. Follow [Effective Go](http://golang.org/doc/effective_go.html).
-1. Provide an infrastructure that allows development of individual dashboard
-   components in separation.
-1. The infrastructure must enforce consistency in how the dashboard components
-   are implemented.
-1. Focus on maintainability, the infrastructure and dashboard components must
-   have good test coverage, the repository must have CI/CD enabled.
+# Installation
 
-On top of that - let's have fun, learn something and become better developers
-together.
+To install this library, run the following:
 
-# Requirements
+```
+go get -u github.com/mum4k/termdash
 
-1. Native support of the UTF-8 encoding.
-1. Simple container management to position the widgets and set their size.
-1. Mouse and keyboard input.
-1. Cross-platform terminal based output.
-1. Unit testing framework for simple and readable tests of dashboard elements.
-1. Tooling to streamline addition of new widgets.
-1. Apache-2.0 licence for the project.
+```
 
-# High-Level design
+# Usage
 
-See the [design document](doc/hld.md).
+The usage of most of these elements is demonstrated in
+[termdashdemo.go](termdashdemo/termdashdemo.go). To execute the demo:
+
+
+```
+go run github.com/mum4k/termdash/termdashdemo/termdashdemo.go
+```
+
+# Documentation
+
+Code documentation can be viewed in
+[godoc](https://godoc.org/github.com/mum4k/termdash).
+
+Project documentation is available in the [doc](doc/) directory.
+
+## Implemented Widgets
+
+### The Gauge
+
+Displays the progress of an operation. Run the
+[gaugedemo](widgets/gauge/gaugedemo/gaugedemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/gauge/gaugedemo/gaugedemo.go
+```
+
+[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
+
+### The Text
+
+Displays text content, supports trimming and scrolling of content. Run the
+[textdemo](widgets/text/textdemo/textdemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/text/textdemo/textdemo.go
+```
+
+[<img src="./images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/text/textdemo/textdemo.go)
+
+### The SparkLine
+
+Draws a graph showing a series of values as vertical bars. The bars can have
+sub-cell height. Run the
+[sparklinedemo](widgets/sparkline/sparklinedemo/sparklinedemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/sparkline/sparklinedemo/sparklinedemo.go
+```
+
+[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
+
+### The BarChart
+
+Displays multiple bars showing relative ratios of values. Run the
+[barchartdemo](widgets/barchart/barchartdemo/barchartdemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
+```
+
+[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif">](widgets/barchart/barchartdemo/barchartdemo.go)
+
+### The LineChart
+
+Displays series of values on a line chart. Run the
+[linechartdemo](widgets/linechart/linechartdemo/linechartdemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.go
+```
+
+[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif">](widgets/linechart/linechartdemo/linechartdemo.go)
 
 # Contributing
 
@@ -64,48 +129,8 @@ through detailed code reviews, design discussions and following of the [design
 guidelines](doc/design_guidelines.md). Please familiarize yourself with these
 before contributing.
 
-## Contributing widgets
-
 If you're developing a new widget, please see the [widget
 development](doc/widget_development.md) section.
-
-## Implemented Widgets
-
-### The Gauge
-
-Displays the progress of an operation. Run the
-[gaugedemo](widgets/gauge/demo/gaugedemo.go).
-
-[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
-
-### The Text
-
-Displays text content, supports trimming and scrolling of content. Run the
-[textdemo](widgets/text/demo/textdemo.go).
-
-[<img src="./images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/text/textdemo/textdemo.go)
-
-### The SparkLine
-
-Draws a graph showing a series of values as vertical bars. The bars can have
-sub-cell height. Run the
-[sparklinedemo](widgets/sparkline/sparklinedemo/sparklinedemo.go).
-
-[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
-
-### The BarChart
-
-Displays multiple bars showing relative ratios of values. Run the
-[barchartdemo](widgets/barchart/barchartdemo/barchartdemo.go).
-
-[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif">](widgets/barchart/barchartdemo/barchartdemo.go)
-
-### The LineChart
-
-Displays series of values as line charts. Run the
-[linechartdemo](widgets/linechart/linechartdemo/linechartdemo.go).
-
-[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif">](widgets/linechart/linechartdemo/linechartdemo.go)
 
 
 ## Disclaimer

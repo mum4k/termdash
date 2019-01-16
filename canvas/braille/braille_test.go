@@ -143,6 +143,28 @@ func TestBraille(t *testing.T) {
 		wantErr  bool
 	}{
 		{
+			desc: "fails on pixel with negative X",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				return c.SetPixel(image.Point{-1, 0})
+			},
+			wantErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc: "fails on pixel with negative Y",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				return c.SetPixel(image.Point{0, -1})
+			},
+			wantErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
 			desc: "set pixel 0,0",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {

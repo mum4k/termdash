@@ -213,6 +213,9 @@ func (c *Canvas) CopyTo(dst *canvas.Canvas) error {
 // cellPoint determines the point (coordinate) of the character cell given
 // coordinates in pixels.
 func (c *Canvas) cellPoint(p image.Point) (image.Point, error) {
+	if p.X < 0 || p.Y < 0 {
+		return image.ZP, fmt.Errorf("pixels cannot have negative coordinates: %v", p)
+	}
 	cp := image.Point{p.X / ColMult, p.Y / RowMult}
 	if ar := c.regular.Area(); !cp.In(ar) {
 		return image.ZP, fmt.Errorf("pixel at%v would be in a character cell at%v which falls outside of the canvas area %v", p, cp, ar)

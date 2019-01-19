@@ -48,6 +48,13 @@ func MustSetPixel(bc *braille.Canvas, p image.Point, opts ...cell.Option) {
 	}
 }
 
+// MustClearPixel clears the specified pixel or panics.
+func MustClearPixel(bc *braille.Canvas, p image.Point, opts ...cell.Option) {
+	if err := bc.ClearPixel(p, opts...); err != nil {
+		panic(fmt.Sprintf("braille.ClearPixel => unexpected error: %v", err))
+	}
+}
+
 // MustCopyTo copies the braille canvas onto the provided canvas or panics.
 func MustCopyTo(bc *braille.Canvas, dst *canvas.Canvas) {
 	if err := bc.CopyTo(dst); err != nil {

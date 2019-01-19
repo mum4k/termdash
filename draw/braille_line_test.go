@@ -98,6 +98,22 @@ func TestBrailleLine(t *testing.T) {
 			},
 		},
 		{
+			desc:   "clears a single point",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{0, 0},
+			opts: []BrailleLineOption{
+				BrailleLineClearPixels(),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+				testbraille.MustClearPixel(bc, image.Point{0, 0})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "draws single point with cell options",
 			canvas: image.Rect(0, 0, 1, 1),
 			start:  image.Point{0, 0},

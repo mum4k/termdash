@@ -24,6 +24,32 @@ import (
 	"github.com/mum4k/termdash/cell"
 )
 
+// braillePixelChange represents an action on a pixel on the braille canvas.
+type braillePixelChange int
+
+// String implements fmt.Stringer()
+func (bpc braillePixelChange) String() string {
+	if n, ok := braillePixelChangeNames[bpc]; ok {
+		return n
+	}
+	return "braillePixelChangeUnknown"
+}
+
+// braillePixelChangeNames maps braillePixelChange values to human readable names.
+var braillePixelChangeNames = map[braillePixelChange]string{
+	braillePixelChangeSet:   "braillePixelChangeSet",
+	braillePixelChangeClear: "braillePixelChangeClear",
+	braillePixelToggle:      "braillePixelToggle",
+}
+
+const (
+	braillePixelChangeUnknown braillePixelChange = iota
+
+	braillePixelChangeSet
+	braillePixelChangeClear
+	braillePixelToggle
+)
+
 // BrailleLineOption is used to provide options to BrailleLine().
 type BrailleLineOption interface {
 	// set sets the provided option.
@@ -32,12 +58,15 @@ type BrailleLineOption interface {
 
 // brailleLineOptions stores the provided options.
 type brailleLineOptions struct {
-	cellOpts []cell.Option
+	cellOpts    []cell.Option
+	pixelChange braillePixelChange
 }
 
 // newBrailleLineOptions returns a new brailleLineOptions instance.
 func newBrailleLineOptions() *brailleLineOptions {
-	return &brailleLineOptions{}
+	return &brailleLineOptions{
+		pixelChange: braillePixelChangeSet,
+	}
 }
 
 // brailleLineOption implements BrailleLineOption.
@@ -54,6 +83,15 @@ func (o brailleLineOption) set(opts *brailleLineOptions) {
 func BrailleLineCellOpts(cOpts ...cell.Option) BrailleLineOption {
 	return brailleLineOption(func(opts *brailleLineOptions) {
 		opts.cellOpts = cOpts
+	})
+}
+
+// BrailleLineClearPixels changes the behavior of BrailleLine, so that it
+// clears the pixels belonging to the line instead of setting them.
+// Useful in order to "erase" a line from the canvas as opposed to drawing one.
+func BrailleLineClearPixels(cOpts ...cell.Option) BrailleLineOption {
+	return brailleLineOption(func(opts *brailleLineOptions) {
+		opts.pixelChange = braillePixelChangeClear
 	})
 }
 
@@ -78,8 +116,15 @@ func BrailleLine(bc *braille.Canvas, start, end image.Point, opts ...BrailleLine
 
 	points := brailleLinePoints(start, end)
 	for _, p := range points {
-		if err := bc.SetPixel(p, opt.cellOpts...); err != nil {
-			return fmt.Errorf("bc.SetPixel(%v) => %v", p, err)
+		switch opt.pixelChange {
+		case braillePixelChangeSet:
+			if err := bc.SetPixel(p, opt.cellOpts...); err != nil {
+				return fmt.Errorf("bc.SetPixel(%v) => %v", p, err)
+			}
+		case braillePixelChangeClear:
+			if err := bc.ClearPixel(p, opt.cellOpts...); err != nil {
+				return fmt.Errorf("bc.ClearPixel(%v) => %v", p, err)
+			}
 		}
 	}
 	return nil

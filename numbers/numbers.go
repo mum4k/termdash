@@ -16,6 +16,7 @@
 package numbers
 
 import (
+	"image"
 	"math"
 )
 
@@ -124,4 +125,69 @@ func MinMax(values []float64) (min, max float64) {
 		}
 	}
 	return min, max
+}
+
+// MinMaxInts returns the smallest and the largest int value among the provided
+// values. Returns (0, 0) if there are no values.
+func MinMaxInts(values []int) (min, max int) {
+	if len(values) == 0 {
+		return 0, 0
+	}
+	min = math.MaxInt32
+	max = -1 * math.MaxInt32
+
+	for _, v := range values {
+		if v < min {
+			min = v
+		}
+		if v > max {
+			max = v
+		}
+	}
+	return min, max
+}
+
+// DegreesToRadians converts degrees to the equivalent in radians.
+func DegreesToRadians(degrees int) float64 {
+	if degrees > 360 {
+		degrees %= 360
+	}
+	return (float64(degrees) / 180) * math.Pi
+}
+
+// RadiansToDegrees converts radians to the equivalent in degrees.
+func RadiansToDegrees(radians float64) int {
+	d := int(Round(radians * 180 / math.Pi))
+	if d < 0 {
+		d += 360
+	}
+	return d
+}
+
+// CirclePointAtAngle given an angle in degrees and a circle midpoint and
+// radius, calculates coordinates of a point on the circle at that angle.
+// Angles are zero at the X axis and grow counter-clockwise.
+func CirclePointAtAngle(degrees int, mid image.Point, radius int) image.Point {
+	angle := DegreesToRadians(degrees)
+	r := float64(radius)
+	x := mid.X + int(Round(r*math.Cos(angle)))
+	// Y coordinates grow down on the canvas.
+	y := mid.Y - int(Round(r*math.Sin(angle)))
+	return image.Point{x, y}
+}
+
+// CircleAngleAtPoint given a point on a circle and its midpoint,
+// calculates the angle in degrees.
+// Angles are zero at the X axis and grow counter-clockwise.
+func CircleAngleAtPoint(point, mid image.Point) int {
+	adj := float64(point.X - mid.X)
+	opp := float64(mid.Y - point.Y)
+	if opp != 0 {
+		angle := math.Atan2(opp, adj)
+		return RadiansToDegrees(angle)
+	} else if adj >= 0 {
+		return 0
+	} else {
+		return 180
+	}
 }

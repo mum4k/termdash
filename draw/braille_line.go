@@ -39,7 +39,6 @@ func (bpc braillePixelChange) String() string {
 var braillePixelChangeNames = map[braillePixelChange]string{
 	braillePixelChangeSet:   "braillePixelChangeSet",
 	braillePixelChangeClear: "braillePixelChangeClear",
-	braillePixelToggle:      "braillePixelToggle",
 }
 
 const (
@@ -47,7 +46,6 @@ const (
 
 	braillePixelChangeSet
 	braillePixelChangeClear
-	braillePixelToggle
 )
 
 // BrailleLineOption is used to provide options to BrailleLine().
@@ -89,7 +87,7 @@ func BrailleLineCellOpts(cOpts ...cell.Option) BrailleLineOption {
 // BrailleLineClearPixels changes the behavior of BrailleLine, so that it
 // clears the pixels belonging to the line instead of setting them.
 // Useful in order to "erase" a line from the canvas as opposed to drawing one.
-func BrailleLineClearPixels(cOpts ...cell.Option) BrailleLineOption {
+func BrailleLineClearPixels() BrailleLineOption {
 	return brailleLineOption(func(opts *brailleLineOptions) {
 		opts.pixelChange = braillePixelChangeClear
 	})

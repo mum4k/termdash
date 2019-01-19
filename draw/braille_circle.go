@@ -33,12 +33,20 @@ type BrailleCircleOption interface {
 
 // brailleCircleOptions stores the provided options.
 type brailleCircleOptions struct {
-	cellOpts []cell.Option
-	filled   bool
+	cellOpts    []cell.Option
+	filled      bool
+	pixelChange braillePixelChange
 
 	arcOnly     bool
 	startDegree int
 	endDegree   int
+}
+
+// newBrailleCircleOptions returns a new brailleCircleOptions instance.
+func newBrailleCircleOptions() *brailleCircleOptions {
+	return &brailleCircleOptions{
+		pixelChange: braillePixelChangeSet,
+	}
 }
 
 // validate validates the provided options.
@@ -61,11 +69,6 @@ func (opts *brailleCircleOptions) validate() error {
 		return fmt.Errorf("invalid degree range, start %d and end %d cannot be equal", opts.startDegree, opts.endDegree)
 	}
 	return nil
-}
-
-// newBrailleCircleOptions returns a new brailleCircleOptions instance.
-func newBrailleCircleOptions() *brailleCircleOptions {
-	return &brailleCircleOptions{}
 }
 
 // brailleCircleOption implements BrailleCircleOption.
@@ -105,6 +108,15 @@ func BrailleCircleArcOnly(startDegree, endDegree int) BrailleCircleOption {
 	})
 }
 
+// BrailleCircleClearPixels changes the behavior of BrailleCircle, so that it
+// clears the pixels belonging to the circle instead of setting them.
+// Useful in order to "erase" a circle from the canvas as opposed to drawing one.
+func BrailleCircleClearPixels() BrailleCircleOption {
+	return brailleCircleOption(func(opts *brailleCircleOptions) {
+		opts.pixelChange = braillePixelChangeClear
+	})
+}
+
 // BrailleCircle draws an approximated circle with the specified mid point and radius.
 // The mid point must be a valid pixel within the canvas.
 // All the points that form the circle must fit into the canvas.
@@ -132,8 +144,15 @@ func BrailleCircle(bc *braille.Canvas, mid image.Point, radius int, opts ...Brai
 	}
 
 	if opt.filled {
+		lineOpts := []BrailleLineOption{
+			BrailleLineCellOpts(opt.cellOpts...),
+		}
+		if opt.pixelChange == braillePixelChangeClear {
+			lineOpts = append(lineOpts, BrailleLineClearPixels())
+		}
+
 		for _, pts := range groupByY(points) {
-			if err := BrailleLine(bc, pts[0], pts[1], BrailleLineCellOpts(opt.cellOpts...)); err != nil {
+			if err := BrailleLine(bc, pts[0], pts[1], lineOpts...); err != nil {
 				return fmt.Errorf("failed to fill circle with mid:%v, start:%d degrees end:%d degrees, BrailleLine => %v", mid, opt.startDegree, opt.endDegree, err)
 			}
 		}
@@ -141,8 +160,16 @@ func BrailleCircle(bc *braille.Canvas, mid image.Point, radius int, opts ...Brai
 	}
 
 	for _, p := range points {
-		if err := bc.SetPixel(p, opt.cellOpts...); err != nil {
-			return fmt.Errorf("failed to draw circle with mid:%v, start:%d degrees end:%d degrees, SetPixel => %v", mid, opt.startDegree, opt.endDegree, err)
+		switch opt.pixelChange {
+		case braillePixelChangeSet:
+			if err := bc.SetPixel(p, opt.cellOpts...); err != nil {
+				return fmt.Errorf("failed to draw circle with mid:%v, start:%d degrees end:%d degrees, SetPixel => %v", mid, opt.startDegree, opt.endDegree, err)
+			}
+		case braillePixelChangeClear:
+			if err := bc.ClearPixel(p, opt.cellOpts...); err != nil {
+				return fmt.Errorf("failed to erase circle with mid:%v, start:%d degrees end:%d degrees, ClearPixel => %v", mid, opt.startDegree, opt.endDegree, err)
+			}
+
 		}
 	}
 	return nil

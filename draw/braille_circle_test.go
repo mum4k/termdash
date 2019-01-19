@@ -34,10 +34,14 @@ func mustBrailleLine(bc *braille.Canvas, start, end image.Point, opts ...Braille
 
 func TestBrailleCircle(t *testing.T) {
 	tests := []struct {
-		desc    string
-		canvas  image.Rectangle
-		mid     image.Point
-		radius  int
+		desc   string
+		canvas image.Rectangle
+		mid    image.Point
+		radius int
+
+		// If not nil, called to prepare the braille canvas before running the test.
+		prepare func(*braille.Canvas) error
+
 		opts    []BrailleCircleOption
 		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
@@ -291,6 +295,117 @@ func TestBrailleCircle(t *testing.T) {
 				mustBrailleLine(bc, image.Point{0, 2}, image.Point{4, 2})
 				mustBrailleLine(bc, image.Point{0, 3}, image.Point{4, 3})
 				mustBrailleLine(bc, image.Point{1, 4}, image.Point{3, 4})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "clears pixels on a filled circle",
+			canvas: image.Rect(0, 0, 3, 3),
+			mid:    image.Point{2, 2},
+			radius: 2,
+			prepare: func(bc *braille.Canvas) error {
+				// Draw a filled circle so we can erase part of it.
+				return BrailleCircle(bc, image.Point{2, 2}, 2, BrailleCircleFilled())
+			},
+			opts: []BrailleCircleOption{
+				BrailleCircleClearPixels(),
+				BrailleCircleFilled(),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				mustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 0})
+				mustBrailleLine(bc, image.Point{0, 1}, image.Point{4, 1})
+				mustBrailleLine(bc, image.Point{0, 2}, image.Point{4, 2})
+				mustBrailleLine(bc, image.Point{0, 3}, image.Point{4, 3})
+				mustBrailleLine(bc, image.Point{1, 4}, image.Point{3, 4})
+
+				mustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 0}, BrailleLineClearPixels())
+				mustBrailleLine(bc, image.Point{0, 1}, image.Point{4, 1}, BrailleLineClearPixels())
+				mustBrailleLine(bc, image.Point{0, 2}, image.Point{4, 2}, BrailleLineClearPixels())
+				mustBrailleLine(bc, image.Point{0, 3}, image.Point{4, 3}, BrailleLineClearPixels())
+				mustBrailleLine(bc, image.Point{1, 4}, image.Point{3, 4}, BrailleLineClearPixels())
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "clears pixels by drawing a smaller filled on circle",
+			canvas: image.Rect(0, 0, 3, 3),
+			mid:    image.Point{2, 2},
+			radius: 1,
+			prepare: func(bc *braille.Canvas) error {
+				// Draw a filled circle so we can erase part of it.
+				return BrailleCircle(bc, image.Point{2, 2}, 2, BrailleCircleFilled())
+			},
+			opts: []BrailleCircleOption{
+				BrailleCircleClearPixels(),
+				BrailleCircleFilled(),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testbraille.MustSetPixel(bc, image.Point{1, 0})
+				testbraille.MustSetPixel(bc, image.Point{2, 0})
+				testbraille.MustSetPixel(bc, image.Point{3, 0})
+
+				testbraille.MustSetPixel(bc, image.Point{0, 1})
+				testbraille.MustSetPixel(bc, image.Point{4, 1})
+
+				testbraille.MustSetPixel(bc, image.Point{0, 2})
+				testbraille.MustSetPixel(bc, image.Point{4, 2})
+
+				testbraille.MustSetPixel(bc, image.Point{0, 3})
+				testbraille.MustSetPixel(bc, image.Point{4, 3})
+
+				testbraille.MustSetPixel(bc, image.Point{1, 4})
+				testbraille.MustSetPixel(bc, image.Point{2, 4})
+				testbraille.MustSetPixel(bc, image.Point{3, 4})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "clears pixels by drawing a smaller empty on circle",
+			canvas: image.Rect(0, 0, 3, 3),
+			mid:    image.Point{2, 2},
+			radius: 1,
+			prepare: func(bc *braille.Canvas) error {
+				// Draw a filled circle so we can erase part of it.
+				return BrailleCircle(bc, image.Point{2, 2}, 2, BrailleCircleFilled())
+			},
+			opts: []BrailleCircleOption{
+				BrailleCircleClearPixels(),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				// The middle remains.
+				testbraille.MustSetPixel(bc, image.Point{2, 2})
+
+				testbraille.MustSetPixel(bc, image.Point{1, 0})
+				testbraille.MustSetPixel(bc, image.Point{2, 0})
+				testbraille.MustSetPixel(bc, image.Point{3, 0})
+
+				testbraille.MustSetPixel(bc, image.Point{0, 1})
+				testbraille.MustSetPixel(bc, image.Point{4, 1})
+
+				testbraille.MustSetPixel(bc, image.Point{0, 2})
+				testbraille.MustSetPixel(bc, image.Point{4, 2})
+
+				testbraille.MustSetPixel(bc, image.Point{0, 3})
+				testbraille.MustSetPixel(bc, image.Point{4, 3})
+
+				testbraille.MustSetPixel(bc, image.Point{1, 4})
+				testbraille.MustSetPixel(bc, image.Point{2, 4})
+				testbraille.MustSetPixel(bc, image.Point{3, 4})
 
 				testbraille.MustApply(bc, ft)
 				return ft
@@ -946,6 +1061,12 @@ func TestBrailleCircle(t *testing.T) {
 			bc, err := braille.New(tc.canvas)
 			if err != nil {
 				t.Fatalf("braille.New => unexpected error: %v", err)
+			}
+
+			if tc.prepare != nil {
+				if err := tc.prepare(bc); err != nil {
+					t.Fatalf("tc.prepare => unexpected error: %v", err)
+				}
 			}
 
 			err = BrailleCircle(bc, tc.mid, tc.radius, tc.opts...)

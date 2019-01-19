@@ -230,7 +230,7 @@ func isBraille(r rune) bool {
 
 // pixelSet returns true if the provided rune has the specified pixel set.
 func pixelSet(r rune, p image.Point) bool {
-	return r&pixelRunes[p] == 1
+	return r&pixelRunes[pixelPoint(p)] > 0
 }
 
 // pixelPoint translates point within canvas to point within the target cell.

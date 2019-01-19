@@ -240,7 +240,7 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 	return nil
 }
 
-// Implements widgetapi.Widget.Keyboard.
+// Keyboard implements widgetapi.Widget.Keyboard.
 func (t *Text) Keyboard(k *terminalapi.Keyboard) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -258,7 +258,7 @@ func (t *Text) Keyboard(k *terminalapi.Keyboard) error {
 	return nil
 }
 
-// Implements widgetapi.Widget.Mouse.
+// Mouse implements widgetapi.Widget.Mouse.
 func (t *Text) Mouse(m *terminalapi.Mouse) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -272,6 +272,7 @@ func (t *Text) Mouse(m *terminalapi.Mouse) error {
 	return nil
 }
 
+// Options of the widget
 func (t *Text) Options() widgetapi.Options {
 	return widgetapi.Options{
 		// At least one line with at least one full-width rune.

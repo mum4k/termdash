@@ -68,6 +68,16 @@ func TestBrailleCircle(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:   "fails when clearing a circle that doesn't fit",
+			canvas: image.Rect(0, 0, 1, 1),
+			mid:    image.Point{0, 0},
+			radius: 2,
+			opts: []BrailleCircleOption{
+				BrailleCircleClearPixels(),
+			},
+			wantErr: true,
+		},
+		{
 			desc:   "fails when the filled circle doesn't fit",
 			canvas: image.Rect(0, 0, 1, 1),
 			mid:    image.Point{0, 0},

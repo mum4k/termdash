@@ -82,6 +82,16 @@ func TestBrailleLine(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:   "low line, fails on end point outside of the canvas when clearing pixels",
+			canvas: image.Rect(0, 0, 3, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{6, 3},
+			opts: []BrailleLineOption{
+				BrailleLineClearPixels(),
+			},
+			wantErr: true,
+		},
+		{
 			desc:    "high line, fails on end point outside of the canvas",
 			canvas:  image.Rect(0, 0, 1, 1),
 			start:   image.Point{0, 0},

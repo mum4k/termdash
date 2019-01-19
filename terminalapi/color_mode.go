@@ -50,11 +50,11 @@ const (
 
 	// ColorMode216 supports only the third range of the ColorMode256, i.e the
 	// 216 different terminal colors. However in this mode the colors are zero
-	// based, so the called doesn't need to provide an offset.
+	// based, so the caller doesn't need to provide an offset.
 	ColorMode216
 
 	// ColorModeGrayscale supports only the fourth range of the ColorMode256,
 	// i.e the 24 different shades of grey. However in this mode the colors are
-	// zero based, so the called doesn't need to provide an offset.
+	// zero based, so the caller doesn't need to provide an offset.
 	ColorModeGrayscale
 )

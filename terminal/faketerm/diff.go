@@ -100,7 +100,7 @@ func Diff(want, got *Terminal) string {
 			for col := 0; col < size.X; col++ {
 				got := got.BackBuffer()[col][row].Rune
 				want := want.BackBuffer()[col][row].Rune
-				b.WriteString(fmt.Sprintf("  cell(%v, %v) => got '%c' (rune %d), want '%c' (rune %d)", col, row, got, got, want, want))
+				b.WriteString(fmt.Sprintf("  cell(%v, %v) => got '%c' (rune %d), want '%c' (rune %d)\n", col, row, got, got, want, want))
 			}
 		}
 	}

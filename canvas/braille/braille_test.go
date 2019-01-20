@@ -109,6 +109,12 @@ func TestNew(t *testing.T) {
 			wantSize: image.Point{6, 12},
 			wantArea: image.Rect(0, 0, 6, 12),
 		},
+		{
+			desc:     "braille from non-zero-based multi-cell rectangular area",
+			ar:       image.Rect(6, 6, 9, 10),
+			wantSize: image.Point{6, 16},
+			wantArea: image.Rect(0, 0, 6, 16),
+		},
 	}
 
 	for _, tc := range tests {

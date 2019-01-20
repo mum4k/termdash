@@ -115,7 +115,7 @@ func (c *Canvas) Size() image.Point {
 // than the area used to create the braille canvas.
 func (c *Canvas) Area() image.Rectangle {
 	ar := c.regular.Area()
-	return image.Rect(0, 0, ar.Dx()*ColMult, ar.Dx()*RowMult)
+	return image.Rect(0, 0, ar.Dx()*ColMult, ar.Dy()*RowMult)
 }
 
 // Clear clears all the content on the canvas.

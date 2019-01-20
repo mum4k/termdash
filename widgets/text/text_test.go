@@ -99,10 +99,7 @@ func TestTextDraws(t *testing.T) {
 				if err := widget.Write(" "); err != nil {
 					return err
 				}
-				if err := widget.Write("world"); err != nil {
-					return err
-				}
-				return nil
+				return widget.Write("world")
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -124,10 +121,7 @@ func TestTextDraws(t *testing.T) {
 					return err
 				}
 				widget.Reset()
-				if err := widget.Write("world"); err != nil {
-					return err
-				}
-				return nil
+				return widget.Write("world")
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -164,10 +158,7 @@ func TestTextDraws(t *testing.T) {
 				if err := widget.Write("red\n", WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 					return err
 				}
-				if err := widget.Write("blue\n", WriteCellOpts(cell.FgColor(cell.ColorBlue))); err != nil {
-					return err
-				}
-				return nil
+				return widget.Write("blue\n", WriteCellOpts(cell.FgColor(cell.ColorBlue)))
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

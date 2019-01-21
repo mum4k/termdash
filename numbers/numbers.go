@@ -125,3 +125,40 @@ func MinMax(values []float64) (min, max float64) {
 	}
 	return min, max
 }
+
+// MinMaxInts returns the smallest and the largest int value among the provided
+// values. Returns (0, 0) if there are no values.
+func MinMaxInts(values []int) (min, max int) {
+	if len(values) == 0 {
+		return 0, 0
+	}
+	min = math.MaxInt32
+	max = -1 * math.MaxInt32
+
+	for _, v := range values {
+		if v < min {
+			min = v
+		}
+		if v > max {
+			max = v
+		}
+	}
+	return min, max
+}
+
+// DegreesToRadians converts degrees to the equivalent in radians.
+func DegreesToRadians(degrees int) float64 {
+	if degrees > 360 {
+		degrees %= 360
+	}
+	return (float64(degrees) / 180) * math.Pi
+}
+
+// RadiansToDegrees converts radians to the equivalent in degrees.
+func RadiansToDegrees(radians float64) int {
+	d := int(Round(radians * 180 / math.Pi))
+	if d < 0 {
+		d += 360
+	}
+	return d
+}

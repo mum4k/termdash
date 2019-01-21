@@ -58,3 +58,10 @@ func MustBrailleLine(bc *braille.Canvas, start, end image.Point, opts ...draw.Br
 		panic(fmt.Sprintf("draw.BrailleLine => unexpected error: %v", err))
 	}
 }
+
+// MustBrailleCircle draws the braille circle or panics.
+func MustBrailleCircle(bc *braille.Canvas, mid image.Point, radius int, opts ...draw.BrailleCircleOption) {
+	if err := draw.BrailleCircle(bc, mid, radius, opts...); err != nil {
+		panic(fmt.Sprintf("draw.BrailleCircle => unexpected error: %v", err))
+	}
+}

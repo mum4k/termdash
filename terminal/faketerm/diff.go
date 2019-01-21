@@ -54,6 +54,7 @@ func Diff(want, got *Terminal) string {
 
 	size := got.Size()
 	var optDiffs []*optDiff
+	cellsDiffer := false
 	for row := 0; row < size.Y; row++ {
 		for col := 0; col < size.X; col++ {
 			p := image.Point{col, row}
@@ -67,6 +68,7 @@ func Diff(want, got *Terminal) string {
 			r := gotCell.Rune
 			if r != wantCell.Rune {
 				r = '࿃'
+				cellsDiffer = true
 			} else if r == 0 && !partial {
 				r = ' '
 			}
@@ -88,6 +90,17 @@ func Diff(want, got *Terminal) string {
 		for _, od := range optDiffs {
 			if diff := pretty.Compare(od.want, od.got); diff != "" {
 				b.WriteString(fmt.Sprintf("cell %v, diff (-want +got):\n%s\n", od.point, diff))
+			}
+		}
+	}
+
+	if cellsDiffer {
+		b.WriteString("  Found differences in some of the cell runes:\n")
+		for row := 0; row < size.Y; row++ {
+			for col := 0; col < size.X; col++ {
+				got := got.BackBuffer()[col][row].Rune
+				want := want.BackBuffer()[col][row].Rune
+				b.WriteString(fmt.Sprintf("  cell(%v, %v) => got '%c' (rune %d), want '%c' (rune %d)\n", col, row, got, got, want, want))
 			}
 		}
 	}

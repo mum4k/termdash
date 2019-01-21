@@ -41,13 +41,13 @@ type options struct {
 	donutHolePercent int
 	hideTextProgress bool
 
-	textCellOpts  []cell.Option
-	donutCellOpts []cell.Option
+	textCellOpts []cell.Option
+	cellOpts     []cell.Option
 
 	// The angle in degrees that represents 0 and 100% of the progress.
 	startAngle int
 	// The direction in which the donut completes as progress increases.
-	// Positive for clockwise, negative for counter-clockwise.
+	// Positive for counter-clockwise, negative for clockwise.
 	direction int
 }
 
@@ -57,8 +57,8 @@ func (o *options) validate() error {
 		return fmt.Errorf("invalid donut hole percent %d, must be in range %d <= p <= %d", o.donutHolePercent, min, max)
 	}
 
-	if min, max := 0, 360; o.startAngle < min || o.startAngle > max {
-		return fmt.Errorf("invalid start angle %d, must be in range %d <= angle <= %d", o.startAngle, min, max)
+	if min, max := 0, 360; o.startAngle < min || o.startAngle >= max {
+		return fmt.Errorf("invalid start angle %d, must be in range %d <= angle < %d", o.startAngle, min, max)
 	}
 
 	return nil
@@ -67,21 +67,25 @@ func (o *options) validate() error {
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
-		donutHolePercent: DefaultDonutHolePercent,
+		donutHolePercent: DefaultHolePercent,
 		startAngle:       DefaultStartAngle,
-		direction:        1,
+		direction:        -1,
+		textCellOpts: []cell.Option{
+			cell.FgColor(cell.ColorDefault),
+			cell.BgColor(cell.ColorDefault),
+		},
 	}
 }
 
-// DefaultDonutHolePercent is the default value for the DonutHolePercent
+// DefaultHolePercent is the default value for the HolePercent
 // option.
-const DefaultDonutHolePercent = 20
+const DefaultHolePercent = 35
 
-// DonutHolePercent sets the size of the "hole" inside the donut as a
+// HolePercent sets the size of the "hole" inside the donut as a
 // percentage of the donut's radius.
 // Setting this to zero disables the hole so that the donut will become just a
 // circle. Valid range is 0 <= p <= 100.
-func DonutHolePercent(p int) Option {
+func HolePercent(p int) Option {
 	return option(func(opts *options) {
 		opts.donutHolePercent = p
 	})
@@ -96,7 +100,7 @@ func DonutHolePercent(p int) Option {
 // The progress is only displayed if there is enough space for it in the middle
 // of the drawn donut.
 //
-// Providing this option also sets DonutHolePercent to its default value.
+// Providing this option also sets HolePercent to its default value.
 func ShowTextProgress() Option {
 	return option(func(opts *options) {
 		opts.hideTextProgress = false
@@ -118,10 +122,10 @@ func TextCellOpts(cOpts ...cell.Option) Option {
 	})
 }
 
-// DonutCellOpts sets cell options on cells that contain the donut.
-func DonutCellOpts(cOpts ...cell.Option) Option {
+// CellOpts sets cell options on cells that contain the donut.
+func CellOpts(cOpts ...cell.Option) Option {
 	return option(func(opts *options) {
-		opts.donutCellOpts = cOpts
+		opts.cellOpts = cOpts
 	})
 }
 
@@ -130,7 +134,7 @@ const DefaultStartAngle = 90
 
 // StartAngle sets the starting angle in degrees, i.e. the point that will
 // represent both 0% and 100% of progress.
-// Valid values are in range 0 <= angle <= 360.
+// Valid values are in range 0 <= angle < 360.
 // Angles start at the X axis and grow counter-clockwise.
 func StartAngle(angle int) Option {
 	return option(func(opts *options) {
@@ -142,7 +146,7 @@ func StartAngle(angle int) Option {
 // direction. This is the default option.
 func Clockwise() Option {
 	return option(func(opts *options) {
-		opts.direction = 1
+		opts.direction = -1
 	})
 }
 
@@ -150,6 +154,6 @@ func Clockwise() Option {
 // direction.
 func CounterClockwise() Option {
 	return option(func(opts *options) {
-		opts.direction = -1
+		opts.direction = 1
 	})
 }

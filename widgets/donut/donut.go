@@ -22,8 +22,12 @@ import (
 	"image"
 	"sync"
 
+	runewidth "github.com/mattn/go-runewidth"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/braille"
+	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/numbers"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -135,12 +139,92 @@ func (d *Donut) Percent(p int, opts ...Option) error {
 	return nil
 }
 
+// progressText returns the textual representation of the current progress.
+func (d *Donut) progressText() string {
+	switch d.pt {
+	case progressTypePercent:
+		return fmt.Sprintf("%d%%", d.current)
+	case progressTypeAbsolute:
+		return fmt.Sprintf("%d/%d", d.current, d.total)
+	default:
+		return ""
+	}
+}
+
+// holeRadius calculates the radius of the "hole" in the donut.
+// Returns zero if no hole should be drawn.
+func (d *Donut) holeRadius(donutRadius int) int {
+	r := int(numbers.Round(float64(donutRadius) / 100 * float64(d.opts.donutHolePercent)))
+	if r < 2 { // Smallest possible circle radius.
+		return 0
+	}
+	return r
+}
+
+// drawText draws the text label showing the progress.
+// The text is only drawn if the radius of the donut "hole" is large enough to
+// accommodate it.
+func (d *Donut) drawText(cvs *canvas.Canvas, mid image.Point, holeR int) error {
+	cells, first := availableCells(mid, holeR)
+	t := d.progressText()
+	needCells := runewidth.StringWidth(t)
+	if cells < needCells {
+		return nil
+	}
+
+	ar := image.Rect(first.X, first.Y, first.X+cells+2, first.Y+1)
+	start, err := align.Text(ar, t, align.HorizontalCenter, align.VerticalMiddle)
+	if err != nil {
+		return fmt.Errorf("align.Text => %v", err)
+	}
+	if err := draw.Text(cvs, t, start, draw.TextMaxX(start.X+needCells), draw.TextCellOpts(d.opts.textCellOpts...)); err != nil {
+		return fmt.Errorf("draw.Text => %v", err)
+	}
+	return nil
+}
+
 // Draw draws the Donut widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
 func (d *Donut) Draw(cvs *canvas.Canvas) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
+	bc, err := braille.New(cvs.Area())
+	if err != nil {
+		return fmt.Errorf("braille.New => %v", err)
+	}
+
+	startA, endA := startEndAngles(d.current, d.total, d.opts.startAngle, d.opts.direction)
+	if startA == endA {
+		// No progress recorded, so nothing to do.
+		return nil
+	}
+
+	mid, r := midAndRadius(bc.Area())
+	if err := draw.BrailleCircle(bc, mid, r,
+		draw.BrailleCircleFilled(),
+		draw.BrailleCircleArcOnly(startA, endA),
+		draw.BrailleCircleCellOpts(d.opts.cellOpts...),
+	); err != nil {
+		return fmt.Errorf("failed to draw the outer circle: %v", err)
+	}
+
+	holeR := d.holeRadius(r)
+	if holeR != 0 {
+		if err := draw.BrailleCircle(bc, mid, holeR,
+			draw.BrailleCircleFilled(),
+			draw.BrailleCircleClearPixels(),
+		); err != nil {
+			return fmt.Errorf("failed to draw the outer circle: %v", err)
+		}
+	}
+	if err := bc.CopyTo(cvs); err != nil {
+		return err
+	}
+
+	if !d.opts.hideTextProgress {
+		return d.drawText(cvs, mid, holeR)
+	}
 	return nil
 }
 
@@ -161,10 +245,8 @@ func (d *Donut) Options() widgetapi.Options {
 		// This is adjusted for the inequality of the braille canvas.
 		Ratio: image.Point{braille.RowMult, braille.ColMult},
 
-		// The smallest circle that "looks" like a circle on the canvas needs
-		// to have a radius of two. We need at least three columns and two rows
-		// of cells to display it.
-		MinimumSize:  image.Point{3, 2},
+		// The smallest circle that "looks" like a circle on the canvas.
+		MinimumSize:  image.Point{3, 3},
 		WantKeyboard: false,
 		WantMouse:    false,
 	}

@@ -4,7 +4,6 @@ package donut
 
 import (
 	"image"
-	"math"
 
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/numbers"
@@ -25,7 +24,7 @@ func startEndAngles(current, total, startAngle, direction int) (start, end int) 
 	if angleSize == fullCircle {
 		return 0, fullCircle
 	}
-	end = startAngle + int(math.Round(float64(direction)*angleSize))
+	end = startAngle + int(numbers.Round(float64(direction)*angleSize))
 
 	if end < 0 {
 		end += fullCircle

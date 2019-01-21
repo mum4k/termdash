@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Binary gaugedemo displays a couple of Gauge widgets.
+// Binary donutdemo displays a couple of Donut widgets.
 // Exist when 'q' is pressed.
 package main
 
@@ -39,10 +39,9 @@ const (
 
 // playDonut continuously changes the displayed percent value on the donut by the
 // step once every delay. Exits when the context expires.
-func playDonut(ctx context.Context, d *donut.Donut, step int, delay time.Duration, pt playType) {
-	progress := 0
+func playDonut(ctx context.Context, d *donut.Donut, start, step int, delay time.Duration, pt playType) {
+	progress := start
 	mult := 1
-	start := 0
 
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
@@ -51,26 +50,20 @@ func playDonut(ctx context.Context, d *donut.Donut, step int, delay time.Duratio
 		case <-ticker.C:
 			switch pt {
 			case playTypePercent:
-				if err := d.Percent(progress, donut.StartAngle(start)); err != nil {
+				if err := d.Percent(progress); err != nil {
 					panic(err)
 				}
 			case playTypeAbsolute:
-				if err := d.Absolute(progress, 100, donut.StartAngle(start)); err != nil {
+				if err := d.Absolute(progress, 100); err != nil {
 					panic(err)
 				}
 			}
-			//progress = 20
-			//continue
 
 			progress += step * mult
 			if progress > 100 || 100-progress < step {
 				progress = 100
 			} else if progress < 0 || progress < step {
 				progress = 0
-				start += 10
-				if start >= 360 {
-					start = 0
-				}
 			}
 
 			if progress == 100 {
@@ -93,25 +86,48 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	d, err := donut.New(
-		donut.HolePercent(35),
-		donut.CellOpts(
-			cell.FgColor(cell.ColorRed),
-		),
-		donut.TextCellOpts(
-			cell.FgColor(cell.ColorBlue),
-		),
-	)
+	green, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorGreen)))
 	if err != nil {
 		panic(err)
 	}
-	go playDonut(ctx, d, 1, 25*time.Millisecond, playTypePercent)
+	go playDonut(ctx, green, 0, 1, 250*time.Millisecond, playTypePercent)
+
+	blue, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorBlue)))
+	if err != nil {
+		panic(err)
+	}
+	go playDonut(ctx, blue, 25, 1, 500*time.Millisecond, playTypePercent)
+
+	yellow, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorYellow)))
+	if err != nil {
+		panic(err)
+	}
+	go playDonut(ctx, yellow, 50, 1, 1*time.Second, playTypeAbsolute)
+
+	red, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorRed)))
+	if err != nil {
+		panic(err)
+	}
+	go playDonut(ctx, red, 75, 1, 2*time.Second, playTypeAbsolute)
 
 	c, err := container.New(
 		t,
 		container.Border(draw.LineStyleLight),
 		container.BorderTitle("PRESS Q TO QUIT"),
-		container.PlaceWidget(d),
+		container.SplitVertical(
+			container.Left(
+				container.SplitVertical(
+					container.Left(container.PlaceWidget(green)),
+					container.Right(container.PlaceWidget(blue)),
+				),
+			),
+			container.Right(
+				container.SplitVertical(
+					container.Left(container.PlaceWidget(yellow)),
+					container.Right(container.PlaceWidget(red)),
+				),
+			),
+		),
 	)
 	if err != nil {
 		panic(err)
@@ -123,7 +139,7 @@ func main() {
 		}
 	}
 
-	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(25*time.Millisecond)); err != nil {
+	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(1*time.Second)); err != nil {
 		panic(err)
 	}
 }

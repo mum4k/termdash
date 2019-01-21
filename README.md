@@ -70,6 +70,17 @@ go run github.com/mum4k/termdash/widgets/gauge/gaugedemo/gaugedemo.go
 
 [<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
 
+### The Donut
+
+Visualizes progress of an operation as a partial or a complete donut. Run the
+[donutdemo](widgets/donut/donutdemo/donutdemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/donut/donutdemo/donutdemo.go
+```
+
+[<img src="./images/donutdemo.gif" alt="donutdemo" type="image/gif">](widgets/donut/donutdemo/donutdemo.go)
+
 ### The Text
 
 Displays text content, supports trimming and scrolling of content. Run the

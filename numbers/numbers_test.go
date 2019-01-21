@@ -82,7 +82,31 @@ func TestZeroBeforeDecimal(t *testing.T) {
 
 // Copied from the math package of Go 1.10 for backwards compatibility with Go
 // 1.8 where the math.Round function doesn't exist yet.
+func tolerance(a, b, e float64) bool {
+	// Multiplying by e here can underflow denormal values to zero.
+	// Check a==b so that at least if a and b are small and identical
+	// we say they match.
+	if a == b {
+		return true
+	}
+	d := a - b
+	if d < 0 {
+		d = -d
+	}
 
+	// note: b is correct (expected) value, a is actual value.
+	// make error tolerance a fraction of b, not a.
+	if b != 0 {
+		e = e * b
+		if e < 0 {
+			e = -e
+		}
+	}
+	return d < e
+}
+func close(a, b float64) bool      { return tolerance(a, b, 1e-14) }
+func veryclose(a, b float64) bool  { return tolerance(a, b, 4e-16) }
+func soclose(a, b, e float64) bool { return tolerance(a, b, e) }
 func alike(a, b float64) bool {
 	switch {
 	case math.IsNaN(a) && math.IsNaN(b):
@@ -195,6 +219,110 @@ func TestMinMax(t *testing.T) {
 			gotMin, gotMax := MinMax(tc.values)
 			if gotMin != tc.wantMin || gotMax != tc.wantMax {
 				t.Errorf("MinMax => (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
+			}
+		})
+	}
+}
+
+func TestMinMaxInts(t *testing.T) {
+	tests := []struct {
+		desc    string
+		values  []int
+		wantMin int
+		wantMax int
+	}{
+		{
+			desc: "no values",
+		},
+		{
+			desc:    "all values the same",
+			values:  []int{1, 1},
+			wantMin: 1,
+			wantMax: 1,
+		},
+		{
+			desc:    "all values the same and negative",
+			values:  []int{-1, -1},
+			wantMin: -1,
+			wantMax: -1,
+		},
+		{
+			desc:    "min and max among positive values",
+			values:  []int{1, 2, 3},
+			wantMin: 1,
+			wantMax: 3,
+		},
+		{
+			desc:    "min and max among positive and zero values",
+			values:  []int{1, 0, 3},
+			wantMin: 0,
+			wantMax: 3,
+		},
+		{
+			desc:    "min and max among negative, positive and zero values",
+			values:  []int{1, 0, 3, -11, 22},
+			wantMin: -11,
+			wantMax: 22,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			gotMin, gotMax := MinMaxInts(tc.values)
+			if gotMin != tc.wantMin || gotMax != tc.wantMax {
+				t.Errorf("MinMaxInts => (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
+			}
+		})
+	}
+}
+
+func TestDegreesToRadiansAndViceVersa(t *testing.T) {
+	tests := []struct {
+		degrees int
+		want    float64
+	}{
+		{0, 0},
+		{1, 0.017453292519943295},
+		{-1, -0.017453292519943295},
+		{15, 0.2617993877991494},
+		{90, 1.5707963267948966},
+		{180, 3.141592653589793},
+		{270, 4.71238898038469},
+		{360, 6.283185307179586},
+		{361, 0.017453292519943295},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("degrees %d", tc.degrees), func(t *testing.T) {
+			got := DegreesToRadians(tc.degrees)
+			if !veryclose(got, tc.want) {
+				t.Errorf("DegreesToRadians(%v) => %v, want %v", tc.degrees, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRadiansToDegrees(t *testing.T) {
+	tests := []struct {
+		radians float64
+		want    int
+	}{
+		{0, 0},
+		{0.017453292519943295, 1},
+		{-0.017453292519943295, 359},
+		{-1.5707963267948966, 270},
+		{0.2617993877991494, 15},
+		{1.5707963267948966, 90},
+		{3.141592653589793, 180},
+		{4.71238898038469, 270},
+		{6.283185307179586, 360},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("radians %v", tc.radians), func(t *testing.T) {
+			got := RadiansToDegrees(tc.radians)
+			if got != tc.want {
+				t.Errorf("RadiansToDegrees(%v) => %v, want %v", tc.radians, got, tc.want)
 			}
 		})
 	}

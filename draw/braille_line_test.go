@@ -27,10 +27,14 @@ import (
 
 func TestBrailleLine(t *testing.T) {
 	tests := []struct {
-		desc    string
-		canvas  image.Rectangle
-		start   image.Point
-		end     image.Point
+		desc   string
+		canvas image.Rectangle
+		start  image.Point
+		end    image.Point
+
+		// If not nil, called to prepare the braille canvas before running the test.
+		prepare func(*braille.Canvas) error
+
 		opts    []BrailleLineOption
 		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
@@ -78,6 +82,16 @@ func TestBrailleLine(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:   "low line, fails on end point outside of the canvas when clearing pixels",
+			canvas: image.Rect(0, 0, 3, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{6, 3},
+			opts: []BrailleLineOption{
+				BrailleLineClearPixels(),
+			},
+			wantErr: true,
+		},
+		{
 			desc:    "high line, fails on end point outside of the canvas",
 			canvas:  image.Rect(0, 0, 1, 1),
 			start:   image.Point{0, 0},
@@ -93,6 +107,26 @@ func TestBrailleLine(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
 				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "clears a single point",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{0, 0},
+			prepare: func(bc *braille.Canvas) error {
+				return bc.SetPixel(image.Point{0, 0})
+			},
+			opts: []BrailleLineOption{
+				BrailleLineClearPixels(),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustClearPixel(bc, image.Point{0, 0})
 				testbraille.MustApply(bc, ft)
 				return ft
 			},
@@ -116,6 +150,29 @@ func TestBrailleLine(t *testing.T) {
 			},
 		},
 		{
+			desc:   "clears a single point with cell options",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{0, 0},
+			prepare: func(bc *braille.Canvas) error {
+				return bc.SetPixel(image.Point{0, 0}, cell.FgColor(cell.ColorBlue))
+			},
+			opts: []BrailleLineOption{
+				BrailleLineClearPixels(),
+				BrailleLineCellOpts(
+					cell.FgColor(cell.ColorRed),
+				),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustClearPixel(bc, image.Point{0, 0}, cell.FgColor(cell.ColorRed))
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "draws high line, octant SE",
 			canvas: image.Rect(0, 0, 1, 1),
 			start:  image.Point{0, 0},
@@ -128,6 +185,34 @@ func TestBrailleLine(t *testing.T) {
 				testbraille.MustSetPixel(bc, image.Point{0, 1})
 				testbraille.MustSetPixel(bc, image.Point{1, 2})
 				testbraille.MustSetPixel(bc, image.Point{1, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "clears a high line, octant SE",
+			canvas: image.Rect(0, 0, 1, 1),
+			start:  image.Point{0, 0},
+			end:    image.Point{1, 3},
+			prepare: func(bc *braille.Canvas) error {
+				return BrailleLine(bc, image.Point{0, 0}, image.Point{1, 3})
+			},
+			opts: []BrailleLineOption{
+				BrailleLineClearPixels(),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testbraille.MustSetPixel(bc, image.Point{0, 0})
+				testbraille.MustSetPixel(bc, image.Point{0, 1})
+				testbraille.MustSetPixel(bc, image.Point{1, 2})
+				testbraille.MustSetPixel(bc, image.Point{1, 3})
+				testbraille.MustClearPixel(bc, image.Point{0, 0})
+				testbraille.MustClearPixel(bc, image.Point{0, 1})
+				testbraille.MustClearPixel(bc, image.Point{1, 2})
+				testbraille.MustClearPixel(bc, image.Point{1, 3})
 
 				testbraille.MustApply(bc, ft)
 				return ft
@@ -334,6 +419,12 @@ func TestBrailleLine(t *testing.T) {
 			bc, err := braille.New(tc.canvas)
 			if err != nil {
 				t.Fatalf("braille.New => unexpected error: %v", err)
+			}
+
+			if tc.prepare != nil {
+				if err := tc.prepare(bc); err != nil {
+					t.Fatalf("tc.prepare => unexpected error: %v", err)
+				}
 			}
 
 			err = BrailleLine(bc, tc.start, tc.end, tc.opts...)

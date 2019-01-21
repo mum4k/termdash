@@ -30,6 +30,7 @@ import (
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
+	"github.com/mum4k/termdash/widgets/donut"
 	"github.com/mum4k/termdash/widgets/gauge"
 	"github.com/mum4k/termdash/widgets/linechart"
 	"github.com/mum4k/termdash/widgets/sparkline"
@@ -97,7 +98,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
-	staticText, err := newStaticText()
+	don, err := newDonut(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +114,10 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 			container.Bottom(
 				container.SplitHorizontal(
 					container.Top(
-						container.PlaceWidget(staticText),
+						container.Border(draw.LineStyleLight),
+						container.BorderTitle("A Donut"),
+						container.BorderTitleAlignRight(),
+						container.PlaceWidget(don),
 					),
 					container.Bottom(
 						container.Border(draw.LineStyleLight),
@@ -263,6 +267,31 @@ func newGauge(ctx context.Context) *gauge.Gauge {
 	return g
 }
 
+// newDonut creates a demo Donut widget.
+func newDonut(ctx context.Context) (*donut.Donut, error) {
+	d, err := donut.New(donut.CellOpts(
+		cell.FgColor(cell.ColorNumber(33))),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	const start = 35
+	progress := start
+
+	go periodic(ctx, 500*time.Millisecond, func() error {
+		if err := d.Percent(progress); err != nil {
+			return err
+		}
+		progress++
+		if progress > 100 {
+			progress = start
+		}
+		return nil
+	})
+	return d, nil
+}
+
 // newHeartbeat returns a line chart that displays a heartbeat-like progression.
 func newHeartbeat(ctx context.Context) *linechart.LineChart {
 	var inputs []float64
@@ -330,17 +359,6 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 		return nil
 	})
 	return bc
-}
-
-// newStaticText returns a new text widget with static content.
-func newStaticText() (*text.Text, error) {
-	t := text.New(
-		text.WrapAtRunes(),
-	)
-	if err := t.Write("\n\n\nA text widget without a border.", text.WriteCellOpts(cell.FgColor(cell.ColorNumber(201)))); err != nil {
-		return nil, err
-	}
-	return t, nil
 }
 
 // newSines returns a line chart that displays multiple sine series.

@@ -49,7 +49,7 @@ func Example_copiedToCanvas() {
 	}
 }
 
-func Example_applidToTerminal() {
+func Example_appliedToTerminal() {
 	// When working with a terminal directly:
 	ft, err := faketerm.New(image.Point{3, 3})
 	if err != nil {
@@ -109,6 +109,12 @@ func TestNew(t *testing.T) {
 			wantSize: image.Point{6, 12},
 			wantArea: image.Rect(0, 0, 6, 12),
 		},
+		{
+			desc:     "braille from non-zero-based multi-cell rectangular area",
+			ar:       image.Rect(6, 6, 9, 10),
+			wantSize: image.Point{6, 16},
+			wantArea: image.Rect(0, 0, 6, 16),
+		},
 	}
 
 	for _, tc := range tests {
@@ -142,6 +148,28 @@ func TestBraille(t *testing.T) {
 		want     func(size image.Point) *faketerm.Terminal
 		wantErr  bool
 	}{
+		{
+			desc: "fails on pixel with negative X",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				return c.SetPixel(image.Point{-1, 0})
+			},
+			wantErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc: "fails on pixel with negative Y",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				return c.SetPixel(image.Point{0, -1})
+			},
+			wantErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
 		{
 			desc: "set pixel 0,0",
 			ar:   image.Rect(0, 0, 1, 1),
@@ -413,7 +441,73 @@ func TestBraille(t *testing.T) {
 			},
 		},
 		{
-			desc: "sets and clears pixels",
+			desc: "clear pixels in multiple cells",
+			ar:   image.Rect(0, 0, 2, 2),
+			pixelOps: func(c *Canvas) error {
+				if err := c.SetPixel(image.Point{0, 0}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{2, 2}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{1, 7}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{0, 0}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{2, 2}); err != nil {
+					return err
+				}
+				return c.ClearPixel(image.Point{1, 7})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '⠀')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, '⠀')
+				testcanvas.MustSetCell(c, image.Point{0, 1}, '⠀')
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "toggle pixels in multiple cells",
+			ar:   image.Rect(0, 0, 2, 2),
+			pixelOps: func(c *Canvas) error {
+				if err := c.TogglePixel(image.Point{0, 0}); err != nil {
+					return err
+				}
+				if err := c.TogglePixel(image.Point{2, 2}); err != nil {
+					return err
+				}
+				if err := c.TogglePixel(image.Point{1, 7}); err != nil {
+					return err
+				}
+				if err := c.TogglePixel(image.Point{0, 0}); err != nil {
+					return err
+				}
+				if err := c.TogglePixel(image.Point{2, 2}); err != nil {
+					return err
+				}
+				return c.TogglePixel(image.Point{1, 7})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '⠀')
+				testcanvas.MustSetCell(c, image.Point{1, 0}, '⠀')
+				testcanvas.MustSetCell(c, image.Point{0, 1}, '⠀')
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets and clears one pixel",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {
 				if err := c.SetPixel(image.Point{0, 0}); err != nil {
@@ -432,6 +526,68 @@ func TestBraille(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testcanvas.MustSetCell(c, image.Point{0, 0}, '⠊')
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets and clears all pixels",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				if err := c.SetPixel(image.Point{0, 0}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{1, 0}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{0, 1}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{1, 1}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{0, 2}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{1, 2}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{0, 3}); err != nil {
+					return err
+				}
+				if err := c.SetPixel(image.Point{1, 3}); err != nil {
+					return err
+				}
+
+				if err := c.ClearPixel(image.Point{0, 0}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{1, 0}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{0, 1}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{1, 1}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{0, 2}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{1, 2}); err != nil {
+					return err
+				}
+				if err := c.ClearPixel(image.Point{0, 3}); err != nil {
+					return err
+				}
+				return c.ClearPixel(image.Point{1, 3})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, '⠀')
 
 				testcanvas.MustApply(c, ft)
 				return ft

@@ -72,7 +72,7 @@ go run github.com/mum4k/termdash/widgets/gauge/gaugedemo/gaugedemo.go
 
 ### The Donut
 
-Visualizes progress of an operation as a partial or complete donut. Run the
+Visualizes progress of an operation as a partial or a complete donut. Run the
 [donutdemo](widgets/donut/donutdemo/donutdemo.go).
 
 ```go
@@ -125,7 +125,6 @@ go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.g
 ```
 
 [<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif">](widgets/linechart/linechartdemo/linechartdemo.go)
-
 
 # Contributing
 

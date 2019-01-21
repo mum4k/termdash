@@ -16,7 +16,6 @@ package numbers
 
 import (
 	"fmt"
-	"image"
 	"math"
 	"testing"
 )
@@ -324,58 +323,6 @@ func TestRadiansToDegrees(t *testing.T) {
 			got := RadiansToDegrees(tc.radians)
 			if got != tc.want {
 				t.Errorf("RadiansToDegrees(%v) => %v, want %v", tc.radians, got, tc.want)
-			}
-		})
-	}
-}
-
-func TestCirclePointAtAngleAndAngle(t *testing.T) {
-	tests := []struct {
-		degrees int
-		mid     image.Point
-		radius  int
-		want    image.Point
-	}{
-		{0, image.Point{0, 0}, 1, image.Point{1, 0}},
-		{90, image.Point{0, 0}, 1, image.Point{0, -1}},
-		{180, image.Point{0, 0}, 1, image.Point{-1, 0}},
-		{270, image.Point{0, 0}, 1, image.Point{0, 1}},
-
-		// Non-zero mid point.
-		{0, image.Point{5, 5}, 1, image.Point{6, 5}},
-		{90, image.Point{5, 5}, 1, image.Point{5, 4}},
-		{180, image.Point{5, 5}, 1, image.Point{4, 5}},
-		{270, image.Point{5, 5}, 1, image.Point{5, 6}},
-		{0, image.Point{1, 1}, 1, image.Point{2, 1}},
-		{90, image.Point{1, 1}, 1, image.Point{1, 0}},
-		{180, image.Point{1, 1}, 1, image.Point{0, 1}},
-		{270, image.Point{1, 1}, 1, image.Point{1, 2}},
-
-		// Larger radius.
-		{0, image.Point{0, 0}, 11, image.Point{11, 0}},
-		{90, image.Point{0, 0}, 11, image.Point{0, -11}},
-		{180, image.Point{0, 0}, 11, image.Point{-11, 0}},
-		{270, image.Point{0, 0}, 11, image.Point{0, 11}},
-
-		// Other angles.
-		{27, image.Point{0, 0}, 11, image.Point{10, -5}},
-		{68, image.Point{0, 0}, 11, image.Point{4, -10}},
-		{333, image.Point{2, 2}, 2, image.Point{4, 3}},
-		{153, image.Point{2, 2}, 2, image.Point{0, 1}},
-	}
-
-	for _, tc := range tests {
-		t.Run(fmt.Sprintf("CirclePointAtAngle %v %v %v", tc.degrees, tc.mid, tc.radius), func(t *testing.T) {
-			got := CirclePointAtAngle(tc.degrees, tc.mid, tc.radius)
-			if got != tc.want {
-				t.Errorf("CirclePointAtAngle(%v, %v, %v) => %v, want %v", tc.degrees, tc.mid, tc.radius, got, tc.want)
-			}
-		})
-		t.Run(fmt.Sprintf("CircleAngleAtPoint %v %v", tc.want, tc.mid), func(t *testing.T) {
-			got := CircleAngleAtPoint(tc.want, tc.mid)
-			want := tc.degrees
-			if got != want {
-				t.Errorf("CircleAngleAtPoint(%v, %v) => %v, want %v", tc.want, tc.mid, got, want)
 			}
 		})
 	}

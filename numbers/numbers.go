@@ -16,7 +16,6 @@
 package numbers
 
 import (
-	"image"
 	"math"
 )
 
@@ -162,32 +161,4 @@ func RadiansToDegrees(radians float64) int {
 		d += 360
 	}
 	return d
-}
-
-// CirclePointAtAngle given an angle in degrees and a circle midpoint and
-// radius, calculates coordinates of a point on the circle at that angle.
-// Angles are zero at the X axis and grow counter-clockwise.
-func CirclePointAtAngle(degrees int, mid image.Point, radius int) image.Point {
-	angle := DegreesToRadians(degrees)
-	r := float64(radius)
-	x := mid.X + int(Round(r*math.Cos(angle)))
-	// Y coordinates grow down on the canvas.
-	y := mid.Y - int(Round(r*math.Sin(angle)))
-	return image.Point{x, y}
-}
-
-// CircleAngleAtPoint given a point on a circle and its midpoint,
-// calculates the angle in degrees.
-// Angles are zero at the X axis and grow counter-clockwise.
-func CircleAngleAtPoint(point, mid image.Point) int {
-	adj := float64(point.X - mid.X)
-	opp := float64(mid.Y - point.Y)
-	if opp != 0 {
-		angle := math.Atan2(opp, adj)
-		return RadiansToDegrees(angle)
-	} else if adj >= 0 {
-		return 0
-	} else {
-		return 180
-	}
 }

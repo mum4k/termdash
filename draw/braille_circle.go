@@ -22,7 +22,7 @@ import (
 
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/numbers"
+	"github.com/mum4k/termdash/trig"
 )
 
 // BrailleCircleOption is used to provide options to BrailleCircle.
@@ -55,16 +55,6 @@ func (opts *brailleCircleOptions) validate() error {
 		return nil
 	}
 
-	const (
-		min = 0
-		max = 360
-	)
-	if got := opts.startDegree; got < min || got > max {
-		return fmt.Errorf("invalid starting degree for the arc %d, must be in range %d <= degree <= %d", got, min, max)
-	}
-	if got := opts.endDegree; got < min || got > max {
-		return fmt.Errorf("invalid ending degree for the arc %d, must be in range %d <= degree <= %d", got, min, max)
-	}
 	if opts.startDegree == opts.endDegree {
 		return fmt.Errorf("invalid degree range, start %d and end %d cannot be equal", opts.startDegree, opts.endDegree)
 	}
@@ -79,7 +69,7 @@ func (o brailleCircleOption) set(opts *brailleCircleOptions) {
 	o(opts)
 }
 
-// BrailleCircleCellOpts sets options on the cells that contain the line.
+// BrailleCircleCellOpts sets options on the cells that contain the circle.
 // Cell options on a braille canvas can only be set on the entire cell, not per
 // pixel.
 func BrailleCircleCellOpts(cOpts ...cell.Option) BrailleCircleOption {
@@ -120,12 +110,12 @@ func BrailleCircleClearPixels() BrailleCircleOption {
 // BrailleCircle draws an approximated circle with the specified mid point and radius.
 // The mid point must be a valid pixel within the canvas.
 // All the points that form the circle must fit into the canvas.
-// The smallest valid radius is one.
+// The smallest valid radius is two.
 func BrailleCircle(bc *braille.Canvas, mid image.Point, radius int, opts ...BrailleCircleOption) error {
 	if ar := bc.Area(); !mid.In(ar) {
 		return fmt.Errorf("unable to draw circle with mid point %v which is outside of the braille canvas area %v", mid, ar)
 	}
-	if min := 1; radius < min {
+	if min := 2; radius < min {
 		return fmt.Errorf("unable to draw circle with radius %d, must be in range %d <= radius", radius, min)
 	}
 
@@ -140,34 +130,35 @@ func BrailleCircle(bc *braille.Canvas, mid image.Point, radius int, opts ...Brai
 
 	points := circlePoints(mid, radius)
 	if opt.arcOnly {
-		points = arcPoints(points, mid, radius, opt)
+		f, err := trig.FilterByAngle(points, mid, opt.startDegree, opt.endDegree)
+		if err != nil {
+			return err
+		}
+		points = f
+		if opt.filled && (opt.startDegree != 0 || opt.endDegree != 360) {
+			points = append(points, openingPoints(mid, radius, opt)...)
+		}
 	}
-
+	if err := drawPoints(bc, points, opt); err != nil {
+		return fmt.Errorf("failed to draw circle with mid:%v, radius:%d, start:%d degrees, end:%d degrees: %v", mid, radius, opt.startDegree, opt.endDegree, err)
+	}
 	if opt.filled {
-		lineOpts := []BrailleLineOption{
-			BrailleLineCellOpts(opt.cellOpts...),
-		}
-		if opt.pixelChange == braillePixelChangeClear {
-			lineOpts = append(lineOpts, BrailleLineClearPixels())
-		}
-
-		for _, pts := range groupByY(points) {
-			if err := BrailleLine(bc, pts[0], pts[1], lineOpts...); err != nil {
-				return fmt.Errorf("failed to fill circle with mid:%v, start:%d degrees end:%d degrees, BrailleLine => %v", mid, opt.startDegree, opt.endDegree, err)
-			}
-		}
-		return nil
+		return fillCircle(bc, points, mid, radius, opt)
 	}
+	return nil
+}
 
+// drawPoints draws the points onto the canvas.
+func drawPoints(bc *braille.Canvas, points []image.Point, opt *brailleCircleOptions) error {
 	for _, p := range points {
 		switch opt.pixelChange {
 		case braillePixelChangeSet:
 			if err := bc.SetPixel(p, opt.cellOpts...); err != nil {
-				return fmt.Errorf("failed to draw circle with mid:%v, start:%d degrees end:%d degrees, SetPixel => %v", mid, opt.startDegree, opt.endDegree, err)
+				return fmt.Errorf("SetPixel => %v", err)
 			}
 		case braillePixelChangeClear:
 			if err := bc.ClearPixel(p, opt.cellOpts...); err != nil {
-				return fmt.Errorf("failed to erase circle with mid:%v, start:%d degrees end:%d degrees, ClearPixel => %v", mid, opt.startDegree, opt.endDegree, err)
+				return fmt.Errorf("ClearPixel => %v", err)
 			}
 
 		}
@@ -175,96 +166,57 @@ func BrailleCircle(bc *braille.Canvas, mid image.Point, radius int, opts ...Brai
 	return nil
 }
 
-// groupByY groups the points by their Y coordinate.
-// Creates a map of Y coordinates to two points on that Y row.
-// The points are the point with the smallest and the largest X coordinate.
-// This is used to fill a circle or an arc - by drawing lines between these
-// points.
-func groupByY(points []image.Point) map[int][]image.Point {
-	groupped := map[int][]int{} // maps y -> x
-	for _, p := range points {
-		groupped[p.Y] = append(groupped[p.Y], p.X)
+// fillCircle fills a circle that consists of the provided point and has the
+// mid point and radius.
+func fillCircle(bc *braille.Canvas, points []image.Point, mid image.Point, radius int, opt *brailleCircleOptions) error {
+	lineOpts := []BrailleLineOption{
+		BrailleLineCellOpts(opt.cellOpts...),
+	}
+	fillOpts := []BrailleFillOption{
+		BrailleFillCellOpts(opt.cellOpts...),
+	}
+	if opt.pixelChange == braillePixelChangeClear {
+		lineOpts = append(lineOpts, BrailleLineClearPixels())
+		fillOpts = append(fillOpts, BrailleFillClearPixels())
 	}
 
-	res := map[int][]image.Point{}
-	for y, pts := range groupped {
-		min, max := numbers.MinMaxInts(pts)
-		res[y] = []image.Point{
-			{min, y},
-			{max, y},
+	// Determine a fill point that should be inside of the circle sector.
+	midA, err := trig.RangeMid(opt.startDegree, opt.endDegree)
+	if err != nil {
+		return err
+	}
+	fp := trig.CirclePointAtAngle(midA, mid, radius-1)
+
+	// Ensure the fill point falls inside the circle.
+	// If drawing a partial circle, it must also fall within points belonging
+	// to the opening.
+	// This might not be true if drawing a partial circle and the arc is very
+	// small.
+	shape := points
+	if opt.arcOnly {
+		startP := trig.CirclePointAtAngle(opt.startDegree, mid, radius-1)
+		endP := trig.CirclePointAtAngle(opt.endDegree, mid, radius-1)
+		shape = append(shape, startP, endP)
+	}
+	if trig.PointIsIn(fp, shape) {
+		if err := BrailleFill(bc, fp, points, fillOpts...); err != nil {
+			return err
+		}
+		if err := BrailleLine(bc, mid, fp, lineOpts...); err != nil {
+			return err
 		}
 	}
-	return res
+	return nil
 }
 
-// filterByAngle filters the provided points, returning only those that fall
-// within the starting and the ending angle.
-func filterByAngle(points []image.Point, mid image.Point, start, end int) []image.Point {
-	var res []image.Point
-	for _, p := range points {
-		angle := numbers.CircleAngleAtPoint(p, mid)
-
-		// Edge case, this might mean 0 or 360.
-		// Decide based on where we are starting.
-		if angle == 0 && start > 0 {
-			angle = 360
-		}
-
-		ranges := toDegreeRanges(start, end)
-		for _, r := range ranges {
-			if r.in(angle) {
-				res = append(res, p)
-				break
-			}
-		}
-	}
-	return res
-}
-
-// intRange represents a range of integers.
-type intRange struct {
-	start int
-	end   int
-}
-
-// in asserts whether the integer is in the range.
-func (ir *intRange) in(i int) bool {
-	return i >= ir.start && i <= ir.end
-}
-
-// toDegreeRanges converts the start and end angles in degrees into ranges of
-// angles. Solves cases where the 0/360 point falls within the range.
-func toDegreeRanges(start, end int) []*intRange {
-	if start == 360 && end == 0 {
-		start, end = end, start
-	}
-
-	if start < end {
-		return []*intRange{
-			{start, end},
-		}
-	}
-
-	// The range is crossing the 0/360 degree point.
-	// Break it into multiple ranges.
-	return []*intRange{
-		{start, 360},
-		{0, end},
-	}
-}
-
-// arcPoints returns only those points that belong to an incomplete circle.
-func arcPoints(points []image.Point, mid image.Point, radius int, opt *brailleCircleOptions) []image.Point {
-	points = filterByAngle(points, mid, opt.startDegree, opt.endDegree)
-
-	if opt.filled {
-		// If we are filling the angle - add points representing the lines from
-		// the mid point to the start and end point of the arc.
-		startP := numbers.CirclePointAtAngle(opt.startDegree, mid, radius)
-		endP := numbers.CirclePointAtAngle(opt.endDegree, mid, radius)
-		points = append(points, brailleLinePoints(mid, startP)...)
-		points = append(points, brailleLinePoints(mid, endP)...)
-	}
+// openingPoints returns points on the lines from the mid point to the circle
+// opening when drawing an incomplete circle.
+func openingPoints(mid image.Point, radius int, opt *brailleCircleOptions) []image.Point {
+	var points []image.Point
+	startP := trig.CirclePointAtAngle(opt.startDegree, mid, radius)
+	endP := trig.CirclePointAtAngle(opt.endDegree, mid, radius)
+	points = append(points, brailleLinePoints(mid, startP)...)
+	points = append(points, brailleLinePoints(mid, endP)...)
 	return points
 }
 

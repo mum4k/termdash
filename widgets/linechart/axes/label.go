@@ -89,10 +89,7 @@ func rowLabel(scale *YScale, y int, labelWidth int) (*Label, error) {
 	}
 
 	ar := rowLabelArea(y, labelWidth)
-	pos, err := align.Text(ar, v.Text(), align.HorizontalRight, align.VerticalMiddle)
-	if err != nil {
-		return nil, err
-	}
+	pos, _ := align.Text(ar, v.Text(), align.HorizontalRight, align.VerticalMiddle)
 	return &Label{
 		Value: v,
 		Pos:   pos,

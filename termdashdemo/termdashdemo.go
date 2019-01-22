@@ -193,10 +193,7 @@ func newTextTime(ctx context.Context) *text.Text {
 	go periodic(ctx, 1*time.Second, func() error {
 		t.Reset()
 		txt := time.Now().UTC().Format(time.UnixDate)
-		if err := t.Write(fmt.Sprintf("\n%s", txt), text.WriteCellOpts(cell.FgColor(cell.ColorMagenta))); err != nil {
-			return err
-		}
-		return nil
+		return t.Write(fmt.Sprintf("\n%s", txt), text.WriteCellOpts(cell.FgColor(cell.ColorMagenta)))
 	})
 	return t
 }
@@ -226,10 +223,7 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 	const max = 100
 	go periodic(ctx, 250*time.Millisecond, func() error {
 		v := int(rand.Int31n(max + 1))
-		if err := spGreen.Add([]int{v}); err != nil {
-			return err
-		}
-		return nil
+		return err := spGreen.Add([]int{v})
 	})
 
 	spRed := sparkline.New(
@@ -238,10 +232,7 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 	)
 	go periodic(ctx, 500*time.Millisecond, func() error {
 		v := int(rand.Int31n(max + 1))
-		if err := spRed.Add([]int{v}); err != nil {
-			return err
-		}
-		return nil
+		return err := spRed.Add([]int{v})
 	})
 	return spGreen, spRed
 
@@ -308,15 +299,12 @@ func newHeartbeat(ctx context.Context) *linechart.LineChart {
 	step := 0
 	go periodic(ctx, redrawInterval/3, func() error {
 		step = (step + 1) % len(inputs)
-		if err := lc.Series("heartbeat", rotate(inputs, step),
-			linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(87))),
-			linechart.SeriesXLabels(map[int]string{
-				0: "zero",
-			}),
-		); err != nil {
-			return err
-		}
-		return nil
+		return lc.Series("heartbeat", rotate(inputs, step),
+		linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(87))),
+		linechart.SeriesXLabels(map[int]string{
+			0: "zero",
+		}),
+	)
 	})
 	return lc
 }
@@ -353,10 +341,7 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 			values[i] = int(rand.Int31n(max + 1))
 		}
 
-		if err := bc.Values(values, max); err != nil {
-			return err
-		}
-		return nil
+		return bc.Values(values, max)
 	})
 	return bc
 }
@@ -384,11 +369,7 @@ func newSines(ctx context.Context) *linechart.LineChart {
 		}
 
 		step2 := (step1 + 100) % len(inputs)
-		if err := lc.Series("second", rotate(inputs, step2), linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite))); err != nil {
-			return err
-		}
-
-		return nil
+		return lc.Series("second", rotate(inputs, step2), linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite)))
 	})
 	return lc
 }

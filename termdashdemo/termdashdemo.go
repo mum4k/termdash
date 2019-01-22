@@ -232,7 +232,7 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 	)
 	go periodic(ctx, 500*time.Millisecond, func() error {
 		v := int(rand.Int31n(max + 1))
-		return err := spRed.Add([]int{v})
+		return spRed.Add([]int{v})
 	})
 	return spGreen, spRed
 
@@ -300,11 +300,11 @@ func newHeartbeat(ctx context.Context) *linechart.LineChart {
 	go periodic(ctx, redrawInterval/3, func() error {
 		step = (step + 1) % len(inputs)
 		return lc.Series("heartbeat", rotate(inputs, step),
-		linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(87))),
-		linechart.SeriesXLabels(map[int]string{
-			0: "zero",
-		}),
-	)
+			linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(87))),
+			linechart.SeriesXLabels(map[int]string{
+				0: "zero",
+			}),
+		)
 	})
 	return lc
 }

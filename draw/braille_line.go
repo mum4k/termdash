@@ -140,12 +140,11 @@ func brailleLinePoints(start, end image.Point) []image.Point {
 			return lineLow(end.X, end.Y, start.X, start.Y)
 		}
 		return lineLow(start.X, start.Y, end.X, end.Y)
-	} else {
-		if start.Y > end.Y {
-			return lineHigh(end.X, end.Y, start.X, start.Y)
-		}
-		return lineHigh(start.X, start.Y, end.X, end.Y)
 	}
+	if start.Y > end.Y {
+		return lineHigh(end.X, end.Y, start.X, start.Y)
+	}
+	return lineHigh(start.X, start.Y, end.X, end.Y)
 }
 
 // lineLow returns points that create a line whose horizontal projection

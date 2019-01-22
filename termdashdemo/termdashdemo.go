@@ -223,7 +223,7 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 	const max = 100
 	go periodic(ctx, 250*time.Millisecond, func() error {
 		v := int(rand.Int31n(max + 1))
-		return err := spGreen.Add([]int{v})
+		return spGreen.Add([]int{v})
 	})
 
 	spRed := sparkline.New(

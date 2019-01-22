@@ -107,7 +107,7 @@ func TestPullBlocksUntilAvailable(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
-	got, err := q.Pull(ctx)
+	_, err := q.Pull(ctx)
 	if err == nil {
 		t.Fatal("Pull => expected timeout error, got nil")
 	}

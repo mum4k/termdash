@@ -113,7 +113,7 @@ func TestPullBlocksUntilAvailable(t *testing.T) {
 	}
 
 	close(ch)
-	got, err = q.Pull(context.Background())
+	got, err := q.Pull(context.Background())
 	if err != nil {
 		t.Fatalf("Pull => unexpected error: %v", err)
 	}

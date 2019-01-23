@@ -39,6 +39,19 @@ var lineStyleChars = map[LineStyle]map[linePart]rune{
 		vAndRight:         '├',
 		vAndH:             '┼',
 	},
+	LineStyleDouble: {
+		hLine:             '═',
+		vLine:             '║',
+		topLeftCorner:     '╔',
+		topRightCorner:    '╗',
+		bottomLeftCorner:  '╚',
+		bottomRightCorner: '╝',
+		hAndUp:            '╩',
+		hAndDown:          '╦',
+		vAndLeft:          '╣',
+		vAndRight:         '╠',
+		vAndH:             '╬',
+	},
 }
 
 // init verifies that all line parts are half-width runes (occupy only one
@@ -75,13 +88,15 @@ func (ls LineStyle) String() string {
 
 // lineStyleNames maps LineStyle values to human readable names.
 var lineStyleNames = map[LineStyle]string{
-	LineStyleLight: "LineStyleLight",
+	LineStyleLight:  "LineStyleLight",
+	LineStyleDouble: "LineStyleDouble",
 }
 
 // Supported line styles.
 const (
 	LineStyleNone LineStyle = iota
 	LineStyleLight
+	LineStyleDouble
 )
 
 // linePart identifies individual line parts.

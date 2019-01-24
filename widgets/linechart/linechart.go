@@ -275,12 +275,12 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 	return nil
 }
 
-// Implements widgetapi.Widget.Keyboard.
+// Keyboard implements widgetapi.Widget.Keyboard.
 func (lc *LineChart) Keyboard(k *terminalapi.Keyboard) error {
 	return errors.New("the LineChart widget doesn't support keyboard events")
 }
 
-// Implements widgetapi.Widget.Mouse.
+// Mouse implements widgetapi.Widget.Mouse.
 func (lc *LineChart) Mouse(m *terminalapi.Mouse) error {
 	return errors.New("the LineChart widget doesn't support mouse events")
 }

@@ -470,6 +470,34 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "draw widget with padding",
+			termSize: image.Point{11, 11},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PaddingBottom(1),
+					PaddingRight(1),
+					PaddingLeft(1),
+					PaddingTop(1),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					ft.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testdraw.MustBorder(cvs, image.Rect(2, 2, 9, 9))
+				testdraw.MustText(cvs, "(7,7)", image.Pt(3, 3))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "placing a widget removes container split",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

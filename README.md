@@ -32,6 +32,8 @@ for more details.
 - Drawing primitives (Go functions) for widget development with character and
   sub-character resolution.
 
+See the [changelog](CHANGELOG.md) for more details.
+
 # Installation
 
 To install this library, run the following:

@@ -63,6 +63,12 @@ type options struct {
 	border            draw.LineStyle
 	borderTitle       string
 	borderTitleHAlign align.Horizontal
+
+	// Padding applied to inner widgets
+	paddingLeft   int
+	paddingTop    int
+	paddingRight  int
+	paddingBottom int
 }
 
 // inherited contains options that are inherited by child containers.
@@ -401,5 +407,35 @@ func (lo bottomOption) bOpts() []Option {
 func Bottom(opts ...Option) BottomOption {
 	return bottomOption(func() []Option {
 		return opts
+	})
+}
+
+type paddingOption func() []Option
+
+func PaddingLeft(padd int) Option {
+	return option(func(c *Container) error {
+		c.opts.paddingLeft = padd
+		return nil
+	})
+}
+
+func PaddingTop(padd int) Option {
+	return option(func(c *Container) error {
+		c.opts.paddingTop = padd
+		return nil
+	})
+}
+
+func PaddingRight(padd int) Option {
+	return option(func(c *Container) error {
+		c.opts.paddingRight = padd
+		return nil
+	})
+}
+
+func PaddingBottom(padd int) Option {
+	return option(func(c *Container) error {
+		c.opts.paddingBottom = padd
+		return nil
 	})
 }

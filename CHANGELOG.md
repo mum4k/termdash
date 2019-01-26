@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The LineChart now correctly displays positive and negative series that don't
+  contain zero value.
 - Lint errors reported on the Go report card.
 
 ## [0.5.0] - 21-Jan-2019

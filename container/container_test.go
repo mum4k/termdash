@@ -70,6 +70,7 @@ func TestNew(t *testing.T) {
 		termSize         image.Point
 		container        func(ft *faketerm.Terminal) (*Container, error)
 		wantContainerErr bool
+		wantDrawErr      bool
 		want             func(size image.Point) *faketerm.Terminal
 	}{
 		{
@@ -674,6 +675,30 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "draw widget with padding on undersized canvas",
+			termSize: image.Point{4, 4},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					PaddingTop(1),
+				)
+			},
+			wantDrawErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					ft.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "placing a widget removes container split",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
@@ -715,8 +740,14 @@ func TestNew(t *testing.T) {
 			if err != nil {
 				return
 			}
-			if err := cont.Draw(); err != nil {
+
+			err = cont.Draw()
+			if err != nil && !tc.wantDrawErr {
 				t.Fatalf("Draw => unexpected error: %v", err)
+			}
+
+			if err == nil && tc.wantDrawErr {
+				t.Fatalf("Draw => expected error")
 			}
 
 			if diff := faketerm.Diff(tc.want(tc.termSize), got); diff != "" {

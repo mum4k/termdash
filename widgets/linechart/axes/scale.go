@@ -55,10 +55,10 @@ func NewYScale(min, max float64, graphHeight, nonZeroDecimals int) (*YScale, err
 	brailleHeight := graphHeight * braille.RowMult
 	usablePixels := brailleHeight - 1 // One pixel reserved for value zero.
 
-	if min > 0 { // If we only have positive data points, make the scale zero based (min).
+	if min > 0 && min == max { // If all the data points are equal, make the scale zero based so we can draw something.
 		min = 0
 	}
-	if max < 0 { // If we only have negative data points, make the scale zero based (max).
+	if max < 0 && min == max { // If all the data points are equal, make the scale zero based so we can draw something.
 		max = 0
 	}
 	diff := max - min
@@ -87,7 +87,11 @@ func (ys *YScale) PixelToValue(y int) (float64, error) {
 	case pos == ys.brailleHeight-1:
 		return ys.Max.Rounded, nil
 	default:
+
 		v := float64(pos) * ys.Step.Rounded
+		if ys.Min.Value > 0 {
+			v += ys.Min.Value
+		}
 		if ys.Min.Value < 0 {
 			diff := -1 * ys.Min.Value
 			v -= diff
@@ -105,6 +109,9 @@ func (ys *YScale) ValueToPixel(v float64) (int, error) {
 		return 0, nil
 	}
 
+	if ys.Min.Value > 0 {
+		v -= ys.Min.Value
+	}
 	if ys.Min.Value < 0 {
 		diff := -1 * ys.Min.Value
 		v += diff

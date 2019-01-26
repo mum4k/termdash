@@ -183,28 +183,53 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "min is non-zero positive, not equal to max, scale is zero based",
-			min:             1,
-			max:             6,
+			desc:            "min and max are non-zero negative and equal, scale is zero based",
+			min:             -6,
+			max:             -6,
 			graphHeight:     1,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
-				{3, 0, false},
-				{2, 2, false},
-				{1, 4, false},
-				{0, 6, false},
+				{3, -6, false},
+				{2, -4, false},
+				{1, -2, false},
+				{0, 0, false},
 			},
 			valueToPixelTests: []valueToPixelTest{
-				{0, 3, false},
+				{0, 0, false},
+				{0.5, 0, false},
+				{-1, 0, false},
+				{-1.5, 1, false},
+				{-2, 1, false},
+				{-4, 2, false},
+				{-6, 3, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(-6, 2), false},
+			},
+		},
+		{
+			desc:            "min is non-zero positive, not equal to max, scale is min based",
+			min:             1,
+			max:             7,
+			graphHeight:     1,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{3, 1, false},
+				{2, 3, false},
+				{1, 5, false},
+				{0, 7, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 3, true},
 				{0.5, 3, false},
-				{1, 2, false},
-				{1.5, 2, false},
+				{1, 3, false},
+				{1.5, 3, false},
 				{2, 2, false},
 				{4, 1, false},
 				{6, 0, false},
 			},
 			cellLabelTests: []cellLabelTest{
-				{0, NewValue(0, 2), false},
+				{0, NewValue(1, 2), false},
 			},
 		},
 
@@ -310,25 +335,25 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "negative integer scale, max is also negative, scale has max of zero",
-			min:             -6,
+			desc:            "negative integer scale, max is also negative",
+			min:             -7,
 			max:             -1,
 			graphHeight:     1,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
-				{3, -6, false},
-				{2, -4, false},
-				{1, -2, false},
-				{0, 0, false},
+				{3, -7, false},
+				{2, -5, false},
+				{1, -3, false},
+				{0, -1, false},
 			},
 			valueToPixelTests: []valueToPixelTest{
-				{-6, 3, false},
-				{-4, 2, false},
-				{-2, 1, false},
-				{0, 0, false},
+				{-7, 3, false},
+				{-4, 1, false},
+				{-2, 0, false},
+				{-1, 0, false},
 			},
 			cellLabelTests: []cellLabelTest{
-				{0, NewValue(-6, 2), false},
+				{0, NewValue(-7, 2), false},
 			},
 		},
 		{
@@ -366,6 +391,157 @@ func TestYScale(t *testing.T) {
 				{111, -0.19, false},
 			},
 		},
+		{
+			desc:            "regression for #92, positive values only",
+			min:             1600,
+			max:             1900,
+			graphHeight:     4,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{15, 1600, false},
+				{14, 1620, false},
+				{13, 1640, false},
+				{12, 1660, false},
+				{11, 1680, false},
+				{10, 1700, false},
+				{9, 1720, false},
+				{8, 1740, false},
+				{7, 1760, false},
+				{6, 1780, false},
+				{5, 1800, false},
+				{4, 1820, false},
+				{3, 1840, false},
+				{2, 1860, false},
+				{1, 1880, false},
+				{0, 1900, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{1590, 0, true},
+				{1600, 15, false},
+				{1620, 14, false},
+				{1640, 13, false},
+				{1660, 12, false},
+				{1680, 11, false},
+				{1700, 10, false},
+				{1720, 9, false},
+				{1740, 8, false},
+				{1760, 7, false},
+				{1780, 6, false},
+				{1800, 5, false},
+				{1820, 4, false},
+				{1840, 3, false},
+				{1860, 2, false},
+				{1880, 1, false},
+				{1900, 0, false},
+				{1910, 0, true},
+			},
+			cellLabelTests: []cellLabelTest{
+				{3, NewValue(1600, 2), false},
+				{2, NewValue(1680, 2), false},
+				{1, NewValue(1760, 2), false},
+				{0, NewValue(1840, 2), false},
+			},
+		},
+		{
+			desc:            "regression for #92, negative values only",
+			min:             -1900,
+			max:             -1600,
+			graphHeight:     4,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{15, -1900, false},
+				{14, -1880, false},
+				{13, -1860, false},
+				{12, -1840, false},
+				{11, -1820, false},
+				{10, -1800, false},
+				{9, -1780, false},
+				{8, -1760, false},
+				{7, -1740, false},
+				{6, -1720, false},
+				{5, -1700, false},
+				{4, -1680, false},
+				{3, -1660, false},
+				{2, -1640, false},
+				{1, -1620, false},
+				{0, -1600, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{-1910, 15, true},
+				{-1900, 15, false},
+				{-1880, 14, false},
+				{-1860, 13, false},
+				{-1840, 12, false},
+				{-1820, 11, false},
+				{-1800, 10, false},
+				{-1780, 9, false},
+				{-1760, 8, false},
+				{-1740, 7, false},
+				{-1720, 6, false},
+				{-1700, 5, false},
+				{-1680, 4, false},
+				{-1660, 3, false},
+				{-1640, 2, false},
+				{-1620, 1, false},
+				{-1600, 0, false},
+				{-1590, 0, true},
+			},
+			cellLabelTests: []cellLabelTest{
+				{3, NewValue(-1900, 2), false},
+				{2, NewValue(-1820, 2), false},
+				{1, NewValue(-1740, 2), false},
+				{0, NewValue(-1660, 2), false},
+			},
+		},
+		{
+			desc:            "regression for #92, negative and positive values",
+			min:             -100,
+			max:             200,
+			graphHeight:     4,
+			nonZeroDecimals: 2,
+			pixelToValueTests: []pixelToValueTest{
+				{15, -100, false},
+				{14, -80, false},
+				{13, -60, false},
+				{12, -40, false},
+				{11, -20, false},
+				{10, 0, false},
+				{9, 20, false},
+				{8, 40, false},
+				{7, 60, false},
+				{6, 80, false},
+				{5, 100, false},
+				{4, 120, false},
+				{3, 140, false},
+				{2, 160, false},
+				{1, 180, false},
+				{0, 200, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{-100, 15, false},
+				{-80, 14, false},
+				{-60, 13, false},
+				{-40, 12, false},
+				{-20, 11, false},
+				{0, 10, false},
+				{20, 9, false},
+				{40, 8, false},
+				{60, 7, false},
+				{80, 6, false},
+				{100, 5, false},
+				{120, 4, false},
+				{140, 3, false},
+				{160, 2, false},
+				{180, 1, false},
+				{200, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{3, NewValue(-100, 2), false},
+				{2, NewValue(-20, 2), false},
+				{1, NewValue(60, 2), false},
+				{0, NewValue(140, 2), false},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -381,7 +557,7 @@ func TestYScale(t *testing.T) {
 			for _, tc := range test.pixelToValueTests {
 				got, err := scale.PixelToValue(tc.pixel)
 				if (err != nil) != tc.wantErr {
-					t.Errorf("PixelToValue => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+					t.Errorf("PixelToValue(%v) => unexpected error: %v, wantErr: %v", tc.pixel, err, tc.wantErr)
 				}
 				if err != nil {
 					continue
@@ -396,7 +572,7 @@ func TestYScale(t *testing.T) {
 			for _, tc := range test.valueToPixelTests {
 				got, err := scale.ValueToPixel(tc.value)
 				if (err != nil) != tc.wantErr {
-					t.Errorf("ValueToPixel => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+					t.Errorf("ValueToPixel(%v) => unexpected error: %v, wantErr: %v", tc.value, err, tc.wantErr)
 				}
 				if err != nil {
 					continue
@@ -411,7 +587,7 @@ func TestYScale(t *testing.T) {
 			for _, tc := range test.cellLabelTests {
 				got, err := scale.CellLabel(tc.cell)
 				if (err != nil) != tc.wantErr {
-					t.Errorf("CellLabel => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+					t.Errorf("CellLabel(%v) => unexpected error: %v, wantErr: %v", tc.cell, err, tc.wantErr)
 				}
 				if err != nil {
 					continue

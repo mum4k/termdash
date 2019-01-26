@@ -410,32 +410,42 @@ func Bottom(opts ...Option) BottomOption {
 	})
 }
 
-type paddingOption func() []Option
-
-func PaddingLeft(padd int) Option {
+// PaddingLeft instructs the container to clear the specified amount of cells between the left side of the
+// container and the left side of the widget placed in the container.
+// Padding has no effect on containers without widgets.
+func PaddingLeft(cells int) Option {
 	return option(func(c *Container) error {
-		c.opts.paddingLeft = padd
+		c.opts.paddingLeft = cells
 		return nil
 	})
 }
 
-func PaddingTop(padd int) Option {
+// PaddingTop instructs the container to clear the specified amount of cells between the top side of the
+// container and the top side of the widget placed in the container.
+// Padding has no effect on containers without widgets.
+func PaddingTop(cells int) Option {
 	return option(func(c *Container) error {
-		c.opts.paddingTop = padd
+		c.opts.paddingTop = cells
 		return nil
 	})
 }
 
-func PaddingRight(padd int) Option {
+// PaddingRight instructs the container to clear the specified amount of cells between the right side of the
+// container and the right side of the widget placed in the container.
+// Padding has no effect on containers without widgets.
+func PaddingRight(cells int) Option {
 	return option(func(c *Container) error {
-		c.opts.paddingRight = padd
+		c.opts.paddingRight = cells
 		return nil
 	})
 }
 
-func PaddingBottom(padd int) Option {
+// PaddingBottom instructs the container to clear the specified amount of cells between the bottom side of the
+// container and the bottom side of the widget placed in the container.
+// Padding has no effect on containers without widgets.
+func PaddingBottom(cells int) Option {
 	return option(func(c *Container) error {
-		c.opts.paddingBottom = padd
+		c.opts.paddingBottom = cells
 		return nil
 	})
 }

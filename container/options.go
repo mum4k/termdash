@@ -17,6 +17,7 @@ package container
 // options.go defines container options.
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/mum4k/termdash/align"
@@ -410,13 +411,23 @@ func Bottom(opts ...Option) BottomOption {
 	})
 }
 
+// checkPadding ensures that cells is zero or any positive number
+func checkPadding(cells int) error {
+	if cells < 0 {
+		return errors.New("Padding must not be a negative number")
+	}
+	return nil
+}
+
 // PaddingLeft instructs the container to clear the specified amount of cells between the left side of the
 // container and the left side of the widget placed in the container.
 // Padding has no effect on containers without widgets.
 func PaddingLeft(cells int) Option {
-	return option(func(c *Container) error {
-		c.opts.paddingLeft = cells
-		return nil
+	return option(func(c *Container) (err error) {
+		if err = checkPadding(cells); err == nil {
+			c.opts.paddingLeft = cells
+		}
+		return
 	})
 }
 
@@ -424,9 +435,11 @@ func PaddingLeft(cells int) Option {
 // container and the top side of the widget placed in the container.
 // Padding has no effect on containers without widgets.
 func PaddingTop(cells int) Option {
-	return option(func(c *Container) error {
-		c.opts.paddingTop = cells
-		return nil
+	return option(func(c *Container) (err error) {
+		if err = checkPadding(cells); err == nil {
+			c.opts.paddingTop = cells
+		}
+		return
 	})
 }
 
@@ -434,9 +447,11 @@ func PaddingTop(cells int) Option {
 // container and the right side of the widget placed in the container.
 // Padding has no effect on containers without widgets.
 func PaddingRight(cells int) Option {
-	return option(func(c *Container) error {
-		c.opts.paddingRight = cells
-		return nil
+	return option(func(c *Container) (err error) {
+		if err = checkPadding(cells); err == nil {
+			c.opts.paddingRight = cells
+		}
+		return
 	})
 }
 
@@ -444,8 +459,10 @@ func PaddingRight(cells int) Option {
 // container and the bottom side of the widget placed in the container.
 // Padding has no effect on containers without widgets.
 func PaddingBottom(cells int) Option {
-	return option(func(c *Container) error {
-		c.opts.paddingBottom = cells
-		return nil
+	return option(func(c *Container) (err error) {
+		if err = checkPadding(cells); err == nil {
+			c.opts.paddingBottom = cells
+		}
+		return
 	})
 }

@@ -139,9 +139,9 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 	}
 	adjusted = image.Rect(
 		adjusted.Min.X+c.opts.paddingLeft,
-		adjusted.Min.Y+c.opts.paddingBottom,
+		adjusted.Min.Y+c.opts.paddingTop,
 		adjusted.Max.X-c.opts.paddingRight,
-		adjusted.Max.Y-c.opts.paddingTop,
+		adjusted.Max.Y-c.opts.paddingBottom,
 	)
 	return adjusted, nil
 }

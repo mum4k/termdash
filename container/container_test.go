@@ -470,15 +470,37 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			desc:     "draw widget with padding",
+			desc:     "draw widget with padding left",
 			termSize: image.Point{11, 11},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
-					PaddingBottom(1),
-					PaddingRight(1),
 					PaddingLeft(1),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					ft.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testdraw.MustBorder(cvs, image.Rect(2, 1, 10, 10))
+				testdraw.MustText(cvs, "(8,9)", image.Pt(3, 2))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draw widget with padding top",
+			termSize: image.Point{11, 11},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
 					PaddingTop(1),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
 				)
@@ -491,8 +513,58 @@ func TestNew(t *testing.T) {
 					ft.Area(),
 					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
-				testdraw.MustBorder(cvs, image.Rect(2, 2, 9, 9))
-				testdraw.MustText(cvs, "(7,7)", image.Pt(3, 3))
+				testdraw.MustBorder(cvs, image.Rect(1, 2, 10, 10))
+				testdraw.MustText(cvs, "(9,8)", image.Pt(2, 3))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draw widget with padding right",
+			termSize: image.Point{11, 11},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PaddingRight(1),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					ft.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 9, 10))
+				testdraw.MustText(cvs, "(8,9)", image.Pt(2, 2))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draw widget with padding bottom",
+			termSize: image.Point{11, 11},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PaddingBottom(1),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					ft.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 10, 9))
+				testdraw.MustText(cvs, "(9,8)", image.Pt(2, 2))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},

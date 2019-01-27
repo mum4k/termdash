@@ -43,7 +43,25 @@ returned on a call to the **Options** method aren't static, but depend on the
 user data provided to the widget, the widget **must** protect against the
 scenario where the infrastructure provides a canvas that doesn't match the
 returned options. This is because the infrastructure cannot guarantee the user
-won't change the inputs between calls to **Options** and **Draw**.
+won't change the data between calls to **Options** and **Draw**.
+
+A widget can draw a character indicating that a resize is needed in such cases:
+
+```go
+func (w *Widget) Draw(cvs *canvas.Canvas) error {
+  min := w.minSize() // Output depends on the current state.
+  needAr, err := area.FromSize(min)
+  if err != nil {
+    return err
+  }
+  if !needAr.In(cvs.Area()) {
+    return draw.ResizeNeeded(cvs)
+  }
+
+  // Draw the widget.
+  return nil
+}
+```
 
 If the container configuration results in a canvas larger than **MaximumSize**
 the canvas will be limited to the specified size. Widgets can either specify a

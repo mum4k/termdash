@@ -32,6 +32,7 @@ func TestY(t *testing.T) {
 		minVal    float64
 		maxVal    float64
 		update    *updateY
+		mode      YScaleMode
 		cvsAr     image.Rectangle
 		wantWidth int
 		want      *YDetails
@@ -71,10 +72,46 @@ func TestY(t *testing.T) {
 				Width: 2,
 				Start: image.Point{1, 0},
 				End:   image.Point{1, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
+				},
+			},
+		},
+		{
+			desc:      "success for anchored scale",
+			minVal:    1,
+			maxVal:    3,
+			mode:      YScaleModeAnchored,
+			cvsAr:     image.Rect(0, 0, 3, 4),
+			wantWidth: 2,
+			want: &YDetails{
+				Width: 2,
+				Start: image.Point{1, 0},
+				End:   image.Point{1, 2},
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
+				Labels: []*Label{
+					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
+				},
+			},
+		},
+		{
+			desc:      "success for adaptive scale",
+			minVal:    1,
+			maxVal:    6,
+			mode:      YScaleModeAdaptive,
+			cvsAr:     image.Rect(0, 0, 3, 4),
+			wantWidth: 2,
+			want: &YDetails{
+				Width: 2,
+				Start: image.Point{1, 0},
+				End:   image.Point{1, 2},
+				Scale: mustNewYScale(1, 6, 2, nonZeroDecimals, YScaleModeAdaptive),
+				Labels: []*Label{
+					{NewValue(1, nonZeroDecimals), image.Point{0, 1}},
+					{NewValue(3.88, nonZeroDecimals), image.Point{0, 0}},
 				},
 			},
 		},
@@ -88,7 +125,7 @@ func TestY(t *testing.T) {
 				Width: 5,
 				Start: image.Point{4, 0},
 				End:   image.Point{4, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -105,7 +142,7 @@ func TestY(t *testing.T) {
 				Width: 5,
 				Start: image.Point{4, 0},
 				End:   image.Point{4, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -126,7 +163,7 @@ func TestY(t *testing.T) {
 				t.Errorf("RequiredWidth => got %v, want %v", gotWidth, tc.wantWidth)
 			}
 
-			got, err := y.Details(tc.cvsAr)
+			got, err := y.Details(tc.cvsAr, tc.mode)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Details => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

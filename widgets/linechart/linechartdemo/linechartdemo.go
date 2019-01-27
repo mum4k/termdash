@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"math"
 	"time"
 
 	"github.com/mum4k/termdash"
@@ -34,9 +33,13 @@ import (
 func sineInputs() []float64 {
 	var res []float64
 
-	for i := 0; i < 200; i++ {
-		v := math.Sin(float64(i) / 100 * math.Pi)
-		res = append(res, v)
+	/*
+		for i := 0; i < 200; i++ {
+			v := math.Sin(float64(i) / 100 * math.Pi)
+			res = append(res, v)
+		}*/
+	for i := 1600; i < 1800; i++ {
+		res = append(res, float64(i))
 	}
 	return res
 }

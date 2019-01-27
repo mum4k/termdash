@@ -173,7 +173,7 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
 
-	yd, err := lc.yAxis.Details(cvs.Area())
+	yd, err := lc.yAxis.Details(cvs.Area(), lc.opts.yAxisMode)
 	if err != nil {
 		return fmt.Errorf("lc.yAxis.Details => %v", err)
 	}

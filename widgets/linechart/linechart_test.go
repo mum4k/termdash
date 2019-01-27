@@ -189,6 +189,75 @@ func TestLineChartDraws(t *testing.T) {
 			},
 		},
 		{
+			desc:   "draws anchored Y axis",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{1600, 1900})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{6, 0}, End: image.Point{6, 8}},
+					{Start: image.Point{6, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{5, 7})
+				testdraw.MustText(c, "980.80", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{7, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(7, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 5}, image.Point{25, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws adaptive Y axis",
+			opts: []Option{
+				YAxisAdaptive(),
+			},
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{1600, 1900})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{7, 0}, End: image.Point{7, 8}},
+					{Start: image.Point{7, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "1600", image.Point{3, 7})
+				testdraw.MustText(c, "1754.88", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{8, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(8, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{23, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "custom X labels",
 			canvas: image.Rect(0, 0, 20, 10),
 			writes: func(lc *LineChart) error {

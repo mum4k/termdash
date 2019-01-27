@@ -22,8 +22,8 @@ import (
 )
 
 // mustNewYScale returns a new YScale or panics.
-func mustNewYScale(min, max float64, graphHeight, nonZeroDecimals int) *YScale {
-	s, err := NewYScale(min, max, graphHeight, nonZeroDecimals)
+func mustNewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode) *YScale {
+	s, err := NewYScale(min, max, graphHeight, nonZeroDecimals, mode)
 	if err != nil {
 		panic(err)
 	}
@@ -74,6 +74,7 @@ func TestYScale(t *testing.T) {
 		max               float64
 		graphHeight       int
 		nonZeroDecimals   int
+		mode              YScaleMode
 		pixelToValueTests []pixelToValueTest
 		valueToPixelTests []valueToPixelTest
 		cellLabelTests    []cellLabelTest
@@ -142,6 +143,15 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
+			desc:            "fails on an unsupported Y scale mode",
+			min:             0,
+			max:             0,
+			graphHeight:     1,
+			nonZeroDecimals: 2,
+			mode:            YScaleMode(-1),
+			wantErr:         true,
+		},
+		{
 			desc:            "works without data points",
 			min:             0,
 			max:             0,
@@ -158,11 +168,12 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "min and max are non-zero positive and equal, scale is zero based",
+			desc:            "min and max are non-zero positive and equal, scale is anchored",
 			min:             6,
 			max:             6,
 			graphHeight:     1,
 			nonZeroDecimals: 2,
+			mode:            YScaleModeAnchored,
 			pixelToValueTests: []pixelToValueTest{
 				{3, 0, false},
 				{2, 2, false},
@@ -183,11 +194,38 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "min and max are non-zero negative and equal, scale is zero based",
+			desc:            "min and max are non-zero positive and equal, scale is adaptive",
+			min:             6,
+			max:             6,
+			graphHeight:     1,
+			nonZeroDecimals: 2,
+			mode:            YScaleModeAdaptive,
+			pixelToValueTests: []pixelToValueTest{
+				{3, 0, false},
+				{2, 2, false},
+				{1, 4, false},
+				{0, 6, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 3, false},
+				{0.5, 3, false},
+				{1, 2, false},
+				{1.5, 2, false},
+				{2, 2, false},
+				{4, 1, false},
+				{6, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
+			},
+		},
+		{
+			desc:            "min and max are non-zero negative and equal, scale is anchored",
 			min:             -6,
 			max:             -6,
 			graphHeight:     1,
 			nonZeroDecimals: 2,
+			mode:            YScaleModeAnchored,
 			pixelToValueTests: []pixelToValueTest{
 				{3, -6, false},
 				{2, -4, false},
@@ -208,11 +246,64 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "min is non-zero positive, not equal to max, scale is min based",
+			desc:            "min and max are non-zero negative and equal, scale is adaptive",
+			min:             -6,
+			max:             -6,
+			graphHeight:     1,
+			nonZeroDecimals: 2,
+			mode:            YScaleModeAdaptive,
+			pixelToValueTests: []pixelToValueTest{
+				{3, -6, false},
+				{2, -4, false},
+				{1, -2, false},
+				{0, 0, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 0, false},
+				{0.5, 0, false},
+				{-1, 0, false},
+				{-1.5, 1, false},
+				{-2, 1, false},
+				{-4, 2, false},
+				{-6, 3, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(-6, 2), false},
+			},
+		},
+		{
+			desc:            "min is non-zero positive, not equal to max, scale is anchored",
 			min:             1,
 			max:             7,
 			graphHeight:     1,
 			nonZeroDecimals: 2,
+			mode:            YScaleModeAnchored,
+			pixelToValueTests: []pixelToValueTest{
+				{3, 0, false},
+				{2, 2.34, false},
+				{1, 4.68, false},
+				{0, 7, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 3, false},
+				{0.5, 3, false},
+				{1, 3, false},
+				{1.5, 2, false},
+				{2, 2, false},
+				{4, 1, false},
+				{6, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(0, 2), false},
+			},
+		},
+		{
+			desc:            "min is non-zero positive, not equal to max, scale is adaptive",
+			min:             1,
+			max:             7,
+			graphHeight:     1,
+			nonZeroDecimals: 2,
+			mode:            YScaleModeAdaptive,
 			pixelToValueTests: []pixelToValueTest{
 				{3, 1, false},
 				{2, 3, false},
@@ -232,7 +323,6 @@ func TestYScale(t *testing.T) {
 				{0, NewValue(1, 2), false},
 			},
 		},
-
 		{
 			desc:            "integer scale",
 			min:             0,
@@ -335,11 +425,36 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "negative integer scale, max is also negative",
+			desc:            "negative integer scale, max is also negative, scale is anchored",
+			min:             -6,
+			max:             -1,
+			graphHeight:     1,
+			nonZeroDecimals: 2,
+			mode:            YScaleModeAnchored,
+			pixelToValueTests: []pixelToValueTest{
+				{3, -6, false},
+				{2, -4, false},
+				{1, -2, false},
+				{0, 0, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{-6, 3, false},
+				{-4, 2, false},
+				{-2, 1, false},
+				{-1, 0, false},
+				{0, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{0, NewValue(-6, 2), false},
+			},
+		},
+		{
+			desc:            "negative integer scale, max is also negative, scale is adaptive",
 			min:             -7,
 			max:             -1,
 			graphHeight:     1,
 			nonZeroDecimals: 2,
+			mode:            YScaleModeAdaptive,
 			pixelToValueTests: []pixelToValueTest{
 				{3, -7, false},
 				{2, -5, false},
@@ -357,7 +472,7 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "zero based float scale",
+			desc:            "anchored based float scale",
 			min:             0,
 			max:             0.3,
 			graphHeight:     1,
@@ -392,11 +507,40 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "regression for #92, positive values only",
+			desc:            "regression for #92, positive values only, scale is anchored",
 			min:             1600,
 			max:             1900,
 			graphHeight:     4,
 			nonZeroDecimals: 2,
+			mode:            YScaleModeAnchored,
+			pixelToValueTests: []pixelToValueTest{
+				{15, 0, false},
+				{14, 126.67, false},
+				{2, 1646.71, false},
+				{1, 1773.38, false},
+				{0, 1900, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{0, 15, false},
+				{126, 14, false},
+				{1600, 2, false},
+				{1800, 1, false},
+				{1900, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{3, NewValue(0, 2), false},
+				{2, NewValue(506.68, 2), false},
+				{1, NewValue(1013.36, 2), false},
+				{0, NewValue(1520.04, 2), false},
+			},
+		},
+		{
+			desc:            "regression for #92, positive values only, scale is adaptive",
+			min:             1600,
+			max:             1900,
+			graphHeight:     4,
+			nonZeroDecimals: 2,
+			mode:            YScaleModeAdaptive,
 			pixelToValueTests: []pixelToValueTest{
 				{15, 1600, false},
 				{14, 1620, false},
@@ -443,11 +587,37 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "regression for #92, negative values only",
+			desc:            "regression for #92, negative values only, scale is anchored",
 			min:             -1900,
 			max:             -1600,
 			graphHeight:     4,
 			nonZeroDecimals: 2,
+			mode:            YScaleModeAnchored,
+			pixelToValueTests: []pixelToValueTest{
+				{15, -1900, false},
+				{14, -1773.33, false},
+				{5, -633.3, false},
+				{0, 0, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{-1900, 15, false},
+				{-1800, 14, false},
+				{-633.3, 5, false},
+				{0, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{3, NewValue(-1900, 2), false},
+				{2, NewValue(-1393.32, 2), false},
+				{1, NewValue(-886.64, 2), false},
+			},
+		},
+		{
+			desc:            "regression for #92, negative values only, scale is adaptiove",
+			min:             -1900,
+			max:             -1600,
+			graphHeight:     4,
+			nonZeroDecimals: 2,
+			mode:            YScaleModeAdaptive,
 			pixelToValueTests: []pixelToValueTest{
 				{15, -1900, false},
 				{14, -1880, false},
@@ -494,11 +664,62 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
-			desc:            "regression for #92, negative and positive values",
+			desc:            "regression for #92, negative and positive values, scale is adaptive",
 			min:             -100,
 			max:             200,
 			graphHeight:     4,
 			nonZeroDecimals: 2,
+			mode:            YScaleModeAdaptive,
+			pixelToValueTests: []pixelToValueTest{
+				{15, -100, false},
+				{14, -80, false},
+				{13, -60, false},
+				{12, -40, false},
+				{11, -20, false},
+				{10, 0, false},
+				{9, 20, false},
+				{8, 40, false},
+				{7, 60, false},
+				{6, 80, false},
+				{5, 100, false},
+				{4, 120, false},
+				{3, 140, false},
+				{2, 160, false},
+				{1, 180, false},
+				{0, 200, false},
+			},
+			valueToPixelTests: []valueToPixelTest{
+				{-100, 15, false},
+				{-80, 14, false},
+				{-60, 13, false},
+				{-40, 12, false},
+				{-20, 11, false},
+				{0, 10, false},
+				{20, 9, false},
+				{40, 8, false},
+				{60, 7, false},
+				{80, 6, false},
+				{100, 5, false},
+				{120, 4, false},
+				{140, 3, false},
+				{160, 2, false},
+				{180, 1, false},
+				{200, 0, false},
+			},
+			cellLabelTests: []cellLabelTest{
+				{3, NewValue(-100, 2), false},
+				{2, NewValue(-20, 2), false},
+				{1, NewValue(60, 2), false},
+				{0, NewValue(140, 2), false},
+			},
+		},
+		{
+			desc:            "regression for #92, negative and positive values, scale is anchored",
+			min:             -100,
+			max:             200,
+			graphHeight:     4,
+			nonZeroDecimals: 2,
+			mode:            YScaleModeAnchored,
 			pixelToValueTests: []pixelToValueTest{
 				{15, -100, false},
 				{14, -80, false},
@@ -545,7 +766,7 @@ func TestYScale(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		scale, err := NewYScale(test.min, test.max, test.graphHeight, test.nonZeroDecimals)
+		scale, err := NewYScale(test.min, test.max, test.graphHeight, test.nonZeroDecimals, test.mode)
 		if (err != nil) != test.wantErr {
 			t.Errorf("NewYScale => unexpected error: %v, wantErr: %v", err, test.wantErr)
 		}

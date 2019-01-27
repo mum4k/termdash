@@ -23,6 +23,35 @@ import (
 	"github.com/mum4k/termdash/numbers"
 )
 
+// YScaleMode determines whether the Y scale is anchored to the zero value.
+type YScaleMode int
+
+// String implements fmt.Stringer()
+func (ysm YScaleMode) String() string {
+	if n, ok := yScaleModeNames[ysm]; ok {
+		return n
+	}
+	return "YScaleModeUnknown"
+}
+
+// yScaleModeNames maps YScaleMode values to human readable names.
+var yScaleModeNames = map[YScaleMode]string{
+	YScaleModeAnchored: "YScaleModeAnchored",
+	YScaleModeAdaptive: "YScaleModeAdaptive",
+}
+
+const (
+	// YScaleModeAnchored is a mode in which the Y scale always starts at value
+	// zero regardless of the min and max on the series.
+	YScaleModeAnchored YScaleMode = iota
+
+	// YScaleModeAdaptive is a mode where the Y scale adapts its base value
+	// according to the min and max on the series.
+	// I.e. it starts at min for all-positive series and at max for
+	// all-negative series.
+	YScaleModeAdaptive
+)
+
 // YScale is the scale of the Y axis.
 type YScale struct {
 	// Min is the minimum value on the axis.
@@ -44,7 +73,7 @@ type YScale struct {
 // calculated scale, see NewValue for details.
 // Max must be greater or equal to min. The graphHeight must be a positive
 // number.
-func NewYScale(min, max float64, graphHeight, nonZeroDecimals int) (*YScale, error) {
+func NewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode) (*YScale, error) {
 	if max < min {
 		return nil, fmt.Errorf("max(%v) cannot be less than min(%v)", max, min)
 	}
@@ -55,11 +84,27 @@ func NewYScale(min, max float64, graphHeight, nonZeroDecimals int) (*YScale, err
 	brailleHeight := graphHeight * braille.RowMult
 	usablePixels := brailleHeight - 1 // One pixel reserved for value zero.
 
-	if min > 0 && min == max { // If all the data points are equal, make the scale zero based so we can draw something.
-		min = 0
-	}
-	if max < 0 && min == max { // If all the data points are equal, make the scale zero based so we can draw something.
-		max = 0
+	switch mode {
+	case YScaleModeAnchored:
+		// Anchor the axis at the zero value.
+		if min > 0 {
+			min = 0
+		}
+		if max < 0 {
+			max = 0
+		}
+
+	case YScaleModeAdaptive:
+		// Even in this mode, we still anchor the axis at the zero if all the
+		// data points are equal, so we can still draw something.
+		if min > 0 && min == max {
+			min = 0
+		}
+		if max < 0 && min == max {
+			max = 0
+		}
+	default:
+		return nil, fmt.Errorf("unsupported mode: %v(%d)", mode, mode)
 	}
 	diff := max - min
 	step := NewValue(diff/float64(usablePixels), nonZeroDecimals)

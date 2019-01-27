@@ -129,7 +129,7 @@ func TestYLabels(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			scale, err := NewYScale(tc.min, tc.max, tc.graphHeight, nonZeroDecimals)
+			scale, err := NewYScale(tc.min, tc.max, tc.graphHeight, nonZeroDecimals, YScaleModeAnchored)
 			if err != nil {
 				t.Fatalf("NewYScale => unexpected error: %v", err)
 			}

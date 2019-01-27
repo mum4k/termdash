@@ -14,7 +14,10 @@
 
 package linechart
 
-import "github.com/mum4k/termdash/cell"
+import (
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/widgets/linechart/axes"
+)
 
 // options.go contains configurable options for LineChart.
 
@@ -29,6 +32,7 @@ type options struct {
 	axesCellOpts   []cell.Option
 	xLabelCellOpts []cell.Option
 	yLabelCellOpts []cell.Option
+	yAxisMode      axes.YScaleMode
 }
 
 // newOptions returns a new options instance.
@@ -66,5 +70,19 @@ func XLabelCellOpts(co ...cell.Option) Option {
 func YLabelCellOpts(co ...cell.Option) Option {
 	return option(func(opts *options) {
 		opts.yLabelCellOpts = co
+	})
+}
+
+// YAxisAdaptive makes the Y axis adapt its base value depending on the
+// provided series.
+// Without this option, the Y axis always starts at the zero value regardless of
+// values available in the series.
+// When this option is specified and the series don't contain value zero, the Y
+// axis will be adapted to the minimum value for all-positive series or the
+// maximum value for all-negative series. The Y axis still starts at the zero
+// value if the series contain both positive and negative values.
+func YAxisAdaptive() Option {
+	return option(func(opts *options) {
+		opts.yAxisMode = axes.YScaleModeAdaptive
 	})
 }

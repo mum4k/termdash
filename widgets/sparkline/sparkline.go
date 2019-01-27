@@ -21,6 +21,7 @@ import (
 	"image"
 	"sync"
 
+	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -61,6 +62,14 @@ func New(opts ...Option) *SparkLine {
 func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
+
+	needAr, err := area.FromSize(sl.minSize())
+	if err != nil {
+		return err
+	}
+	if !needAr.In(cvs.Area()) {
+		return draw.ResizeNeeded(cvs)
+	}
 
 	ar := sl.area(cvs)
 	visible, max := visibleMax(sl.data, ar.Dx())

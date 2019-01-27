@@ -187,3 +187,9 @@ func Text(c *canvas.Canvas, text string, start image.Point, opts ...TextOption) 
 	}
 	return nil
 }
+
+// ResizeNeeded draws an unicode character indicating that the canvas size is
+// too small to draw meaningful content.
+func ResizeNeeded(cvs *canvas.Canvas) error {
+	return Text(cvs, "⇄", image.Point{0, 0})
+}

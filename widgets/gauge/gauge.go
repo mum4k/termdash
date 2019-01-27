@@ -249,6 +249,14 @@ func (g *Gauge) Draw(cvs *canvas.Canvas) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
+	needAr, err := area.FromSize(g.minSize())
+	if err != nil {
+		return err
+	}
+	if !needAr.In(cvs.Area()) {
+		return draw.ResizeNeeded(cvs)
+	}
+
 	if g.hasBorder() {
 		if err := draw.Border(cvs, cvs.Area(),
 			draw.BorderLineStyle(g.opts.border),

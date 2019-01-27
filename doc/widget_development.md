@@ -10,8 +10,8 @@ callers to set the displayed percentage.
 ## Thread safety
 
 All widget implementations must be thread safe, since the infrastructure calls
-the widget's **Draw()** method concurrently with the user of the widget setting
-the displayed values.
+the widget's **Options** and **Draw()** method concurrently with the user of
+the widget setting the displayed values.
 
 ## Drawing the widget's content
 
@@ -38,11 +38,17 @@ canvas in order to handle under sized or over sized terminals gracefully.
 If the current size of the terminal and the configured container splits result
 in a canvas smaller than the **MinimumSize**, the infrastructure won't call the
 widget's **Draw()** method. The widgets can use this to prevent impossible
-scenarios where an error would have to be returned.
+scenarios where an error would have to be returned. Note that if the values
+returned on a call to the **Options** method aren't static, but depend on the
+user data provided to the widget, the widget **must** protect against the
+scenario where the infrastructure provides a canvas that doesn't match the
+returned options. This is because the infrastructure cannot guarantee the user
+won't change the inputs between calls to **Options** and **Draw**.
 
 If the container configuration results in a canvas larger than **MaximumSize**
 the canvas will be limited to the specified size. Widgets can either specify a
 limit for both the maximum width and height or limit just one of them.
+
 
 ## Unit tests
 

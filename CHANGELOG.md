@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bugfixes in the braille canvas.
 - Lint errors reported on the Go report card.
+- Flaky behavior in termdash_test.
 
 ## [0.4.0] - 15-Jan-2019
 

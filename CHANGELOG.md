@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The LineChart now has an option to change the behavior of the Y axis from
   zero anchored to adaptive.
 - Lint errors reported on the Go report card.
+- Widgets now correctly handle a race when new user data are supplied between
+  calls to their Options() and Draw() methods.
 
 ## [0.5.0] - 21-Jan-2019
 

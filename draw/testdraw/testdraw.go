@@ -65,3 +65,10 @@ func MustBrailleCircle(bc *braille.Canvas, mid image.Point, radius int, opts ...
 		panic(fmt.Sprintf("draw.BrailleCircle => unexpected error: %v", err))
 	}
 }
+
+// MustResizeNeeded draws the character or panics.
+func MustResizeNeeded(cvs *canvas.Canvas) {
+	if err := draw.ResizeNeeded(cvs); err != nil {
+		panic(fmt.Sprintf("draw.ResizeNeeded => unexpected error: %v", err))
+	}
+}

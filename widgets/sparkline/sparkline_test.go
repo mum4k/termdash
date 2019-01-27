@@ -292,6 +292,24 @@ func TestSparkLine(t *testing.T) {
 			},
 		},
 		{
+			desc: "draws resize needed character when canvas is smaller than requested",
+			sparkLine: New(
+				Height(2),
+			),
+			update: func(sl *SparkLine) error {
+				return sl.Add([]int{0, 100, 50, 85})
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustResizeNeeded(c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc: "respects fixed height with label",
 			sparkLine: New(
 				Label("zoo"),

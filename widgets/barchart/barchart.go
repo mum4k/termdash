@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -67,6 +68,14 @@ func New(opts ...Option) *BarChart {
 func (bc *BarChart) Draw(cvs *canvas.Canvas) error {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
+
+	needAr, err := area.FromSize(bc.minSize())
+	if err != nil {
+		return err
+	}
+	if !needAr.In(cvs.Area()) {
+		return draw.ResizeNeeded(cvs)
+	}
 
 	for i, v := range bc.values {
 		r, err := bc.barRect(cvs, i, v)

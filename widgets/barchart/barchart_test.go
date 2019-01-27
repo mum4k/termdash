@@ -108,6 +108,24 @@ func TestGauge(t *testing.T) {
 			wantUpdateErr: true,
 		},
 		{
+			desc: "draws resize needed character when canvas is smaller than requested",
+			bc: New(
+				Char('o'),
+			),
+			update: func(bc *BarChart) error {
+				return bc.Values([]int{0, 2, 5, 10}, 10)
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustResizeNeeded(c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc: "displays bars",
 			bc: New(
 				Char('o'),

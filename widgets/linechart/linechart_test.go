@@ -64,14 +64,16 @@ func TestLineChartDraws(t *testing.T) {
 			wantWriteErr: true,
 		},
 		{
-			desc:    "draw fails when canvas not wide enough",
-			canvas:  image.Rect(0, 0, 2, 4),
-			wantErr: true,
-		},
-		{
-			desc:    "draw fails when canvas not tall enough",
-			canvas:  image.Rect(0, 0, 3, 3),
-			wantErr: true,
+			desc:   "draws resize needed character when canvas is smaller than requested",
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustResizeNeeded(c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
 		},
 		{
 			desc:   "empty without series",

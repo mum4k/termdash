@@ -95,14 +95,16 @@ func NewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMo
 		}
 
 	case YScaleModeAdaptive:
-		// Only make the scale zero based if all the data points are equal, so
-		// we can still draw something.
+		// Even in this mode, we still anchor the axis at the zero if all the
+		// data points are equal, so we can still draw something.
 		if min > 0 && min == max {
 			min = 0
 		}
 		if max < 0 && min == max {
 			max = 0
 		}
+	default:
+		return nil, fmt.Errorf("unsupported mode: %v(%d)", mode, mode)
 	}
 	diff := max - min
 	step := NewValue(diff/float64(usablePixels), nonZeroDecimals)

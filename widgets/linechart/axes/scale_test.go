@@ -143,6 +143,15 @@ func TestYScale(t *testing.T) {
 			},
 		},
 		{
+			desc:            "fails on an unsupported Y scale mode",
+			min:             0,
+			max:             0,
+			graphHeight:     1,
+			nonZeroDecimals: 2,
+			mode:            YScaleMode(-1),
+			wantErr:         true,
+		},
+		{
 			desc:            "works without data points",
 			min:             0,
 			max:             0,

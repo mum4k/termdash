@@ -1,3 +1,17 @@
+// Copyright 2019 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package segment provides functions that draw a single segment.
 package segment
 
@@ -84,17 +98,21 @@ func Draw(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option
 	}
 
 	var nextLine nextLineFn
-	var width int
+	var lines int
 	switch st {
 	case SegmentTypeHorizontal:
-		width = ar.Dy()
+		lines = ar.Dy()
 		nextLine = nextHorizLine
+
+	case SegmentTypeVertical:
+		lines = ar.Dx()
+		nextLine = nextVertLine
 
 	default:
 		return fmt.Errorf("unsupported segment type %v(%d)", st, st)
 	}
 
-	for i := 0; i < width; i++ {
+	for i := 0; i < lines; i++ {
 		start, end := nextLine(i, ar)
 		if err := draw.BrailleLine(bc, start, end, draw.BrailleLineCellOpts(opt.cellOpts...)); err != nil {
 			return err
@@ -107,9 +125,10 @@ func Draw(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option
 // nextLine is a function that determines the start and end point of line number num in the segment.
 type nextLineFn func(num int, ar image.Rectangle) (image.Point, image.Point)
 
-// nextHorizLine determines the start and end point of individual lines in horizontal segment.
+// nextHorizLine determines the start and end point of individual lines in a
+// horizontal segment.
 func nextHorizLine(num int, ar image.Rectangle) (image.Point, image.Point) {
-	// Start and end points of the full line without adjustments for slopes.
+	// Start and end points of the full row without adjustments for slopes.
 	start := image.Point{ar.Min.X, ar.Min.Y + num}
 	end := image.Point{ar.Max.X - 1, ar.Min.Y + num}
 
@@ -120,19 +139,20 @@ func nextHorizLine(num int, ar image.Rectangle) (image.Point, image.Point) {
 		return start, end
 	}
 
-	// Don't adjust lines that fall exactly in the middle of the segment height.
-	// E.g when height divides oddly, we want the middle line to take the full width:
+	// Don't adjust rows that fall exactly in the middle of the segment height.
+	// E.g when height divides oddly, we want the middle row to take the full
+	// width:
 	//     --
 	//    ----
 	//     --
 	//
-	// And when the height divides oddly, we want the two middle lines to take
+	// And when the height divides oddly, we want the two middle rows to take
 	// the full width:
 	//     --
 	//    ----
 	//    ----
 	//     --
-	// We only do this for segments that are at least three lines tall.
+	// We only do this for segments that are at least three rows tall.
 	// For smaller segments we still want this behavior:
 	//     --
 	//    ----
@@ -147,7 +167,7 @@ func nextHorizLine(num int, ar image.Rectangle) (image.Point, image.Point) {
 		adjust := halfHeight - num
 		if height%2 == 0 && height > 2 {
 			// On evenly divided height, we need one less adjustment on every
-			// line above the half, since two lines are taking the full width
+			// row above the half, since two rows are taking the full width
 			// as shown above.
 			adjust--
 		}
@@ -157,8 +177,65 @@ func nextHorizLine(num int, ar image.Rectangle) (image.Point, image.Point) {
 	return adjustHoriz(start, end, width, adjust)
 }
 
+// nextVertLine determines the start and end point of individual lines in a
+// vertical segment.
+func nextVertLine(num int, ar image.Rectangle) (image.Point, image.Point) {
+	// Start and end points of the full column without adjustments for slopes.
+	start := image.Point{ar.Min.X + num, ar.Min.Y}
+	end := image.Point{ar.Min.X + num, ar.Max.Y - 1}
+
+	height := ar.Dy()
+	width := ar.Dx()
+	if height < 3 || width < 2 {
+		// No slopes under these dimensions as we don't have the resolution.
+		return start, end
+	}
+
+	// Don't adjust lines that fall exactly in the middle of the segment height.
+	// E.g when width divides oddly, we want the middle line to take the full
+	// height:
+	//    |
+	//   |||
+	//   |||
+	//    |
+	//
+	// And when the width divides oddly, we want the two middle columns to take
+	// the full height:
+	//    ||
+	//   ||||
+	//   ||||
+	//    ||
+	//
+	// We only do this for segments that are at least three columns wide.
+	// For smaller segments we still want this behavior:
+	//     |
+	//    ||
+	//    ||
+	//     |
+	halfWidth := width / 2
+	if width > 2 {
+		if num == halfWidth || (width%2 == 0 && num == halfWidth-1) {
+			return start, end
+		}
+	}
+
+	if num < halfWidth {
+		adjust := halfWidth - num
+		if width%2 == 0 && width > 2 {
+			// On evenly divided width, we need one less adjustment on every
+			// column above the half, since two lines are taking the full
+			// height as shown above.
+			adjust--
+		}
+		return adjustVert(start, end, height, adjust)
+	}
+	adjust := num - halfWidth
+	return adjustVert(start, end, height, adjust)
+}
+
 // adjustHoriz given start and end points that identify a horizontal line,
-// returns points that are adjusted by the specified amount.
+// returns points that are adjusted towards each other on the line by the
+// specified amount.
 // I.e. the start is moved to the right and the end is moved to the left.
 // The points won't be allowed to cross each other.
 // The segWidth is the full width of the segment we are drawing.
@@ -182,7 +259,23 @@ func adjustHoriz(start, end image.Point, segWidth int, adjust int) (image.Point,
 		// E.g: 0 1  2   3 4
 		//      - - nsne - -
 		ns = image.Point{halfWidth, start.Y}
-		ne = image.Point{halfWidth, end.Y}
+		ne = ns
 	}
 	return ns, ne
+}
+
+// adjustVert given start and end points that identify a vertical line,
+// returns points that are adjusted towards each other on the line by the
+// specified amount.
+// I.e. the start is moved down and the end is moved up.
+// The points won't be allowed to cross each other.
+// The segHeight is the full height of the segment we are drawing.
+func adjustVert(start, end image.Point, segHeight int, adjust int) (image.Point, image.Point) {
+	adjStart, adjEnd := adjustHoriz(swapCoord(start), swapCoord(end), segHeight, adjust)
+	return swapCoord(adjStart), swapCoord(adjEnd)
+}
+
+// swapCoord returns a point with its X and Y coordinates swapped.
+func swapCoord(p image.Point) image.Point {
+	return image.Point{p.Y, p.X}
 }

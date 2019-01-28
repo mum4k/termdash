@@ -88,7 +88,7 @@ func (y *Y) RequiredWidth() int {
 
 // Details retrieves details about the Y axis required to draw it on a canvas
 // of the provided area.
-func (y *Y) Details(cvsAr image.Rectangle) (*YDetails, error) {
+func (y *Y) Details(cvsAr image.Rectangle, mode YScaleMode) (*YDetails, error) {
 	cvsWidth := cvsAr.Dx()
 	cvsHeight := cvsAr.Dy()
 	maxWidth := cvsWidth - 1 // Reserve one row for the line chart itself.
@@ -97,7 +97,7 @@ func (y *Y) Details(cvsAr image.Rectangle) (*YDetails, error) {
 	}
 
 	graphHeight := cvsHeight - 2 // One row for the X axis and one for its labels.
-	scale, err := NewYScale(y.min.Value, y.max.Value, graphHeight, nonZeroDecimals)
+	scale, err := NewYScale(y.min.Value, y.max.Value, graphHeight, nonZeroDecimals, mode)
 	if err != nil {
 		return nil, err
 	}

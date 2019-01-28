@@ -601,3 +601,56 @@ func TestText(t *testing.T) {
 		})
 	}
 }
+
+func TestResizeNeeded(t *testing.T) {
+	tests := []struct {
+		desc   string
+		canvas image.Rectangle
+		want   func(size image.Point) *faketerm.Terminal
+	}{
+		{
+			desc:   "draws the resize needed character",
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testcanvas.MustSetCell(cvs, image.Point{0, 0}, '⇄')
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			cvs, err := canvas.New(tc.canvas)
+			if err != nil {
+				t.Fatalf("canvas.New => unexpected error: %v", err)
+			}
+
+			if err := ResizeNeeded(cvs); err != nil {
+				t.Fatalf("ResizeNeeded => unexpected error: %v", err)
+			}
+
+			got, err := faketerm.New(cvs.Size())
+			if err != nil {
+				t.Fatalf("faketerm.New => unexpected error: %v", err)
+			}
+			if err := cvs.Apply(got); err != nil {
+				t.Fatalf("Apply => unexpected error: %v", err)
+			}
+
+			want, err := faketerm.New(cvs.Size())
+			if err != nil {
+				t.Fatalf("faketerm.New => unexpected error: %v", err)
+			}
+			if tc.want != nil {
+				want = tc.want(cvs.Size())
+			}
+
+			if diff := faketerm.Diff(want, got); diff != "" {
+				t.Errorf("ResizeNeeded => %v", diff)
+			}
+		})
+	}
+}

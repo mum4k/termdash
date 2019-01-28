@@ -10,11 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A CHANGELOG.
-- New line style for borders.
+- New line styles for borders.
 
 ### Fixed
 
+- The LineChart now has an option to change the behavior of the Y axis from
+  zero anchored to adaptive.
 - Lint errors reported on the Go report card.
+- Widgets now correctly handle a race when new user data are supplied between
+  calls to their Options() and Draw() methods.
 
 ## [0.5.0] - 21-Jan-2019
 
@@ -27,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bugfixes in the braille canvas.
 - Lint errors reported on the Go report card.
+- Flaky behavior in termdash_test.
 
 ## [0.4.0] - 15-Jan-2019
 
@@ -71,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.5.0...devel
 [0.5.0]: https://github.com/mum4k/termdash/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/mum4k/termdash/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mum4k/termdash/compare/v0.2.0...v0.3.0

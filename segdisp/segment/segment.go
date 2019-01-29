@@ -375,23 +375,18 @@ func Diagonal(bc *braille.Canvas, ar image.Rectangle, width int, dt DiagonalType
 // nextLRLine is a function that determines the start and end points of the
 // next line of a left-to-right diagonal segment.
 func nextLRLine(num int, start, end, prevStart, prevEnd image.Point) (image.Point, image.Point) {
+	dist := num / 2
 	if num%2 != 0 {
-		ns := prevStart
-		ne := prevEnd
-		if num > 1 {
-			// Swap back from the previous line.
-			ns = swapCoord(ns)
-			ne = swapCoord(ne)
-		}
-
 		// Every odd line is placed above the mid diagonal.
-		ns = ns.Add(image.Point{1, 0})
-		ne = ne.Sub(image.Point{0, 1})
+		ns := image.Point{start.X + dist + 1, start.Y}
+		ne := image.Point{end.X, end.Y - dist - 1}
 		return ns, ne
 	}
 
 	// Every even line is placed under the mid diagonal.
-	return swapCoord(prevStart), swapCoord(prevEnd)
+	ns := image.Point{start.X, start.Y + dist}
+	ne := image.Point{end.X - dist, end.Y}
+	return ns, ne
 }
 
 // nextRLLine is a function that determines the start and end points of the

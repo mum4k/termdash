@@ -960,63 +960,54 @@ func TestHV(t *testing.T) {
 	}
 }
 
-// segmentTest represents one segment that will be drawn.
-type segmentTest struct {
+// hvSegment is one horizontal or vertical segment.
+type hvSegment struct {
 	ar image.Rectangle
 	st SegmentType
+}
+
+// diagSegment is one diagonal segment.
+type diagSegment struct {
+	ar    image.Rectangle
+	width int
+	dt    DiagonalType
 }
 
 func TestMultipleSegments(t *testing.T) {
 	t.Skip()
 	tests := []struct {
-		desc       string
-		cellCanvas image.Rectangle
-		segments   []segmentTest
-		want       func(size image.Point) *faketerm.Terminal
+		desc         string
+		cellCanvas   image.Rectangle
+		hvSegments   []hvSegment
+		diagSegments []diagSegment
+		want         func(size image.Point) *faketerm.Terminal
 	}{
-		/*
-			{
-				desc:       "12-segment display",
-				cellCanvas: image.Rect(0, 0, 16, 12),
-				segments: []segmentTest{
-					{image.Rect(2, 0, 16, 4), SegmentTypeHorizontal},  // A1
-					{image.Rect(16, 0, 30, 4), SegmentTypeHorizontal}, // A2
-
-					{image.Rect(0, 2, 4, 24), SegmentTypeVertical},   // F
-					{image.Rect(14, 2, 18, 24), SegmentTypeVertical}, // J
-					{image.Rect(28, 2, 32, 24), SegmentTypeVertical}, // B
-
-					{image.Rect(2, 22, 16, 26), SegmentTypeHorizontal},  // G1
-					{image.Rect(16, 22, 30, 26), SegmentTypeHorizontal}, // G2
-
-					{image.Rect(0, 24, 4, 46), SegmentTypeVertical},   // E
-					{image.Rect(14, 24, 18, 46), SegmentTypeVertical}, // M
-					{image.Rect(28, 24, 32, 46), SegmentTypeVertical}, // C
-
-					{image.Rect(2, 44, 16, 48), SegmentTypeHorizontal},  // D1
-					{image.Rect(16, 44, 30, 48), SegmentTypeHorizontal}, // D2
-				},
-			},*/
 		{
 			desc:       "12-segment display, more spacing",
 			cellCanvas: image.Rect(0, 0, 16, 12),
-			segments: []segmentTest{
-				{image.Rect(3, 0, 15, 4), SegmentTypeHorizontal},  // A1
-				{image.Rect(17, 0, 29, 4), SegmentTypeHorizontal}, // A2
+			hvSegments: []hvSegment{
+				//{image.Rect(3, 0, 15, 4), SegmentTypeHorizontal},  // A1
+				//{image.Rect(17, 0, 29, 4), SegmentTypeHorizontal}, // A2
 
 				{image.Rect(0, 3, 4, 23), SegmentTypeVertical}, // F
 				//{image.Rect(14, 3, 18, 23), SegmentTypeVertical}, // J
 				{image.Rect(28, 3, 32, 23), SegmentTypeVertical}, // B
 
-				{image.Rect(3, 22, 15, 26), SegmentTypeHorizontal},  // G1
-				{image.Rect(17, 22, 29, 26), SegmentTypeHorizontal}, // G2
+				//{image.Rect(3, 22, 15, 26), SegmentTypeHorizontal},  // G1
+				//{image.Rect(17, 22, 29, 26), SegmentTypeHorizontal}, // G2
 
 				{image.Rect(0, 25, 4, 45), SegmentTypeVertical}, // E
 				//{image.Rect(14, 25, 18, 45), SegmentTypeVertical}, // M
 				{image.Rect(28, 25, 32, 45), SegmentTypeVertical}, // C
 
-				{image.Rect(3, 44, 15, 48), SegmentTypeHorizontal},  // D1
-				{image.Rect(17, 44, 29, 48), SegmentTypeHorizontal}, // D2
+				//{image.Rect(3, 44, 15, 48), SegmentTypeHorizontal},  // D1
+				//{image.Rect(17, 44, 29, 48), SegmentTypeHorizontal}, // D2
+			},
+			diagSegments: []diagSegment{
+				//{image.Rect(4, 4, 14, 22), 4, DiagonalTypeLeftToRight},   // H
+				//{image.Rect(18, 22, 28, 4), 4, DiagonalTypeRightToLeft},  // K
+				{image.Rect(4, 44, 14, 26), 4, DiagonalTypeRightToLeft},  // N
+				{image.Rect(18, 26, 28, 44), 4, DiagonalTypeLeftToRight}, // L
 			},
 		},
 	}
@@ -1028,11 +1019,18 @@ func TestMultipleSegments(t *testing.T) {
 				t.Fatalf("braille.New => unexpected error: %v", err)
 			}
 
-			for _, st := range tc.segments {
-				if err := HV(bc, st.ar, st.st); err != nil {
+			for _, hv := range tc.hvSegments {
+				if err := HV(bc, hv.ar, hv.st); err != nil {
 					t.Fatalf("HV => unexpected error: %v", err)
 				}
 			}
+
+			for _, diag := range tc.diagSegments {
+				if err := Diagonal(bc, diag.ar, diag.width, diag.dt); err != nil {
+					t.Fatalf("Diagonal => unexpected error: %v", err)
+				}
+			}
+
 			size := area.Size(tc.cellCanvas)
 			want := faketerm.MustNew(size)
 			if tc.want != nil {
@@ -1367,6 +1365,78 @@ func TestDiagonal(t *testing.T) {
 				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 2})
 				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
 				testdraw.MustBrailleLine(bc, image.Point{3, 1}, image.Point{1, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 8x4, width 3",
+			cellCanvas: image.Rect(0, 0, 4, 1),
+			ar:         image.Rect(0, 0, 8, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      3,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{7, 3})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{7, 2})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{6, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 8x4, width 3",
+			cellCanvas: image.Rect(0, 0, 4, 1),
+			ar:         image.Rect(0, 0, 8, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      3,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{7, 0}, image.Point{0, 3})
+				testdraw.MustBrailleLine(bc, image.Point{6, 0}, image.Point{0, 2})
+				testdraw.MustBrailleLine(bc, image.Point{7, 1}, image.Point{1, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 4x8, width 3",
+			cellCanvas: image.Rect(0, 0, 2, 2),
+			ar:         image.Rect(0, 0, 4, 8),
+			dt:         DiagonalTypeLeftToRight,
+			width:      3,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 7})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 6})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 7})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x8, width 3",
+			cellCanvas: image.Rect(0, 0, 2, 2),
+			ar:         image.Rect(0, 0, 4, 8),
+			dt:         DiagonalTypeRightToLeft,
+			width:      3,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 7})
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 6})
+				testdraw.MustBrailleLine(bc, image.Point{3, 1}, image.Point{1, 7})
 
 				testbraille.MustApply(bc, ft)
 				return ft

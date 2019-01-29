@@ -39,15 +39,15 @@ func (st SegmentType) String() string {
 var segmentTypeNames = map[SegmentType]string{
 	SegmentTypeHorizontal: "SegmentTypeHorizontal",
 	SegmentTypeVertical:   "SegmentTypeVertical",
-	SegmentTypeDiagonal:   "SegmentTypeDiagonal",
 }
 
 const (
 	segmentTypeUnknown SegmentType = iota
 
+	// SegmentTypeHorizontal is a horizontal segment.
 	SegmentTypeHorizontal
+	// SegmentTypeVertical is a vertical segment.
 	SegmentTypeVertical
-	SegmentTypeDiagonal
 
 	segmentTypeMax // Used for validation.
 )
@@ -80,8 +80,8 @@ func CellOpts(cOpts ...cell.Option) Option {
 	})
 }
 
-// Draw draws a segment filling the provided area.
-func Draw(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option) error {
+// validArea validates the provided area.
+func validArea(ar image.Rectangle) error {
 	if ar.Min.X < 0 || ar.Min.Y < 0 {
 		return fmt.Errorf("the start coordinates cannot be negative, got: %v", ar)
 	}
@@ -91,13 +91,21 @@ func Draw(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option
 	if ar.Dx() < 1 || ar.Dy() < 1 {
 		return fmt.Errorf("the area for the segment must be at least 1x1 pixels, got %vx%v in area:%v", ar.Dx(), ar.Dy(), ar)
 	}
+	return nil
+}
+
+// HV draws a horizontal or a vertical display segment, filling the provided area.
+func HV(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option) error {
+	if err := validArea(ar); err != nil {
+		return err
+	}
 
 	opt := &options{}
 	for _, o := range opts {
 		o.set(opt)
 	}
 
-	var nextLine nextLineFn
+	var nextLine nextHVLineFn
 	var lines int
 	switch st {
 	case SegmentTypeHorizontal:
@@ -122,8 +130,9 @@ func Draw(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option
 	return nil
 }
 
-// nextLine is a function that determines the start and end point of line number num in the segment.
-type nextLineFn func(num int, ar image.Rectangle) (image.Point, image.Point)
+// nextHVLineFn is a function that determines the start and end points of a line
+// number num in a horizontal or a vertical segment.
+type nextHVLineFn func(num int, ar image.Rectangle) (image.Point, image.Point)
 
 // nextHorizLine determines the start and end point of individual lines in a
 // horizontal segment.
@@ -278,4 +287,126 @@ func adjustVert(start, end image.Point, segHeight int, adjust int) (image.Point,
 // swapCoord returns a point with its X and Y coordinates swapped.
 func swapCoord(p image.Point) image.Point {
 	return image.Point{p.Y, p.X}
+}
+
+// DiagonalType determines the type of diagonal segment.
+type DiagonalType int
+
+// String implements fmt.Stringer()
+func (dt DiagonalType) String() string {
+	if n, ok := diagonalTypeNames[dt]; ok {
+		return n
+	}
+	return "DiagonalTypeUnknown"
+}
+
+// diagonalTypeNames maps DiagonalType values to human readable names.
+var diagonalTypeNames = map[DiagonalType]string{
+	DiagonalTypeLeftToRight: "DiagonalTypeLeftToRight",
+	DiagonalTypeRightToLeft: "DiagonalTypeRightToLeft",
+}
+
+const (
+	diagonalTypeUnknown DiagonalType = iota
+	// DiagonalTypeLeftToRight is a diagonal segment from top left to bottom right.
+	DiagonalTypeLeftToRight
+	// DiagonalTypeRightToLeft is a diagonal segment from top right to bottom left.
+	DiagonalTypeRightToLeft
+
+	diagonalTypeMax // Used for validation.
+)
+
+// nextDiagLineFn is a function that determines the start and end points of a line
+// number num in a diagonal segment.
+// Points start and end define the first diagonal exactly in the middle.
+// Points prevStart and prevEnd define line num-1.
+type nextDiagLineFn func(num int, start, end, prevStart, prevEnd image.Point) (image.Point, image.Point)
+
+// Diagonal draws a diagonal segment of the specified width filling the area.
+func Diagonal(bc *braille.Canvas, ar image.Rectangle, width int, dt DiagonalType, opts ...Option) error {
+	if err := validArea(ar); err != nil {
+		return err
+	}
+	if min := 1; width < min {
+		return fmt.Errorf("invalid width %d, must be width >= %d", width, min)
+	}
+	opt := &options{}
+	for _, o := range opts {
+		o.set(opt)
+	}
+
+	var start, end image.Point
+	var nextFn nextDiagLineFn
+	switch dt {
+	case DiagonalTypeLeftToRight:
+		start = ar.Min
+		end = image.Point{ar.Max.X - 1, ar.Max.Y - 1}
+		nextFn = nextLRLine
+
+	case DiagonalTypeRightToLeft:
+		start = image.Point{ar.Max.X - 1, ar.Min.Y}
+		end = image.Point{ar.Min.X, ar.Max.Y - 1}
+		nextFn = nextRLLine
+
+	default:
+		return fmt.Errorf("unsupported diagonal type %v(%d)", dt, dt)
+	}
+
+	if err := draw.BrailleLine(bc, start, end, draw.BrailleLineCellOpts(opt.cellOpts...)); err != nil {
+		return err
+	}
+
+	ns := start
+	ne := end
+	for i := 1; i < width; i++ {
+		ns, ne = nextFn(i, start, end, ns, ne)
+
+		if !ns.In(ar) || !ne.In(ar) {
+			return fmt.Errorf("cannot draw diagonal segment of width %d in area %v, the area isn't large enough for line %v-%v", width, ar, ns, ne)
+		}
+
+		if err := draw.BrailleLine(bc, ns, ne, draw.BrailleLineCellOpts(opt.cellOpts...)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// nextLRLine is a function that determines the start and end points of the
+// next line of a left-to-right diagonal segment.
+func nextLRLine(num int, start, end, prevStart, prevEnd image.Point) (image.Point, image.Point) {
+	if num%2 != 0 {
+		ns := prevStart
+		ne := prevEnd
+		if num > 1 {
+			// Swap back from the previous line.
+			ns = swapCoord(ns)
+			ne = swapCoord(ne)
+		}
+
+		// Every odd line is placed above the mid diagonal.
+		ns = ns.Add(image.Point{1, 0})
+		ne = ne.Sub(image.Point{0, 1})
+		return ns, ne
+	}
+
+	// Every even line is placed under the mid diagonal.
+	return swapCoord(prevStart), swapCoord(prevEnd)
+}
+
+// nextRLLine is a function that determines the start and end points of the
+// next line of a right-to-left diagonal segment.
+func nextRLLine(num int, start, end, prevStart, prevEnd image.Point) (image.Point, image.Point) {
+	dist := num / 2
+	if num%2 != 0 {
+		// Every odd line is placed above the mid diagonal.
+		ns := image.Point{start.X - dist - 1, start.Y}
+		ne := image.Point{end.X, end.Y - dist - 1}
+		return ns, ne
+	}
+
+	// Every even line is placed under the mid diagonal.
+	ns := image.Point{start.X, start.Y + dist}
+	ne := image.Point{end.X + dist, end.Y}
+	return ns, ne
 }

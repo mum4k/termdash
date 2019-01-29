@@ -23,11 +23,12 @@ import (
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/canvas/braille/testbraille"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
-func TestDraw(t *testing.T) {
+func TestHV(t *testing.T) {
 	tests := []struct {
 		desc       string
 		opts       []Option
@@ -80,10 +81,17 @@ func TestDraw(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			desc:       "fails on unsupported segment type",
+			desc:       "fails on unsupported segment type (too small)",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 2),
 			st:         SegmentType(0),
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on unsupported segment type (too large)",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 2, 2),
+			st:         SegmentType(int(SegmentTypeVertical) + 1),
 			wantErr:    true,
 		},
 		{
@@ -924,9 +932,9 @@ func TestDraw(t *testing.T) {
 				t.Fatalf("braille.New => unexpected error: %v", err)
 			}
 
-			err = Draw(bc, tc.ar, tc.st, tc.opts...)
+			err = HV(bc, tc.ar, tc.st, tc.opts...)
 			if (err != nil) != tc.wantErr {
-				t.Errorf("Draw => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				t.Errorf("HV => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
 			if err != nil {
 				return
@@ -946,7 +954,7 @@ func TestDraw(t *testing.T) {
 				t.Fatalf("bc.Apply => unexpected error: %v", err)
 			}
 			if diff := faketerm.Diff(want, got); diff != "" {
-				t.Fatalf("Draw => %v", diff)
+				t.Fatalf("HV => %v", diff)
 			}
 		})
 	}
@@ -1021,8 +1029,8 @@ func TestMultipleSegments(t *testing.T) {
 			}
 
 			for _, st := range tc.segments {
-				if err := Draw(bc, st.ar, st.st); err != nil {
-					t.Fatalf("Draw => unexpected error: %v", err)
+				if err := HV(bc, st.ar, st.st); err != nil {
+					t.Fatalf("HV => unexpected error: %v", err)
 				}
 			}
 			size := area.Size(tc.cellCanvas)
@@ -1039,7 +1047,7 @@ func TestMultipleSegments(t *testing.T) {
 				t.Fatalf("bc.Apply => unexpected error: %v", err)
 			}
 			if diff := faketerm.Diff(want, got); diff != "" {
-				t.Fatalf("Draw => %v", diff)
+				t.Fatalf("HV => %v", diff)
 			}
 		})
 	}
@@ -1167,6 +1175,445 @@ func TestAdjustVert(t *testing.T) {
 				t.Errorf("adjustVert(%v, %v, %v, %v) => %v, %v, want %v, %v", tc.start, tc.end, tc.segHeight, tc.adjust, gotStart, gotEnd, tc.wantStart, tc.wantEnd)
 			}
 
+		})
+	}
+}
+
+func TestDiagonal(t *testing.T) {
+	tests := []struct {
+		desc       string
+		opts       []Option
+		cellCanvas image.Rectangle // Canvas in cells that will be converted to braille canvas for drawing.
+		ar         image.Rectangle
+		width      int
+		dt         DiagonalType
+		want       func(size image.Point) *faketerm.Terminal
+		wantErr    bool
+	}{
+		{
+			desc:       "fails on area with negative Min.X",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(-1, 0, 1, 1),
+			width:      1,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on area with negative Min.Y",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, -1, 1, 1),
+			width:      1,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on area with negative Max.X",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rectangle{image.Point{0, 0}, image.Point{-1, 1}},
+			width:      1,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on area with negative Max.Y",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rectangle{image.Point{0, 0}, image.Point{1, -1}},
+			width:      1,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on area with zero Dx()",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 0, 1),
+			width:      1,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on area with zero Dy()",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 1, 0),
+			width:      1,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on unsupported diagonal type (too small)",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 2, 2),
+			width:      1,
+			dt:         DiagonalType(0),
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on unsupported diagonal type (too large)",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 2, 2),
+			width:      1,
+			dt:         DiagonalType(int(DiagonalTypeRightToLeft) + 1),
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on area larger than the canvas",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 3, 1),
+			width:      1,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails on zero width",
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 3, 1),
+			width:      0,
+			dt:         DiagonalTypeLeftToRight,
+			wantErr:    true,
+		},
+		{
+			desc:       "left to right, area 4x4, width 1",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      1,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x4, width 1",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      1,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 4x4, width 2",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      2,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 2})
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x4, width 2",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      2,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 2})
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 4x4, width 3",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      3,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 2})
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x4, width 3",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      3,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 2})
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 1}, image.Point{1, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 4x4, width 4",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      4,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{3, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 2})
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x4, width 4",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      4,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{0, 1})
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 2})
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 1}, image.Point{1, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 4x4, width 5",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      5,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{3, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 2})
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{1, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x4, width 5",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      5,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{0, 1})
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 2})
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 1}, image.Point{1, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 2}, image.Point{2, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 4x4, width 6",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      6,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{3, 0})
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{3, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 2})
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{1, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x4, width 6",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      6,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{0, 0})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{0, 1})
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 2})
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 1}, image.Point{1, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 2}, image.Point{2, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, area 4x4, width 7",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      7,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{3, 0})
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{3, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 2})
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{1, 3})
+				testdraw.MustBrailleLine(bc, image.Point{0, 3}, image.Point{3, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "right to left, area 4x4, width 7",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      7,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{0, 0})
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{0, 1})
+				testdraw.MustBrailleLine(bc, image.Point{2, 0}, image.Point{0, 2})
+				testdraw.MustBrailleLine(bc, image.Point{3, 0}, image.Point{0, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 1}, image.Point{1, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 2}, image.Point{2, 3})
+				testdraw.MustBrailleLine(bc, image.Point{3, 3}, image.Point{3, 3})
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "left to right, fails when width is larger than area",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      8,
+			wantErr:    true,
+		},
+		{
+			desc:       "right to left, fails when width is larger than area",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeRightToLeft,
+			width:      8,
+			wantErr:    true,
+		},
+		{
+			desc: "sets cell options",
+			opts: []Option{
+				CellOpts(
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorGreen),
+				),
+			},
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 4, 4),
+			dt:         DiagonalTypeLeftToRight,
+			width:      2,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				opts := []draw.BrailleLineOption{
+					draw.BrailleLineCellOpts(
+						cell.FgColor(cell.ColorRed),
+						cell.BgColor(cell.ColorGreen),
+					),
+				}
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{3, 2}, opts...)
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{3, 3}, opts...)
+
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%s dt:%v", tc.desc, tc.dt), func(t *testing.T) {
+			bc, err := braille.New(tc.cellCanvas)
+			if err != nil {
+				t.Fatalf("braille.New => unexpected error: %v", err)
+			}
+
+			err = Diagonal(bc, tc.ar, tc.width, tc.dt, tc.opts...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Diagonal => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			size := area.Size(tc.cellCanvas)
+			want := faketerm.MustNew(size)
+			if tc.want != nil {
+				want = tc.want(size)
+			}
+
+			got, err := faketerm.New(size)
+			if err != nil {
+				t.Fatalf("faketerm.New => unexpected error: %v", err)
+			}
+			if err := bc.Apply(got); err != nil {
+				t.Fatalf("bc.Apply => unexpected error: %v", err)
+			}
+			if diff := faketerm.Diff(want, got); diff != "" {
+				t.Fatalf("Diagonal => %v", diff)
+			}
 		})
 	}
 }

@@ -974,7 +974,7 @@ type diagSegment struct {
 }
 
 func TestMultipleSegments(t *testing.T) {
-	t.Skip()
+	//t.Skip()
 	tests := []struct {
 		desc         string
 		cellCanvas   image.Rectangle
@@ -986,26 +986,26 @@ func TestMultipleSegments(t *testing.T) {
 			desc:       "12-segment display, more spacing",
 			cellCanvas: image.Rect(0, 0, 16, 12),
 			hvSegments: []hvSegment{
-				//{image.Rect(3, 0, 15, 4), SegmentTypeHorizontal},  // A1
-				//{image.Rect(17, 0, 29, 4), SegmentTypeHorizontal}, // A2
+				{image.Rect(3, 0, 15, 4), SegmentTypeHorizontal},  // A1
+				{image.Rect(17, 0, 29, 4), SegmentTypeHorizontal}, // A2
 
-				{image.Rect(0, 3, 4, 23), SegmentTypeVertical}, // F
-				//{image.Rect(14, 3, 18, 23), SegmentTypeVertical}, // J
+				{image.Rect(0, 3, 4, 23), SegmentTypeVertical},   // F
+				{image.Rect(14, 3, 18, 23), SegmentTypeVertical}, // J
 				{image.Rect(28, 3, 32, 23), SegmentTypeVertical}, // B
 
-				//{image.Rect(3, 22, 15, 26), SegmentTypeHorizontal},  // G1
-				//{image.Rect(17, 22, 29, 26), SegmentTypeHorizontal}, // G2
+				{image.Rect(3, 22, 15, 26), SegmentTypeHorizontal},  // G1
+				{image.Rect(17, 22, 29, 26), SegmentTypeHorizontal}, // G2
 
-				{image.Rect(0, 25, 4, 45), SegmentTypeVertical}, // E
-				//{image.Rect(14, 25, 18, 45), SegmentTypeVertical}, // M
+				{image.Rect(0, 25, 4, 45), SegmentTypeVertical},   // E
+				{image.Rect(14, 25, 18, 45), SegmentTypeVertical}, // M
 				{image.Rect(28, 25, 32, 45), SegmentTypeVertical}, // C
 
-				//{image.Rect(3, 44, 15, 48), SegmentTypeHorizontal},  // D1
-				//{image.Rect(17, 44, 29, 48), SegmentTypeHorizontal}, // D2
+				{image.Rect(3, 44, 15, 48), SegmentTypeHorizontal},  // D1
+				{image.Rect(17, 44, 29, 48), SegmentTypeHorizontal}, // D2
 			},
 			diagSegments: []diagSegment{
-				//{image.Rect(4, 4, 14, 22), 4, DiagonalTypeLeftToRight},   // H
-				//{image.Rect(18, 22, 28, 4), 4, DiagonalTypeRightToLeft},  // K
+				{image.Rect(4, 4, 14, 22), 4, DiagonalTypeLeftToRight},   // H
+				{image.Rect(18, 22, 28, 4), 4, DiagonalTypeRightToLeft},  // K
 				{image.Rect(4, 44, 14, 26), 4, DiagonalTypeRightToLeft},  // N
 				{image.Rect(18, 26, 28, 44), 4, DiagonalTypeLeftToRight}, // L
 			},

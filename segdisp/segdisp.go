@@ -13,9 +13,9 @@
 // limitations under the License.
 
 /*
-Package segdisp simulates a 16-segment display drawn on a braille canvas.
+Package segdisp simulates a 16-segment display drawn on a canvas.
 
-Given a braille canvas, determines the placement and size of the individual
+Given a canvas, determines the placement and size of the individual
 segments and exposes API that can turn individual segments on and off.
 
 The following outlines segments in the display and their names.
@@ -33,17 +33,22 @@ The following outlines segments in the display and their names.
   E |   N   M   L   | C
     |  /    |    \  |
     | /     |     \ |
-     ------- -------  o
-       D1      D2     DP
+     ------- -------
+       D1      D2
 */
 package segdisp
 
 import (
-	"errors"
 	"fmt"
+	"image"
+	"log"
 
+	"github.com/mum4k/termdash/area"
+	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/numbers"
+	"github.com/mum4k/termdash/segdisp/segment"
 )
 
 // Segment represents a single segment in the display.
@@ -75,7 +80,6 @@ var segmentNames = map[Segment]string{
 	L:  "L",
 	M:  "M",
 	N:  "M",
-	DP: "DP",
 }
 
 const (
@@ -97,7 +101,6 @@ const (
 	L
 	M
 	N
-	DP
 
 	segmentMax // Used for validation.
 )
@@ -106,6 +109,15 @@ const (
 type Option interface {
 	// set sets the provided option.
 	set(*Display)
+}
+
+// AllSegments returns all 16 segments in an undefined order.
+func AllSegments() []Segment {
+	var res []Segment
+	for s := range segmentNames {
+		res = append(res, s)
+	}
+	return res
 }
 
 // option implements Option.
@@ -188,24 +200,65 @@ func (d *Display) ToggleSegment(s Segment) error {
 	return nil
 }
 
-// Minimum valid size of braille canvas in order to draw the segment display.
+// Minimum valid size of a cell canvas in order to draw the segment display.
 const (
-	// MinColPixels is the smallest valid amount of columns in pixels.
-	MinColPixels = 4 * braille.ColMult
-	// MinRowPixels is the smallest valid amount of rows in pixels.
-	MinRowPixels = 3 * braille.RowMult
+	// MinCols is the smallest valid amount of columns in a cell area.
+	MinCols = 4
+	// MinRowPixels is the smallest valid amount of rows in a cell area.
+	MinRows = 3
 )
 
 // Draw draws the current state of the segment display onto the canvas.
-// The canvas must be at 4x3 cells, or an error will be returned.
+// The canvas must be at least MinCols x MinRows cells, or an error will be
+// returned.
 // Any options provided to draw overwrite the values provided to New.
-func (d *Display) Draw(bc *braille.Canvas, opts ...Option) error {
-	if size := bc.Size(); size.X < MinColPixels || size.Y < MinRowPixels {
-		return fmt.Errorf("the canvas size %v is too small for the segment display, need at least %d columns and %d rows in pixels", size, MinColPixels, MinRowPixels)
+func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
+	ar, err := Required(cvs.Area())
+	if err != nil {
+		return err
 	}
 
-	// Determine line width.
+	bc, err := braille.New(ar)
+	if err != nil {
+		return fmt.Errorf("braille.New => %v", err)
+	}
+
+	bcAr := bc.Area()
+	sw := segWidth(bcAr)
+	half := bcAr.Dx() / 2
+	log.Printf("bcAr:%v, sw:%d, half:%d", bcAr, sw, half)
+
+	a1 := image.Rect(sw-1, 0, half-sw/2, sw)
+	a2 := image.Rect(half+sw/2, 0, bcAr.Max.X-1, sw)
+	log.Printf("a1:%v", a1)
+	log.Printf("a2:%v", a2)
+	for _, segAr := range []image.Rectangle{a1, a2} {
+		if err := segment.HV(bc, segAr, segment.SegmentTypeHorizontal); err != nil {
+			return fmt.Errorf("segment.HV => %v", err)
+		}
+	}
+
 	// Determine gap width.
 	// Determine length of short and long segment.
-	return errors.New("unimplemented")
+	return bc.CopyTo(cvs)
+}
+
+// Required, when given an area of cells, returns either an area of the same
+// size or a smaller area that is required to draw one display.
+// Returns a smaller area when the provided area didn;t have the required
+// aspect ratio.
+// Returns an error if the area is too small to draw a segment display.
+func Required(cellArea image.Rectangle) (image.Rectangle, error) {
+	ar := area.WithRatio(cellArea, image.Point{MinCols, MinRows})
+	if ar.Empty() {
+		return image.ZR, fmt.Errorf("cell area %v is to small to draw the segment display, need at least %d x %d cells", cellArea, MinCols, MinRows)
+	}
+	return ar, nil
+}
+
+// segWidth given an area for the display determines the width of individual segments.
+func segWidth(ar image.Rectangle) int {
+	// widthPerc is the relative width of a segment to the width of the canvas.
+	const widthPerc = 10
+	return int(numbers.Round(float64(ar.Dx()) * 10 / 100))
 }

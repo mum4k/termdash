@@ -34,7 +34,7 @@ func TestHV(t *testing.T) {
 		opts       []Option
 		cellCanvas image.Rectangle // Canvas in cells that will be converted to braille canvas for drawing.
 		ar         image.Rectangle
-		st         SegmentType
+		st         Type
 		want       func(size image.Point) *faketerm.Terminal
 		wantErr    bool
 	}{
@@ -84,14 +84,14 @@ func TestHV(t *testing.T) {
 			desc:       "fails on unsupported segment type (too small)",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 2),
-			st:         SegmentType(0),
+			st:         Type(0),
 			wantErr:    true,
 		},
 		{
 			desc:       "fails on unsupported segment type (too large)",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 2),
-			st:         SegmentType(int(Vertical) + 1),
+			st:         Type(int(Vertical) + 1),
 			wantErr:    true,
 		},
 		{
@@ -1112,7 +1112,7 @@ func TestHV(t *testing.T) {
 // hvSegment is one horizontal or vertical segment.
 type hvSegment struct {
 	ar image.Rectangle
-	st SegmentType
+	st Type
 }
 
 // diagSegment is one diagonal segment.

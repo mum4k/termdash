@@ -24,25 +24,25 @@ import (
 	"github.com/mum4k/termdash/draw"
 )
 
-// SegmentType identifies the type of the segment that is drawn.
-type SegmentType int
+// Type identifies the type of the segment that is drawn.
+type Type int
 
 // String implements fmt.Stringer()
-func (st SegmentType) String() string {
+func (st Type) String() string {
 	if n, ok := segmentTypeNames[st]; ok {
 		return n
 	}
-	return "SegmentTypeUnknown"
+	return "TypeUnknown"
 }
 
-// segmentTypeNames maps SegmentType values to human readable names.
-var segmentTypeNames = map[SegmentType]string{
+// segmentTypeNames maps Type values to human readable names.
+var segmentTypeNames = map[Type]string{
 	Horizontal: "Horizontal",
 	Vertical:   "Vertical",
 }
 
 const (
-	segmentTypeUnknown SegmentType = iota
+	segmentTypeUnknown Type = iota
 
 	// Horizontal is a horizontal segment.
 	Horizontal
@@ -125,7 +125,7 @@ func validArea(ar image.Rectangle) error {
 
 // HV draws a horizontal or a vertical display segment, filling the provided area.
 // The segment will have slopes on both of its ends.
-func HV(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option) error {
+func HV(bc *braille.Canvas, ar image.Rectangle, st Type, opts ...Option) error {
 	if err := validArea(ar); err != nil {
 		return err
 	}

@@ -82,7 +82,7 @@ var segmentNames = map[Segment]string{
 	K:  "K",
 	L:  "L",
 	M:  "M",
-	N:  "M",
+	N:  "N",
 }
 
 const (
@@ -254,7 +254,6 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 	}
 
 	bcAr := area.WithRatio(bc.Area(), image.Point{3, 5})
-	log.Printf("XXX before:%v after:%v", bc.Area(), bcAr)
 	segW := segWidth(bcAr)
 	if segW == 4 {
 		segW = 5
@@ -310,7 +309,7 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 
 	for _, segArg := range []struct {
 		s    Segment
-		st   segment.SegmentType
+		st   segment.Type
 		ar   image.Rectangle
 		opts []segment.Option
 	}{
@@ -334,6 +333,7 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		if !d.segments[segArg.s] {
 			continue
 		}
+		log.Printf("segment.HV for %v, ar:%v", segArg.s, segArg.ar)
 		if err := segment.HV(bc, segArg.ar, segArg.st, segArg.opts...); err != nil {
 			return fmt.Errorf("failed to draw segment %v, segment.HV => %v", segArg.s, err)
 		}
@@ -376,6 +376,7 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		if !d.segments[segArg.s] {
 			continue
 		}
+		log.Printf("segment.Diagonal for %v, ar:%v", segArg.s, segArg.ar)
 		if err := segment.Diagonal(bc, segArg.ar, segW, segArg.dt); err != nil {
 			return fmt.Errorf("failed to draw segment %v, segment.Diagonal => %v", segArg.s, err)
 		}

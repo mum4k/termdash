@@ -20,6 +20,9 @@ import (
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/canvas/braille/testbraille"
+	"github.com/mum4k/termdash/draw/segdisp/segment"
+	"github.com/mum4k/termdash/draw/segdisp/segment/testsegment"
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
@@ -35,40 +38,12 @@ func TestDraw(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			desc:       "smallest display 6x5, all segments",
+			desc:       "empty when no segments set",
 			cellCanvas: image.Rect(0, 0, 6, 5),
-			/*
-				update: func(d *Display) error {
-					for _, s := range AllSegments() {
-						if err := d.SetSegment(s); err != nil {
-							return err
-						}
-					}
-					return nil
-				},*/
-			update: func(d *Display) error {
-				return d.SetCharacter('w')
-			},
 		},
 		{
-			desc:       "8x6, all segments",
-			cellCanvas: image.Rect(0, 0, 8, 6),
-			/*
-				update: func(d *Display) error {
-					for _, s := range AllSegments() {
-						if err := d.SetSegment(s); err != nil {
-							return err
-						}
-					}
-					return nil
-				},*/
-			update: func(d *Display) error {
-				return d.SetCharacter('W')
-			},
-		},
-		{
-			desc:       "16x12, all segments",
-			cellCanvas: image.Rect(0, 0, 16, 12),
+			desc:       "smallest valid display 6x5, all segments",
+			cellCanvas: image.Rect(0, 0, 6, 5),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -77,60 +52,33 @@ func TestDraw(t *testing.T) {
 				}
 				return nil
 			},
-			/*
-				update: func(d *Display) error {
-					return d.SetCharacter('W')
-				},*/
-		},
-		{
-			desc:       "32x24, all segments",
-			cellCanvas: image.Rect(0, 0, 32, 24),
-			/*
-				update: func(d *Display) error {
-					for _, s := range AllSegments() {
-						if err := d.SetSegment(s); err != nil {
-							return err
-						}
-					}
-					return nil
-				},*/
-			update: func(d *Display) error {
-				return d.SetCharacter('W')
-			},
-		},
-		{
-			desc:       "64x48, all segments",
-			cellCanvas: image.Rect(0, 0, 64, 48),
-			/*
-				update: func(d *Display) error {
-					for _, s := range AllSegments() {
-						if err := d.SetSegment(s); err != nil {
-							return err
-						}
-					}
-					return nil
-				},*/
-			update: func(d *Display) error {
-				return d.SetCharacter('W')
-			},
-		},
-		{
-			desc:       "80x64, all segments",
-			cellCanvas: image.Rect(0, 0, 80, 64),
-			update: func(d *Display) error {
-				for _, s := range AllSegments() {
-					if err := d.SetSegment(s); err != nil {
-						return err
-					}
-				}
-				return nil
-			},
-		},
-		{
-			desc:       "80x64, W",
-			cellCanvas: image.Rect(0, 0, 80, 64),
-			update: func(d *Display) error {
-				return d.SetCharacter('W')
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(1, 0, 4, 1), segment.Horizontal) // A1
+				testsegment.MustHV(bc, image.Rect(5, 0, 8, 1), segment.Horizontal) // A2
+
+				testsegment.MustHV(bc, image.Rect(0, 1, 1, 8), segment.Vertical) // F
+				testsegment.MustHV(bc, image.Rect(4, 1, 5, 8), segment.Vertical) // J
+				testsegment.MustHV(bc, image.Rect(8, 1, 9, 8), segment.Vertical) // B
+
+				testsegment.MustHV(bc, image.Rect(1, 8, 4, 9), segment.Horizontal) // G1
+				testsegment.MustHV(bc, image.Rect(5, 8, 8, 9), segment.Horizontal) // G2
+
+				testsegment.MustHV(bc, image.Rect(0, 9, 1, 16), segment.Vertical) // E
+				testsegment.MustHV(bc, image.Rect(4, 9, 5, 16), segment.Vertical) // M
+				testsegment.MustHV(bc, image.Rect(8, 9, 9, 16), segment.Vertical) // C
+
+				testsegment.MustHV(bc, image.Rect(1, 16, 4, 17), segment.Horizontal) // D1
+				testsegment.MustHV(bc, image.Rect(5, 16, 8, 17), segment.Horizontal) // D2
+
+				testsegment.MustDiagonal(bc, image.Rect(1, 1, 4, 8), 1, segment.LeftToRight)  // H
+				testsegment.MustDiagonal(bc, image.Rect(5, 1, 8, 8), 1, segment.RightToLeft)  // K
+				testsegment.MustDiagonal(bc, image.Rect(1, 9, 4, 16), 1, segment.RightToLeft) // N
+				testsegment.MustDiagonal(bc, image.Rect(5, 9, 8, 16), 1, segment.LeftToRight) // L
+				testbraille.MustApply(bc, ft)
+				return ft
 			},
 		},
 	}

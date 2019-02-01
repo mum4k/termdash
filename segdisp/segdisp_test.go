@@ -35,15 +35,35 @@ func TestDraw(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			desc:       "smallest display, all segments",
-			cellCanvas: image.Rect(0, 0, 4, 3),
-			update: func(d *Display) error {
-				for _, s := range AllSegments() {
-					if err := d.SetSegment(s); err != nil {
-						return err
+			desc:       "smallest display 6x5, all segments",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			/*
+				update: func(d *Display) error {
+					for _, s := range AllSegments() {
+						if err := d.SetSegment(s); err != nil {
+							return err
+						}
 					}
-				}
-				return nil
+					return nil
+				},*/
+			update: func(d *Display) error {
+				return d.SetCharacter('w')
+			},
+		},
+		{
+			desc:       "8x6, all segments",
+			cellCanvas: image.Rect(0, 0, 8, 6),
+			/*
+				update: func(d *Display) error {
+					for _, s := range AllSegments() {
+						if err := d.SetSegment(s); err != nil {
+							return err
+						}
+					}
+					return nil
+				},*/
+			update: func(d *Display) error {
+				return d.SetCharacter('W')
 			},
 		},
 		{
@@ -56,6 +76,61 @@ func TestDraw(t *testing.T) {
 					}
 				}
 				return nil
+			},
+			/*
+				update: func(d *Display) error {
+					return d.SetCharacter('W')
+				},*/
+		},
+		{
+			desc:       "32x24, all segments",
+			cellCanvas: image.Rect(0, 0, 32, 24),
+			/*
+				update: func(d *Display) error {
+					for _, s := range AllSegments() {
+						if err := d.SetSegment(s); err != nil {
+							return err
+						}
+					}
+					return nil
+				},*/
+			update: func(d *Display) error {
+				return d.SetCharacter('W')
+			},
+		},
+		{
+			desc:       "64x48, all segments",
+			cellCanvas: image.Rect(0, 0, 64, 48),
+			/*
+				update: func(d *Display) error {
+					for _, s := range AllSegments() {
+						if err := d.SetSegment(s); err != nil {
+							return err
+						}
+					}
+					return nil
+				},*/
+			update: func(d *Display) error {
+				return d.SetCharacter('W')
+			},
+		},
+		{
+			desc:       "80x64, all segments",
+			cellCanvas: image.Rect(0, 0, 80, 64),
+			update: func(d *Display) error {
+				for _, s := range AllSegments() {
+					if err := d.SetSegment(s); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
+		{
+			desc:       "80x64, W",
+			cellCanvas: image.Rect(0, 0, 80, 64),
+			update: func(d *Display) error {
+				return d.SetCharacter('W')
 			},
 		},
 	}

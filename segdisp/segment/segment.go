@@ -143,7 +143,7 @@ func nextHorizLine(num int, ar image.Rectangle) (image.Point, image.Point) {
 
 	height := ar.Dy()
 	width := ar.Dx()
-	if height < 2 || width < 3 {
+	if height < 3 || width < 3 {
 		// No slopes under these dimensions as we don't have the resolution.
 		return start, end
 	}
@@ -195,7 +195,7 @@ func nextVertLine(num int, ar image.Rectangle) (image.Point, image.Point) {
 
 	height := ar.Dy()
 	width := ar.Dx()
-	if height < 3 || width < 2 {
+	if height < 3 || width < 3 {
 		// No slopes under these dimensions as we don't have the resolution.
 		return start, end
 	}

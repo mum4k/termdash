@@ -39,9 +39,11 @@ The following outlines segments in the display and their names.
 package segdisp
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"log"
+	"math"
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
@@ -104,6 +106,13 @@ const (
 
 	segmentMax // Used for validation.
 )
+
+// characterSegments maps characters that can be displayed on their segments.
+var characterSegments = map[rune][]Segment{
+	' ': nil,
+	'w': {E, N, L, C},
+	'W': {F, E, N, L, C, B},
+}
 
 // Option is used to provide options.
 type Option interface {
@@ -200,6 +209,26 @@ func (d *Display) ToggleSegment(s Segment) error {
 	return nil
 }
 
+// ErrUnsupportedCharacter is returned when the provided character cannot be displayed.
+var ErrUnsupportedCharacter = errors.New("unsupported character")
+
+// Character sets all the segments that are needed to display the provided character.
+// Returns ErrUnsupportedCharacter when the character cannot be displayed.
+// Doesn't clear the display of segments set previously.
+func (d *Display) SetCharacter(c rune) error {
+	seg, ok := characterSegments[c]
+	if !ok {
+		return ErrUnsupportedCharacter
+	}
+
+	for _, s := range seg {
+		if err := d.SetSegment(s); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Minimum valid size of a cell canvas in order to draw the segment display.
 const (
 	// MinCols is the smallest valid amount of columns in a cell area.
@@ -223,42 +252,160 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		return fmt.Errorf("braille.New => %v", err)
 	}
 
-	bcAr := bc.Area()
-	sw := segWidth(bcAr)
-	half := bcAr.Dx() / 2
-	log.Printf("bcAr:%v, sw:%d, half:%d", bcAr, sw, half)
+	bcAr := area.WithRatio(bc.Area(), image.Point{3, 5})
+	log.Printf("XXX before:%v after:%v", bc.Area(), bcAr)
+	segW := segWidth(bcAr)
+	if segW == 4 {
+		segW = 5
+	}
 
-	a1 := image.Rect(sw-1, 0, half-sw/2, sw)
-	a2 := image.Rect(half+sw/2, 0, bcAr.Max.X-1, sw)
-	log.Printf("a1:%v", a1)
-	log.Printf("a2:%v", a2)
-	for _, segAr := range []image.Rectangle{a1, a2} {
-		if err := segment.HV(bc, segAr, segment.SegmentTypeHorizontal); err != nil {
-			return fmt.Errorf("segment.HV => %v", err)
+	// Gap between the edge and the first segment.
+	//_, edgeGap := numbers.MinMaxInts([]int{segW/2 + 1 + segW/6, 1})
+	// Gap between two horizontal or vertical segments.
+	_, diaGap := numbers.MinMaxInts([]int{int(float64(segW) * 0.4), 1})
+
+	segLeg := float64(segW) / math.Sqrt2
+	twoSegHypo := 2*segLeg + float64(diaGap)
+	twoSegLeg := twoSegHypo / math.Sqrt2
+	segPeakDist := segLeg / math.Sqrt2
+	edgeSegGap := twoSegLeg - segPeakDist
+	diaLeg := (float64(diaGap) / math.Sqrt2)
+	peakToPeak := diaLeg * 2
+	if segW == 2 {
+		peakToPeak = 2
+	}
+
+	// Lengths of the short and long segment.
+	shortL := (bcAr.Dx()-int(numbers.Round(2*edgeSegGap+peakToPeak)))/2 - 1
+	longL := (bcAr.Dy()-int(numbers.Round(2*edgeSegGap+peakToPeak)))/2 - 1
+
+	//log.Printf("dx:%d segW:%d, edgeGap:%d, segGap:%d, shortL:%d, longL:%d, end:%d, mid:%d, midGap:%d segDist:%d", bcAr.Dx(), segW, edgeGap, segGap, shortL, longL, end, mid, midGap, segDist)
+
+	eg := int(numbers.Round(edgeSegGap))
+	ptp := int(numbers.Round(peakToPeak))
+
+	a1Ar := image.Rect(eg, 0, eg+shortL, segW)
+	a2Ar := image.Rect(a1Ar.Max.X+ptp, 0, a1Ar.Max.X+ptp+shortL, segW)
+	fAr := image.Rect(0, eg, segW, eg+longL)
+
+	midStart := a1Ar.Max.X + int(numbers.Round(diaLeg-segPeakDist))
+
+	jAr := image.Rect(midStart, eg, midStart+segW, eg+longL)
+
+	endStart := a2Ar.Max.X + int(numbers.Round(diaLeg-segPeakDist))
+	bAr := image.Rect(endStart, eg, endStart+segW, eg+longL)
+
+	cenStart := fAr.Max.Y + int(numbers.Round(diaLeg-segPeakDist))
+	g1Ar := image.Rect(eg, cenStart, eg+shortL, cenStart+segW)
+	g2Ar := image.Rect(g1Ar.Max.X+ptp, cenStart, g1Ar.Max.X+ptp+shortL, cenStart+segW)
+
+	eAr := image.Rect(0, fAr.Max.Y+ptp, segW, fAr.Max.Y+ptp+longL)
+	mAr := image.Rect(midStart, jAr.Max.Y+ptp, midStart+segW, jAr.Max.Y+ptp+longL)
+	cAr := image.Rect(endStart, bAr.Max.Y+ptp, endStart+segW, bAr.Max.Y+ptp+longL)
+
+	botStart := eAr.Max.Y + int(numbers.Round(diaLeg-segPeakDist))
+	d1Ar := image.Rect(eg, botStart, eg+shortL, botStart+segW)
+	d2Ar := image.Rect(d1Ar.Max.X+ptp, botStart, d1Ar.Max.X+ptp+shortL, botStart+segW)
+
+	for _, segArg := range []struct {
+		s  Segment
+		st segment.SegmentType
+		ar image.Rectangle
+	}{
+		{A1, segment.SegmentTypeHorizontal, a1Ar},
+		{A2, segment.SegmentTypeHorizontal, a2Ar},
+
+		{F, segment.SegmentTypeVertical, fAr},
+		{J, segment.SegmentTypeVertical, jAr},
+		{B, segment.SegmentTypeVertical, bAr},
+
+		{G1, segment.SegmentTypeHorizontal, g1Ar},
+		{G2, segment.SegmentTypeHorizontal, g2Ar},
+
+		{E, segment.SegmentTypeVertical, eAr},
+		{M, segment.SegmentTypeVertical, mAr},
+		{C, segment.SegmentTypeVertical, cAr},
+
+		{D1, segment.SegmentTypeHorizontal, d1Ar},
+		{D2, segment.SegmentTypeHorizontal, d2Ar},
+	} {
+		if !d.segments[segArg.s] {
+			continue
+		}
+		if err := segment.HV(bc, segArg.ar, segArg.st); err != nil {
+			return fmt.Errorf("failed to draw segment %v, segment.HV => %v", segArg.s, err)
 		}
 	}
 
-	// Determine gap width.
-	// Determine length of short and long segment.
+	topLStartX := int(numbers.Round(float64(a1Ar.Min.X) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	topLStartY := int(numbers.Round(float64(fAr.Min.Y) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	topLEndX := int(numbers.Round(float64(g1Ar.Max.X) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	topLEndY := int(numbers.Round(float64(jAr.Max.Y) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	hAr := image.Rect(topLStartX, topLStartY, topLEndX, topLEndY)
+
+	topRStartX := int(numbers.Round(float64(a2Ar.Max.X) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	topRStartY := int(numbers.Round(float64(bAr.Min.Y) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	topREndX := int(numbers.Round(float64(g2Ar.Min.X) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	topREndY := int(numbers.Round(float64(jAr.Max.Y) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	kAr := image.Rect(topRStartX, topRStartY, topREndX, topREndY)
+
+	botLStartX := int(numbers.Round(float64(g1Ar.Max.X) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	botLStartY := int(numbers.Round(float64(mAr.Min.Y) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	botLEndX := int(numbers.Round(float64(d1Ar.Min.X) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	botLEndY := int(numbers.Round(float64(eAr.Max.Y) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	nAr := image.Rect(botLStartX, botLStartY, botLEndX, botLEndY)
+
+	botRStartX := int(numbers.Round(float64(g2Ar.Min.X) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	botRStartY := int(numbers.Round(float64(mAr.Min.Y) + segPeakDist - diaLeg + float64(diaGap)*0.3))
+	botREndX := int(numbers.Round(float64(d2Ar.Max.X) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	botREndY := int(numbers.Round(float64(cAr.Max.Y) - segPeakDist + diaLeg - float64(diaGap)*0.3))
+	lAr := image.Rect(botRStartX, botRStartY, botREndX, botREndY)
+
+	for _, segArg := range []struct {
+		s  Segment
+		dt segment.DiagonalType
+		ar image.Rectangle
+	}{
+		{H, segment.DiagonalTypeLeftToRight, hAr},
+		{K, segment.DiagonalTypeRightToLeft, kAr},
+		{N, segment.DiagonalTypeRightToLeft, nAr},
+		{L, segment.DiagonalTypeLeftToRight, lAr},
+	} {
+		if !d.segments[segArg.s] {
+			continue
+		}
+		if err := segment.Diagonal(bc, segArg.ar, segW, segArg.dt); err != nil {
+			return fmt.Errorf("failed to draw segment %v, segment.Diagonal => %v", segArg.s, err)
+		}
+	}
+
 	return bc.CopyTo(cvs)
 }
 
 // Required, when given an area of cells, returns either an area of the same
 // size or a smaller area that is required to draw one display.
-// Returns a smaller area when the provided area didn;t have the required
+// Returns a smaller area when the provided area didn't have the required
 // aspect ratio.
 // Returns an error if the area is too small to draw a segment display.
 func Required(cellArea image.Rectangle) (image.Rectangle, error) {
-	ar := area.WithRatio(cellArea, image.Point{MinCols, MinRows})
-	if ar.Empty() {
+	bcAr := image.Rect(cellArea.Min.X, cellArea.Min.Y, cellArea.Max.X*braille.ColMult, cellArea.Max.Y*braille.RowMult)
+	bcArAdj := area.WithRatio(bcAr, image.Point{3, 5})
+	if bcArAdj.Empty() {
 		return image.ZR, fmt.Errorf("cell area %v is to small to draw the segment display, need at least %d x %d cells", cellArea, MinCols, MinRows)
 	}
-	return ar, nil
+
+	needCols := int(math.Ceil(float64(bcArAdj.Dx()) / braille.ColMult))
+	needRows := int(math.Ceil(float64(bcArAdj.Dy()) / braille.RowMult))
+	needAr := image.Rect(cellArea.Min.X, cellArea.Min.Y, cellArea.Min.X+needCols, cellArea.Min.Y+needRows)
+	if !needAr.In(cellArea) {
+		return image.ZR, fmt.Errorf("what just happened?")
+	}
+	return needAr, nil
 }
 
 // segWidth given an area for the display determines the width of individual segments.
 func segWidth(ar image.Rectangle) int {
 	// widthPerc is the relative width of a segment to the width of the canvas.
-	const widthPerc = 10
-	return int(numbers.Round(float64(ar.Dx()) * 10 / 100))
+	const widthPerc = 9
+	return int(numbers.Round(float64(ar.Dx()) * widthPerc / 100))
 }

@@ -60,8 +60,9 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	cellOpts   []cell.Option
-	skipSlopes bool
+	cellOpts      []cell.Option
+	skipSlopes    bool
+	reverseSlopes bool
 }
 
 // option implements Option.
@@ -85,6 +86,24 @@ func CellOpts(cOpts ...cell.Option) Option {
 func SkipSlopes() Option {
 	return option(func(opts *options) {
 		opts.skipSlopes = true
+	})
+}
+
+// ReverseSlopes if provided reverses the order in which slopes are drawn.
+// This only has a visible effect when the horizontal segment has height of two
+// or the vertical segment has width of two.
+// Without this option segments with height / width of two look like this:
+//    -   |
+//   ---  ||
+//        |
+//
+// With this option:
+//   ---  |
+//    -  ||
+//        |
+func ReverseSlopes() Option {
+	return option(func(opts *options) {
+		opts.reverseSlopes = true
 	})
 }
 
@@ -180,6 +199,9 @@ func nextHorizLine(num int, ar image.Rectangle, opt *options) (image.Point, imag
 			return start, end
 		}
 	}
+	if height == 2 && opt.reverseSlopes {
+		return adjustHoriz(start, end, width, num)
+	}
 
 	if num < halfHeight {
 		adjust := halfHeight - num
@@ -235,6 +257,9 @@ func nextVertLine(num int, ar image.Rectangle, opt *options) (image.Point, image
 		if num == halfWidth || (width%2 == 0 && num == halfWidth-1) {
 			return start, end
 		}
+	}
+	if width == 2 && opt.reverseSlopes {
+		return adjustVert(start, end, width, num)
 	}
 
 	if num < halfWidth {

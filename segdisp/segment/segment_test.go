@@ -311,7 +311,44 @@ func TestHV(t *testing.T) {
 			},
 		},
 		{
+			desc: "horizontal, segment 3x2, reverse slopes",
+			opts: []Option{
+				ReverseSlopes(),
+			},
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 3, 2),
+			st:         Horizontal,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{2, 0})
+				testdraw.MustBrailleLine(bc, image.Point{1, 1}, image.Point{1, 1})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
 			desc:       "horizontal, segment 3x3",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 3, 3),
+			st:         Horizontal,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{1, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 2}, image.Point{1, 2})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "horizontal, segment 3x3, reverse slopes has no effect on larger height",
+			opts: []Option{
+				ReverseSlopes(),
+			},
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 3),
 			st:         Horizontal,
@@ -666,6 +703,25 @@ func TestHV(t *testing.T) {
 			},
 		},
 		{
+			desc: "vertical, segment 2x3, reverse slopes",
+			opts: []Option{
+				ReverseSlopes(),
+			},
+			cellCanvas: image.Rect(0, 0, 1, 1),
+			ar:         image.Rect(0, 0, 2, 3),
+			st:         Vertical,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{0, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{1, 1})
+				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{0, 2})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
 			desc:       "vertical, segment 2x4",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 4),
@@ -731,6 +787,25 @@ func TestHV(t *testing.T) {
 		},
 		{
 			desc:       "vertical, segment 3x3",
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 3, 3),
+			st:         Vertical,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{1, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 2}, image.Point{1, 2})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "vertical, segment 3x3, reverse slopes has no effect on larger width",
+			opts: []Option{
+				ReverseSlopes(),
+			},
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 3),
 			st:         Vertical,

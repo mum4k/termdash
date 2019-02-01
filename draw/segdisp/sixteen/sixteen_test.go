@@ -42,6 +42,247 @@ func TestDraw(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 6, 5),
 		},
 		{
+			desc:       "smallest valid display 6x5, A1",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(A1)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(1, 0, 4, 1), segment.Horizontal) // A1
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, A2",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(A2)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 0, 8, 1), segment.Horizontal) // A2
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, F",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(F)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(0, 1, 1, 8), segment.Vertical) // F
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, J",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(J)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(4, 1, 5, 8), segment.Vertical) // J
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, B",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(B)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(8, 1, 9, 8), segment.Vertical) // B
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, G1",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(G1)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(1, 8, 4, 9), segment.Horizontal) // G1
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, G2",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(G2)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 8, 8, 9), segment.Horizontal) // G2
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, E",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(E)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(0, 9, 1, 16), segment.Vertical) // E
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, M",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(M)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(4, 9, 5, 16), segment.Vertical) // M
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, C",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(C)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(8, 9, 9, 16), segment.Vertical) // C
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, D1",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(D1)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(1, 16, 4, 17), segment.Horizontal) // D1
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, D2",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(D2)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 16, 8, 17), segment.Horizontal) // D2
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, H",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(H)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustDiagonal(bc, image.Rect(1, 1, 4, 8), 1, segment.LeftToRight) // H
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, K",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(K)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustDiagonal(bc, image.Rect(5, 1, 8, 8), 1, segment.RightToLeft) // K
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+
+		{
+			desc:       "smallest valid display 6x5, N",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(N)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustDiagonal(bc, image.Rect(1, 9, 4, 16), 1, segment.RightToLeft) // N
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, L",
+			cellCanvas: image.Rect(0, 0, 6, 5),
+			update: func(d *Display) error {
+				return d.SetSegment(L)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustDiagonal(bc, image.Rect(5, 9, 8, 16), 1, segment.LeftToRight) // L
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
 			desc:       "smallest valid display 6x5, all segments",
 			cellCanvas: image.Rect(0, 0, 6, 5),
 			update: func(d *Display) error {

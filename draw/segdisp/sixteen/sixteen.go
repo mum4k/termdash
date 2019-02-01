@@ -13,10 +13,11 @@
 // limitations under the License.
 
 /*
-Package segdisp simulates a 16-segment display drawn on a canvas.
+Package sixteen simulates a 16-segment display drawn on a canvas.
 
 Given a canvas, determines the placement and size of the individual
-segments and exposes API that can turn individual segments on and off.
+segments and exposes API that can turn individual segments on and off or
+display characters.
 
 The following outlines segments in the display and their names.
 
@@ -36,7 +37,7 @@ The following outlines segments in the display and their names.
      ------- -------
        D1      D2
 */
-package segdisp
+package sixteen
 
 import (
 	"errors"
@@ -49,8 +50,8 @@ import (
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/draw/segdisp/segment"
 	"github.com/mum4k/termdash/numbers"
-	"github.com/mum4k/termdash/segdisp/segment"
 )
 
 // Segment represents a single segment in the display.
@@ -308,31 +309,32 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 	d2Ar := image.Rect(d1Ar.Max.X+ptp, botStart, d1Ar.Max.X+ptp+shortL, botStart+segW)
 
 	for _, segArg := range []struct {
-		s  Segment
-		st segment.SegmentType
-		ar image.Rectangle
+		s    Segment
+		st   segment.SegmentType
+		ar   image.Rectangle
+		opts []segment.Option
 	}{
-		{A1, segment.SegmentTypeHorizontal, a1Ar},
-		{A2, segment.SegmentTypeHorizontal, a2Ar},
+		{A1, segment.Horizontal, a1Ar, nil},
+		{A2, segment.Horizontal, a2Ar, nil},
 
-		{F, segment.SegmentTypeVertical, fAr},
-		{J, segment.SegmentTypeVertical, jAr},
-		{B, segment.SegmentTypeVertical, bAr},
+		{F, segment.Vertical, fAr, nil},
+		{J, segment.Vertical, jAr, []segment.Option{segment.SkipSlopesLTE(2)}},
+		{B, segment.Vertical, bAr, []segment.Option{segment.ReverseSlopes()}},
 
-		{G1, segment.SegmentTypeHorizontal, g1Ar},
-		{G2, segment.SegmentTypeHorizontal, g2Ar},
+		{G1, segment.Horizontal, g1Ar, []segment.Option{segment.SkipSlopesLTE(2)}},
+		{G2, segment.Horizontal, g2Ar, []segment.Option{segment.SkipSlopesLTE(2)}},
 
-		{E, segment.SegmentTypeVertical, eAr},
-		{M, segment.SegmentTypeVertical, mAr},
-		{C, segment.SegmentTypeVertical, cAr},
+		{E, segment.Vertical, eAr, nil},
+		{M, segment.Vertical, mAr, []segment.Option{segment.SkipSlopesLTE(2)}},
+		{C, segment.Vertical, cAr, []segment.Option{segment.ReverseSlopes()}},
 
-		{D1, segment.SegmentTypeHorizontal, d1Ar},
-		{D2, segment.SegmentTypeHorizontal, d2Ar},
+		{D1, segment.Horizontal, d1Ar, []segment.Option{segment.ReverseSlopes()}},
+		{D2, segment.Horizontal, d2Ar, []segment.Option{segment.ReverseSlopes()}},
 	} {
 		if !d.segments[segArg.s] {
 			continue
 		}
-		if err := segment.HV(bc, segArg.ar, segArg.st); err != nil {
+		if err := segment.HV(bc, segArg.ar, segArg.st, segArg.opts...); err != nil {
 			return fmt.Errorf("failed to draw segment %v, segment.HV => %v", segArg.s, err)
 		}
 	}
@@ -366,10 +368,10 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		dt segment.DiagonalType
 		ar image.Rectangle
 	}{
-		{H, segment.DiagonalTypeLeftToRight, hAr},
-		{K, segment.DiagonalTypeRightToLeft, kAr},
-		{N, segment.DiagonalTypeRightToLeft, nAr},
-		{L, segment.DiagonalTypeLeftToRight, lAr},
+		{H, segment.LeftToRight, hAr},
+		{K, segment.RightToLeft, kAr},
+		{N, segment.RightToLeft, nAr},
+		{L, segment.LeftToRight, lAr},
 	} {
 		if !d.segments[segArg.s] {
 			continue

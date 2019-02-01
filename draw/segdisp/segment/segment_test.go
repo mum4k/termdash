@@ -366,7 +366,7 @@ func TestHV(t *testing.T) {
 		{
 			desc: "horizontal, segment 3x3, skip slopes",
 			opts: []Option{
-				SkipSlopes(),
+				SkipSlopesLTE(3),
 			},
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 3),
@@ -378,6 +378,25 @@ func TestHV(t *testing.T) {
 				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{2, 0})
 				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
 				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{2, 2})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "horizontal, segment 3x3, doesn't skip slopes because is taller",
+			opts: []Option{
+				SkipSlopesLTE(2),
+			},
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 3, 3),
+			st:         Horizontal,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{1, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 2}, image.Point{1, 2})
 				testbraille.MustApply(bc, ft)
 				return ft
 			},
@@ -823,7 +842,7 @@ func TestHV(t *testing.T) {
 		{
 			desc: "vertical, segment 3x3, skips slopes",
 			opts: []Option{
-				SkipSlopes(),
+				SkipSlopesLTE(3),
 			},
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 3),
@@ -835,6 +854,25 @@ func TestHV(t *testing.T) {
 				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{2, 0})
 				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
 				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{2, 2})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "vertical, segment 3x3, doesn't skips slopes because is wider",
+			opts: []Option{
+				SkipSlopesLTE(2),
+			},
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 3, 3),
+			st:         Vertical,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{1, 0}, image.Point{1, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
+				testdraw.MustBrailleLine(bc, image.Point{1, 2}, image.Point{1, 2})
 				testbraille.MustApply(bc, ft)
 				return ft
 			},
@@ -1226,7 +1264,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(-1, 0, 1, 1),
 			width:      1,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
@@ -1234,7 +1272,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, -1, 1, 1),
 			width:      1,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
@@ -1242,7 +1280,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rectangle{image.Point{0, 0}, image.Point{-1, 1}},
 			width:      1,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
@@ -1250,7 +1288,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rectangle{image.Point{0, 0}, image.Point{1, -1}},
 			width:      1,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
@@ -1258,7 +1296,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 0, 1),
 			width:      1,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
@@ -1266,7 +1304,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 0),
 			width:      1,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
@@ -1282,7 +1320,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 2),
 			width:      1,
-			dt:         DiagonalType(int(DiagonalTypeRightToLeft) + 1),
+			dt:         DiagonalType(int(RightToLeft) + 1),
 			wantErr:    true,
 		},
 		{
@@ -1290,7 +1328,7 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 3, 1),
 			width:      1,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
@@ -1298,14 +1336,14 @@ func TestDiagonal(t *testing.T) {
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 3, 1),
 			width:      0,
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			wantErr:    true,
 		},
 		{
 			desc:       "left to right, area 4x4, width 1",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      1,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1321,7 +1359,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x4, width 1",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      1,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1337,7 +1375,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 4x4, width 2",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1354,7 +1392,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x4, width 2",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1371,7 +1409,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 4x4, width 3",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      3,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1389,7 +1427,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x4, width 3",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      3,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1407,7 +1445,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 8x4, width 3",
 			cellCanvas: image.Rect(0, 0, 4, 1),
 			ar:         image.Rect(0, 0, 8, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      3,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1425,7 +1463,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 8x4, width 3",
 			cellCanvas: image.Rect(0, 0, 4, 1),
 			ar:         image.Rect(0, 0, 8, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      3,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1443,7 +1481,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 4x8, width 3",
 			cellCanvas: image.Rect(0, 0, 2, 2),
 			ar:         image.Rect(0, 0, 4, 8),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      3,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1461,7 +1499,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x8, width 3",
 			cellCanvas: image.Rect(0, 0, 2, 2),
 			ar:         image.Rect(0, 0, 4, 8),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      3,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1479,7 +1517,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 4x4, width 4",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      4,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1498,7 +1536,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x4, width 4",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      4,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1517,7 +1555,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 4x4, width 5",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      5,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1537,7 +1575,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x4, width 5",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      5,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1557,7 +1595,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 4x4, width 6",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      6,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1578,7 +1616,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x4, width 6",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      6,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1599,7 +1637,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, area 4x4, width 7",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      7,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1621,7 +1659,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, area 4x4, width 7",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      7,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1643,7 +1681,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "left to right, fails when width is larger than area",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      8,
 			wantErr:    true,
 		},
@@ -1651,7 +1689,7 @@ func TestDiagonal(t *testing.T) {
 			desc:       "right to left, fails when width is larger than area",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeRightToLeft,
+			dt:         RightToLeft,
 			width:      8,
 			wantErr:    true,
 		},
@@ -1665,7 +1703,7 @@ func TestDiagonal(t *testing.T) {
 			},
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			dt:         DiagonalTypeLeftToRight,
+			dt:         LeftToRight,
 			width:      2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

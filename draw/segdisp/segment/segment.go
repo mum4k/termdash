@@ -61,7 +61,7 @@ type Option interface {
 // options stores the provided options.
 type options struct {
 	cellOpts      []cell.Option
-	skipSlopes    bool
+	skipSlopesLTE int
 	reverseSlopes bool
 }
 
@@ -82,10 +82,12 @@ func CellOpts(cOpts ...cell.Option) Option {
 	})
 }
 
-// SkipSlopes if provided instructs HV to not create slopes at the ends of a segment.
-func SkipSlopes() Option {
+// SkipSlopesLTE if provided instructs HV to not create slopes at the ends of a
+// segment if the height of the horizontal or the width of the vertical segment
+// is less or equal to the provided value.
+func SkipSlopesLTE(v int) Option {
 	return option(func(opts *options) {
-		opts.skipSlopes = true
+		opts.skipSlopesLTE = v
 	})
 }
 
@@ -94,12 +96,12 @@ func SkipSlopes() Option {
 // or the vertical segment has width of two.
 // Without this option segments with height / width of two look like this:
 //    -   |
-//   ---  ||
+//   --- ||
 //        |
 //
 // With this option:
 //   ---  |
-//    -  ||
+//    -   ||
 //        |
 func ReverseSlopes() Option {
 	return option(func(opts *options) {
@@ -171,7 +173,7 @@ func nextHorizLine(num int, ar image.Rectangle, opt *options) (image.Point, imag
 
 	height := ar.Dy()
 	width := ar.Dx()
-	if opt.skipSlopes || height < 2 || width < 3 {
+	if height <= opt.skipSlopesLTE || height < 2 || width < 3 {
 		// No slopes under these dimensions as we don't have the resolution.
 		return start, end
 	}
@@ -226,7 +228,7 @@ func nextVertLine(num int, ar image.Rectangle, opt *options) (image.Point, image
 
 	height := ar.Dy()
 	width := ar.Dx()
-	if opt.skipSlopes || height < 3 || width < 2 {
+	if width <= opt.skipSlopesLTE || height < 3 || width < 2 {
 		// No slopes under these dimensions as we don't have the resolution.
 		return start, end
 	}
@@ -336,16 +338,16 @@ func (dt DiagonalType) String() string {
 
 // diagonalTypeNames maps DiagonalType values to human readable names.
 var diagonalTypeNames = map[DiagonalType]string{
-	DiagonalTypeLeftToRight: "DiagonalTypeLeftToRight",
-	DiagonalTypeRightToLeft: "DiagonalTypeRightToLeft",
+	LeftToRight: "LeftToRight",
+	RightToLeft: "RightToLeft",
 }
 
 const (
 	diagonalTypeUnknown DiagonalType = iota
-	// DiagonalTypeLeftToRight is a diagonal segment from top left to bottom right.
-	DiagonalTypeLeftToRight
-	// DiagonalTypeRightToLeft is a diagonal segment from top right to bottom left.
-	DiagonalTypeRightToLeft
+	// LeftToRight is a diagonal segment from top left to bottom right.
+	LeftToRight
+	// RightToLeft is a diagonal segment from top right to bottom left.
+	RightToLeft
 
 	diagonalTypeMax // Used for validation.
 )
@@ -401,12 +403,12 @@ func Diagonal(bc *braille.Canvas, ar image.Rectangle, width int, dt DiagonalType
 	var start, end image.Point
 	var nextFn nextDiagLineFn
 	switch dt {
-	case DiagonalTypeLeftToRight:
+	case LeftToRight:
 		start = ar.Min
 		end = image.Point{ar.Max.X - 1, ar.Max.Y - 1}
 		nextFn = nextLRLine
 
-	case DiagonalTypeRightToLeft:
+	case RightToLeft:
 		start = image.Point{ar.Max.X - 1, ar.Min.Y}
 		end = image.Point{ar.Min.X, ar.Max.Y - 1}
 		nextFn = nextRLLine

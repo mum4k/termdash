@@ -37,17 +37,17 @@ func (st SegmentType) String() string {
 
 // segmentTypeNames maps SegmentType values to human readable names.
 var segmentTypeNames = map[SegmentType]string{
-	SegmentTypeHorizontal: "SegmentTypeHorizontal",
-	SegmentTypeVertical:   "SegmentTypeVertical",
+	Horizontal: "Horizontal",
+	Vertical:   "Vertical",
 }
 
 const (
 	segmentTypeUnknown SegmentType = iota
 
-	// SegmentTypeHorizontal is a horizontal segment.
-	SegmentTypeHorizontal
-	// SegmentTypeVertical is a vertical segment.
-	SegmentTypeVertical
+	// Horizontal is a horizontal segment.
+	Horizontal
+	// Vertical is a vertical segment.
+	Vertical
 
 	segmentTypeMax // Used for validation.
 )
@@ -60,7 +60,8 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	cellOpts []cell.Option
+	cellOpts   []cell.Option
+	skipSlopes bool
 }
 
 // option implements Option.
@@ -80,6 +81,13 @@ func CellOpts(cOpts ...cell.Option) Option {
 	})
 }
 
+// SkipSlopes if provided instructs HV to not create slopes at the ends of a segment.
+func SkipSlopes() Option {
+	return option(func(opts *options) {
+		opts.skipSlopes = true
+	})
+}
+
 // validArea validates the provided area.
 func validArea(ar image.Rectangle) error {
 	if ar.Min.X < 0 || ar.Min.Y < 0 {
@@ -95,6 +103,7 @@ func validArea(ar image.Rectangle) error {
 }
 
 // HV draws a horizontal or a vertical display segment, filling the provided area.
+// The segment will have slopes on both of its ends.
 func HV(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option) error {
 	if err := validArea(ar); err != nil {
 		return err
@@ -108,11 +117,11 @@ func HV(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option) 
 	var nextLine nextHVLineFn
 	var lines int
 	switch st {
-	case SegmentTypeHorizontal:
+	case Horizontal:
 		lines = ar.Dy()
 		nextLine = nextHorizLine
 
-	case SegmentTypeVertical:
+	case Vertical:
 		lines = ar.Dx()
 		nextLine = nextVertLine
 
@@ -121,7 +130,7 @@ func HV(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option) 
 	}
 
 	for i := 0; i < lines; i++ {
-		start, end := nextLine(i, ar)
+		start, end := nextLine(i, ar, opt)
 		if err := draw.BrailleLine(bc, start, end, draw.BrailleLineCellOpts(opt.cellOpts...)); err != nil {
 			return err
 		}
@@ -132,18 +141,18 @@ func HV(bc *braille.Canvas, ar image.Rectangle, st SegmentType, opts ...Option) 
 
 // nextHVLineFn is a function that determines the start and end points of a line
 // number num in a horizontal or a vertical segment.
-type nextHVLineFn func(num int, ar image.Rectangle) (image.Point, image.Point)
+type nextHVLineFn func(num int, ar image.Rectangle, opt *options) (image.Point, image.Point)
 
 // nextHorizLine determines the start and end point of individual lines in a
 // horizontal segment.
-func nextHorizLine(num int, ar image.Rectangle) (image.Point, image.Point) {
+func nextHorizLine(num int, ar image.Rectangle, opt *options) (image.Point, image.Point) {
 	// Start and end points of the full row without adjustments for slopes.
 	start := image.Point{ar.Min.X, ar.Min.Y + num}
 	end := image.Point{ar.Max.X - 1, ar.Min.Y + num}
 
 	height := ar.Dy()
 	width := ar.Dx()
-	if height < 3 || width < 3 {
+	if opt.skipSlopes || height < 2 || width < 3 {
 		// No slopes under these dimensions as we don't have the resolution.
 		return start, end
 	}
@@ -188,14 +197,14 @@ func nextHorizLine(num int, ar image.Rectangle) (image.Point, image.Point) {
 
 // nextVertLine determines the start and end point of individual lines in a
 // vertical segment.
-func nextVertLine(num int, ar image.Rectangle) (image.Point, image.Point) {
+func nextVertLine(num int, ar image.Rectangle, opt *options) (image.Point, image.Point) {
 	// Start and end points of the full column without adjustments for slopes.
 	start := image.Point{ar.Min.X + num, ar.Min.Y}
 	end := image.Point{ar.Min.X + num, ar.Max.Y - 1}
 
 	height := ar.Dy()
 	width := ar.Dx()
-	if height < 3 || width < 3 {
+	if opt.skipSlopes || height < 3 || width < 2 {
 		// No slopes under these dimensions as we don't have the resolution.
 		return start, end
 	}
@@ -322,15 +331,44 @@ const (
 // Points prevStart and prevEnd define line num-1.
 type nextDiagLineFn func(num int, start, end, prevStart, prevEnd image.Point) (image.Point, image.Point)
 
+// DiagonalOption is used to provide options.
+type DiagonalOption interface {
+	// set sets the provided option.
+	set(*diagonalOptions)
+}
+
+// diagonalOptions stores the provided diagonal options.
+type diagonalOptions struct {
+	cellOpts []cell.Option
+}
+
+// diagonalOption implements DiagonalOption.
+type diagonalOption func(*diagonalOptions)
+
+// set implements DiagonalOption.set.
+func (o diagonalOption) set(opts *diagonalOptions) {
+	o(opts)
+}
+
+// DiagonalCellOpts sets options on the cells that contain the diagonal
+// segment.
+// Cell options on a braille canvas can only be set on the entire cell, not per
+// pixel.
+func DiagonalCellOpts(cOpts ...cell.Option) DiagonalOption {
+	return diagonalOption(func(opts *diagonalOptions) {
+		opts.cellOpts = cOpts
+	})
+}
+
 // Diagonal draws a diagonal segment of the specified width filling the area.
-func Diagonal(bc *braille.Canvas, ar image.Rectangle, width int, dt DiagonalType, opts ...Option) error {
+func Diagonal(bc *braille.Canvas, ar image.Rectangle, width int, dt DiagonalType, opts ...DiagonalOption) error {
 	if err := validArea(ar); err != nil {
 		return err
 	}
 	if min := 1; width < min {
 		return fmt.Errorf("invalid width %d, must be width >= %d", width, min)
 	}
-	opt := &options{}
+	opt := &diagonalOptions{}
 	for _, o := range opts {
 		o.set(opt)
 	}

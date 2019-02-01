@@ -42,42 +42,42 @@ func TestHV(t *testing.T) {
 			desc:       "fails on area with negative Min.X",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(-1, 0, 1, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			wantErr:    true,
 		},
 		{
 			desc:       "fails on area with negative Min.Y",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, -1, 1, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			wantErr:    true,
 		},
 		{
 			desc:       "fails on area with negative Max.X",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rectangle{image.Point{0, 0}, image.Point{-1, 1}},
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			wantErr:    true,
 		},
 		{
 			desc:       "fails on area with negative Max.Y",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rectangle{image.Point{0, 0}, image.Point{1, -1}},
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			wantErr:    true,
 		},
 		{
 			desc:       "fails on area with zero Dx()",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 0, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			wantErr:    true,
 		},
 		{
 			desc:       "fails on area with zero Dy()",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 0),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			wantErr:    true,
 		},
 		{
@@ -91,14 +91,14 @@ func TestHV(t *testing.T) {
 			desc:       "fails on unsupported segment type (too large)",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 2),
-			st:         SegmentType(int(SegmentTypeVertical) + 1),
+			st:         SegmentType(int(Vertical) + 1),
 			wantErr:    true,
 		},
 		{
 			desc:       "fails on area larger than the canvas",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 3, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			wantErr:    true,
 		},
 		{
@@ -111,7 +111,7 @@ func TestHV(t *testing.T) {
 			},
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -125,7 +125,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 1x1",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -139,7 +139,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 1x2",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 2),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -154,7 +154,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 1x3",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 3),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -170,7 +170,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 1x4",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 4),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -187,7 +187,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 1x5",
 			cellCanvas: image.Rect(0, 0, 1, 2),
 			ar:         image.Rect(0, 0, 1, 5),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -205,7 +205,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 2x1",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -219,7 +219,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 2x2",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 2),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -234,7 +234,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 2x3",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 3),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -250,7 +250,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 2x4",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 4),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -267,7 +267,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 2x5",
 			cellCanvas: image.Rect(0, 0, 1, 2),
 			ar:         image.Rect(0, 0, 2, 5),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -285,7 +285,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 3x1",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -299,7 +299,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 3x2",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 2),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -314,7 +314,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 3x3",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 3),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -327,10 +327,29 @@ func TestHV(t *testing.T) {
 			},
 		},
 		{
+			desc: "horizontal, segment 3x3, skip slopes",
+			opts: []Option{
+				SkipSlopes(),
+			},
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 3, 3),
+			st:         Horizontal,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{2, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
+				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{2, 2})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
 			desc:       "horizontal, segment 3x4",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 4),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -347,7 +366,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 3x5",
 			cellCanvas: image.Rect(0, 0, 2, 2),
 			ar:         image.Rect(0, 0, 3, 5),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -365,7 +384,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 4x1",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -379,7 +398,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 4x2",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 2),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -394,7 +413,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 4x3",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 3),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -410,7 +429,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 4x4",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -427,7 +446,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 4x5",
 			cellCanvas: image.Rect(0, 0, 2, 2),
 			ar:         image.Rect(0, 0, 4, 5),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -445,7 +464,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 5x1",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 1),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -459,7 +478,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 5x2",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 2),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -474,7 +493,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 5x3",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 3),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -490,7 +509,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 5x4",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 4),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -507,7 +526,7 @@ func TestHV(t *testing.T) {
 			desc:       "horizontal, segment 5x5",
 			cellCanvas: image.Rect(0, 0, 3, 2),
 			ar:         image.Rect(0, 0, 5, 5),
-			st:         SegmentTypeHorizontal,
+			st:         Horizontal,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -521,13 +540,11 @@ func TestHV(t *testing.T) {
 				return ft
 			},
 		},
-
-		// VERT HERE
 		{
 			desc:       "vertical, segment 1x1",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 1),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -541,7 +558,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 1x2",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 2),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -556,7 +573,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 1x3",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 3),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -572,7 +589,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 1x4",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 1, 4),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -589,7 +606,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 1x5",
 			cellCanvas: image.Rect(0, 0, 1, 2),
 			ar:         image.Rect(0, 0, 1, 5),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -607,7 +624,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 2x1",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 1),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -621,7 +638,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 2x2",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 2),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -636,7 +653,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 2x3",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 3),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -652,7 +669,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 2x4",
 			cellCanvas: image.Rect(0, 0, 1, 1),
 			ar:         image.Rect(0, 0, 2, 4),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -669,7 +686,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 2x5",
 			cellCanvas: image.Rect(0, 0, 1, 2),
 			ar:         image.Rect(0, 0, 2, 5),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -687,7 +704,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 3x1",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 1),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -701,7 +718,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 3x2",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 2),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -716,7 +733,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 3x3",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 3),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -729,10 +746,29 @@ func TestHV(t *testing.T) {
 			},
 		},
 		{
+			desc: "vertical, segment 3x3, skips slopes",
+			opts: []Option{
+				SkipSlopes(),
+			},
+			cellCanvas: image.Rect(0, 0, 2, 1),
+			ar:         image.Rect(0, 0, 3, 3),
+			st:         Vertical,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleLine(bc, image.Point{0, 0}, image.Point{2, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 1}, image.Point{2, 1})
+				testdraw.MustBrailleLine(bc, image.Point{0, 2}, image.Point{2, 2})
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
 			desc:       "vertical, segment 3x4",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 3, 4),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -749,7 +785,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 3x5",
 			cellCanvas: image.Rect(0, 0, 2, 2),
 			ar:         image.Rect(0, 0, 3, 5),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -767,7 +803,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 4x1",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 1),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -781,7 +817,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 4x2",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 2),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -796,7 +832,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 4x3",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 3),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -812,7 +848,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 4x4",
 			cellCanvas: image.Rect(0, 0, 2, 1),
 			ar:         image.Rect(0, 0, 4, 4),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -829,7 +865,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 4x5",
 			cellCanvas: image.Rect(0, 0, 2, 2),
 			ar:         image.Rect(0, 0, 4, 5),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -847,7 +883,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 5x1",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 1),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -861,7 +897,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 5x2",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 2),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -876,7 +912,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 5x3",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 3),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -892,7 +928,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 5x4",
 			cellCanvas: image.Rect(0, 0, 3, 1),
 			ar:         image.Rect(0, 0, 5, 4),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -909,7 +945,7 @@ func TestHV(t *testing.T) {
 			desc:       "vertical, segment 5x5",
 			cellCanvas: image.Rect(0, 0, 3, 2),
 			ar:         image.Rect(0, 0, 5, 5),
-			st:         SegmentTypeVertical,
+			st:         Vertical,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				bc := testbraille.MustNew(ft.Area())
@@ -971,84 +1007,6 @@ type diagSegment struct {
 	ar    image.Rectangle
 	width int
 	dt    DiagonalType
-}
-
-func TestMultipleSegments(t *testing.T) {
-	//t.Skip()
-	tests := []struct {
-		desc         string
-		cellCanvas   image.Rectangle
-		hvSegments   []hvSegment
-		diagSegments []diagSegment
-		want         func(size image.Point) *faketerm.Terminal
-	}{
-		{
-			desc:       "12-segment display, more spacing",
-			cellCanvas: image.Rect(0, 0, 16, 12),
-			hvSegments: []hvSegment{
-				{image.Rect(3, 0, 15, 4), SegmentTypeHorizontal},  // A1
-				{image.Rect(17, 0, 29, 4), SegmentTypeHorizontal}, // A2
-
-				{image.Rect(0, 3, 4, 23), SegmentTypeVertical},   // F
-				{image.Rect(14, 3, 18, 23), SegmentTypeVertical}, // J
-				{image.Rect(28, 3, 32, 23), SegmentTypeVertical}, // B
-
-				{image.Rect(3, 22, 15, 26), SegmentTypeHorizontal},  // G1
-				{image.Rect(17, 22, 29, 26), SegmentTypeHorizontal}, // G2
-
-				{image.Rect(0, 25, 4, 45), SegmentTypeVertical},   // E
-				{image.Rect(14, 25, 18, 45), SegmentTypeVertical}, // M
-				{image.Rect(28, 25, 32, 45), SegmentTypeVertical}, // C
-
-				{image.Rect(3, 44, 15, 48), SegmentTypeHorizontal},  // D1
-				{image.Rect(17, 44, 29, 48), SegmentTypeHorizontal}, // D2
-			},
-			diagSegments: []diagSegment{
-				{image.Rect(4, 4, 14, 22), 4, DiagonalTypeLeftToRight},   // H
-				{image.Rect(18, 22, 28, 4), 4, DiagonalTypeRightToLeft},  // K
-				{image.Rect(4, 44, 14, 26), 4, DiagonalTypeRightToLeft},  // N
-				{image.Rect(18, 26, 28, 44), 4, DiagonalTypeLeftToRight}, // L
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			bc, err := braille.New(tc.cellCanvas)
-			if err != nil {
-				t.Fatalf("braille.New => unexpected error: %v", err)
-			}
-
-			for _, hv := range tc.hvSegments {
-				if err := HV(bc, hv.ar, hv.st); err != nil {
-					t.Fatalf("HV => unexpected error: %v", err)
-				}
-			}
-
-			for _, diag := range tc.diagSegments {
-				if err := Diagonal(bc, diag.ar, diag.width, diag.dt); err != nil {
-					t.Fatalf("Diagonal => unexpected error: %v", err)
-				}
-			}
-
-			size := area.Size(tc.cellCanvas)
-			want := faketerm.MustNew(size)
-			if tc.want != nil {
-				want = tc.want(size)
-			}
-
-			got, err := faketerm.New(size)
-			if err != nil {
-				t.Fatalf("faketerm.New => unexpected error: %v", err)
-			}
-			if err := bc.Apply(got); err != nil {
-				t.Fatalf("bc.Apply => unexpected error: %v", err)
-			}
-			if diff := faketerm.Diff(want, got); diff != "" {
-				t.Fatalf("HV => %v", diff)
-			}
-		})
-	}
 }
 
 func TestAdjustHoriz(t *testing.T) {
@@ -1180,7 +1138,7 @@ func TestAdjustVert(t *testing.T) {
 func TestDiagonal(t *testing.T) {
 	tests := []struct {
 		desc       string
-		opts       []Option
+		opts       []DiagonalOption
 		cellCanvas image.Rectangle // Canvas in cells that will be converted to braille canvas for drawing.
 		ar         image.Rectangle
 		width      int
@@ -1624,8 +1582,8 @@ func TestDiagonal(t *testing.T) {
 		},
 		{
 			desc: "sets cell options",
-			opts: []Option{
-				CellOpts(
+			opts: []DiagonalOption{
+				DiagonalCellOpts(
 					cell.FgColor(cell.ColorRed),
 					cell.BgColor(cell.ColorGreen),
 				),

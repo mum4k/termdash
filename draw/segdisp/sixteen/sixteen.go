@@ -40,6 +40,7 @@ The following outlines segments in the display and their names.
 package sixteen
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"image"
@@ -115,10 +116,37 @@ var characterSegments = map[rune][]Segment{
 	'W': {F, E, N, L, C, B},
 }
 
-// Option is used to provide options.
-type Option interface {
-	// set sets the provided option.
-	set(*Display)
+// SupportsChars asserts whether the display supports all runes in the
+// provided string.
+// The display only supports a subset of ASCII runes.
+// Returns any unsupported runes found in the string in an unspecified order.
+func SupportsChars(s string) (bool, []rune) {
+	unsupp := map[rune]bool{}
+	for _, r := range s {
+		if _, ok := characterSegments[r]; !ok {
+			unsupp[r] = true
+		}
+	}
+
+	var res []rune
+	for r := range unsupp {
+		res = append(res, r)
+	}
+	return len(res) == 0, res
+}
+
+// Sanitize returns a copy of the string, replacing all unsupported characters
+// with a space character.
+func Sanitize(s string) string {
+	var b bytes.Buffer
+	for _, r := range s {
+		if _, ok := characterSegments[r]; !ok {
+			b.WriteRune(' ')
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 // AllSegments returns all 16 segments in an undefined order.
@@ -128,6 +156,12 @@ func AllSegments() []Segment {
 		res = append(res, s)
 	}
 	return res
+}
+
+// Option is used to provide options.
+type Option interface {
+	// set sets the provided option.
+	set(*Display)
 }
 
 // option implements Option.
@@ -180,7 +214,7 @@ func (d *Display) Clear(opts ...Option) {
 // This method is idempotent.
 func (d *Display) SetSegment(s Segment) error {
 	if s <= segmentUnknown || s >= segmentMax {
-		return fmt.Errorf("unknown segment %v", s)
+		return fmt.Errorf("unknown segment %v(%d)", s, s)
 	}
 	d.segments[s] = true
 	return nil
@@ -190,7 +224,7 @@ func (d *Display) SetSegment(s Segment) error {
 // This method is idempotent.
 func (d *Display) ClearSegment(s Segment) error {
 	if s <= segmentUnknown || s >= segmentMax {
-		return fmt.Errorf("unknown segment %v", s)
+		return fmt.Errorf("unknown segment %v(%d)", s, s)
 	}
 	d.segments[s] = false
 	return nil
@@ -200,7 +234,7 @@ func (d *Display) ClearSegment(s Segment) error {
 // or clears it depending on its current state.
 func (d *Display) ToggleSegment(s Segment) error {
 	if s <= segmentUnknown || s >= segmentMax {
-		return fmt.Errorf("unknown segment %v", s)
+		return fmt.Errorf("unknown segment %v(%d)", s, s)
 	}
 	if d.segments[s] {
 		d.segments[s] = false
@@ -233,16 +267,23 @@ func (d *Display) SetCharacter(c rune) error {
 // Minimum valid size of a cell canvas in order to draw the segment display.
 const (
 	// MinCols is the smallest valid amount of columns in a cell area.
-	MinCols = 4
+	MinCols = 6
 	// MinRowPixels is the smallest valid amount of rows in a cell area.
-	MinRows = 3
+	MinRows = 5
 )
+
+// aspectRatio is the desired aspect ratio of a single segment display.
+var aspectRatio = image.Point{3, 5}
 
 // Draw draws the current state of the segment display onto the canvas.
 // The canvas must be at least MinCols x MinRows cells, or an error will be
 // returned.
 // Any options provided to draw overwrite the values provided to New.
 func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
+	for _, o := range opts {
+		o.set(d)
+	}
+
 	ar, err := Required(cvs.Area())
 	if err != nil {
 		return err
@@ -253,7 +294,7 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		return fmt.Errorf("braille.New => %v", err)
 	}
 
-	bcAr := area.WithRatio(bc.Area(), image.Point{3, 5})
+	bcAr := area.WithRatio(bc.Area(), aspectRatio)
 	segW := segWidth(bcAr)
 	if segW == 4 {
 		segW = 5
@@ -307,6 +348,10 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 	d1Ar := image.Rect(eg, botStart, eg+shortL, botStart+segW)
 	d2Ar := image.Rect(d1Ar.Max.X+ptp, botStart, d1Ar.Max.X+ptp+shortL, botStart+segW)
 
+	var sOpts []segment.Option
+	if len(d.cellOpts) > 0 {
+		sOpts = append(sOpts, segment.CellOpts(d.cellOpts...))
+	}
 	for _, segArg := range []struct {
 		s    Segment
 		st   segment.Type
@@ -334,7 +379,8 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 			continue
 		}
 		log.Printf("segment.HV for %v, ar:%v", segArg.s, segArg.ar)
-		if err := segment.HV(bc, segArg.ar, segArg.st, segArg.opts...); err != nil {
+		sOpts := append(sOpts, segArg.opts...)
+		if err := segment.HV(bc, segArg.ar, segArg.st, sOpts...); err != nil {
 			return fmt.Errorf("failed to draw segment %v, segment.HV => %v", segArg.s, err)
 		}
 	}
@@ -363,6 +409,10 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 	botREndY := int(numbers.Round(float64(cAr.Max.Y) - segPeakDist + diaLeg - float64(diaGap)*0.3))
 	lAr := image.Rect(botRStartX, botRStartY, botREndX, botREndY)
 
+	var dsOpts []segment.DiagonalOption
+	if len(d.cellOpts) > 0 {
+		dsOpts = append(dsOpts, segment.DiagonalCellOpts(d.cellOpts...))
+	}
 	for _, segArg := range []struct {
 		s  Segment
 		dt segment.DiagonalType
@@ -377,7 +427,7 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 			continue
 		}
 		log.Printf("segment.Diagonal for %v, ar:%v", segArg.s, segArg.ar)
-		if err := segment.Diagonal(bc, segArg.ar, segW, segArg.dt); err != nil {
+		if err := segment.Diagonal(bc, segArg.ar, segW, segArg.dt, dsOpts...); err != nil {
 			return fmt.Errorf("failed to draw segment %v, segment.Diagonal => %v", segArg.s, err)
 		}
 	}
@@ -389,20 +439,20 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 // size or a smaller area that is required to draw one display.
 // Returns a smaller area when the provided area didn't have the required
 // aspect ratio.
-// Returns an error if the area is too small to draw a segment display.
+// Returns an error if the area is too small to draw a segment display, i.e.
+// smaller than MinCols x MinRows.
 func Required(cellArea image.Rectangle) (image.Rectangle, error) {
-	bcAr := image.Rect(cellArea.Min.X, cellArea.Min.Y, cellArea.Max.X*braille.ColMult, cellArea.Max.Y*braille.RowMult)
-	bcArAdj := area.WithRatio(bcAr, image.Point{3, 5})
-	if bcArAdj.Empty() {
-		return image.ZR, fmt.Errorf("cell area %v is to small to draw the segment display, need at least %d x %d cells", cellArea, MinCols, MinRows)
+	if cols, rows := cellArea.Dx(), cellArea.Dy(); cols < MinCols || rows < MinRows {
+		return image.ZR, fmt.Errorf("cell area %v is too small to draw the segment display, has %dx%d cells, need at least %dx%d cells",
+			cellArea, cols, rows, MinCols, MinRows)
 	}
+
+	bcAr := image.Rect(cellArea.Min.X, cellArea.Min.Y, cellArea.Max.X*braille.ColMult, cellArea.Max.Y*braille.RowMult)
+	bcArAdj := area.WithRatio(bcAr, aspectRatio)
 
 	needCols := int(math.Ceil(float64(bcArAdj.Dx()) / braille.ColMult))
 	needRows := int(math.Ceil(float64(bcArAdj.Dy()) / braille.RowMult))
 	needAr := image.Rect(cellArea.Min.X, cellArea.Min.Y, cellArea.Min.X+needCols, cellArea.Min.Y+needRows)
-	if !needAr.In(cellArea) {
-		return image.ZR, fmt.Errorf("what just happened?")
-	}
 	return needAr, nil
 }
 

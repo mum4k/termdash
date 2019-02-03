@@ -41,10 +41,8 @@ package sixteen
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"image"
-	"log"
 	"math"
 
 	"github.com/mum4k/termdash/area"
@@ -110,8 +108,40 @@ const (
 )
 
 // characterSegments maps characters that can be displayed on their segments.
+// See doc/16-Segment-ASCII-All.jpg and:
+// https://www.partsnotincluded.com/electronics/segmented-led-display-ascii-library
 var characterSegments = map[rune][]Segment{
-	' ': nil,
+	' ':  nil,
+	'"':  {J, B},
+	'#':  {J, B, G1, G2, M, C, D1, D2},
+	'$':  {A1, A2, F, J, G1, G2, M, C, D1, D2},
+	'%':  {A1, F, J, K, G1, G2, N, M, C, D2},
+	'&':  {A1, H, J, G1, E, L, D1, D2},
+	'\'': {J},
+	'(':  {K, L},
+	')':  {H, N},
+	'*':  {H, J, K, G1, G2, N, M, L},
+	'+':  {J, G1, G2, M},
+	',':  {N},
+	'-':  {G1, G2},
+	'/':  {N, K},
+	'0':  {A1, A2, F, K, B, E, N, C, D1, D2},
+	'1':  {K, B, C},
+	'2':  {A1, A2, B, G1, G2, E, D1, D2},
+	'3':  {A1, A2, B, G2, C, D1, D2},
+	'4':  {F, B, G1, G2, C},
+	'5':  {A1, A2, F, G1, L, D1, D2},
+	'6':  {A1, A2, F, G1, G2, E, C, D1, D2},
+	'7':  {A1, A2, B, C},
+	'8':  {A1, A2, F, B, G1, G2, E, C, D1, D2},
+	'9':  {A1, A2, F, B, G1, G2, C, D1, D2},
+	':':  {J, M},
+	'<':  {K, G1, L},
+	'=':  {G1, G2, D1, D2},
+	'>':  {H, G2, N},
+	'?':  {A1, A2, B, G2, M},
+	'@':  {A1, A2, F, J, B, G2, E, D1, D2},
+
 	'w': {E, N, L, C},
 	'W': {F, E, N, L, C, B},
 }
@@ -244,16 +274,14 @@ func (d *Display) ToggleSegment(s Segment) error {
 	return nil
 }
 
-// ErrUnsupportedCharacter is returned when the provided character cannot be displayed.
-var ErrUnsupportedCharacter = errors.New("unsupported character")
-
 // Character sets all the segments that are needed to display the provided character.
-// Returns ErrUnsupportedCharacter when the character cannot be displayed.
+// The display only supports a subset of ASCII characters, use SupportsChars()
+// or Sanitize() to ensure the provided character is supported.
 // Doesn't clear the display of segments set previously.
 func (d *Display) SetCharacter(c rune) error {
 	seg, ok := characterSegments[c]
 	if !ok {
-		return ErrUnsupportedCharacter
+		return fmt.Errorf("display doesn't support character %q rune(%v)", c, c)
 	}
 
 	for _, s := range seg {
@@ -296,8 +324,8 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 
 	bcAr := area.WithRatio(bc.Area(), aspectRatio)
 	segW := segWidth(bcAr)
-	if segW == 4 {
-		segW = 5
+	if segW > 3 && segW%2 == 0 {
+		segW++
 	}
 
 	// Gap between the edge and the first segment.
@@ -315,12 +343,13 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 	if segW == 2 {
 		peakToPeak = 2
 	}
+	if peakToPeak > 3 && int(peakToPeak)%2 == 0 {
+		peakToPeak++
+	}
 
 	// Lengths of the short and long segment.
 	shortL := (bcAr.Dx()-int(numbers.Round(2*edgeSegGap+peakToPeak)))/2 - 1
 	longL := (bcAr.Dy()-int(numbers.Round(2*edgeSegGap+peakToPeak)))/2 - 1
-
-	//log.Printf("dx:%d segW:%d, edgeGap:%d, segGap:%d, shortL:%d, longL:%d, end:%d, mid:%d, midGap:%d segDist:%d", bcAr.Dx(), segW, edgeGap, segGap, shortL, longL, end, mid, midGap, segDist)
 
 	eg := int(numbers.Round(edgeSegGap))
 	ptp := int(numbers.Round(peakToPeak))
@@ -378,7 +407,6 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		if !d.segments[segArg.s] {
 			continue
 		}
-		log.Printf("segment.HV for %v, ar:%v", segArg.s, segArg.ar)
 		sOpts := append(sOpts, segArg.opts...)
 		if err := segment.HV(bc, segArg.ar, segArg.st, sOpts...); err != nil {
 			return fmt.Errorf("failed to draw segment %v, segment.HV => %v", segArg.s, err)
@@ -426,7 +454,6 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		if !d.segments[segArg.s] {
 			continue
 		}
-		log.Printf("segment.Diagonal for %v, ar:%v", segArg.s, segArg.ar)
 		if err := segment.Diagonal(bc, segArg.ar, segW, segArg.dt, dsOpts...); err != nil {
 			return fmt.Errorf("failed to draw segment %v, segment.Diagonal => %v", segArg.s, err)
 		}

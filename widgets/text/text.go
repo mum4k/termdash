@@ -89,8 +89,8 @@ func (t *Text) Reset() {
 }
 
 // Write writes text for the widget to display. Multiple calls append
-// additional text. The text cannot control characters (unicode.IsControl) or
-// space character (unicode.IsSpace) other than:
+// additional text. The text contain cannot control characters
+// (unicode.IsControl) or space character (unicode.IsSpace) other than:
 //   ' ', '\n'
 // Any newline ('\n') characters are interpreted as newlines when displaying
 // the text.

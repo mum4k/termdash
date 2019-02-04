@@ -1,10 +1,43 @@
 package attrrange
 
 import (
+	"log"
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/cell"
 )
+
+func Example() {
+	// Caller has a slice of some attributes, like a cell color that applies
+	// to a portion of text.
+	attrs := []cell.Color{cell.ColorRed, cell.ColorBlue}
+	redIdx := 0
+	blueIdx := 1
+
+	// This is the text the colors apply to.
+	const text = "HelloWorld"
+
+	// Assuming that we want the word "Hello" in red and the word "World" in
+	// green, we can set our ranges as follows:
+	tr := NewTracker()
+	if err := tr.Add(0, len("Hello"), redIdx); err != nil {
+		panic(err)
+	}
+	if err := tr.Add(len("Hello")+1, len(text), blueIdx); err != nil {
+		panic(err)
+	}
+
+	// Now to get the index into attrs (i.e. the color) for a particular
+	// character, we can do:
+	for i, c := range text {
+		ar, err := tr.ForPosition(i)
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("character at text[%d] = %q, color index %d = %v, range low:%d, high:%d", i, c, ar.AttrIdx, attrs[ar.AttrIdx], ar.Low, ar.High)
+	}
+}
 
 func TestForPosition(t *testing.T) {
 	tests := []struct {

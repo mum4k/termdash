@@ -892,7 +892,7 @@ func TestSetCharacter(t *testing.T) {
 	}{
 		{
 			desc:    "fails on unsupported character",
-			char:    '!',
+			char:    '.',
 			wantErr: true,
 		},
 		{
@@ -907,6 +907,13 @@ func TestSetCharacter(t *testing.T) {
 			char: 'W',
 			want: func(size image.Point) *faketerm.Terminal {
 				return mustDrawSegments(size, F, E, N, L, C, B, A2)
+			},
+		},
+		{
+			desc: "displays '!'",
+			char: '!',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, B, C)
 			},
 		},
 		{
@@ -1078,6 +1085,13 @@ func TestSetCharacter(t *testing.T) {
 			},
 		},
 		{
+			desc: "displays ';'",
+			char: ';',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, J, N)
+			},
+		},
+		{
 			desc: "displays '<'",
 			char: '<',
 			want: func(size image.Point) *faketerm.Terminal {
@@ -1113,10 +1127,227 @@ func TestSetCharacter(t *testing.T) {
 			},
 		},
 		{
+			desc: "displays 'A'",
+			char: 'A',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, B, G1, G2, E, C)
+			},
+		},
+		{
+			desc: "displays 'B'",
+			char: 'B',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, J, B, G2, M, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'C'",
+			char: 'C',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, E, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'D'",
+			char: 'D',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, J, B, M, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'E'",
+			char: 'E',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, G1, E, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'F'",
+			char: 'F',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, G1, E)
+			},
+		},
+		{
+			desc: "displays 'G'",
+			char: 'G',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, G2, E, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'H'",
+			char: 'H',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, B, G1, G2, E, C)
+			},
+		},
+		{
+			desc: "displays 'I'",
+			char: 'I',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, J, M, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'J'",
+			char: 'J',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, B, E, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'K'",
+			char: 'K',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, K, G1, E, L)
+			},
+		},
+		{
+			desc: "displays 'L'",
+			char: 'L',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, E, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'M'",
+			char: 'M',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, H, K, B, E, C)
+			},
+		},
+		{
+			desc: "displays 'N'",
+			char: 'N',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, H, B, E, L, C)
+			},
+		},
+		{
+			desc: "displays 'O'",
+			char: 'O',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, B, E, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'P'",
+			char: 'P',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, B, G1, G2, E)
+			},
+		},
+		{
+			desc: "displays 'Q'",
+			char: 'Q',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, B, E, L, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'R'",
+			char: 'R',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, B, G1, G2, E, L)
+			},
+		},
+		{
+			desc: "displays 'S'",
+			char: 'S',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, F, G1, G2, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'T'",
+			char: 'T',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, J, M)
+			},
+		},
+		{
+			desc: "displays 'U'",
+			char: 'U',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, B, E, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'V'",
+			char: 'V',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, K, E, N)
+			},
+		},
+		{
 			desc: "displays 'W'",
 			char: 'W',
 			want: func(size image.Point) *faketerm.Terminal {
 				return mustDrawSegments(size, F, E, N, L, C, B)
+			},
+		},
+		{
+			desc: "displays 'X'",
+			char: 'X',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, H, K, N, L)
+			},
+		},
+		{
+			desc: "displays 'Y'",
+			char: 'Y',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, F, B, G1, G2, C, D1, D2)
+			},
+		},
+		{
+			desc: "displays 'Z'",
+			char: 'Z',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, A2, K, N, D1, D2)
+			},
+		},
+		{
+			desc: "displays '['",
+			char: '[',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A2, J, M, D2)
+			},
+		},
+		{
+			desc: "displays '\\'",
+			char: '\\',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, H, L)
+			},
+		},
+		{
+			desc: "displays ']'",
+			char: ']',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, A1, J, M, D1)
+			},
+		},
+		{
+			desc: "displays '^'",
+			char: '^',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, N, L)
+			},
+		},
+		{
+			desc: "displays '_'",
+			char: '_',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, D1, D2)
+			},
+		},
+		{
+			desc: "displays '`'",
+			char: '`',
+			want: func(size image.Point) *faketerm.Terminal {
+				return mustDrawSegments(size, H)
 			},
 		},
 	}
@@ -1256,15 +1487,15 @@ func TestSupportsChars(t *testing.T) {
 		},
 		{
 			desc:       "supports some chars in the string",
-			str:        " w!W :",
+			str:        " w.W :",
 			wantRes:    false,
-			wantUnsupp: []rune{'!'},
+			wantUnsupp: []rune{'.'},
 		},
 		{
 			desc:       "supports no chars in the string",
-			str:        "!",
+			str:        ".",
 			wantRes:    false,
-			wantUnsupp: []rune{'!'},
+			wantUnsupp: []rune{'.'},
 		},
 	}
 
@@ -1304,12 +1535,12 @@ func TestSanitize(t *testing.T) {
 		},
 		{
 			desc: "some characters are supported",
-			str:  " w!W:",
+			str:  " w.W:",
 			want: " w W:",
 		},
 		{
 			desc: "no characters are supported",
-			str:  "!",
+			str:  ".",
 			want: " ",
 		},
 	}

@@ -24,7 +24,27 @@ import (
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/widgets/segmentdisplay"
 )
+
+// clock displays the current time on the segment display.
+// Exists when the context expires.
+func clock(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			now := time.Now().Format("150405")
+			if err := sd.Write(segmentdisplay.NewChunk(now)); err != nil {
+				panic(err)
+			}
+
+		case <-ctx.Done():
+			return
+		}
+	}
+}
 
 func main() {
 	t, err := termbox.New()
@@ -33,20 +53,20 @@ func main() {
 	}
 	defer t.Close()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	sd := segmentdisplay.New()
+	go clock(ctx, sd)
+
 	c, err := container.New(
 		t,
 		container.Border(draw.LineStyleLight),
 		container.BorderTitle("PRESS Q TO QUIT"),
-		container.SplitVertical(
-			container.Left(),
-			container.Right(),
-		),
+		container.PlaceWidget(sd),
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {
 			cancel()

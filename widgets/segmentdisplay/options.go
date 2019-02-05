@@ -85,3 +85,5 @@ func MaximizeDisplayedText() Option {
 		opts.maximizeSegSize = false
 	})
 }
+
+// TODO: Spacing between segments in cells.

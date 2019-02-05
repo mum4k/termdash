@@ -157,13 +157,13 @@ func TestSegmentDisplay(t *testing.T) {
 				if err := sd.Write(NewChunk("123")); err != nil {
 					return err
 				}
-				return sd.Write(NewChunk("1"))
+				return sd.Write(NewChunk("4"))
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(0, 1, sixteen.MinCols, sixteen.MinRows+1))
+				mustDrawChar(cvs, '4', image.Rect(0, 1, sixteen.MinCols, sixteen.MinRows+1))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft

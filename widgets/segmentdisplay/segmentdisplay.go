@@ -97,6 +97,7 @@ func (sd *SegmentDisplay) Write(chunks ...*TextChunk) error {
 	sd.mu.Lock()
 	defer sd.mu.Unlock()
 
+	sd.reset()
 	if len(chunks) == 0 {
 		return errors.New("at least one text chunk must be specified")
 	}
@@ -122,7 +123,12 @@ func (sd *SegmentDisplay) Write(chunks ...*TextChunk) error {
 func (sd *SegmentDisplay) Reset() {
 	sd.mu.Lock()
 	defer sd.mu.Unlock()
+	sd.reset()
+}
 
+// reset is the implementation of Reset.
+// Caller must hold sd.mu.
+func (sd *SegmentDisplay) reset() {
 	sd.buff.Reset()
 	sd.givenWOpts = nil
 	sd.wOptsTracker = attrrange.NewTracker()

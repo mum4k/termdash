@@ -18,7 +18,6 @@
 package attrrange
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 )
@@ -72,10 +71,6 @@ func (t *Tracker) Add(low, high, attrIdx int) error {
 	return nil
 }
 
-// ErrNotFound indicates that the requested position wasn't found in any of the
-// known ranges.
-var ErrNotFound = errors.New("range not found")
-
 // ForPosition returns attribute index that apply to the specified position.
 // Returns ErrNotFound when the requested position wasn't found in any of the
 // known ranges.
@@ -102,7 +97,7 @@ func (t *Tracker) ForPosition(pos int) (*AttrRange, error) {
 	}
 
 	if res == nil {
-		return nil, ErrNotFound
+		return nil, fmt.Errorf("did not find attribute range for position %d", pos)
 	}
 	return res, nil
 }

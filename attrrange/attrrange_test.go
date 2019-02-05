@@ -61,13 +61,13 @@ func TestForPosition(t *testing.T) {
 		update        func(*Tracker) error
 		pos           int
 		want          *AttrRange
-		wantErr       error
+		wantErr       bool
 		wantUpdateErr bool
 	}{
 		{
 			desc:    "fails when no ranges given",
 			pos:     0,
-			wantErr: ErrNotFound,
+			wantErr: true,
 		},
 		{
 			desc: "fails to add a duplicate",
@@ -88,7 +88,7 @@ func TestForPosition(t *testing.T) {
 				return tr.Add(5, 10, 41)
 			},
 			pos:     1,
-			wantErr: ErrNotFound,
+			wantErr: true,
 		},
 		{
 			desc: "multiple given options, position falls on the lower",
@@ -132,7 +132,7 @@ func TestForPosition(t *testing.T) {
 				return tr.Add(5, 10, 41)
 			},
 			pos:     10,
-			wantErr: ErrNotFound,
+			wantErr: true,
 		},
 	}
 
@@ -150,7 +150,7 @@ func TestForPosition(t *testing.T) {
 			}
 
 			got, err := tr.ForPosition(tc.pos)
-			if err != tc.wantErr {
+			if (err != nil) != tc.wantErr {
 				t.Errorf("ForPosition => unexpected error:%v, wantErr:%v", err, tc.wantErr)
 			}
 			if err != nil {

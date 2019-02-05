@@ -39,11 +39,6 @@ type options struct {
 	maximizeSegSize bool
 }
 
-// validate validates the provided options.
-func (o *options) validate() error {
-	return nil
-}
-
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
@@ -73,7 +68,7 @@ func AlignVertical(v align.Vertical) Option {
 // When this option is set and the user has provided more text than we can fit
 // on the canvas, the widget will prefer to maximize height of individual
 // characters which will result in earlier trimming of the text.
-func MaximizeSegmentHeight(v align.Vertical) Option {
+func MaximizeSegmentHeight() Option {
 	return option(func(opts *options) {
 		opts.maximizeSegSize = true
 	})
@@ -85,7 +80,7 @@ func MaximizeSegmentHeight(v align.Vertical) Option {
 // on the canvas, the widget will prefer to decrease the height of individual
 // characters and fit more of them on the canvas.
 // This is the default behavior.
-func MaximizeDisplayedText(v align.Vertical) Option {
+func MaximizeDisplayedText() Option {
 	return option(func(opts *options) {
 		opts.maximizeSegSize = false
 	})

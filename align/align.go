@@ -121,7 +121,7 @@ func vAlign(rect image.Rectangle, ar image.Rectangle, v Vertical) (image.Rectang
 	), nil
 }
 
-// Rectangle aligns the rectangle within the provided area returning the
+// Rectangle aligns the area within the rectangle returning the
 // aligned area. The area must fall within the rectangle.
 func Rectangle(rect image.Rectangle, ar image.Rectangle, h Horizontal, v Vertical) (image.Rectangle, error) {
 	if !ar.In(rect) {

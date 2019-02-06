@@ -14,7 +14,11 @@
 
 package segmentdisplay
 
-import "github.com/mum4k/termdash/align"
+import (
+	"fmt"
+
+	"github.com/mum4k/termdash/align"
+)
 
 // options.go contains configurable options for SegmentDisplay.
 
@@ -37,13 +41,23 @@ type options struct {
 	hAlign          align.Horizontal
 	vAlign          align.Vertical
 	maximizeSegSize bool
+	gapPercent      int
+}
+
+// validate validates the provided options.
+func (o *options) validate() error {
+	if min, max := 0, 100; o.gapPercent < min || o.gapPercent > max {
+		return fmt.Errorf("invalid GapPercent %d, must be %d <= value <= %d", o.gapPercent, min, max)
+	}
+	return nil
 }
 
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
-		hAlign: align.HorizontalCenter,
-		vAlign: align.VerticalMiddle,
+		hAlign:     align.HorizontalCenter,
+		vAlign:     align.VerticalMiddle,
+		gapPercent: DefaultGapPercent,
 	}
 }
 
@@ -86,4 +100,13 @@ func MaximizeDisplayedText() Option {
 	})
 }
 
-// TODO: Spacing between segments in cells.
+// DefaultGapPercent is the default value for the GapPercent option.
+const DefaultGapPercent = 20
+
+// GapPercent sets the size of the horizontal gap between individual segments
+// (characters) expressed as a percentage of the segment height.
+func GapPercent(perc int) Option {
+	return option(func(opts *options) {
+		opts.gapPercent = perc
+	})
+}

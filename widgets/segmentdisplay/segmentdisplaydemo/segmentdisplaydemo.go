@@ -35,8 +35,8 @@ func clock(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 	for {
 		select {
 		case <-ticker.C:
-			now := time.Now().Format("150405")
-			if err := sd.Write(segmentdisplay.NewChunk(now)); err != nil {
+			now := segmentdisplay.NewChunk(time.Now().Format("150405"))
+			if err := sd.Write([]*segmentdisplay.TextChunk{now}); err != nil {
 				panic(err)
 			}
 
@@ -54,7 +54,10 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	sd := segmentdisplay.New()
+	sd, err := segmentdisplay.New()
+	if err != nil {
+		panic(err)
+	}
 	go clock(ctx, sd)
 
 	c, err := container.New(

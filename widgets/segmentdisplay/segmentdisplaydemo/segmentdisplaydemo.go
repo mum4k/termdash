@@ -91,7 +91,7 @@ func rollText(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 		state = append(state, ' ')
 	}
 	state = append(state, []rune(text)...)
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
@@ -145,7 +145,7 @@ func main() {
 			container.Bottom(
 				container.PlaceWidget(clockSD),
 			),
-			container.SplitPercent(20),
+			container.SplitPercent(40),
 		),
 	)
 	if err != nil {
@@ -158,7 +158,7 @@ func main() {
 		}
 	}
 
-	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(500*time.Millisecond)); err != nil {
+	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(1*time.Second)); err != nil {
 		panic(err)
 	}
 }

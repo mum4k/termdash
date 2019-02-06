@@ -149,103 +149,13 @@ func (sd *SegmentDisplay) reset() {
 	sd.wOptsTracker = attrrange.NewTracker()
 }
 
-// segArea contains information about the area that will contain the segments.
-type segArea struct {
-	// segment is the area for one segment.
-	segment image.Rectangle
-	// canFit is the number of segments we can fit on the canvas.
-	canFit int
-	// gapPixels is the size of gaps between segments in pixels.
-	gapPixels int
-	// gaps is the number of gaps that will be drawn.
-	gaps int
-}
-
-// needArea returns the complete area required for all the segments that we can
-// fit and any gaps.
-func (sa *segArea) needArea() image.Rectangle {
-	return image.Rect(
-		0,
-		0,
-		sa.segment.Dx()*sa.canFit+sa.gaps*sa.gapPixels,
-		sa.segment.Dy(),
-	)
-}
-
-// segArea calculates size and number of segments that can fit onto the
-// specified area.
-func (sd *SegmentDisplay) segArea(ar image.Rectangle) (*segArea, error) {
-	segAr, err := sixteen.Required(ar)
-	if err != nil {
-		return nil, fmt.Errorf("sixteen.Required => %v", err)
-	}
-	gapPixels := segAr.Dy() * sd.opts.gapPercent / 100
-
-	var (
-		gaps   int
-		canFit int
-		taken  int
-	)
-	for i := 0; i < sd.buff.Len(); i++ {
-		taken += segAr.Dx()
-
-		if taken > ar.Dx() {
-			break
-		}
-		canFit++
-
-		// Don't insert gaps after the last segment in the text or the last
-		// segment we can fit.
-		if gapPixels == 0 || i == sd.buff.Len()-1 {
-			continue
-		}
-
-		remaining := ar.Dx() - taken
-		// Only insert gaps if we can still fit one more segment with the gap.
-		if remaining >= gapPixels+segAr.Dx() {
-			taken += gapPixels
-			gaps++
-		} else {
-			// Gap is needed but doesn't fit together with the next segment.
-			// So insert neither.
-			break
-		}
-	}
-	return &segArea{
-		segment:   segAr,
-		canFit:    canFit,
-		gapPixels: gapPixels,
-		gaps:      gaps,
-	}, nil
-}
-
-// maximizeFit finds the largest individual segment size that enables us to fit
-// the most characters onto a canvas with the provided area. Returns the area
-// required for a single segment and the number of segments we can fit.
-func (sd *SegmentDisplay) maximizeFit(ar image.Rectangle) (*segArea, error) {
-	var bestSegAr *segArea
-	need := sd.buff.Len()
-	for height := ar.Dy(); height >= sixteen.MinRows; height-- {
-		ar := image.Rect(ar.Min.X, ar.Min.Y, ar.Max.X, ar.Min.Y+height)
-		segAr, err := sd.segArea(ar)
-		if err != nil {
-			return nil, err
-		}
-
-		if segAr.canFit >= need {
-			return segAr, nil
-		}
-		bestSegAr = segAr
-	}
-	return bestSegAr, nil
-}
-
 // preprocess determines the size of individual segments maximizing their
 // height or the amount of displayed characters based on the specified options.
 // Returns the area required for a single segment, the text that we can fit and
 // size of gaps between segments in cells.
 func (sd *SegmentDisplay) preprocess(cvsAr image.Rectangle) (*segArea, error) {
-	segAr, err := sd.segArea(cvsAr)
+	textLen := sd.buff.Len() // We're guaranteed by Write to only have ASCII characters.
+	segAr, err := newSegArea(cvsAr, textLen, sd.opts.gapPercent)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +165,7 @@ func (sd *SegmentDisplay) preprocess(cvsAr image.Rectangle) (*segArea, error) {
 		return segAr, nil
 	}
 
-	bestAr, err := sd.maximizeFit(cvsAr)
+	bestAr, err := maximizeFit(cvsAr, textLen, sd.opts.gapPercent)
 	if err != nil {
 		return nil, err
 	}

@@ -17,9 +17,11 @@ package main
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -35,10 +37,76 @@ func clock(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 	for {
 		select {
 		case <-ticker.C:
-			now := segmentdisplay.NewChunk(time.Now().Format("150405"))
-			if err := sd.Write([]*segmentdisplay.TextChunk{now}); err != nil {
+			now := time.Now()
+			nowStr := now.Format("15 04 05")
+			parts := strings.Split(nowStr, " ")
+
+			spacer := " "
+			if now.Second()%2 == 0 {
+				spacer = "_"
+			}
+			chunks := []*segmentdisplay.TextChunk{
+				segmentdisplay.NewChunk(parts[0], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorBlue))),
+				segmentdisplay.NewChunk(spacer),
+				segmentdisplay.NewChunk(parts[1], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorRed))),
+				segmentdisplay.NewChunk(spacer),
+				segmentdisplay.NewChunk(parts[2], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorYellow))),
+			}
+			if err := sd.Write(chunks); err != nil {
 				panic(err)
 			}
+
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// rotate returns a new slice with inputs rotated by step.
+// I.e. for a step of one:
+//   inputs[0] -> inputs[len(inputs)-1]
+//   inputs[1] -> inputs[0]
+// And so on.
+func rotate(inputs []rune, step int) []rune {
+	return append(inputs[step:], inputs[:step]...)
+}
+
+// rollText rolls a text across the segment display.
+// Exists when the context expires.
+func rollText(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
+	const text = "Termdash"
+	colors := map[rune]cell.Color{
+		'T': cell.ColorBlue,
+		'e': cell.ColorRed,
+		'r': cell.ColorYellow,
+		'm': cell.ColorBlue,
+		'd': cell.ColorGreen,
+		'a': cell.ColorRed,
+		's': cell.ColorGreen,
+		'h': cell.ColorRed,
+	}
+
+	var state []rune
+	for i := 0; i < len(text); i++ {
+		state = append(state, ' ')
+	}
+	state = append(state, []rune(text)...)
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			var chunks []*segmentdisplay.TextChunk
+			for i := 0; i < len(text); i++ {
+				chunks = append(chunks, segmentdisplay.NewChunk(
+					string(state[i]),
+					segmentdisplay.WriteCellOpts(cell.FgColor(colors[state[i]])),
+				))
+			}
+			if err := sd.Write(chunks); err != nil {
+				panic(err)
+			}
+			state = rotate(state, 1)
 
 		case <-ctx.Done():
 			return
@@ -54,17 +122,31 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	sd, err := segmentdisplay.New()
+	clockSD, err := segmentdisplay.New()
 	if err != nil {
 		panic(err)
 	}
-	go clock(ctx, sd)
+	go clock(ctx, clockSD)
+
+	rollingSD, err := segmentdisplay.New()
+	if err != nil {
+		panic(err)
+	}
+	go rollText(ctx, rollingSD)
 
 	c, err := container.New(
 		t,
 		container.Border(draw.LineStyleLight),
 		container.BorderTitle("PRESS Q TO QUIT"),
-		container.PlaceWidget(sd),
+		container.SplitHorizontal(
+			container.Top(
+				container.PlaceWidget(rollingSD),
+			),
+			container.Bottom(
+				container.PlaceWidget(clockSD),
+			),
+			container.SplitPercent(20),
+		),
 	)
 	if err != nil {
 		panic(err)
@@ -76,7 +158,7 @@ func main() {
 		}
 	}
 
-	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(1*time.Second)); err != nil {
+	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(500*time.Millisecond)); err != nil {
 		panic(err)
 	}
 }

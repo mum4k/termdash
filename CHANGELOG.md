@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 07-Feb-2019
+
 ### Added
 
 - The SegmentDisplay widget.
@@ -81,7 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.5.0...devel
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.6.0...devel
+[0.6.0]: https://github.com/mum4k/termdash/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/mum4k/termdash/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/mum4k/termdash/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mum4k/termdash/compare/v0.2.0...v0.3.0

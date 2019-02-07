@@ -9,8 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The SegmentDisplay widget.
 - A CHANGELOG.
 - New line styles for borders.
+
+### Changed
+
+- Better recordings of the individual demos.
 
 ### Fixed
 

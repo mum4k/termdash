@@ -7,7 +7,7 @@
 
 # termdash
 
-[<img src="./images/termdashdemo.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
+[<img src="./images/termdashdemo_0_6_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
 This project implements a cross-platform customizable terminal based dashboard.
 The feature set is inspired by the

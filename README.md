@@ -104,7 +104,7 @@ sub-cell height. Run the
 go run github.com/mum4k/termdash/widgets/sparkline/sparklinedemo/sparklinedemo.go
 ```
 
-[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
+[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif" width="50%">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
 
 ### The BarChart
 
@@ -115,7 +115,7 @@ Displays multiple bars showing relative ratios of values. Run the
 go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
 ```
 
-[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif">](widgets/barchart/barchartdemo/barchartdemo.go)
+[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif" width="50%">](widgets/barchart/barchartdemo/barchartdemo.go)
 
 ### The LineChart
 
@@ -126,7 +126,7 @@ Displays series of values on a line chart. Run the
 go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.go
 ```
 
-[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif">](widgets/linechart/linechartdemo/linechartdemo.go)
+[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif" width="70%">](widgets/linechart/linechartdemo/linechartdemo.go)
 
 ### The SegmentDisplay
 

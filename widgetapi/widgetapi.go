@@ -83,5 +83,13 @@ type Widget interface {
 	// This is how the widget indicates to the infrastructure whether it is
 	// interested in keyboard or mouse shortcuts, what is its minimum canvas
 	// size, etc.
+	//
+	// Most widgets will return statically compiled options (minimum and
+	// maximum size, etc.). If the returned options depend on the runtime state
+	// of the widget (e.g. the user data provided to the widget), the widget
+	// must protect against a case where the infrastructure calls the Draw
+	// method with a canvas that doesn't meet the requested options. This is
+	// because the data in the widget might change between calls to Options and
+	// Draw.
 	Options() Options
 }

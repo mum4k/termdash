@@ -174,7 +174,7 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
-			desc: "fails when the widget doesn't draw",
+			desc: "fails when the widget doesn't draw due to size too small",
 			size: image.Point{1, 1},
 			opts: []Option{
 				RedrawInterval(1),
@@ -350,7 +350,7 @@ func TestRun(t *testing.T) {
 				t.Fatalf("container.New => unexpected error: %v", err)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			err = Run(ctx, got, cont, tc.opts...)
 			cancel()
 			if (err != nil) != tc.wantErr {

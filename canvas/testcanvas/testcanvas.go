@@ -50,3 +50,11 @@ func MustSetCell(c *canvas.Canvas, p image.Point, r rune, opts ...cell.Option) i
 	}
 	return cells
 }
+
+// MustCopyTo copies the content of the source canvas onto the destination
+// canvas or panics.
+func MustCopyTo(src, dst *canvas.Canvas) {
+	if err := src.CopyTo(dst); err != nil {
+		panic(fmt.Sprintf("canvas.CopyTo => unexpected error: %v", err))
+	}
+}

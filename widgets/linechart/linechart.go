@@ -22,6 +22,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/cell"
@@ -173,7 +174,15 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
 
-	yd, err := lc.yAxis.Details(cvs.Area())
+	needAr, err := area.FromSize(lc.minSize())
+	if err != nil {
+		return err
+	}
+	if !needAr.In(cvs.Area()) {
+		return draw.ResizeNeeded(cvs)
+	}
+
+	yd, err := lc.yAxis.Details(cvs.Area(), lc.opts.yAxisMode)
 	if err != nil {
 		return fmt.Errorf("lc.yAxis.Details => %v", err)
 	}
@@ -285,19 +294,24 @@ func (lc *LineChart) Mouse(m *terminalapi.Mouse) error {
 	return errors.New("the LineChart widget doesn't support mouse events")
 }
 
-// Options implements widgetapi.Widget.Options.
-func (lc *LineChart) Options() widgetapi.Options {
-	lc.mu.Lock()
-	defer lc.mu.Unlock()
-
+// minSize determines the minimum required size to draw the line chart.
+func (lc *LineChart) minSize() image.Point {
 	// At the very least we need:
 	// - n cells width for the Y axis and its labels as reported by it.
 	// - at least 1 cell width for the graph.
 	reqWidth := lc.yAxis.RequiredWidth() + 1
 	// - 2 cells height the X axis and its values and 2 for min and max labels on Y.
 	const reqHeight = 4
+	return image.Point{reqWidth, reqHeight}
+}
+
+// Options implements widgetapi.Widget.Options.
+func (lc *LineChart) Options() widgetapi.Options {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+
 	return widgetapi.Options{
-		MinimumSize: image.Point{reqWidth, reqHeight},
+		MinimumSize: lc.minSize(),
 	}
 }
 

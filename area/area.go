@@ -18,6 +18,8 @@ package area
 import (
 	"fmt"
 	"image"
+
+	"github.com/mum4k/termdash/numbers"
 )
 
 // Size returns the size of the provided area.
@@ -76,14 +78,6 @@ func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right im
 	return left, right, nil
 }
 
-// abs returns the absolute value of x.
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
 // ExcludeBorder returns a new area created by subtracting a border around the
 // provided area. Return the zero area if there isn't enough space to exclude
 // the border.
@@ -95,10 +89,10 @@ func ExcludeBorder(area image.Rectangle) image.Rectangle {
 		return image.ZR
 	}
 	return image.Rect(
-		abs(area.Min.X+1),
-		abs(area.Min.Y+1),
-		abs(area.Max.X-1),
-		abs(area.Max.Y-1),
+		numbers.Abs(area.Min.X+1),
+		numbers.Abs(area.Min.Y+1),
+		numbers.Abs(area.Max.X-1),
+		numbers.Abs(area.Max.Y-1),
 	)
 }
 

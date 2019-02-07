@@ -3,10 +3,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/mum4k/termdash/badge.svg?branch=master)](https://coveralls.io/github/mum4k/termdash?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mum4k/termdash)](https://goreportcard.com/report/github.com/mum4k/termdash)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/mum4k/termdash/blob/master/LICENSE)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
 # termdash
 
-[<img src="./images/termdashdemo.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
+[<img src="./images/termdashdemo_0_6_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
 This project implements a cross-platform customizable terminal based dashboard.
 The feature set is inspired by the
@@ -31,13 +32,14 @@ for more details.
 - Drawing primitives (Go functions) for widget development with character and
   sub-character resolution.
 
+See the [changelog](CHANGELOG.md) for more details.
+
 # Installation
 
 To install this library, run the following:
 
 ```
 go get -u github.com/mum4k/termdash
-
 ```
 
 # Usage
@@ -102,7 +104,7 @@ sub-cell height. Run the
 go run github.com/mum4k/termdash/widgets/sparkline/sparklinedemo/sparklinedemo.go
 ```
 
-[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
+[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif" width="50%">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
 
 ### The BarChart
 
@@ -113,7 +115,7 @@ Displays multiple bars showing relative ratios of values. Run the
 go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
 ```
 
-[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif">](widgets/barchart/barchartdemo/barchartdemo.go)
+[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif" width="50%">](widgets/barchart/barchartdemo/barchartdemo.go)
 
 ### The LineChart
 
@@ -124,7 +126,18 @@ Displays series of values on a line chart. Run the
 go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.go
 ```
 
-[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif">](widgets/linechart/linechartdemo/linechartdemo.go)
+[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif" width="70%">](widgets/linechart/linechartdemo/linechartdemo.go)
+
+### The SegmentDisplay
+
+Displays text by simulating a 16-segment display. Run the
+[linechartdemo](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go
+```
+
+[<img src="./images/segmentdisplaydemo.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)
 
 # Contributing
 

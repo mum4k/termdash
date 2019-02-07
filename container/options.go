@@ -205,7 +205,7 @@ func PlaceWidget(w widgetapi.Widget) Option {
 
 // AlignHorizontal sets the horizontal alignment for the widget placed in the
 // container. Has no effect if the container contains no widget.
-// Defaults alignment in the center.
+// Defaults to alignment in the center.
 func AlignHorizontal(h align.Horizontal) Option {
 	return option(func(c *Container) error {
 		c.opts.hAlign = h

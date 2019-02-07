@@ -33,6 +33,7 @@ import (
 	"github.com/mum4k/termdash/widgets/donut"
 	"github.com/mum4k/termdash/widgets/gauge"
 	"github.com/mum4k/termdash/widgets/linechart"
+	"github.com/mum4k/termdash/widgets/segmentdisplay"
 	"github.com/mum4k/termdash/widgets/sparkline"
 	"github.com/mum4k/termdash/widgets/text"
 )
@@ -43,14 +44,17 @@ const redrawInterval = 250 * time.Millisecond
 // layout prepares the screen layout by creating the container and placing
 // widgets.
 func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, error) {
+	sd, err := newSegmentDisplay(ctx)
+	if err != nil {
+		return nil, err
+	}
 	spGreen, spRed := newSparkLines(ctx)
-	textAndSpark := []container.Option{
+	segmentTextSpark := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
 				container.Border(draw.LineStyleLight),
-				container.BorderTitle("Termdash demo, press Q to quit"),
-				container.BorderColor(cell.ColorNumber(39)),
-				container.PlaceWidget(newTextTime(ctx)),
+				container.BorderTitle("Press Q to quit"),
+				container.PlaceWidget(sd),
 			),
 			container.Bottom(
 				container.SplitVertical(
@@ -69,7 +73,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 					),
 				),
 			),
-			container.SplitPercent(30),
+			container.SplitPercent(50),
 		),
 	}
 
@@ -92,7 +96,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 
 	leftSide := []container.Option{
 		container.SplitHorizontal(
-			container.Top(textAndSpark...),
+			container.Top(segmentTextSpark...),
 			container.Bottom(gaugeAndHeartbeat...),
 			container.SplitPercent(50),
 		),
@@ -186,16 +190,45 @@ func periodic(ctx context.Context, interval time.Duration, fn func() error) {
 	}
 }
 
-// newTextTime creates a new Text widget that displays the current time.
-func newTextTime(ctx context.Context) *text.Text {
-	t := text.New()
+// newSegmentDisplay creates a new SegmentDisplay that shows the Termdash name.
+func newSegmentDisplay(ctx context.Context) (*segmentdisplay.SegmentDisplay, error) {
+	sd, err := segmentdisplay.New()
+	if err != nil {
+		return nil, err
+	}
 
-	go periodic(ctx, 1*time.Second, func() error {
-		t.Reset()
-		txt := time.Now().UTC().Format(time.UnixDate)
-		return t.Write(fmt.Sprintf("\n%s", txt), text.WriteCellOpts(cell.FgColor(cell.ColorMagenta)))
+	const text = "Termdash"
+	colors := map[rune]cell.Color{
+		'T': cell.ColorBlue,
+		'e': cell.ColorRed,
+		'r': cell.ColorYellow,
+		'm': cell.ColorBlue,
+		'd': cell.ColorGreen,
+		'a': cell.ColorRed,
+		's': cell.ColorGreen,
+		'h': cell.ColorRed,
+	}
+
+	var state []rune
+	for i := 0; i < len(text); i++ {
+		state = append(state, ' ')
+	}
+	state = append(state, []rune(text)...)
+	go periodic(ctx, 500*time.Millisecond, func() error {
+		var chunks []*segmentdisplay.TextChunk
+		for i := 0; i < len(text); i++ {
+			chunks = append(chunks, segmentdisplay.NewChunk(
+				string(state[i]),
+				segmentdisplay.WriteCellOpts(cell.FgColor(colors[state[i]])),
+			))
+		}
+		if err := sd.Write(chunks); err != nil {
+			return err
+		}
+		state = rotateRunes(state, 1)
+		return nil
 	})
-	return t
+	return sd, nil
 }
 
 // newRollText creates a new Text widget that displays rolling text.
@@ -299,7 +332,7 @@ func newHeartbeat(ctx context.Context) *linechart.LineChart {
 	step := 0
 	go periodic(ctx, redrawInterval/3, func() error {
 		step = (step + 1) % len(inputs)
-		return lc.Series("heartbeat", rotate(inputs, step),
+		return lc.Series("heartbeat", rotateFloats(inputs, step),
 			linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(87))),
 			linechart.SeriesXLabels(map[int]string{
 				0: "zero",
@@ -362,23 +395,32 @@ func newSines(ctx context.Context) *linechart.LineChart {
 	step1 := 0
 	go periodic(ctx, redrawInterval/3, func() error {
 		step1 = (step1 + 1) % len(inputs)
-		if err := lc.Series("first", rotate(inputs, step1),
+		if err := lc.Series("first", rotateFloats(inputs, step1),
 			linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
 		); err != nil {
 			return err
 		}
 
 		step2 := (step1 + 100) % len(inputs)
-		return lc.Series("second", rotate(inputs, step2), linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite)))
+		return lc.Series("second", rotateFloats(inputs, step2), linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite)))
 	})
 	return lc
 }
 
-// rotate returns a new slice with inputs rotated by step.
+// rotateFloats returns a new slice with inputs rotated by step.
 // I.e. for a step of one:
 //   inputs[0] -> inputs[len(inputs)-1]
 //   inputs[1] -> inputs[0]
 // And so on.
-func rotate(inputs []float64, step int) []float64 {
+func rotateFloats(inputs []float64, step int) []float64 {
+	return append(inputs[step:], inputs[:step]...)
+}
+
+// rotateRunes returns a new slice with inputs rotated by step.
+// I.e. for a step of one:
+//   inputs[0] -> inputs[len(inputs)-1]
+//   inputs[1] -> inputs[0]
+// And so on.
+func rotateRunes(inputs []rune, step int) []rune {
 	return append(inputs[step:], inputs[:step]...)
 }

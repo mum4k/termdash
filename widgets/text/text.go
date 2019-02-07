@@ -23,6 +23,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/mum4k/termdash/attrrange"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -42,7 +43,9 @@ type Text struct {
 	// buff contains the text to be displayed in the widget.
 	buff bytes.Buffer
 	// givenWOpts are write options given for the text.
-	givenWOpts givenWOpts
+	givenWOpts []*writeOptions
+	// wOptsTracker tracks the positions in a buff to which the givenWOpts apply.
+	wOptsTracker *attrrange.Tracker
 
 	// scroll tracks scrolling the position.
 	scroll *scrollTracker
@@ -69,9 +72,9 @@ type Text struct {
 func New(opts ...Option) *Text {
 	opt := newOptions(opts...)
 	return &Text{
-		givenWOpts: newGivenWOpts(),
-		scroll:     newScrollTracker(opt),
-		opts:       opt,
+		wOptsTracker: attrrange.NewTracker(),
+		scroll:       newScrollTracker(opt),
+		opts:         opt,
 	}
 }
 
@@ -81,7 +84,8 @@ func (t *Text) Reset() {
 	defer t.mu.Unlock()
 
 	t.buff.Reset()
-	t.givenWOpts = newGivenWOpts()
+	t.givenWOpts = nil
+	t.wOptsTracker = attrrange.NewTracker()
 	t.scroll = newScrollTracker(t.opts)
 	t.lastWidth = 0
 	t.contentChanged = true
@@ -89,8 +93,8 @@ func (t *Text) Reset() {
 }
 
 // Write writes text for the widget to display. Multiple calls append
-// additional text. The text cannot control characters (unicode.IsControl) or
-// space character (unicode.IsSpace) other than:
+// additional text. The text contain cannot control characters
+// (unicode.IsControl) or space character (unicode.IsSpace) other than:
 //   ' ', '\n'
 // Any newline ('\n') characters are interpreted as newlines when displaying
 // the text.
@@ -103,7 +107,11 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	}
 
 	pos := t.buff.Len()
-	t.givenWOpts[pos] = newOptsRange(pos, pos+len(text), newWriteOptions(wOpts...))
+	t.givenWOpts = append(t.givenWOpts, newWriteOptions(wOpts...))
+	wOptsIdx := len(t.givenWOpts) - 1
+	if err := t.wOptsTracker.Add(pos, pos+len(text), wOptsIdx); err != nil {
+		return err
+	}
 	if _, err := t.buff.WriteString(text); err != nil {
 		return err
 	}
@@ -157,7 +165,10 @@ func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 	var cur image.Point // Tracks the current drawing position on the canvas.
 	height := cvs.Area().Dy()
 	fromLine := t.scroll.firstLine(len(t.lines), height)
-	optRange := t.givenWOpts.forPosition(0) // Text options for the current byte.
+	optRange, err := t.wOptsTracker.ForPosition(0) // Text options for the current byte.
+	if err != nil {
+		return err
+	}
 	startPos := t.lines[fromLine]
 	for i, r := range text {
 		if i < startPos {
@@ -202,10 +213,15 @@ func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 			continue // Don't print the newline runes, just interpret them above.
 		}
 
-		if i >= optRange.high { // Get the next write options.
-			optRange = t.givenWOpts.forPosition(i)
+		if i >= optRange.High { // Get the next write options.
+			or, err := t.wOptsTracker.ForPosition(i)
+			if err != nil {
+				return err
+			}
+			optRange = or
 		}
-		cells, err := cvs.SetCell(cur, r, optRange.opts.cellOpts)
+		wOpts := t.givenWOpts[optRange.AttrIdx]
+		cells, err := cvs.SetCell(cur, r, wOpts.cellOpts)
 		if err != nil {
 			return err
 		}

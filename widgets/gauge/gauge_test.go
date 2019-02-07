@@ -75,6 +75,23 @@ func TestGauge(t *testing.T) {
 			},
 		},
 		{
+			desc: "draws resize needed character when canvas is smaller than requested",
+			gauge: New(
+				Char('o'),
+				Border(draw.LineStyleLight),
+			),
+			percent: &percentCall{p: 35},
+			canvas:  image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustResizeNeeded(c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc: "aligns the progress text top and left",
 			gauge: New(
 				Char('o'),

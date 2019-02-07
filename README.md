@@ -137,7 +137,7 @@ Displays text by simulating a 16-segment display. Run the
 go run github.com/mum4k/termdash/widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go
 ```
 
-[<img src="./images/segmentdisplay.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)
+[<img src="./images/segmentdisplaydemo.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)
 
 # Contributing
 

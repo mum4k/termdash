@@ -22,6 +22,7 @@ import (
 
 	"github.com/mum4k/termdash/canvas/braille"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/numbers"
 )
 
 // braillePixelChange represents an action on a pixel on the braille canvas.
@@ -133,8 +134,8 @@ func brailleLinePoints(start, end image.Point) []image.Point {
 	// Implements Bresenham's line algorithm.
 	// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 
-	vertProj := abs(end.Y - start.Y)
-	horizProj := abs(end.X - start.X)
+	vertProj := numbers.Abs(end.Y - start.Y)
+	horizProj := numbers.Abs(end.X - start.X)
 	if vertProj < horizProj {
 		if start.X > end.X {
 			return lineLow(end.X, end.Y, start.X, start.Y)
@@ -200,12 +201,4 @@ func lineHigh(x0, y0, x1, y1 int) []image.Point {
 		diff += 2 * deltaX
 	}
 	return res
-}
-
-// abs returns the absolute value of x.
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

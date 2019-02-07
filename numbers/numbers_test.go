@@ -327,3 +327,25 @@ func TestRadiansToDegrees(t *testing.T) {
 		})
 	}
 }
+
+func TestAbs(t *testing.T) {
+	tests := []struct {
+		input int
+		want  int
+	}{
+		{0, 0},
+		{1, 1},
+		{2, 2},
+		{-1, 1},
+		{-2, 2},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%d", tc.input), func(t *testing.T) {
+			got := Abs(tc.input)
+			if got != tc.want {
+				t.Errorf("Abs(%d) => %v, want %v", tc.input, got, tc.want)
+			}
+		})
+	}
+}

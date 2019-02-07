@@ -38,7 +38,7 @@ func clock(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 		select {
 		case <-ticker.C:
 			now := time.Now()
-			nowStr := now.Format("15 04 05")
+			nowStr := now.Format("15 04")
 			parts := strings.Split(nowStr, " ")
 
 			spacer := " "
@@ -49,8 +49,6 @@ func clock(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 				segmentdisplay.NewChunk(parts[0], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorBlue))),
 				segmentdisplay.NewChunk(spacer),
 				segmentdisplay.NewChunk(parts[1], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorRed))),
-				segmentdisplay.NewChunk(spacer),
-				segmentdisplay.NewChunk(parts[2], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorYellow))),
 			}
 			if err := sd.Write(chunks); err != nil {
 				panic(err)

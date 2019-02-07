@@ -40,7 +40,6 @@ To install this library, run the following:
 
 ```
 go get -u github.com/mum4k/termdash
-
 ```
 
 # Usage
@@ -128,6 +127,17 @@ go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.g
 ```
 
 [<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif">](widgets/linechart/linechartdemo/linechartdemo.go)
+
+### The SegmentDisplay
+
+Displays text by simulating a 16-segment display. Run the
+[linechartdemo](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go
+```
+
+[<img src="./images/segmentdisplay.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)
 
 # Contributing
 

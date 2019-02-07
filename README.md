@@ -131,7 +131,7 @@ go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.g
 ### The SegmentDisplay
 
 Displays text by simulating a 16-segment display. Run the
-[linechartdemo](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go).
+[segmentdisplaydemo](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go).
 
 ```go
 go run github.com/mum4k/termdash/widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go

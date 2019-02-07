@@ -53,8 +53,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		container.SplitHorizontal(
 			container.Top(
 				container.Border(draw.LineStyleLight),
-				container.BorderTitle("Termdash demo, press Q to quit"),
-				container.BorderColor(cell.ColorNumber(39)),
+				container.BorderTitle("Press Q to quit"),
 				container.PlaceWidget(sd),
 			),
 			container.Bottom(

@@ -14,7 +14,7 @@
 
 // Package attrrange simplifies tracking of attributes that apply to a range of
 // items.
-// Refer to the examples if the test file for details on usage.
+// Refer to the examples in the test file for details on usage.
 package attrrange
 
 import (

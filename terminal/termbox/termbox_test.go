@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
@@ -17,8 +16,6 @@ func TestNewTerminal(t *testing.T) {
 		{
 			desc: "default options",
 			want: &Terminal{
-				events:    eventqueue.New(),
-				done:      make(chan struct{}),
 				colorMode: terminalapi.ColorMode256,
 			},
 		},
@@ -28,8 +25,6 @@ func TestNewTerminal(t *testing.T) {
 				ColorMode(terminalapi.ColorModeNormal),
 			},
 			want: &Terminal{
-				events:    eventqueue.New(),
-				done:      make(chan struct{}),
 				colorMode: terminalapi.ColorModeNormal,
 			},
 		},
@@ -38,6 +33,11 @@ func TestNewTerminal(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			got := newTerminal(tc.opts...)
+
+			// Ignore these fields.
+			got.events = nil
+			got.done = nil
+
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("newTerminal => unexpected diff (-want, +got):\n%s", diff)
 			}

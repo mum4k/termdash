@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0] - 07-Feb-2019
 
+### Changed
+
+- Termbox is now initialized in 256 color mode by default.
+
 ### Added
 
 - The SegmentDisplay widget.

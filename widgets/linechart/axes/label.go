@@ -169,7 +169,7 @@ func xLabels(scale *XScale, graphZero image.Point, customLabels map[int]string) 
 
 	next := 0
 	for haveLabels := 0; haveLabels <= int(scale.Max.Value); haveLabels = len(res) {
-		label, err := colLabel(scale, space, next, customLabels)
+		label, err := colLabel(scale, space, customLabels)
 		if err != nil {
 			return nil, err
 		}
@@ -202,23 +202,21 @@ func xLabels(scale *XScale, graphZero image.Point, customLabels map[int]string) 
 	return res, nil
 }
 
-// colLabel returns a label placed either at the beginning of the space.
+// colLabel returns a label placed at the beginning of the space.
 // The space is adjusted according to how much space was taken by the label.
 // Returns nil, nil if the label doesn't fit in the space.
-func colLabel(scale *XScale, space *xSpace, labelNum int, customLabels map[int]string) (*Label, error) {
-	var val *Value
-	if custom, ok := customLabels[labelNum]; ok {
-		val = NewTextValue(custom)
-	} else {
-		pos := space.Relative()
-		v, err := scale.CellLabel(pos.X)
-		if err != nil {
-			return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
-		}
-		val = v
+func colLabel(scale *XScale, space *xSpace, customLabels map[int]string) (*Label, error) {
+	pos := space.Relative()
+	label, err := scale.CellLabel(pos.X)
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
 	}
 
-	labelLen := len(val.Text())
+	if custom, ok := customLabels[int(label.Value)]; ok {
+		label = NewTextValue(custom)
+	}
+
+	labelLen := len(label.Text())
 	if labelLen > space.Remaining() {
 		return nil, nil
 	}
@@ -229,7 +227,7 @@ func colLabel(scale *XScale, space *xSpace, labelNum int, customLabels map[int]s
 	}
 
 	return &Label{
-		Value: val,
+		Value: label,
 		Pos:   abs,
 	}, nil
 }

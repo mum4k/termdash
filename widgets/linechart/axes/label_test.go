@@ -266,6 +266,26 @@ func TestXLabels(t *testing.T) {
 			},
 		},
 		{
+			desc:       "custom labels provided, but only some fit, regression for #117",
+			numPoints:  8,
+			graphWidth: 5,
+			graphZero:  image.Point{0, 1},
+			customLabels: map[int]string{
+				0: "a",
+				1: "b",
+				2: "c",
+				3: "d",
+				4: "e",
+				5: "f",
+				6: "g",
+				7: "h",
+			},
+			want: []*Label{
+				{NewTextValue("a"), image.Point{0, 3}},
+				{NewTextValue("g"), image.Point{4, 3}},
+			},
+		},
+		{
 			desc:       "only some custom labels provided",
 			numPoints:  4,
 			graphWidth: 100,

@@ -19,6 +19,8 @@ package container
 import (
 	"image"
 
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/mouse/button"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
@@ -50,9 +52,9 @@ type focusTracker struct {
 	// a mouse click and now waiting for a release or a timeout.
 	candidate *Container
 
-	// mouseFSM is a state machine tracking mouse clicks in containers and
+	// buttonFSM is a state machine tracking mouse clicks in containers and
 	// moving focus from one container to the next.
-	mouseFSM mouseStateFn
+	buttonFSM *button.FSM
 }
 
 // newFocusTracker returns a new focus tracker with focus set at the provided
@@ -60,7 +62,9 @@ type focusTracker struct {
 func newFocusTracker(c *Container) *focusTracker {
 	return &focusTracker{
 		container: c,
-		mouseFSM:  mouseWantLeftButton,
+		// Mouse FSM tracking clicks inside the entire area for the root
+		// container.
+		buttonFSM: button.NewFSM(mouse.ButtonLeft, c.area),
 	}
 }
 
@@ -76,6 +80,15 @@ func (ft *focusTracker) active() *Container {
 
 // mouse identifies mouse events that change the focused container and track
 // the focused container in the tree.
-func (ft *focusTracker) mouse(m *terminalapi.Mouse) {
-	ft.mouseFSM = ft.mouseFSM(ft, m)
+// The argument c is the container onto which the mouse event landed.
+func (ft *focusTracker) mouse(target *Container, m *terminalapi.Mouse) {
+	clicked, bs := ft.buttonFSM.Event(m)
+	switch {
+	case bs == button.Down:
+		ft.candidate = target
+	case bs == button.Up && clicked:
+		if target == ft.candidate {
+			ft.container = target
+		}
+	}
 }

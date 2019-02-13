@@ -195,12 +195,12 @@ func (c *Container) Keyboard(k *terminalapi.Keyboard) error {
 // widget. Only mouse events that fall within the widget's canvas are forwarded
 // and the coordinates are adjusted relative to the widget's canvas.
 func (c *Container) Mouse(m *terminalapi.Mouse) error {
-	c.focusTracker.mouse(m)
-
 	target := pointCont(c, m.Position)
 	if target == nil { // Ignore mouse clicks where no containers are.
 		return nil
 	}
+	c.focusTracker.mouse(target, m)
+
 	w := target.opts.widget
 	if w == nil || !w.Options().WantMouse {
 		return nil

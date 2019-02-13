@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A function that draws text in vertically.
+
 ### Changed
 
-- Generalised mouse button FSM for use in widgets that need to track mouse
+- Termbox is now initialized in 256 color mode by default.
+- Generalized mouse button FSM for use in widgets that need to track mouse
   button clicks.
 
-=======
 ## [0.6.1] - 12-Feb-2019
 
 ### Fixes
@@ -20,10 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The LineChart widget now correctly places custom labels.
 
 ## [0.6.0] - 07-Feb-2019
-
-### Changed
-
-- Termbox is now initialized in 256 color mode by default.
 
 ### Added
 

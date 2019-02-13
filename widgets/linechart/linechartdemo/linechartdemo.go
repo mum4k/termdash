@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -48,15 +49,23 @@ func playLineChart(ctx context.Context, lc *linechart.LineChart, delay time.Dura
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 	for i := 0; ; {
+		labels := map[int]string{}
+		for i := 0; i < 200; i++ {
+			labels[i] = fmt.Sprintf("l%d", i)
+		}
+
 		select {
 		case <-ticker.C:
 			i = (i + 1) % len(inputs)
 			rotated := append(inputs[i:], inputs[:i]...)
 			if err := lc.Series("first", rotated,
 				linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
-				linechart.SeriesXLabels(map[int]string{
-					0: "zero",
-				}),
+				/*
+					linechart.SeriesXLabels(map[int]string{
+						0: "zero",
+					}),
+				*/
+				linechart.SeriesXLabels(labels),
 			); err != nil {
 				panic(err)
 			}

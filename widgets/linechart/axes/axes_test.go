@@ -179,14 +179,15 @@ func TestY(t *testing.T) {
 
 func TestNewXDetails(t *testing.T) {
 	tests := []struct {
-		desc         string
-		numPoints    int
-		yStart       image.Point
-		cvsWidth     int
-		cvsAr        image.Rectangle
-		customLabels map[int]string
-		want         *XDetails
-		wantErr      bool
+		desc             string
+		numPoints        int
+		yStart           image.Point
+		cvsWidth         int
+		cvsAr            image.Rectangle
+		customLabels     map[int]string
+		labelOrientation LabelOrientation
+		want             *XDetails
+		wantErr          bool
 	}{
 		{
 			desc:      "fails when numPoints is negative",
@@ -247,7 +248,7 @@ func TestNewXDetails(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, err := NewXDetails(tc.numPoints, tc.yStart, tc.cvsAr, tc.customLabels)
+			got, err := NewXDetails(tc.numPoints, tc.yStart, tc.cvsAr, tc.customLabels, tc.labelOrientation)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("NewXDetails => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

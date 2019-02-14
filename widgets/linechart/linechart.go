@@ -187,7 +187,7 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 		return fmt.Errorf("lc.yAxis.Details => %v", err)
 	}
 
-	xd, err := axes.NewXDetails(lc.maxPoints(), yd.Start, cvs.Area(), lc.xLabels)
+	xd, err := axes.NewXDetails(lc.maxPoints(), yd.Start, cvs.Area(), lc.xLabels, lc.opts.xLabelOrientation)
 	if err != nil {
 		return fmt.Errorf("NewXDetails => %v", err)
 	}

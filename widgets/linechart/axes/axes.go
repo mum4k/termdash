@@ -168,7 +168,7 @@ type XDetails struct {
 // plotted.
 // customLabels are the desired labels for the X axis, these are preferred if
 // provided.
-func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, customLabels map[int]string) (*XDetails, error) {
+func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, customLabels map[int]string, lo LabelOrientation) (*XDetails, error) {
 	if min := 3; cvsAr.Dy() < min {
 		return nil, fmt.Errorf("the canvas isn't tall enough to accommodate the X axis, its labels and the line chart, got height %d, minimum is %d", cvsAr.Dy(), min)
 	}
@@ -183,7 +183,7 @@ func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, custo
 	// One point horizontally for the Y axis.
 	// Two points vertically, one for the X axis and one for its labels.
 	graphZero := image.Point{yStart.X + 1, cvsAr.Dy() - 3}
-	labels, err := xLabels(scale, graphZero, customLabels)
+	labels, err := xLabels(scale, graphZero, customLabels, lo)
 	if err != nil {
 		return nil, err
 	}
@@ -194,32 +194,6 @@ func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, custo
 		Labels: labels,
 	}, nil
 }
-
-// LabelOrientation represents the orientation of text labels.
-type LabelOrientation int
-
-// String implements fmt.Stringer()
-func (lo LabelOrientation) String() string {
-	if n, ok := labelOrientationNames[lo]; ok {
-		return n
-	}
-	return "LabelOrientationUnknown"
-}
-
-// labelOrientationNames maps LabelOrientation values to human readable names.
-var labelOrientationNames = map[LabelOrientation]string{
-	LabelOrientationHorizontal: "LabelOrientationHorizontal",
-	LabelOrientationVertical:   "LabelOrientationVertical",
-}
-
-const (
-	// LabelOrientationHorizontal is the default label orientation where text
-	// flows horizontally.
-	LabelOrientationHorizontal LabelOrientation = iota
-
-	// LabelOrientationvertical is an orientation where text flows vertically.
-	LabelOrientationVertical
-)
 
 // RequiredHeight calculates the minimum height required in order to draw the X
 // axis and its labels.

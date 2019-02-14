@@ -28,46 +28,51 @@ type updateY struct {
 
 func TestY(t *testing.T) {
 	tests := []struct {
-		desc      string
-		minVal    float64
-		maxVal    float64
-		update    *updateY
-		mode      YScaleMode
-		cvsAr     image.Rectangle
-		wantWidth int
-		want      *YDetails
-		wantErr   bool
+		desc       string
+		minVal     float64
+		maxVal     float64
+		update     *updateY
+		reqXHeight int
+		mode       YScaleMode
+		cvsAr      image.Rectangle
+		wantWidth  int
+		want       *YDetails
+		wantErr    bool
 	}{
 		{
-			desc:      "fails on canvas too small",
-			minVal:    0,
-			maxVal:    3,
-			cvsAr:     image.Rect(0, 0, 3, 2),
-			wantWidth: 2,
-			wantErr:   true,
+			desc:       "fails on canvas too small",
+			minVal:     0,
+			maxVal:     3,
+			cvsAr:      image.Rect(0, 0, 3, 2),
+			reqXHeight: 2,
+			wantWidth:  2,
+			wantErr:    true,
 		},
 		{
-			desc:      "fails on cvsWidth less than required width",
-			minVal:    0,
-			maxVal:    3,
-			cvsAr:     image.Rect(0, 0, 2, 4),
-			wantWidth: 2,
-			wantErr:   true,
+			desc:       "fails on cvsWidth less than required width",
+			minVal:     0,
+			maxVal:     3,
+			cvsAr:      image.Rect(0, 0, 2, 4),
+			reqXHeight: 2,
+			wantWidth:  2,
+			wantErr:    true,
 		},
 		{
-			desc:      "fails when max is less than min",
-			minVal:    0,
-			maxVal:    -1,
-			cvsAr:     image.Rect(0, 0, 4, 4),
-			wantWidth: 3,
-			wantErr:   true,
+			desc:       "fails when max is less than min",
+			minVal:     0,
+			maxVal:     -1,
+			cvsAr:      image.Rect(0, 0, 4, 4),
+			reqXHeight: 2,
+			wantWidth:  3,
+			wantErr:    true,
 		},
 		{
-			desc:      "cvsWidth equals required width",
-			minVal:    0,
-			maxVal:    3,
-			cvsAr:     image.Rect(0, 0, 3, 4),
-			wantWidth: 2,
+			desc:       "cvsWidth equals required width",
+			minVal:     0,
+			maxVal:     3,
+			cvsAr:      image.Rect(0, 0, 3, 4),
+			wantWidth:  2,
+			reqXHeight: 2,
 			want: &YDetails{
 				Width: 2,
 				Start: image.Point{1, 0},
@@ -80,12 +85,13 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:      "success for anchored scale",
-			minVal:    1,
-			maxVal:    3,
-			mode:      YScaleModeAnchored,
-			cvsAr:     image.Rect(0, 0, 3, 4),
-			wantWidth: 2,
+			desc:       "success for anchored scale",
+			minVal:     1,
+			maxVal:     3,
+			mode:       YScaleModeAnchored,
+			cvsAr:      image.Rect(0, 0, 3, 4),
+			reqXHeight: 2,
+			wantWidth:  2,
 			want: &YDetails{
 				Width: 2,
 				Start: image.Point{1, 0},
@@ -98,12 +104,32 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:      "success for adaptive scale",
-			minVal:    1,
-			maxVal:    6,
-			mode:      YScaleModeAdaptive,
-			cvsAr:     image.Rect(0, 0, 3, 4),
-			wantWidth: 2,
+			desc:       "accommodates X scale that needs more height",
+			minVal:     1,
+			maxVal:     3,
+			mode:       YScaleModeAnchored,
+			cvsAr:      image.Rect(0, 0, 3, 6),
+			reqXHeight: 4,
+			wantWidth:  2,
+			want: &YDetails{
+				Width: 2,
+				Start: image.Point{1, 0},
+				End:   image.Point{1, 2},
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
+				Labels: []*Label{
+					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
+					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
+				},
+			},
+		},
+		{
+			desc:       "success for adaptive scale",
+			minVal:     1,
+			maxVal:     6,
+			mode:       YScaleModeAdaptive,
+			cvsAr:      image.Rect(0, 0, 3, 4),
+			reqXHeight: 2,
+			wantWidth:  2,
 			want: &YDetails{
 				Width: 2,
 				Start: image.Point{1, 0},
@@ -116,11 +142,12 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:      "cvsWidth just accommodates the longest label",
-			minVal:    0,
-			maxVal:    3,
-			cvsAr:     image.Rect(0, 0, 6, 4),
-			wantWidth: 2,
+			desc:       "cvsWidth just accommodates the longest label",
+			minVal:     0,
+			maxVal:     3,
+			cvsAr:      image.Rect(0, 0, 6, 4),
+			reqXHeight: 2,
+			wantWidth:  2,
 			want: &YDetails{
 				Width: 5,
 				Start: image.Point{4, 0},
@@ -133,11 +160,12 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:      "cvsWidth is more than we need",
-			minVal:    0,
-			maxVal:    3,
-			cvsAr:     image.Rect(0, 0, 7, 4),
-			wantWidth: 2,
+			desc:       "cvsWidth is more than we need",
+			minVal:     0,
+			maxVal:     3,
+			cvsAr:      image.Rect(0, 0, 7, 4),
+			reqXHeight: 2,
+			wantWidth:  2,
 			want: &YDetails{
 				Width: 5,
 				Start: image.Point{4, 0},
@@ -163,7 +191,7 @@ func TestY(t *testing.T) {
 				t.Errorf("RequiredWidth => got %v, want %v", gotWidth, tc.wantWidth)
 			}
 
-			got, err := y.Details(tc.cvsAr, tc.mode)
+			got, err := y.Details(tc.cvsAr, tc.reqXHeight, tc.mode)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Details => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
@@ -228,6 +256,24 @@ func TestNewXDetails(t *testing.T) {
 			},
 		},
 		{
+			desc:             "works with no data points, vertical",
+			numPoints:        0,
+			yStart:           image.Point{0, 0},
+			cvsAr:            image.Rect(0, 0, 2, 3),
+			labelOrientation: LabelOrientationVertical,
+			want: &XDetails{
+				Start: image.Point{0, 1},
+				End:   image.Point{1, 1},
+				Scale: mustNewXScale(0, 1, nonZeroDecimals),
+				Labels: []*Label{
+					{
+						Value: NewValue(0, nonZeroDecimals),
+						Pos:   image.Point{1, 2},
+					},
+				},
+			},
+		},
+		{
 			desc:      "accounts for non-zero yStart",
 			numPoints: 0,
 			yStart:    image.Point{2, 0},
@@ -240,6 +286,76 @@ func TestNewXDetails(t *testing.T) {
 					{
 						Value: NewValue(0, nonZeroDecimals),
 						Pos:   image.Point{3, 4},
+					},
+				},
+			},
+		},
+		{
+			desc:             "accounts for longer vertical labels, the tallest didn't fit",
+			numPoints:        1000,
+			yStart:           image.Point{2, 0},
+			cvsAr:            image.Rect(0, 0, 10, 10),
+			labelOrientation: LabelOrientationVertical,
+			want: &XDetails{
+				Start: image.Point{2, 5},
+				End:   image.Point{9, 5},
+				Scale: mustNewXScale(1000, 7, nonZeroDecimals),
+				Labels: []*Label{
+					{
+						Value: NewValue(0, nonZeroDecimals),
+						Pos:   image.Point{3, 6},
+					},
+					{
+						Value: NewValue(615, nonZeroDecimals),
+						Pos:   image.Point{7, 6},
+					},
+				},
+			},
+		},
+		{
+			desc:             "accounts for longer vertical labels, the tallest label fits",
+			numPoints:        999,
+			yStart:           image.Point{2, 0},
+			cvsAr:            image.Rect(0, 0, 10, 10),
+			labelOrientation: LabelOrientationVertical,
+			want: &XDetails{
+				Start: image.Point{2, 6},
+				End:   image.Point{9, 6},
+				Scale: mustNewXScale(999, 7, nonZeroDecimals),
+				Labels: []*Label{
+					{
+						Value: NewValue(0, nonZeroDecimals),
+						Pos:   image.Point{3, 7},
+					},
+					{
+						Value: NewValue(614, nonZeroDecimals),
+						Pos:   image.Point{7, 7},
+					},
+				},
+			},
+		},
+		{
+			desc:      "accounts for longer custom labels, vertical",
+			numPoints: 2,
+			yStart:    image.Point{5, 0},
+			cvsAr:     image.Rect(0, 0, 20, 10),
+			customLabels: map[int]string{
+				0: "start",
+				1: "end",
+			},
+			labelOrientation: LabelOrientationVertical,
+			want: &XDetails{
+				Start: image.Point{5, 4},
+				End:   image.Point{19, 4},
+				Scale: mustNewXScale(2, 14, nonZeroDecimals),
+				Labels: []*Label{
+					{
+						Value: NewTextValue("start"),
+						Pos:   image.Point{6, 5},
+					},
+					{
+						Value: NewTextValue("end"),
+						Pos:   image.Point{19, 5},
 					},
 				},
 			},

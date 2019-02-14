@@ -182,7 +182,8 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 		return draw.ResizeNeeded(cvs)
 	}
 
-	yd, err := lc.yAxis.Details(cvs.Area(), lc.opts.yAxisMode)
+	reqXHeight := axes.RequiredHeight(lc.maxPoints(), lc.xLabels, lc.opts.xLabelOrientation)
+	yd, err := lc.yAxis.Details(cvs.Area(), reqXHeight, lc.opts.yAxisMode)
 	if err != nil {
 		return fmt.Errorf("lc.yAxis.Details => %v", err)
 	}
@@ -219,8 +220,19 @@ func (lc *LineChart) drawAxes(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YD
 	}
 
 	for _, l := range xd.Labels {
-		if err := draw.Text(cvs, l.Value.Text(), l.Pos, draw.TextCellOpts(lc.opts.xLabelCellOpts...)); err != nil {
-			return fmt.Errorf("failed to draw the X labels: %v", err)
+		switch lc.opts.xLabelOrientation {
+		case axes.LabelOrientationHorizontal:
+			if err := draw.Text(cvs, l.Value.Text(), l.Pos, draw.TextCellOpts(lc.opts.xLabelCellOpts...)); err != nil {
+				return fmt.Errorf("failed to draw the X horizontal labels: %v", err)
+			}
+
+		case axes.LabelOrientationVertical:
+			if err := draw.VerticalText(cvs, l.Value.Text(), l.Pos,
+				draw.VerticalTextCellOpts(lc.opts.xLabelCellOpts...),
+				draw.VerticalTextOverrunMode(draw.OverrunModeThreeDot),
+			); err != nil {
+				return fmt.Errorf("failed to draw the vertical X labels: %v", err)
+			}
 		}
 	}
 	return nil
@@ -300,8 +312,11 @@ func (lc *LineChart) minSize() image.Point {
 	// - n cells width for the Y axis and its labels as reported by it.
 	// - at least 1 cell width for the graph.
 	reqWidth := lc.yAxis.RequiredWidth() + 1
-	// - 2 cells height the X axis and its values and 2 for min and max labels on Y.
-	const reqHeight = 4
+
+	// And for the height:
+	// - n cells width for the X axis and its labels as reported by it.
+	// - at least 1 cell height for the graph.
+	reqHeight := axes.RequiredHeight(lc.maxPoints(), lc.xLabels, lc.opts.xLabelOrientation) + 1
 	return image.Point{reqWidth, reqHeight}
 }
 

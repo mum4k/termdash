@@ -89,15 +89,16 @@ func (y *Y) RequiredWidth() int {
 
 // Details retrieves details about the Y axis required to draw it on a canvas
 // of the provided area.
-func (y *Y) Details(cvsAr image.Rectangle, mode YScaleMode) (*YDetails, error) {
+// The argument reqXHeight is the height required for the X axis and its labels.
+func (y *Y) Details(cvsAr image.Rectangle, reqXHeight int, mode YScaleMode) (*YDetails, error) {
 	cvsWidth := cvsAr.Dx()
 	cvsHeight := cvsAr.Dy()
-	maxWidth := cvsWidth - 1 // Reserve one row for the line chart itself.
+	maxWidth := cvsWidth - 1 // Reserve one column for the line chart itself.
 	if req := y.RequiredWidth(); maxWidth < req {
-		return nil, fmt.Errorf("the received maxWidth %d is smaller than the reported required width %d", maxWidth, req)
+		return nil, fmt.Errorf("the available maxWidth %d is smaller than the reported required width %d", maxWidth, req)
 	}
 
-	graphHeight := cvsHeight - 2 // One row for the X axis and one for its labels.
+	graphHeight := cvsHeight - reqXHeight
 	scale, err := NewYScale(y.min.Value, y.max.Value, graphHeight, nonZeroDecimals, mode)
 	if err != nil {
 		return nil, err
@@ -169,8 +170,11 @@ type XDetails struct {
 // customLabels are the desired labels for the X axis, these are preferred if
 // provided.
 func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, customLabels map[int]string, lo LabelOrientation) (*XDetails, error) {
-	if min := 3; cvsAr.Dy() < min {
-		return nil, fmt.Errorf("the canvas isn't tall enough to accommodate the X axis, its labels and the line chart, got height %d, minimum is %d", cvsAr.Dy(), min)
+	cvsHeight := cvsAr.Dy()
+	maxHeight := cvsHeight - 1 // Reserve one row for the line chart itself.
+	reqHeight := RequiredHeight(numPoints, customLabels, lo)
+	if maxHeight < reqHeight {
+		return nil, fmt.Errorf("the available maxHeight %d is smaller than the reported required height %d", maxHeight, reqHeight)
 	}
 
 	// The space between the start of the axis and the end of the canvas.
@@ -180,16 +184,20 @@ func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, custo
 		return nil, err
 	}
 
-	// One point horizontally for the Y axis.
-	// Two points vertically, one for the X axis and one for its labels.
-	graphZero := image.Point{yStart.X + 1, cvsAr.Dy() - 3}
+	// See how the labels would look like on the entire reqHeight.
+	graphZero := image.Point{
+		// Reserve one point horizontally for the Y axis.
+		yStart.X + 1,
+		cvsAr.Dy() - reqHeight - 1,
+	}
 	labels, err := xLabels(scale, graphZero, customLabels, lo)
 	if err != nil {
 		return nil, err
 	}
+
 	return &XDetails{
-		Start:  image.Point{yStart.X, cvsAr.Dy() - 2}, // One row for the labels.
-		End:    image.Point{yStart.X + graphWidth, cvsAr.Dy() - 2},
+		Start:  image.Point{yStart.X, cvsAr.Dy() - reqHeight}, // Space for the labels.
+		End:    image.Point{yStart.X + graphWidth, cvsAr.Dy() - reqHeight},
 		Scale:  scale,
 		Labels: labels,
 	}, nil

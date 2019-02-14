@@ -260,7 +260,7 @@ func TestLineChartDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "custom X labels",
+			desc:   "custom X labels, horizontal by default",
 			canvas: image.Rect(0, 0, 20, 10),
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 100}, SeriesXLabels(map[int]string{
@@ -288,6 +288,83 @@ func TestLineChartDraws(t *testing.T) {
 				graphAr := image.Rect(6, 0, 20, 8)
 				bc := testbraille.MustNew(graphAr)
 				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "custom X labels, horizontal with option",
+			opts: []Option{
+				XLabelsHorizontal(),
+			},
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 100}, SeriesXLabels(map[int]string{
+					0: "start",
+					1: "end",
+				}))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "start", image.Point{6, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "custom X labels, vertical",
+			opts: []Option{
+				XLabelsVertical(),
+			},
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 100}, SeriesXLabels(map[int]string{
+					0: "start",
+					1: "end",
+				}))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{6, 0}, End: image.Point{6, 4}},
+					{Start: image.Point{6, 4}, End: image.Point{19, 4}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{5, 3})
+				testdraw.MustText(c, "80.040", image.Point{0, 0})
+				testdraw.MustVerticalText(c, "start", image.Point{7, 5})
+				testdraw.MustVerticalText(c, "end", image.Point{19, 5})
+
+				// Braille line.
+				graphAr := image.Rect(7, 0, 20, 4)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 15}, image.Point{25, 0})
 				testbraille.MustCopyTo(bc, c)
 
 				testcanvas.MustApply(c, ft)
@@ -524,6 +601,7 @@ func TestLineChartDraws(t *testing.T) {
 func TestOptions(t *testing.T) {
 	tests := []struct {
 		desc string
+		opts []Option
 		// if not nil, executed before obtaining the options.
 		addSeries func(*LineChart) error
 		want      widgetapi.Options
@@ -552,11 +630,35 @@ func TestOptions(t *testing.T) {
 				MinimumSize: image.Point{6, 4},
 			},
 		},
+		{
+			desc: "reserves space for longer vertical X labels",
+			opts: []Option{
+				XLabelsVertical(),
+			},
+			addSeries: func(lc *LineChart) error {
+				return lc.Series("series", []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+			},
+			want: widgetapi.Options{
+				MinimumSize: image.Point{4, 5},
+			},
+		},
+		{
+			desc: "reserves space for longer custom vertical X labels",
+			opts: []Option{
+				XLabelsVertical(),
+			},
+			addSeries: func(lc *LineChart) error {
+				return lc.Series("series", []float64{0, 100}, SeriesXLabels(map[int]string{0: "text"}))
+			},
+			want: widgetapi.Options{
+				MinimumSize: image.Point{5, 7},
+			},
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			lc := New()
+			lc := New(tc.opts...)
 
 			if tc.addSeries != nil {
 				if err := tc.addSeries(lc); err != nil {

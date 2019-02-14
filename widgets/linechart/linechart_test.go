@@ -609,7 +609,7 @@ func TestOptions(t *testing.T) {
 		{
 			desc: "reserves space for axis without series",
 			want: widgetapi.Options{
-				MinimumSize: image.Point{3, 3},
+				MinimumSize: image.Point{3, 4},
 			},
 		},
 		{
@@ -618,7 +618,7 @@ func TestOptions(t *testing.T) {
 				return lc.Series("series", []float64{0, 100})
 			},
 			want: widgetapi.Options{
-				MinimumSize: image.Point{5, 3},
+				MinimumSize: image.Point{5, 4},
 			},
 		},
 		{
@@ -627,7 +627,7 @@ func TestOptions(t *testing.T) {
 				return lc.Series("series", []float64{-100, 100})
 			},
 			want: widgetapi.Options{
-				MinimumSize: image.Point{6, 3},
+				MinimumSize: image.Point{6, 4},
 			},
 		},
 		{
@@ -639,7 +639,7 @@ func TestOptions(t *testing.T) {
 				return lc.Series("series", []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
 			},
 			want: widgetapi.Options{
-				MinimumSize: image.Point{4, 4},
+				MinimumSize: image.Point{4, 5},
 			},
 		},
 		{
@@ -651,7 +651,7 @@ func TestOptions(t *testing.T) {
 				return lc.Series("series", []float64{0, 100}, SeriesXLabels(map[int]string{0: "text"}))
 			},
 			want: widgetapi.Options{
-				MinimumSize: image.Point{5, 6},
+				MinimumSize: image.Point{5, 7},
 			},
 		},
 	}

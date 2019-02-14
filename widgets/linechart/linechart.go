@@ -315,8 +315,8 @@ func (lc *LineChart) minSize() image.Point {
 
 	// And for the height:
 	// - n cells width for the X axis and its labels as reported by it.
-	// - at least 1 cell height for the graph.
-	reqHeight := axes.RequiredHeight(lc.maxPoints(), lc.xLabels, lc.opts.xLabelOrientation) + 1
+	// - at least 2 cell height for the graph.
+	reqHeight := axes.RequiredHeight(lc.maxPoints(), lc.xLabels, lc.opts.xLabelOrientation) + 2
 	return image.Point{reqWidth, reqHeight}
 }
 

@@ -404,7 +404,7 @@ func TestXLabels(t *testing.T) {
 			if err != nil {
 				t.Fatalf("NewXScale => unexpected error: %v", err)
 			}
-			t.Logf("scale step: %v", scale.Step.Rounded)
+			t.Logf("scale step: %v, label orientation: %v", scale.Step.Rounded, tc.labelOrientation)
 			got, err := xLabels(scale, tc.graphZero, tc.customLabels, tc.labelOrientation)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("xLabels => unexpected error: %v, wantErr: %v", err, tc.wantErr)
@@ -414,6 +414,65 @@ func TestXLabels(t *testing.T) {
 			}
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("xLabels => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestXSpace(t *testing.T) {
+	tests := []struct {
+		desc          string
+		graphZero     image.Point
+		graphWidth    int
+		sub           int
+		wantRemaining int
+		wantRelative  image.Point
+		wantErr       bool
+	}{
+		{
+			desc:       "fails to subtract when we run out of space",
+			graphWidth: 1,
+			sub:        2,
+			wantErr:    true,
+		},
+		{
+			desc:          "subtracts, graph is zero based",
+			graphWidth:    2,
+			sub:           1,
+			wantRemaining: 1,
+			wantRelative:  image.Point{1, 1},
+		},
+		{
+			desc:          "subtracts, graph isn't zero based",
+			graphZero:     image.Point{10, 10},
+			graphWidth:    2,
+			sub:           1,
+			wantRemaining: 1,
+			wantRelative:  image.Point{1, 11},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			xs := newXSpace(tc.graphZero, tc.graphWidth)
+			t.Logf("xSpace: %v", xs)
+
+			err := xs.Sub(tc.sub)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("xSpace.Sub => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			gotRemaining := xs.Remaining()
+			if gotRemaining != tc.wantRemaining {
+				t.Errorf("xSpace.Remaining => %v, want %v", gotRemaining, tc.wantRemaining)
+			}
+
+			gotRelative := xs.Relative()
+			if diff := pretty.Compare(tc.wantRelative, gotRelative); diff != "" {
+				t.Errorf("xSpace.Relative => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

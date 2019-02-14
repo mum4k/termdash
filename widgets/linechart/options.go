@@ -29,10 +29,11 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	axesCellOpts   []cell.Option
-	xLabelCellOpts []cell.Option
-	yLabelCellOpts []cell.Option
-	yAxisMode      axes.YScaleMode
+	axesCellOpts      []cell.Option
+	xLabelCellOpts    []cell.Option
+	xLabelOrientation axes.LabelOrientation
+	yLabelCellOpts    []cell.Option
+	yAxisMode         axes.YScaleMode
 }
 
 // newOptions returns a new options instance.
@@ -63,6 +64,22 @@ func AxesCellOpts(co ...cell.Option) Option {
 func XLabelCellOpts(co ...cell.Option) Option {
 	return option(func(opts *options) {
 		opts.xLabelCellOpts = co
+	})
+}
+
+// XLabelsVertical makes the labels under the X axis flow vertically.
+// Defaults to labels that flow horizontally.
+func XLabelsVertical() Option {
+	return option(func(opts *options) {
+		opts.xLabelOrientation = axes.LabelOrientationVertical
+	})
+}
+
+// XLabelsHorizontal makes the labels under the X axis flow horizontally.
+// This is the default option.
+func XLabelsHorizontal() Option {
+	return option(func(opts *options) {
+		opts.xLabelOrientation = axes.LabelOrientationHorizontal
 	})
 }
 

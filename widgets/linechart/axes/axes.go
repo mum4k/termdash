@@ -26,8 +26,8 @@ const (
 	// rounded up to.
 	nonZeroDecimals = 2
 
-	// yAxisWidth is width of the Y axis.
-	yAxisWidth = 1
+	// axisWidth is width of an axis.
+	axisWidth = 1
 )
 
 // YDetails contain information about the Y axis that will be drawn onto the
@@ -75,15 +75,16 @@ func (y *Y) Update(minVal, maxVal float64) {
 	y.min, y.max = NewValue(minVal, nonZeroDecimals), NewValue(maxVal, nonZeroDecimals)
 }
 
-// RequiredWidth calculates the minimum width required in order to draw the Y axis.
+// RequiredWidth calculates the minimum width required in order to draw the Y
+// axis and its labels.
 func (y *Y) RequiredWidth() int {
 	// This is an estimation only, it is possible that more labels in the
 	// middle will be generated and might be wider than this. Such cases are
 	// handled on the call to Details when the size of canvas is known.
-	return widestLabel([]*Label{
+	return longestLabel([]*Label{
 		{Value: y.min},
 		{Value: y.max},
-	}) + yAxisWidth
+	}) + axisWidth
 }
 
 // Details retrieves details about the Y axis required to draw it on a canvas
@@ -103,7 +104,7 @@ func (y *Y) Details(cvsAr image.Rectangle, mode YScaleMode) (*YDetails, error) {
 	}
 
 	// See how the labels would look like on the entire maxWidth.
-	maxLabelWidth := maxWidth - yAxisWidth
+	maxLabelWidth := maxWidth - axisWidth
 	labels, err := yLabels(scale, maxLabelWidth)
 	if err != nil {
 		return nil, err
@@ -112,7 +113,7 @@ func (y *Y) Details(cvsAr image.Rectangle, mode YScaleMode) (*YDetails, error) {
 	var width int
 	// Determine the largest label, which might be less than maxWidth.
 	// Such case would allow us to save more space for the line chart itself.
-	widest := widestLabel(labels)
+	widest := longestLabel(labels)
 	if widest < maxLabelWidth {
 		// Save the space and recalculate the labels, since they need to be realigned.
 		l, err := yLabels(scale, widest)
@@ -120,7 +121,7 @@ func (y *Y) Details(cvsAr image.Rectangle, mode YScaleMode) (*YDetails, error) {
 			return nil, err
 		}
 		labels = l
-		width = widest + yAxisWidth // One for the axis itself.
+		width = widest + axisWidth // One for the axis itself.
 	} else {
 		width = maxWidth
 	}
@@ -134,8 +135,8 @@ func (y *Y) Details(cvsAr image.Rectangle, mode YScaleMode) (*YDetails, error) {
 	}, nil
 }
 
-// widestLabel returns the width of the widest label.
-func widestLabel(labels []*Label) int {
+// longestLabel returns the width of the widest label.
+func longestLabel(labels []*Label) int {
 	var widest int
 	for _, label := range labels {
 		if l := len(label.Value.Text()); l > widest {
@@ -192,4 +193,50 @@ func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, custo
 		Scale:  scale,
 		Labels: labels,
 	}, nil
+}
+
+// LabelOrientation represents the orientation of text labels.
+type LabelOrientation int
+
+// String implements fmt.Stringer()
+func (lo LabelOrientation) String() string {
+	if n, ok := labelOrientationNames[lo]; ok {
+		return n
+	}
+	return "LabelOrientationUnknown"
+}
+
+// labelOrientationNames maps LabelOrientation values to human readable names.
+var labelOrientationNames = map[LabelOrientation]string{
+	LabelOrientationHorizontal: "LabelOrientationHorizontal",
+	LabelOrientationVertical:   "LabelOrientationVertical",
+}
+
+const (
+	// LabelOrientationHorizontal is the default label orientation where text
+	// flows horizontally.
+	LabelOrientationHorizontal LabelOrientation = iota
+
+	// LabelOrientationvertical is an orientation where text flows vertically.
+	LabelOrientationVertical
+)
+
+// RequiredHeight calculates the minimum height required in order to draw the X
+// axis and its labels.
+func RequiredHeight(numPoints int, customLabels map[int]string, lo LabelOrientation) int {
+	if lo == LabelOrientationHorizontal {
+		// One row for the X axis and one row for its labels flowing
+		// horizontally.
+		return axisWidth + 1
+	}
+
+	labels := []*Label{
+		{Value: NewValue(float64(numPoints), nonZeroDecimals)},
+	}
+	for _, cl := range customLabels {
+		labels = append(labels, &Label{
+			Value: NewTextValue(cl),
+		})
+	}
+	return longestLabel(labels) + axisWidth
 }

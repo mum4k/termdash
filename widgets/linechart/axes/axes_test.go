@@ -261,3 +261,53 @@ func TestNewXDetails(t *testing.T) {
 		})
 	}
 }
+
+func TestRequiredHeight(t *testing.T) {
+	tests := []struct {
+		desc             string
+		numPoints        int
+		customLabels     map[int]string
+		labelOrientation LabelOrientation
+		want             int
+	}{
+		{
+			desc: "horizontal orientation",
+			want: 2,
+		},
+		{
+			desc:             "vertical orientation, no custom labels, need single row for max label",
+			numPoints:        9,
+			labelOrientation: LabelOrientationVertical,
+			want:             2,
+		},
+		{
+			desc:             "vertical orientation, no custom labels, need multiple row for max label",
+			numPoints:        100,
+			labelOrientation: LabelOrientationVertical,
+			want:             4,
+		},
+		{
+			desc:             "vertical orientation, custom labels but all shorter than max label",
+			numPoints:        100,
+			customLabels:     map[int]string{1: "a", 2: "b"},
+			labelOrientation: LabelOrientationVertical,
+			want:             4,
+		},
+		{
+			desc:             "vertical orientation, custom labels and some longer than max label",
+			numPoints:        100,
+			customLabels:     map[int]string{1: "a", 2: "bbbbb"},
+			labelOrientation: LabelOrientationVertical,
+			want:             6,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := RequiredHeight(tc.numPoints, tc.customLabels, tc.labelOrientation)
+			if got != tc.want {
+				t.Errorf("RequiredHeight => %d, want %d", got, tc.want)
+			}
+		})
+	}
+}

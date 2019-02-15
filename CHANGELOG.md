@@ -24,8 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The constructors of all the widgets now also return an error so that they
   can validate the options. This is a breaking change for the following
-  widgets: BarChart, Gauge, SparkLine, Text. The callers will have to handle
-  the returned error.
+  widgets: BarChart, Gauge, LineChart, SparkLine, Text. The callers will have
+  to handle the returned error.
 
 ### Fixed
 

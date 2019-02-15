@@ -106,6 +106,11 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
+	bc, err := newBarChart(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	don, err := newDonut(ctx)
 	if err != nil {
 		return nil, err
@@ -120,7 +125,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 			container.Top(
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("BarChart"),
-				container.PlaceWidget(newBarChart(ctx)),
+				container.PlaceWidget(bc),
 				container.BorderTitleAlignRight(),
 			),
 			container.Bottom(

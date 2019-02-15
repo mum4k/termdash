@@ -19,8 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Termbox is now initialized in 256 color mode by default.
 - Generalized mouse button FSM for use in widgets that need to track mouse
   button clicks.
-- The constructor of the LineChart widget now also returns an error so that it
-  can validate its options. This is a breaking change on the LineChart API.
+
+#### Breaking API changes
+
+- The constructors of all the widgets now also return an error so that they
+  can validate the options. This is a breaking change for the following
+  widgets: BarChart, Gauge, SparkLine, Text. The callers will have to handle
+  the returned error.
 
 ### Fixed
 

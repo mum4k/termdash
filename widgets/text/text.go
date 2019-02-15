@@ -69,13 +69,16 @@ type Text struct {
 }
 
 // New returns a new text widget.
-func New(opts ...Option) *Text {
+func New(opts ...Option) (*Text, error) {
 	opt := newOptions(opts...)
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
 	return &Text{
 		wOptsTracker: attrrange.NewTracker(),
 		scroll:       newScrollTracker(opt),
 		opts:         opt,
-	}
+	}, nil
 }
 
 // Reset resets the widget back to empty content.

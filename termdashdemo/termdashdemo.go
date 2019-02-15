@@ -48,6 +48,10 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	if err != nil {
 		return nil, err
 	}
+	rollT, err := newRollText(ctx)
+	if err != nil {
+		return nil, err
+	}
 	spGreen, spRed, err := newSparkLines(ctx)
 	if err != nil {
 		return nil, err
@@ -64,7 +68,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 					container.Left(
 						container.Border(draw.LineStyleLight),
 						container.BorderTitle("A rolling text"),
-						container.PlaceWidget(newRollText(ctx)),
+						container.PlaceWidget(rollT),
 					),
 					container.Right(
 						container.Border(draw.LineStyleLight),
@@ -253,8 +257,11 @@ func newSegmentDisplay(ctx context.Context) (*segmentdisplay.SegmentDisplay, err
 }
 
 // newRollText creates a new Text widget that displays rolling text.
-func newRollText(ctx context.Context) *text.Text {
-	t := text.New(text.RollContent())
+func newRollText(ctx context.Context) (*text.Text, error) {
+	t, err := text.New(text.RollContent())
+	if err != nil {
+		return nil, err
+	}
 
 	i := 0
 	go periodic(ctx, 1*time.Second, func() error {
@@ -264,7 +271,7 @@ func newRollText(ctx context.Context) *text.Text {
 		i++
 		return nil
 	})
-	return t
+	return t, nil
 }
 
 // newSparkLines creates two new sparklines displaying random values.

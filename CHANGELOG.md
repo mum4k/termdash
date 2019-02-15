@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.1] - 12-Feb-2019
 
-### Fixes
+### Fixed
 
 - The LineChart widget now correctly places custom labels.
 

@@ -82,11 +82,14 @@ func main() {
 
 	const redrawInterval = 250 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
-	lc := linechart.New(
+	lc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorCyan)),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playLineChart(ctx, lc, redrawInterval/3)
 	c, err := container.New(
 		t,

@@ -11,12 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A function that draws text in vertically.
 - The LineChart widget can display X axis labels in vertical orientation.
+- The LineChart widget allows the user to specify a custom scale for the Y
+  axis.
 
 ### Changed
 
 - Termbox is now initialized in 256 color mode by default.
 - Generalized mouse button FSM for use in widgets that need to track mouse
   button clicks.
+- The constructor of the LineChart widget now also returns an error so that it
+  can validate its options. This is a breaking change on the LineChart API.
 
 ## [0.6.1] - 12-Feb-2019
 

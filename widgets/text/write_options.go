@@ -29,6 +29,7 @@ type WriteOption interface {
 // writeOptions stores the provided options.
 type writeOptions struct {
 	cellOpts *cell.Options
+	replace  bool
 }
 
 // newWriteOptions returns new writeOptions instance.
@@ -54,5 +55,13 @@ func (wo writeOption) set(wOpts *writeOptions) {
 func WriteCellOpts(opts ...cell.Option) WriteOption {
 	return writeOption(func(wOpts *writeOptions) {
 		wOpts.cellOpts = cell.NewOptions(opts...)
+	})
+}
+
+// WriteReplace instructs the text widget to replace the entire text content on
+// this write instead of appending.
+func WriteReplace() WriteOption {
+	return writeOption(func(wOpts *writeOptions) {
+		wOpts.replace = true
 	})
 }

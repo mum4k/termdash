@@ -134,6 +134,24 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
+			desc:   "multiple writes replace when requested",
+			canvas: image.Rect(0, 0, 12, 1),
+			writes: func(widget *Text) error {
+				if err := widget.Write("hello", WriteReplace()); err != nil {
+					return err
+				}
+				return widget.Write("world", WriteReplace())
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "world", image.Point{0, 0})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "reset clears the content",
 			canvas: image.Rect(0, 0, 12, 1),
 			writes: func(widget *Text) error {

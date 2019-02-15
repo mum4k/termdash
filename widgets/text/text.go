@@ -85,7 +85,11 @@ func New(opts ...Option) (*Text, error) {
 func (t *Text) Reset() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.reset()
+}
 
+// reset implements Reset, caller must hold t.mu.
+func (t *Text) reset() {
 	t.buff.Reset()
 	t.givenWOpts = nil
 	t.wOptsTracker = attrrange.NewTracker()
@@ -109,8 +113,13 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 		return err
 	}
 
+	opts := newWriteOptions(wOpts...)
+	if opts.replace {
+		t.reset()
+	}
+
 	pos := t.buff.Len()
-	t.givenWOpts = append(t.givenWOpts, newWriteOptions(wOpts...))
+	t.givenWOpts = append(t.givenWOpts, opts)
 	wOptsIdx := len(t.givenWOpts) - 1
 	if err := t.wOptsTracker.Add(pos, pos+len(text), wOptsIdx); err != nil {
 		return err

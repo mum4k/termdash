@@ -17,6 +17,8 @@ package gauge
 // options.go contains configurable options for Gauge.
 
 import (
+	"fmt"
+
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -56,6 +58,14 @@ func newOptions() *options {
 		filledTextColor: DefaultFilledTextColor,
 		emptyTextColor:  DefaultEmptyTextColor,
 	}
+}
+
+// validate validates the provided options.
+func (o *options) validate() error {
+	if got, min := o.height, 0; got < min {
+		return fmt.Errorf("invalid Height %d, must be %d <= Height", got, min)
+	}
+	return nil
 }
 
 // option implements Option.

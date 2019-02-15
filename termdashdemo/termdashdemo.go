@@ -77,6 +77,11 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
+	g, err := newGauge(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	heartLC, err := newHeartbeat(ctx)
 	if err != nil {
 		return nil, err
@@ -87,7 +92,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("A Gauge"),
 				container.BorderColor(cell.ColorNumber(39)),
-				container.PlaceWidget(newGauge(ctx)),
+				container.PlaceWidget(g),
 			),
 			container.Bottom(
 				container.Border(draw.LineStyleLight),
@@ -285,8 +290,11 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 }
 
 // newGauge creates a demo Gauge widget.
-func newGauge(ctx context.Context) *gauge.Gauge {
-	g := gauge.New()
+func newGauge(ctx context.Context) (*gauge.Gauge, error) {
+	g, err := gauge.New()
+	if err != nil {
+		return nil, err
+	}
 
 	const start = 35
 	progress := start
@@ -301,7 +309,7 @@ func newGauge(ctx context.Context) *gauge.Gauge {
 		}
 		return nil
 	})
-	return g
+	return g, nil
 }
 
 // newDonut creates a demo Donut widget.

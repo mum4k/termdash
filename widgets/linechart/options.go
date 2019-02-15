@@ -15,6 +15,9 @@
 package linechart
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/widgets/linechart/axes"
 )
@@ -34,6 +37,22 @@ type options struct {
 	xLabelOrientation axes.LabelOrientation
 	yLabelCellOpts    []cell.Option
 	yAxisMode         axes.YScaleMode
+	yAxisCustomScale  *customScale
+}
+
+// validate validates the provided options.
+func (o *options) validate() error {
+	if o.yAxisCustomScale == nil {
+		return nil
+	}
+
+	if math.IsNaN(o.yAxisCustomScale.min) || math.IsNaN(o.yAxisCustomScale.max) {
+		return fmt.Errorf("both the min(%v) and the max(%v) provided as custom Y scale must be valid numbers", o.yAxisCustomScale.min, o.yAxisCustomScale.max)
+	}
+	if o.yAxisCustomScale.min >= o.yAxisCustomScale.max {
+		return fmt.Errorf("the min(%v) must be less than the max(%v) provided as custom Y scale", o.yAxisCustomScale.min, o.yAxisCustomScale.max)
+	}
+	return nil
 }
 
 // newOptions returns a new options instance.
@@ -101,5 +120,30 @@ func YLabelCellOpts(co ...cell.Option) Option {
 func YAxisAdaptive() Option {
 	return option(func(opts *options) {
 		opts.yAxisMode = axes.YScaleModeAdaptive
+	})
+}
+
+// customScale is the custom scale provided via the YAxisCustomScale option.
+type customScale struct {
+	min, max float64
+}
+
+// YAxisCustomScale when provided, the scale of the Y axis will be based on the
+// specified minimum and maximum value instead of determining those from the
+// LineChart series. Useful to visually stabilize the Y axis for LineChart
+// applications that continuously feed values.
+// The default behavior is to continuously determine the minimum and maximum
+// value from the series before drawing the LineChart.
+// Even when this option is provided, the LineChart would still rescale the Y
+// axis if a value is encountered that is outside of the range specified here,
+// i.e. smaller than the minimum or larger than the maximum.
+// Both the minimum and the maximum must be valid numbers and the minimum must
+// be smaller than the maximum.
+func YAxisCustomScale(min, max float64) Option {
+	return option(func(opts *options) {
+		opts.yAxisCustomScale = &customScale{
+			min: min,
+			max: max,
+		}
 	})
 }

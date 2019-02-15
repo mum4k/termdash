@@ -17,6 +17,8 @@ package gauge
 // options.go contains configurable options for Gauge.
 
 import (
+	"fmt"
+
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
@@ -58,6 +60,14 @@ func newOptions() *options {
 	}
 }
 
+// validate validates the provided options.
+func (o *options) validate() error {
+	if got, min := o.height, 0; got < min {
+		return fmt.Errorf("invalid Height %d, must be %d <= Height", got, min)
+	}
+	return nil
+}
+
 // option implements Option.
 type option func(*options)
 
@@ -95,8 +105,8 @@ func HideTextProgress() Option {
 	})
 }
 
-// Height sets the height of the drawn Gauge.
-// Defaults to the height of the container.
+// Height sets the height of the drawn Gauge. Must be a positive number.
+// Defaults to zero which means the height of the container.
 func Height(height int) Option {
 	return option(func(opts *options) {
 		opts.height = height

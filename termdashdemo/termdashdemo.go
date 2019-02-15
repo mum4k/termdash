@@ -48,7 +48,14 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	if err != nil {
 		return nil, err
 	}
-	spGreen, spRed := newSparkLines(ctx)
+	rollT, err := newRollText(ctx)
+	if err != nil {
+		return nil, err
+	}
+	spGreen, spRed, err := newSparkLines(ctx)
+	if err != nil {
+		return nil, err
+	}
 	segmentTextSpark := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
@@ -61,7 +68,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 					container.Left(
 						container.Border(draw.LineStyleLight),
 						container.BorderTitle("A rolling text"),
-						container.PlaceWidget(newRollText(ctx)),
+						container.PlaceWidget(rollT),
 					),
 					container.Right(
 						container.Border(draw.LineStyleLight),
@@ -77,6 +84,11 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
+	g, err := newGauge(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	heartLC, err := newHeartbeat(ctx)
 	if err != nil {
 		return nil, err
@@ -87,7 +99,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("A Gauge"),
 				container.BorderColor(cell.ColorNumber(39)),
-				container.PlaceWidget(newGauge(ctx)),
+				container.PlaceWidget(g),
 			),
 			container.Bottom(
 				container.Border(draw.LineStyleLight),
@@ -106,6 +118,11 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
+	bc, err := newBarChart(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	don, err := newDonut(ctx)
 	if err != nil {
 		return nil, err
@@ -120,7 +137,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 			container.Top(
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("BarChart"),
-				container.PlaceWidget(newBarChart(ctx)),
+				container.PlaceWidget(bc),
 				container.BorderTitleAlignRight(),
 			),
 			container.Bottom(
@@ -240,8 +257,11 @@ func newSegmentDisplay(ctx context.Context) (*segmentdisplay.SegmentDisplay, err
 }
 
 // newRollText creates a new Text widget that displays rolling text.
-func newRollText(ctx context.Context) *text.Text {
-	t := text.New(text.RollContent())
+func newRollText(ctx context.Context) (*text.Text, error) {
+	t, err := text.New(text.RollContent())
+	if err != nil {
+		return nil, err
+	}
 
 	i := 0
 	go periodic(ctx, 1*time.Second, func() error {
@@ -251,15 +271,18 @@ func newRollText(ctx context.Context) *text.Text {
 		i++
 		return nil
 	})
-	return t
+	return t, nil
 }
 
 // newSparkLines creates two new sparklines displaying random values.
-func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkLine) {
-	spGreen := sparkline.New(
+func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkLine, error) {
+	spGreen, err := sparkline.New(
 		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorGreen),
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	const max = 100
 	go periodic(ctx, 250*time.Millisecond, func() error {
@@ -267,21 +290,27 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 		return spGreen.Add([]int{v})
 	})
 
-	spRed := sparkline.New(
+	spRed, err := sparkline.New(
 		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorRed),
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 	go periodic(ctx, 500*time.Millisecond, func() error {
 		v := int(rand.Int31n(max + 1))
 		return spRed.Add([]int{v})
 	})
-	return spGreen, spRed
+	return spGreen, spRed, nil
 
 }
 
 // newGauge creates a demo Gauge widget.
-func newGauge(ctx context.Context) *gauge.Gauge {
-	g := gauge.New()
+func newGauge(ctx context.Context) (*gauge.Gauge, error) {
+	g, err := gauge.New()
+	if err != nil {
+		return nil, err
+	}
 
 	const start = 35
 	progress := start
@@ -296,7 +325,7 @@ func newGauge(ctx context.Context) *gauge.Gauge {
 		}
 		return nil
 	})
-	return g
+	return g, nil
 }
 
 // newDonut creates a demo Donut widget.
@@ -354,8 +383,8 @@ func newHeartbeat(ctx context.Context) (*linechart.LineChart, error) {
 }
 
 // newBarChart returns a BarcChart that displays random values on multiple bars.
-func newBarChart(ctx context.Context) *barchart.BarChart {
-	bc := barchart.New(
+func newBarChart(ctx context.Context) (*barchart.BarChart, error) {
+	bc, err := barchart.New(
 		barchart.BarColors([]cell.Color{
 			cell.ColorNumber(33),
 			cell.ColorNumber(39),
@@ -374,6 +403,9 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 		}),
 		barchart.ShowValues(),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	const (
 		bars = 6
@@ -387,7 +419,7 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 
 		return bc.Values(values, max)
 	})
-	return bc
+	return bc, nil
 }
 
 // newSines returns a line chart that displays multiple sine series.

@@ -39,8 +39,31 @@ func TestTextDraws(t *testing.T) {
 		writes       func(*Text) error
 		events       func(*Text)
 		want         func(size image.Point) *faketerm.Terminal
+		wantErr      bool
 		wantWriteErr bool
 	}{
+		{
+			desc: "fails when scroll keys aren't unique",
+			opts: []Option{
+				ScrollKeys('a', 'a', 'a', 'a'),
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
+			desc: "fails when scroll mouse buttons aren't unique",
+			opts: []Option{
+				ScrollMouseButtons(mouse.ButtonLeft, mouse.ButtonLeft),
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
 		{
 			desc:   "empty when no written text",
 			canvas: image.Rect(0, 0, 1, 1),
@@ -691,7 +714,14 @@ func TestTextDraws(t *testing.T) {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			widget := New(tc.opts...)
+			widget, err := New(tc.opts...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("New => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
 			if tc.writes != nil {
 				err := tc.writes(widget)
 				if (err != nil) != tc.wantWriteErr {
@@ -755,7 +785,11 @@ func TestOptions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			text := New(tc.opts...)
+			text, err := New(tc.opts...)
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
+
 			got := text.Options()
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)

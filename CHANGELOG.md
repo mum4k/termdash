@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The constructor of the LineChart widget now also returns an error so that it
   can validate its options. This is a breaking change on the LineChart API.
 
+### Fixed
+
+- The LineChart widget now correctly determines the Y axis scale when multiple
+  series are provided.
+
 ## [0.6.1] - 12-Feb-2019
 
 ### Fixes

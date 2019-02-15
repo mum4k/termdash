@@ -90,13 +90,16 @@ type LineChart struct {
 }
 
 // New returns a new line chart widget.
-func New(opts ...Option) *LineChart {
+func New(opts ...Option) (*LineChart, error) {
 	opt := newOptions(opts...)
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
 	return &LineChart{
 		series: map[string]*seriesValues{},
 		yAxis:  axes.NewY(0, 0),
 		opts:   opt,
-	}
+	}, nil
 }
 
 // SeriesOption is used to provide options to Series.
@@ -136,6 +139,27 @@ func SeriesXLabels(labels map[int]string) SeriesOption {
 	})
 }
 
+// yMinMax determines the min and max values for the Y axis.
+func (lc *LineChart) yMinMax() (float64, float64) {
+	var (
+		minimums []float64
+		maximums []float64
+	)
+	for _, sv := range lc.series {
+		minimums = append(minimums, sv.min)
+		maximums = append(maximums, sv.max)
+	}
+
+	if lc.opts.yAxisCustomScale != nil {
+		minimums = append(minimums, lc.opts.yAxisCustomScale.min)
+		maximums = append(maximums, lc.opts.yAxisCustomScale.max)
+	}
+
+	min, _ := numbers.MinMax(minimums)
+	_, max := numbers.MinMax(maximums)
+	return min, max
+}
+
 // Series sets the values that should be displayed as the line chart with the
 // provided label.
 // Subsequent calls with the same label replace any previously provided values.
@@ -164,7 +188,7 @@ func (lc *LineChart) Series(label string, values []float64, opts ...SeriesOption
 	}
 
 	lc.series[label] = series
-	lc.yAxis = axes.NewY(series.min, series.max)
+	lc.yAxis = axes.NewY(lc.yMinMax())
 	return nil
 }
 

@@ -77,6 +77,10 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
+	heartLC, err := newHeartbeat(ctx)
+	if err != nil {
+		return nil, err
+	}
 	gaugeAndHeartbeat := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
@@ -88,7 +92,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 			container.Bottom(
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("A LineChart"),
-				container.PlaceWidget(newHeartbeat(ctx)),
+				container.PlaceWidget(heartLC),
 			),
 			container.SplitPercent(20),
 		),
@@ -107,6 +111,10 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		return nil, err
 	}
 
+	sineLC, err := newSines(ctx)
+	if err != nil {
+		return nil, err
+	}
 	rightSide := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
@@ -127,7 +135,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 						container.Border(draw.LineStyleLight),
 						container.BorderTitle("Multiple series"),
 						container.BorderTitleAlignRight(),
-						container.PlaceWidget(newSines(ctx)),
+						container.PlaceWidget(sineLC),
 					),
 					container.SplitPercent(30),
 				),
@@ -317,18 +325,21 @@ func newDonut(ctx context.Context) (*donut.Donut, error) {
 }
 
 // newHeartbeat returns a line chart that displays a heartbeat-like progression.
-func newHeartbeat(ctx context.Context) *linechart.LineChart {
+func newHeartbeat(ctx context.Context) (*linechart.LineChart, error) {
 	var inputs []float64
 	for i := 0; i < 100; i++ {
 		v := math.Pow(math.Sin(float64(i)), 63) * math.Sin(float64(i)+1.5) * 8
 		inputs = append(inputs, v)
 	}
 
-	lc := linechart.New(
+	lc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 	)
+	if err != nil {
+		return nil, err
+	}
 	step := 0
 	go periodic(ctx, redrawInterval/3, func() error {
 		step = (step + 1) % len(inputs)
@@ -339,7 +350,7 @@ func newHeartbeat(ctx context.Context) *linechart.LineChart {
 			}),
 		)
 	})
-	return lc
+	return lc, nil
 }
 
 // newBarChart returns a BarcChart that displays random values on multiple bars.
@@ -380,18 +391,21 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 }
 
 // newSines returns a line chart that displays multiple sine series.
-func newSines(ctx context.Context) *linechart.LineChart {
+func newSines(ctx context.Context) (*linechart.LineChart, error) {
 	var inputs []float64
 	for i := 0; i < 200; i++ {
 		v := math.Sin(float64(i) / 100 * math.Pi)
 		inputs = append(inputs, v)
 	}
 
-	lc := linechart.New(
+	lc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 	)
+	if err != nil {
+		return nil, err
+	}
 	step1 := 0
 	go periodic(ctx, redrawInterval/3, func() error {
 		step1 = (step1 + 1) % len(inputs)
@@ -404,7 +418,7 @@ func newSines(ctx context.Context) *linechart.LineChart {
 		step2 := (step1 + 100) % len(inputs)
 		return lc.Series("second", rotateFloats(inputs, step2), linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite)))
 	})
-	return lc
+	return lc, nil
 }
 
 // rotateFloats returns a new slice with inputs rotated by step.

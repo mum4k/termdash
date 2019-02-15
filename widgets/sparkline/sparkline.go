@@ -47,14 +47,18 @@ type SparkLine struct {
 }
 
 // New returns a new SparkLine.
-func New(opts ...Option) *SparkLine {
+func New(opts ...Option) (*SparkLine, error) {
 	opt := newOptions()
 	for _, o := range opts {
 		o.set(opt)
 	}
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
+
 	return &SparkLine{
 		opts: opt,
-	}
+	}, nil
 }
 
 // Draw draws the SparkLine widget onto the canvas.

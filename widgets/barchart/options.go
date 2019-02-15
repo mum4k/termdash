@@ -80,7 +80,7 @@ func Char(ch rune) Option {
 }
 
 // BarWidth sets the width of the bars. If not set, or set to zero, the bars
-// use all the space available to the widget. Must be a positive non-zero
+// use all the space available to the widget. Must be a positive or zero
 // integer.
 func BarWidth(width int) Option {
 	return option(func(opts *options) {
@@ -92,7 +92,7 @@ func BarWidth(width int) Option {
 const DefaultBarGap = 1
 
 // BarGap sets the width of the space between the bars.
-// Must be a positive non-zero integer.
+// Must be a positive or zero integer.
 // Defaults to DefaultBarGap.
 func BarGap(width int) Option {
 	return option(func(opts *options) {

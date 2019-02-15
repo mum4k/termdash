@@ -105,8 +105,8 @@ func HideTextProgress() Option {
 	})
 }
 
-// Height sets the height of the drawn Gauge.
-// Defaults to the height of the container.
+// Height sets the height of the drawn Gauge. Must be a positive number.
+// Defaults to zero which means the height of the container.
 func Height(height int) Option {
 	return option(func(opts *options) {
 		opts.height = height

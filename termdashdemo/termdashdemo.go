@@ -48,7 +48,10 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	if err != nil {
 		return nil, err
 	}
-	spGreen, spRed := newSparkLines(ctx)
+	spGreen, spRed, err := newSparkLines(ctx)
+	if err != nil {
+		return nil, err
+	}
 	segmentTextSpark := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
@@ -265,11 +268,14 @@ func newRollText(ctx context.Context) *text.Text {
 }
 
 // newSparkLines creates two new sparklines displaying random values.
-func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkLine) {
-	spGreen := sparkline.New(
+func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkLine, error) {
+	spGreen, err := sparkline.New(
 		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorGreen),
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	const max = 100
 	go periodic(ctx, 250*time.Millisecond, func() error {
@@ -277,15 +283,18 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 		return spGreen.Add([]int{v})
 	})
 
-	spRed := sparkline.New(
+	spRed, err := sparkline.New(
 		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorRed),
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 	go periodic(ctx, 500*time.Millisecond, func() error {
 		v := int(rand.Int31n(max + 1))
 		return spRed.Add([]int{v})
 	})
-	return spGreen, spRed
+	return spGreen, spRed, nil
 
 }
 

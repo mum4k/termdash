@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The LineChart widget can display X axis labels in vertical orientation.
 - The LineChart widget allows the user to specify a custom scale for the Y
   axis.
+- The Text widget now has a Write option that atomically replaces the entire
+  text content.
 
 ### Changed
 

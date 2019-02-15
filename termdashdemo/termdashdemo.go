@@ -343,8 +343,8 @@ func newHeartbeat(ctx context.Context) *linechart.LineChart {
 }
 
 // newBarChart returns a BarcChart that displays random values on multiple bars.
-func newBarChart(ctx context.Context) *barchart.BarChart {
-	bc := barchart.New(
+func newBarChart(ctx context.Context) (*barchart.BarChart, error) {
+	bc, err := barchart.New(
 		barchart.BarColors([]cell.Color{
 			cell.ColorNumber(33),
 			cell.ColorNumber(39),
@@ -363,6 +363,9 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 		}),
 		barchart.ShowValues(),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	const (
 		bars = 6
@@ -376,7 +379,7 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 
 		return bc.Values(values, max)
 	})
-	return bc
+	return bc, nil
 }
 
 // newSines returns a line chart that displays multiple sine series.

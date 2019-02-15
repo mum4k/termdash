@@ -17,6 +17,8 @@ package barchart
 // options.go contains configurable options for BarChart.
 
 import (
+	"fmt"
+
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 )
@@ -47,6 +49,17 @@ type options struct {
 	labels      []string
 }
 
+// validate validates the provided options.
+func (o *options) validate() error {
+	if got, min := o.barWidth, 0; got < min {
+		return fmt.Errorf("invalid BarWidth %d, must be %d <= BarWidth", got, min)
+	}
+	if got, min := o.barGap, 0; got < min {
+		return fmt.Errorf("invalid BarGap %d, must be %d <= BarGap", got, min)
+	}
+	return nil
+}
+
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
@@ -66,8 +79,9 @@ func Char(ch rune) Option {
 	})
 }
 
-// BarWidth sets the width of the bars. If not set, the bars use all the space
-// available to the widget.
+// BarWidth sets the width of the bars. If not set, or set to zero, the bars
+// use all the space available to the widget. Must be a positive non-zero
+// integer.
 func BarWidth(width int) Option {
 	return option(func(opts *options) {
 		opts.barWidth = width
@@ -78,6 +92,7 @@ func BarWidth(width int) Option {
 const DefaultBarGap = 1
 
 // BarGap sets the width of the space between the bars.
+// Must be a positive non-zero integer.
 // Defaults to DefaultBarGap.
 func BarGap(width int) Option {
 	return option(func(opts *options) {

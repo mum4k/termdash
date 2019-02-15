@@ -67,7 +67,7 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	bc := barchart.New(
+	bc, err := barchart.New(
 		barchart.BarColors([]cell.Color{
 			cell.ColorBlue,
 			cell.ColorRed,
@@ -91,6 +91,9 @@ func main() {
 			"CPU3",
 		}),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playBarChart(ctx, bc, 1*time.Second)
 
 	c, err := container.New(

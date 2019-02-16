@@ -152,7 +152,8 @@ func TestXLabels(t *testing.T) {
 	const nonZeroDecimals = 2
 	tests := []struct {
 		desc             string
-		numPoints        int
+		min              int
+		max              int
 		graphWidth       int
 		graphZero        image.Point
 		customLabels     map[int]string
@@ -162,7 +163,8 @@ func TestXLabels(t *testing.T) {
 	}{
 		{
 			desc:       "only one point",
-			numPoints:  1,
+			min:        0,
+			max:        0,
 			graphWidth: 1,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -171,7 +173,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:             "only one point, vertical",
-			numPoints:        1,
+			min:              0,
+			max:              0,
 			graphWidth:       1,
 			graphZero:        image.Point{0, 1},
 			labelOrientation: LabelOrientationVertical,
@@ -181,7 +184,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "two points, only one label fits",
-			numPoints:  2,
+			min:        0,
+			max:        1,
 			graphWidth: 1,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -190,7 +194,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "two points, two labels fit exactly",
-			numPoints:  2,
+			min:        0,
+			max:        1,
 			graphWidth: 5,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -200,7 +205,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:             "two points, two labels fit exactly, vertical",
-			numPoints:        2,
+			min:              0,
+			max:              1,
 			graphWidth:       5,
 			graphZero:        image.Point{0, 1},
 			labelOrientation: LabelOrientationVertical,
@@ -211,7 +217,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "labels are placed according to graphZero",
-			numPoints:  2,
+			min:        0,
+			max:        1,
 			graphWidth: 5,
 			graphZero:  image.Point{3, 5},
 			want: []*Label{
@@ -221,7 +228,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "skip to next value exhausts the space completely",
-			numPoints:  11,
+			min:        0,
+			max:        10,
 			graphWidth: 4,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -230,7 +238,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "second label doesn't fit due to its length",
-			numPoints:  100,
+			min:        0,
+			max:        100,
 			graphWidth: 5,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -239,7 +248,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "two points, two labels, more space than minSpacing so end label adjusted",
-			numPoints:  2,
+			min:        0,
+			max:        1,
 			graphWidth: 6,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -249,7 +259,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "at most as many labels as there are points",
-			numPoints:  2,
+			min:        0,
+			max:        1,
 			graphWidth: 100,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -259,7 +270,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "some labels in the middle",
-			numPoints:  4,
+			min:        0,
+			max:        3,
 			graphWidth: 100,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -271,7 +283,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "custom labels provided",
-			numPoints:  4,
+			min:        0,
+			max:        3,
 			graphWidth: 100,
 			graphZero:  image.Point{0, 1},
 			customLabels: map[int]string{
@@ -289,7 +302,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "custom labels provided, but only some fit, regression for #117",
-			numPoints:  8,
+			min:        0,
+			max:        7,
 			graphWidth: 5,
 			graphZero:  image.Point{0, 1},
 			customLabels: map[int]string{
@@ -309,7 +323,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "only some custom labels provided",
-			numPoints:  4,
+			min:        0,
+			max:        3,
 			graphWidth: 100,
 			graphZero:  image.Point{0, 1},
 			customLabels: map[int]string{
@@ -325,7 +340,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "not displayed if custom labels don't fit",
-			numPoints:  2,
+			min:        0,
+			max:        1,
 			graphWidth: 6,
 			graphZero:  image.Point{0, 1},
 			customLabels: map[int]string{
@@ -335,7 +351,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "more points than pixels",
-			numPoints:  100,
+			min:        0,
+			max:        99,
 			graphWidth: 6,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -345,7 +362,8 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "longer labels, only two fit in horizontal",
-			numPoints:  1000,
+			min:        0,
+			max:        1000,
 			graphWidth: 10,
 			graphZero:  image.Point{0, 1},
 			want: []*Label{
@@ -355,19 +373,21 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:             "longer labels, multiple fit in vertical",
-			numPoints:        1000,
+			min:              0,
+			max:              1000,
 			graphWidth:       10,
 			graphZero:        image.Point{0, 1},
 			labelOrientation: LabelOrientationVertical,
 			want: []*Label{
 				{NewValue(0, nonZeroDecimals), image.Point{0, 3}},
 				{NewValue(421, nonZeroDecimals), image.Point{4, 3}},
-				{NewValue(841, nonZeroDecimals), image.Point{8, 3}},
+				{NewValue(842, nonZeroDecimals), image.Point{8, 3}},
 			},
 		},
 		{
 			desc:       "longer custom labels, only one fits in horizontal",
-			numPoints:  1000,
+			min:        0,
+			max:        1000,
 			graphWidth: 10,
 			graphZero:  image.Point{0, 1},
 			customLabels: map[int]string{
@@ -381,13 +401,14 @@ func TestXLabels(t *testing.T) {
 		},
 		{
 			desc:       "longer custom labels, all fit in vertical",
-			numPoints:  1000,
+			min:        0,
+			max:        1000,
 			graphWidth: 10,
 			graphZero:  image.Point{0, 1},
 			customLabels: map[int]string{
 				0:   "zero label",
 				421: "this one is even longer",
-				841: "this label just keeps on going",
+				842: "this label just keeps on going",
 			},
 			labelOrientation: LabelOrientationVertical,
 			want: []*Label{
@@ -400,7 +421,7 @@ func TestXLabels(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			scale, err := NewXScale(tc.numPoints, tc.graphWidth, nonZeroDecimals)
+			scale, err := NewXScale(tc.min, tc.max, tc.graphWidth, nonZeroDecimals)
 			if err != nil {
 				t.Fatalf("NewXScale => unexpected error: %v", err)
 			}

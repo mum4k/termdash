@@ -37,7 +37,7 @@ type YDetails struct {
 	Width int
 
 	// Start is the point where the Y axis starts.
-	// Both coordinates of Start are less than End.
+	// The Y coordinate of Start is less than the Y coordinate of End.
 	Start image.Point
 	// End is the point where the Y axis ends.
 	End image.Point
@@ -149,23 +149,40 @@ type XDetails struct {
 	Labels []*Label
 }
 
+// XProperties are the properties of the X axis.
+type XProperties struct {
+	// Min is the minimum value on the axis, i.e. the position of the first
+	// displayed value from the series.
+	Min int
+	// Max is the maximum value on the axis, i.e. the position of the last
+	// displayed value from the series.
+	Max int
+	// ReqYWidth is the width required for the Y axis and its labels.
+	ReqYWidth int
+	// CustomLabels are the desired labels for the X axis, these are preferred
+	// if provided.
+	CustomLabels map[int]string
+	// LO is the desired orientation of labels under the X axis.
+	LO LabelOrientation
+}
+
 // NewXDetails retrieves details about the X axis required to draw it on a canvas
 // of the provided area. The yStart is the point where the Y axis starts.
 // The numPoints is the number of points in the largest series that will be
 // plotted.
 // customLabels are the desired labels for the X axis, these are preferred if
 // provided.
-func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, customLabels map[int]string, lo LabelOrientation) (*XDetails, error) {
+func NewXDetails(cvsAr image.Rectangle, xp *XProperties) (*XDetails, error) {
 	cvsHeight := cvsAr.Dy()
 	maxHeight := cvsHeight - 1 // Reserve one row for the line chart itself.
-	reqHeight := RequiredHeight(numPoints, customLabels, lo)
+	reqHeight := RequiredHeight(xp.Max, xp.CustomLabels, xp.LO)
 	if maxHeight < reqHeight {
 		return nil, fmt.Errorf("the available maxHeight %d is smaller than the reported required height %d", maxHeight, reqHeight)
 	}
 
 	// The space between the start of the axis and the end of the canvas.
-	graphWidth := cvsAr.Dx() - yStart.X - 1
-	scale, err := NewXScale(numPoints, graphWidth, nonZeroDecimals)
+	graphWidth := cvsAr.Dx() - xp.ReqYWidth - 1
+	scale, err := NewXScale(xp.Min, xp.Max, graphWidth, nonZeroDecimals)
 	if err != nil {
 		return nil, err
 	}
@@ -173,17 +190,17 @@ func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, custo
 	// See how the labels would look like on the entire reqHeight.
 	graphZero := image.Point{
 		// Reserve one point horizontally for the Y axis.
-		yStart.X + 1,
+		xp.ReqYWidth + 1,
 		cvsAr.Dy() - reqHeight - 1,
 	}
-	labels, err := xLabels(scale, graphZero, customLabels, lo)
+	labels, err := xLabels(scale, graphZero, xp.CustomLabels, xp.LO)
 	if err != nil {
 		return nil, err
 	}
 
 	return &XDetails{
-		Start:  image.Point{yStart.X, cvsAr.Dy() - reqHeight}, // Space for the labels.
-		End:    image.Point{yStart.X + graphWidth, cvsAr.Dy() - reqHeight},
+		Start:  image.Point{xp.ReqYWidth, cvsAr.Dy() - reqHeight}, // Space for the labels.
+		End:    image.Point{xp.ReqYWidth + graphWidth, cvsAr.Dy() - reqHeight},
 		Scale:  scale,
 		Labels: labels,
 	}, nil
@@ -191,7 +208,7 @@ func NewXDetails(numPoints int, yStart image.Point, cvsAr image.Rectangle, custo
 
 // RequiredHeight calculates the minimum height required in order to draw the X
 // axis and its labels.
-func RequiredHeight(numPoints int, customLabels map[int]string, lo LabelOrientation) int {
+func RequiredHeight(max int, customLabels map[int]string, lo LabelOrientation) int {
 	if lo == LabelOrientationHorizontal {
 		// One row for the X axis and one row for its labels flowing
 		// horizontally.
@@ -199,7 +216,7 @@ func RequiredHeight(numPoints int, customLabels map[int]string, lo LabelOrientat
 	}
 
 	labels := []*Label{
-		{Value: NewValue(float64(numPoints), nonZeroDecimals)},
+		{Value: NewValue(float64(max), nonZeroDecimals)},
 	}
 	for _, cl := range customLabels {
 		labels = append(labels, &Label{

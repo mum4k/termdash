@@ -31,8 +31,8 @@ func mustNewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YSca
 }
 
 // mustNewXScale returns a new XScale or panics.
-func mustNewXScale(numPoints int, graphWidth, nonZeroDecimals int) *XScale {
-	s, err := NewXScale(numPoints, graphWidth, nonZeroDecimals)
+func mustNewXScale(min, max int, graphWidth, nonZeroDecimals int) *XScale {
+	s, err := NewXScale(min, max, graphWidth, nonZeroDecimals)
 	if err != nil {
 		panic(err)
 	}
@@ -824,7 +824,8 @@ func TestYScale(t *testing.T) {
 func TestXScale(t *testing.T) {
 	tests := []struct {
 		desc              string
-		numPoints         int
+		min               int
+		max               int
 		graphWidth        int
 		nonZeroDecimals   int
 		pixelToValueTests []pixelToValueTest
@@ -834,20 +835,35 @@ func TestXScale(t *testing.T) {
 		wantErr           bool
 	}{
 		{
-			desc:       "fails when numPoints negative",
-			numPoints:  -1,
+			desc:       "fails when min is negative",
+			min:        -1,
+			graphWidth: 1,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails when max is negative",
+			max:        -1,
+			graphWidth: 1,
+			wantErr:    true,
+		},
+		{
+			desc:       "fails when min > max",
+			min:        1,
+			max:        0,
 			graphWidth: 1,
 			wantErr:    true,
 		},
 		{
 			desc:       "fails when graphWidth zero",
-			numPoints:  1,
+			min:        0,
+			max:        0,
 			graphWidth: 0,
 			wantErr:    true,
 		},
 		{
 			desc:            "fails on negative pixel",
-			numPoints:       1,
+			min:             0,
+			max:             0,
 			graphWidth:      1,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
@@ -856,7 +872,8 @@ func TestXScale(t *testing.T) {
 		},
 		{
 			desc:            "fails on pixel out of range",
-			numPoints:       1,
+			min:             0,
+			max:             0,
 			graphWidth:      1,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
@@ -865,7 +882,8 @@ func TestXScale(t *testing.T) {
 		},
 		{
 			desc:            "fails on value or cell too small",
-			numPoints:       1,
+			min:             0,
+			max:             0,
 			graphWidth:      1,
 			nonZeroDecimals: 2,
 			valueToPixelTests: []valueToPixelTest{
@@ -880,7 +898,8 @@ func TestXScale(t *testing.T) {
 		},
 		{
 			desc:            "fails on value or cell too large",
-			numPoints:       1,
+			min:             0,
+			max:             0,
 			graphWidth:      1,
 			nonZeroDecimals: 2,
 			valueToPixelTests: []valueToPixelTest{
@@ -895,7 +914,8 @@ func TestXScale(t *testing.T) {
 		},
 		{
 			desc:            "works without data points",
-			numPoints:       0,
+			min:             0,
+			max:             0,
 			graphWidth:      1,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
@@ -910,7 +930,8 @@ func TestXScale(t *testing.T) {
 		},
 		{
 			desc:            "integer scale, all points fit",
-			numPoints:       6,
+			min:             0,
+			max:             5,
 			graphWidth:      3,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
@@ -945,7 +966,8 @@ func TestXScale(t *testing.T) {
 		},
 		{
 			desc:            "float scale, multiple points per pixel",
-			numPoints:       12,
+			min:             0,
+			max:             11,
 			graphWidth:      3,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
@@ -992,7 +1014,8 @@ func TestXScale(t *testing.T) {
 		},
 		{
 			desc:            "float scale, multiple pixels per point",
-			numPoints:       2,
+			min:             0,
+			max:             1,
 			graphWidth:      5,
 			nonZeroDecimals: 2,
 			pixelToValueTests: []pixelToValueTest{
@@ -1026,7 +1049,7 @@ func TestXScale(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		scale, err := NewXScale(test.numPoints, test.graphWidth, test.nonZeroDecimals)
+		scale, err := NewXScale(test.min, test.max, test.graphWidth, test.nonZeroDecimals)
 		if (err != nil) != test.wantErr {
 			t.Errorf("NewXScale => unexpected error: %v, wantErr: %v", err, test.wantErr)
 		}

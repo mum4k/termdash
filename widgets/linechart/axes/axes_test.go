@@ -216,46 +216,54 @@ func TestY(t *testing.T) {
 
 func TestNewXDetails(t *testing.T) {
 	tests := []struct {
-		desc             string
-		numPoints        int
-		yStart           image.Point
-		cvsWidth         int
-		cvsAr            image.Rectangle
-		customLabels     map[int]string
-		labelOrientation LabelOrientation
-		want             *XDetails
-		wantErr          bool
+		desc    string
+		xp      *XProperties
+		cvsAr   image.Rectangle
+		want    *XDetails
+		wantErr bool
 	}{
 		{
-			desc:      "fails when numPoints is negative",
-			numPoints: -1,
-			yStart:    image.Point{0, 0},
-			cvsAr:     image.Rect(0, 0, 2, 3),
-			wantErr:   true,
+			desc: "fails when min is negative",
+			xp: &XProperties{
+				Min:       -1,
+				Max:       0,
+				ReqYWidth: 0,
+			},
+			cvsAr:   image.Rect(0, 0, 2, 3),
+			wantErr: true,
 		},
 		{
-			desc:      "fails when cvsAr isn't wide enough",
-			numPoints: 1,
-			yStart:    image.Point{0, 0},
-			cvsAr:     image.Rect(0, 0, 1, 3),
-			wantErr:   true,
+			desc: "fails when cvsAr isn't wide enough",
+			xp: &XProperties{
+				Min:       0,
+				Max:       0,
+				ReqYWidth: 0,
+			},
+			cvsAr:   image.Rect(0, 0, 1, 3),
+			wantErr: true,
 		},
 		{
-			desc:      "fails when cvsAr isn't tall enough",
-			numPoints: 1,
-			yStart:    image.Point{0, 0},
-			cvsAr:     image.Rect(0, 0, 3, 2),
-			wantErr:   true,
+			desc: "fails when cvsAr isn't tall enough",
+			xp: &XProperties{
+				Min:       0,
+				Max:       0,
+				ReqYWidth: 0,
+			},
+			cvsAr:   image.Rect(0, 0, 3, 2),
+			wantErr: true,
 		},
 		{
-			desc:      "works with no data points",
-			numPoints: 0,
-			yStart:    image.Point{0, 0},
-			cvsAr:     image.Rect(0, 0, 2, 3),
+			desc: "works with no data points",
+			xp: &XProperties{
+				Min:       0,
+				Max:       0,
+				ReqYWidth: 0,
+			},
+			cvsAr: image.Rect(0, 0, 2, 3),
 			want: &XDetails{
 				Start: image.Point{0, 1},
 				End:   image.Point{1, 1},
-				Scale: mustNewXScale(0, 1, nonZeroDecimals),
+				Scale: mustNewXScale(0, 0, 1, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
@@ -265,15 +273,18 @@ func TestNewXDetails(t *testing.T) {
 			},
 		},
 		{
-			desc:             "works with no data points, vertical",
-			numPoints:        0,
-			yStart:           image.Point{0, 0},
-			cvsAr:            image.Rect(0, 0, 2, 3),
-			labelOrientation: LabelOrientationVertical,
+			desc: "works with no data points, vertical",
+			xp: &XProperties{
+				Min:       0,
+				Max:       0,
+				ReqYWidth: 0,
+				LO:        LabelOrientationVertical,
+			},
+			cvsAr: image.Rect(0, 0, 2, 3),
 			want: &XDetails{
 				Start: image.Point{0, 1},
 				End:   image.Point{1, 1},
-				Scale: mustNewXScale(0, 1, nonZeroDecimals),
+				Scale: mustNewXScale(0, 0, 1, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
@@ -283,14 +294,17 @@ func TestNewXDetails(t *testing.T) {
 			},
 		},
 		{
-			desc:      "accounts for non-zero yStart",
-			numPoints: 0,
-			yStart:    image.Point{2, 0},
-			cvsAr:     image.Rect(0, 0, 4, 5),
+			desc: "accounts for non-zero yStart",
+			xp: &XProperties{
+				Min:       0,
+				Max:       0,
+				ReqYWidth: 2,
+			},
+			cvsAr: image.Rect(0, 0, 4, 5),
 			want: &XDetails{
 				Start: image.Point{2, 3},
 				End:   image.Point{3, 3},
-				Scale: mustNewXScale(0, 1, nonZeroDecimals),
+				Scale: mustNewXScale(0, 0, 1, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
@@ -300,15 +314,18 @@ func TestNewXDetails(t *testing.T) {
 			},
 		},
 		{
-			desc:             "accounts for longer vertical labels, the tallest didn't fit",
-			numPoints:        1000,
-			yStart:           image.Point{2, 0},
-			cvsAr:            image.Rect(0, 0, 10, 10),
-			labelOrientation: LabelOrientationVertical,
+			desc: "accounts for longer vertical labels, the tallest didn't fit",
+			xp: &XProperties{
+				Min:       0,
+				Max:       1000,
+				ReqYWidth: 2,
+				LO:        LabelOrientationVertical,
+			},
+			cvsAr: image.Rect(0, 0, 10, 10),
 			want: &XDetails{
 				Start: image.Point{2, 5},
 				End:   image.Point{9, 5},
-				Scale: mustNewXScale(1000, 7, nonZeroDecimals),
+				Scale: mustNewXScale(0, 1000, 7, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
@@ -322,41 +339,47 @@ func TestNewXDetails(t *testing.T) {
 			},
 		},
 		{
-			desc:             "accounts for longer vertical labels, the tallest label fits",
-			numPoints:        999,
-			yStart:           image.Point{2, 0},
-			cvsAr:            image.Rect(0, 0, 10, 10),
-			labelOrientation: LabelOrientationVertical,
+			desc: "accounts for longer vertical labels, the tallest label fits",
+			xp: &XProperties{
+				Min:       0,
+				Max:       999,
+				ReqYWidth: 2,
+				LO:        LabelOrientationVertical,
+			},
+			cvsAr: image.Rect(0, 0, 10, 10),
 			want: &XDetails{
 				Start: image.Point{2, 6},
 				End:   image.Point{9, 6},
-				Scale: mustNewXScale(999, 7, nonZeroDecimals),
+				Scale: mustNewXScale(0, 999, 7, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewValue(0, nonZeroDecimals),
 						Pos:   image.Point{3, 7},
 					},
 					{
-						Value: NewValue(614, nonZeroDecimals),
+						Value: NewValue(615, nonZeroDecimals),
 						Pos:   image.Point{7, 7},
 					},
 				},
 			},
 		},
 		{
-			desc:      "accounts for longer custom labels, vertical",
-			numPoints: 2,
-			yStart:    image.Point{5, 0},
-			cvsAr:     image.Rect(0, 0, 20, 10),
-			customLabels: map[int]string{
-				0: "start",
-				1: "end",
+			desc: "accounts for longer custom labels, vertical",
+			xp: &XProperties{
+				Min:       0,
+				Max:       1,
+				ReqYWidth: 5,
+				CustomLabels: map[int]string{
+					0: "start",
+					1: "end",
+				},
+				LO: LabelOrientationVertical,
 			},
-			labelOrientation: LabelOrientationVertical,
+			cvsAr: image.Rect(0, 0, 20, 10),
 			want: &XDetails{
 				Start: image.Point{5, 4},
 				End:   image.Point{19, 4},
-				Scale: mustNewXScale(2, 14, nonZeroDecimals),
+				Scale: mustNewXScale(0, 1, 14, nonZeroDecimals),
 				Labels: []*Label{
 					{
 						Value: NewTextValue("start"),
@@ -373,7 +396,7 @@ func TestNewXDetails(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, err := NewXDetails(tc.numPoints, tc.yStart, tc.cvsAr, tc.customLabels, tc.labelOrientation)
+			got, err := NewXDetails(tc.cvsAr, tc.xp)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("NewXDetails => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
@@ -391,7 +414,7 @@ func TestNewXDetails(t *testing.T) {
 func TestRequiredHeight(t *testing.T) {
 	tests := []struct {
 		desc             string
-		numPoints        int
+		max              int
 		customLabels     map[int]string
 		labelOrientation LabelOrientation
 		want             int
@@ -402,26 +425,26 @@ func TestRequiredHeight(t *testing.T) {
 		},
 		{
 			desc:             "vertical orientation, no custom labels, need single row for max label",
-			numPoints:        9,
+			max:              8,
 			labelOrientation: LabelOrientationVertical,
 			want:             2,
 		},
 		{
-			desc:             "vertical orientation, no custom labels, need multiple row for max label",
-			numPoints:        100,
+			desc:             "vertical orientation, no custom labels, need multiple rows for max label",
+			max:              100,
 			labelOrientation: LabelOrientationVertical,
 			want:             4,
 		},
 		{
 			desc:             "vertical orientation, custom labels but all shorter than max label",
-			numPoints:        100,
+			max:              100,
 			customLabels:     map[int]string{1: "a", 2: "b"},
 			labelOrientation: LabelOrientationVertical,
 			want:             4,
 		},
 		{
 			desc:             "vertical orientation, custom labels and some longer than max label",
-			numPoints:        100,
+			max:              99,
 			customLabels:     map[int]string{1: "a", 2: "bbbbb"},
 			labelOrientation: LabelOrientationVertical,
 			want:             6,
@@ -430,7 +453,7 @@ func TestRequiredHeight(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := RequiredHeight(tc.numPoints, tc.customLabels, tc.labelOrientation)
+			got := RequiredHeight(tc.max, tc.customLabels, tc.labelOrientation)
 			if got != tc.want {
 				t.Errorf("RequiredHeight => %d, want %d", got, tc.want)
 			}

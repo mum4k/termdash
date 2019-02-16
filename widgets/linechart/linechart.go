@@ -207,7 +207,7 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 		return draw.ResizeNeeded(cvs)
 	}
 
-	reqXHeight := axes.RequiredHeight(lc.maxPoints(), lc.xLabels, lc.opts.xLabelOrientation)
+	reqXHeight := axes.RequiredHeight(lc.maxXValue(), lc.xLabels, lc.opts.xLabelOrientation)
 	yp := &axes.YProperties{
 		Min:        lc.yMin,
 		Max:        lc.yMax,
@@ -219,7 +219,14 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 		return fmt.Errorf("lc.yAxis.Details => %v", err)
 	}
 
-	xd, err := axes.NewXDetails(lc.maxPoints(), yd.Start, cvs.Area(), lc.xLabels, lc.opts.xLabelOrientation)
+	xp := &axes.XProperties{
+		Min:          0,
+		Max:          lc.maxXValue(),
+		ReqYWidth:    yd.Start.X,
+		CustomLabels: lc.xLabels,
+		LO:           lc.opts.xLabelOrientation,
+	}
+	xd, err := axes.NewXDetails(cvs.Area(), xp)
 	if err != nil {
 		return fmt.Errorf("NewXDetails => %v", err)
 	}
@@ -347,7 +354,7 @@ func (lc *LineChart) minSize() image.Point {
 	// And for the height:
 	// - n cells width for the X axis and its labels as reported by it.
 	// - at least 2 cell height for the graph.
-	reqHeight := axes.RequiredHeight(lc.maxPoints(), lc.xLabels, lc.opts.xLabelOrientation) + 2
+	reqHeight := axes.RequiredHeight(lc.maxXValue(), lc.xLabels, lc.opts.xLabelOrientation) + 2
 	return image.Point{reqWidth, reqHeight}
 }
 
@@ -361,14 +368,17 @@ func (lc *LineChart) Options() widgetapi.Options {
 	}
 }
 
-// maxPoints returns the largest number of points among all the series.
+// maxXValue returns the maximum value on the X axis among all the series.
 // lc.mu must be held when calling this method.
-func (lc *LineChart) maxPoints() int {
-	max := 0
+func (lc *LineChart) maxXValue() int {
+	maxLen := 0
 	for _, sv := range lc.series {
-		if num := len(sv.values); num > max {
-			max = num
+		if l := len(sv.values); l > maxLen {
+			maxLen = l
 		}
 	}
-	return max
+	if maxLen == 0 {
+		return 0
+	}
+	return maxLen - 1
 }

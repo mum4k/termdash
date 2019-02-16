@@ -371,7 +371,6 @@ func TestLineChartDraws(t *testing.T) {
 			desc: "custom Y scale, negative only, values fit",
 			opts: []Option{
 				YAxisCustomScale(-200, -100),
-				YAxisAdaptive(),
 			},
 			canvas: image.Rect(0, 0, 20, 10),
 			writes: func(lc *LineChart) error {

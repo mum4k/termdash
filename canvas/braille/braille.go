@@ -186,15 +186,38 @@ func (c *Canvas) TogglePixel(p image.Point, opts ...cell.Option) error {
 	if err != nil {
 		return err
 	}
-	cell, err := c.regular.Cell(cp)
+	curCell, err := c.regular.Cell(cp)
 	if err != nil {
 		return err
 	}
 
-	if isBraille(cell.Rune) && pixelSet(cell.Rune, p) {
+	if isBraille(curCell.Rune) && pixelSet(curCell.Rune, p) {
 		return c.ClearPixel(p, opts...)
 	}
 	return c.SetPixel(p, opts...)
+}
+
+// SetCellOpts sets options on the specified cell of the braille canvas without
+// modifying the content of the cell.
+// Sets the default cell options if no options are provided.
+// This method is idempotent.
+func (c *Canvas) SetCellOpts(cellPoint image.Point, opts ...cell.Option) error {
+	curCell, err := c.regular.Cell(cellPoint)
+	if err != nil {
+		return err
+	}
+
+	if len(opts) == 0 {
+		// Set the default options.
+		opts = []cell.Option{
+			cell.FgColor(cell.ColorDefault),
+			cell.BgColor(cell.ColorDefault),
+		}
+	}
+	if _, err := c.regular.SetCell(cellPoint, curCell.Rune, opts...); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Apply applies the canvas to the corresponding area of the terminal.

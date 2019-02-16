@@ -61,3 +61,10 @@ func MustCopyTo(bc *braille.Canvas, dst *canvas.Canvas) {
 		panic(fmt.Sprintf("bc.CopyTo => unexpected error: %v", err))
 	}
 }
+
+// MustSetCellOpts sets the cell options or panics.
+func MustSetCellOpts(bc *braille.Canvas, cellPoint image.Point, opts ...cell.Option) {
+	if err := bc.SetCellOpts(cellPoint, opts...); err != nil {
+		panic(fmt.Sprintf("bc.SetCellOpts => unexpected error: %v", err))
+	}
+}

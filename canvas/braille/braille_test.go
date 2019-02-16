@@ -171,6 +171,111 @@ func TestBraille(t *testing.T) {
 			},
 		},
 		{
+			desc: "SetCellOptions fails on a cell outside of the braille canvas",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				return c.SetCellOpts(image.Point{0, -1})
+			},
+			wantErr: true,
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+		},
+		{
+			desc: "SetCellOptions sets options on cell with no options",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				return c.SetCellOpts(image.Point{0, 0}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				c := testcanvas.MustCell(cvs, image.Point{0, 0})
+				testcanvas.MustSetCell(cvs, image.Point{0, 0}, c.Rune, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "SetCellOptions preserves the cell rune",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				if err := c.SetPixel(image.Point{0, 0}); err != nil {
+					return err
+				}
+				return c.SetCellOpts(image.Point{0, 0}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(cvs, image.Point{0, 0}, '⠁', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "SetCellOptions overwrites options set previously",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				if err := c.SetPixel(image.Point{0, 0}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return err
+				}
+				return c.SetCellOpts(image.Point{0, 0}, cell.FgColor(cell.ColorGreen), cell.BgColor(cell.ColorYellow))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(cvs, image.Point{0, 0}, '⠁', cell.FgColor(cell.ColorGreen), cell.BgColor(cell.ColorYellow))
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "SetCellOptions sets default options when no options provided",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				if err := c.SetPixel(image.Point{0, 0}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return err
+				}
+				return c.SetCellOpts(image.Point{0, 0})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(cvs, image.Point{0, 0}, '⠁')
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "SetCellOptions is idempotent",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				if err := c.SetCellOpts(image.Point{0, 0}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return err
+				}
+				return c.SetCellOpts(image.Point{0, 0}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				c := testcanvas.MustCell(cvs, image.Point{0, 0})
+				testcanvas.MustSetCell(cvs, image.Point{0, 0}, c.Rune, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc: "set pixel 0,0",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {

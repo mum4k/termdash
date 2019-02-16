@@ -282,6 +282,19 @@ func TestXLabels(t *testing.T) {
 			},
 		},
 		{
+			desc:       "some labels in the middle, min isn't zero",
+			min:        1,
+			max:        4,
+			graphWidth: 100,
+			graphZero:  image.Point{0, 1},
+			want: []*Label{
+				{NewValue(1, nonZeroDecimals), image.Point{0, 3}},
+				{NewValue(2, nonZeroDecimals), image.Point{31, 3}},
+				{NewValue(3, nonZeroDecimals), image.Point{62, 3}},
+				{NewValue(4, nonZeroDecimals), image.Point{94, 3}},
+			},
+		},
+		{
 			desc:       "custom labels provided",
 			min:        0,
 			max:        3,
@@ -292,6 +305,25 @@ func TestXLabels(t *testing.T) {
 				1: "b",
 				2: "c",
 				3: "d",
+			},
+			want: []*Label{
+				{NewTextValue("a"), image.Point{0, 3}},
+				{NewTextValue("b"), image.Point{31, 3}},
+				{NewTextValue("c"), image.Point{62, 3}},
+				{NewTextValue("d"), image.Point{94, 3}},
+			},
+		},
+		{
+			desc:       "custom labels provided, min isn't zero",
+			min:        1,
+			max:        4,
+			graphWidth: 100,
+			graphZero:  image.Point{0, 1},
+			customLabels: map[int]string{
+				1: "a",
+				2: "b",
+				3: "c",
+				4: "d",
 			},
 			want: []*Label{
 				{NewTextValue("a"), image.Point{0, 3}},

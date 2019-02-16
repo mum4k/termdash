@@ -193,7 +193,7 @@ func xLabels(scale *XScale, graphZero image.Point, customLabels map[int]string, 
 	const minSpacing = 3
 	var res []*Label
 
-	next := 0
+	next := int(scale.Min.Value)
 	for haveLabels := 0; haveLabels <= int(scale.Max.Value); haveLabels = len(res) {
 		label, err := colLabel(scale, space, customLabels, lo)
 		if err != nil {

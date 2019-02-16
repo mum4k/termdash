@@ -249,7 +249,11 @@ func (xs *XScale) PixelToValue(x int) (float64, error) {
 	case x == xs.brailleWidth-1:
 		return xs.Max.Rounded, nil
 	default:
-		return float64(x) * xs.Step.Rounded, nil
+		v := float64(x) * xs.Step.Rounded
+		if xs.Min.Value > 0 {
+			v += xs.Min.Value
+		}
+		return v, nil
 	}
 }
 
@@ -264,6 +268,9 @@ func (xs *XScale) ValueToPixel(v int) (int, error) {
 	}
 	if xs.Step.Rounded == 0 {
 		return 0, nil
+	}
+	if xs.Min.Value > 0 {
+		fv -= xs.Min.Value
 	}
 	return int(numbers.Round(fv / xs.Step.Rounded)), nil
 }

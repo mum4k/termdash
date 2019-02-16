@@ -88,19 +88,30 @@ func RequiredWidth(minVal, maxVal float64) int {
 	}) + axisWidth
 }
 
-// Details retrieves details about the Y axis required to draw it on a canvas
-// of the provided area.
-// The argument reqXHeight is the height required for the X axis and its labels.
-func (y *Y) Details(cvsAr image.Rectangle, reqXHeight int, mode YScaleMode) (*YDetails, error) {
+// YProperties are the properties of the Y axis.
+type YProperties struct {
+	// Min is the minimum value on the axis.
+	Min float64
+	// Max is the maximum value on the axis.
+	Max float64
+	// ReqXHeight is the height required for the X axis and its labels.
+	ReqXHeight int
+	// ScaleMode determines how the Y axis scales.
+	ScaleMode YScaleMode
+}
+
+// NewYDetails retrieves details about the Y axis required to draw it on a
+// canvas of the provided area.
+func NewYDetails(cvsAr image.Rectangle, yp *YProperties) (*YDetails, error) {
 	cvsWidth := cvsAr.Dx()
 	cvsHeight := cvsAr.Dy()
 	maxWidth := cvsWidth - 1 // Reserve one column for the line chart itself.
-	if req := RequiredWidth(y.min.Value, y.max.Value); maxWidth < req {
+	if req := RequiredWidth(yp.Min, yp.Max); maxWidth < req {
 		return nil, fmt.Errorf("the available maxWidth %d is smaller than the reported required width %d", maxWidth, req)
 	}
 
-	graphHeight := cvsHeight - reqXHeight
-	scale, err := NewYScale(y.min.Value, y.max.Value, graphHeight, nonZeroDecimals, mode)
+	graphHeight := cvsHeight - yp.ReqXHeight
+	scale, err := NewYScale(yp.Min, yp.Max, graphHeight, nonZeroDecimals, yp.ScaleMode)
 	if err != nil {
 		return nil, err
 	}

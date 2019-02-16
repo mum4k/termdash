@@ -212,7 +212,13 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
 	}
 
 	reqXHeight := axes.RequiredHeight(lc.maxPoints(), lc.xLabels, lc.opts.xLabelOrientation)
-	yd, err := lc.yAxis.Details(cvs.Area(), reqXHeight, lc.opts.yAxisMode)
+	yp := &axes.YProperties{
+		Min:        lc.yMin,
+		Max:        lc.yMax,
+		ReqXHeight: reqXHeight,
+		ScaleMode:  lc.opts.yAxisMode,
+	}
+	yd, err := axes.NewYDetails(cvs.Area(), yp)
 	if err != nil {
 		return fmt.Errorf("lc.yAxis.Details => %v", err)
 	}

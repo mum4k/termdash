@@ -28,51 +28,55 @@ type updateY struct {
 
 func TestY(t *testing.T) {
 	tests := []struct {
-		desc       string
-		minVal     float64
-		maxVal     float64
-		update     *updateY
-		reqXHeight int
-		mode       YScaleMode
-		cvsAr      image.Rectangle
-		wantWidth  int
-		want       *YDetails
-		wantErr    bool
+		desc      string
+		yp        *YProperties
+		cvsAr     image.Rectangle
+		wantWidth int
+		want      *YDetails
+		wantErr   bool
 	}{
 		{
-			desc:       "fails on canvas too small",
-			minVal:     0,
-			maxVal:     3,
-			cvsAr:      image.Rect(0, 0, 3, 2),
-			reqXHeight: 2,
-			wantWidth:  2,
-			wantErr:    true,
+			desc: "fails on canvas too small",
+			yp: &YProperties{
+				Min:        0,
+				Max:        3,
+				ReqXHeight: 2,
+			},
+			cvsAr:     image.Rect(0, 0, 3, 2),
+			wantWidth: 2,
+			wantErr:   true,
 		},
 		{
-			desc:       "fails on cvsWidth less than required width",
-			minVal:     0,
-			maxVal:     3,
-			cvsAr:      image.Rect(0, 0, 2, 4),
-			reqXHeight: 2,
-			wantWidth:  2,
-			wantErr:    true,
+			desc: "fails on cvsWidth less than required width",
+			yp: &YProperties{
+				Min:        0,
+				Max:        3,
+				ReqXHeight: 2,
+			},
+			cvsAr:     image.Rect(0, 0, 2, 4),
+			wantWidth: 2,
+			wantErr:   true,
 		},
 		{
-			desc:       "fails when max is less than min",
-			minVal:     0,
-			maxVal:     -1,
-			cvsAr:      image.Rect(0, 0, 4, 4),
-			reqXHeight: 2,
-			wantWidth:  3,
-			wantErr:    true,
+			desc: "fails when max is less than min",
+			yp: &YProperties{
+				Min:        0,
+				Max:        -1,
+				ReqXHeight: 2,
+			},
+			cvsAr:     image.Rect(0, 0, 4, 4),
+			wantWidth: 3,
+			wantErr:   true,
 		},
 		{
-			desc:       "cvsWidth equals required width",
-			minVal:     0,
-			maxVal:     3,
-			cvsAr:      image.Rect(0, 0, 3, 4),
-			wantWidth:  2,
-			reqXHeight: 2,
+			desc: "cvsWidth equals required width",
+			yp: &YProperties{
+				Min:        0,
+				Max:        3,
+				ReqXHeight: 2,
+			},
+			cvsAr:     image.Rect(0, 0, 3, 4),
+			wantWidth: 2,
 			want: &YDetails{
 				Width: 2,
 				Start: image.Point{1, 0},
@@ -85,13 +89,15 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:       "success for anchored scale",
-			minVal:     1,
-			maxVal:     3,
-			mode:       YScaleModeAnchored,
-			cvsAr:      image.Rect(0, 0, 3, 4),
-			reqXHeight: 2,
-			wantWidth:  2,
+			desc: "success for anchored scale",
+			yp: &YProperties{
+				Min:        1,
+				Max:        3,
+				ReqXHeight: 2,
+				ScaleMode:  YScaleModeAnchored,
+			},
+			cvsAr:     image.Rect(0, 0, 3, 4),
+			wantWidth: 2,
 			want: &YDetails{
 				Width: 2,
 				Start: image.Point{1, 0},
@@ -104,13 +110,15 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:       "accommodates X scale that needs more height",
-			minVal:     1,
-			maxVal:     3,
-			mode:       YScaleModeAnchored,
-			cvsAr:      image.Rect(0, 0, 3, 6),
-			reqXHeight: 4,
-			wantWidth:  2,
+			desc: "accommodates X scale that needs more height",
+			yp: &YProperties{
+				Min:        1,
+				Max:        3,
+				ReqXHeight: 4,
+				ScaleMode:  YScaleModeAnchored,
+			},
+			cvsAr:     image.Rect(0, 0, 3, 6),
+			wantWidth: 2,
 			want: &YDetails{
 				Width: 2,
 				Start: image.Point{1, 0},
@@ -123,13 +131,15 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:       "success for adaptive scale",
-			minVal:     1,
-			maxVal:     6,
-			mode:       YScaleModeAdaptive,
-			cvsAr:      image.Rect(0, 0, 3, 4),
-			reqXHeight: 2,
-			wantWidth:  2,
+			desc: "success for adaptive scale",
+			yp: &YProperties{
+				Min:        1,
+				Max:        6,
+				ReqXHeight: 2,
+				ScaleMode:  YScaleModeAdaptive,
+			},
+			cvsAr:     image.Rect(0, 0, 3, 4),
+			wantWidth: 2,
 			want: &YDetails{
 				Width: 2,
 				Start: image.Point{1, 0},
@@ -142,12 +152,14 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:       "cvsWidth just accommodates the longest label",
-			minVal:     0,
-			maxVal:     3,
-			cvsAr:      image.Rect(0, 0, 6, 4),
-			reqXHeight: 2,
-			wantWidth:  2,
+			desc: "cvsWidth just accommodates the longest label",
+			yp: &YProperties{
+				Min:        0,
+				Max:        3,
+				ReqXHeight: 2,
+			},
+			cvsAr:     image.Rect(0, 0, 6, 4),
+			wantWidth: 2,
 			want: &YDetails{
 				Width: 5,
 				Start: image.Point{4, 0},
@@ -160,12 +172,14 @@ func TestY(t *testing.T) {
 			},
 		},
 		{
-			desc:       "cvsWidth is more than we need",
-			minVal:     0,
-			maxVal:     3,
-			cvsAr:      image.Rect(0, 0, 7, 4),
-			reqXHeight: 2,
-			wantWidth:  2,
+			desc: "cvsWidth is more than we need",
+			yp: &YProperties{
+				Min:        0,
+				Max:        3,
+				ReqXHeight: 2,
+			},
+			cvsAr:     image.Rect(0, 0, 7, 4),
+			wantWidth: 2,
 			want: &YDetails{
 				Width: 5,
 				Start: image.Point{4, 0},
@@ -181,17 +195,12 @@ func TestY(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			y := NewY(tc.minVal, tc.maxVal)
-			if tc.update != nil {
-				y.Update(tc.update.minVal, tc.update.maxVal)
-			}
-
-			gotWidth := RequiredWidth(tc.minVal, tc.maxVal)
+			gotWidth := RequiredWidth(tc.yp.Min, tc.yp.Max)
 			if gotWidth != tc.wantWidth {
 				t.Errorf("RequiredWidth => got %v, want %v", gotWidth, tc.wantWidth)
 			}
 
-			got, err := y.Details(tc.cvsAr, tc.reqXHeight, tc.mode)
+			got, err := NewYDetails(tc.cvsAr, tc.yp)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Details => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

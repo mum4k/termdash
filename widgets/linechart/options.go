@@ -140,12 +140,15 @@ type customScale struct {
 // i.e. smaller than the minimum or larger than the maximum.
 // Both the minimum and the maximum must be valid numbers and the minimum must
 // be smaller than the maximum.
+//
+// Providing this option also sets YAxisAdaptive.
 func YAxisCustomScale(min, max float64) Option {
 	return option(func(opts *options) {
 		opts.yAxisCustomScale = &customScale{
 			min: min,
 			max: max,
 		}
+		opts.yAxisMode = axes.YScaleModeAdaptive
 	})
 }
 

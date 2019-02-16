@@ -81,6 +81,8 @@ type LineChart struct {
 
 	// yAxis is the Y axis of the line chart.
 	yAxis *axes.Y
+	// yMin are the min and max values for the Y axis.
+	yMin, yMax float64
 
 	// opts are the provided options.
 	opts *options
@@ -188,7 +190,10 @@ func (lc *LineChart) Series(label string, values []float64, opts ...SeriesOption
 	}
 
 	lc.series[label] = series
-	lc.yAxis = axes.NewY(lc.yMinMax())
+	yMin, yMax := lc.yMinMax()
+	lc.yAxis = axes.NewY(yMin, yMax)
+	lc.yMin = yMin
+	lc.yMax = yMax
 	return nil
 }
 
@@ -335,7 +340,7 @@ func (lc *LineChart) minSize() image.Point {
 	// At the very least we need:
 	// - n cells width for the Y axis and its labels as reported by it.
 	// - at least 1 cell width for the graph.
-	reqWidth := lc.yAxis.RequiredWidth() + 1
+	reqWidth := axes.RequiredWidth(lc.yMin, lc.yMax) + 1
 
 	// And for the height:
 	// - n cells width for the X axis and its labels as reported by it.

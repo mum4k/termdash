@@ -186,7 +186,7 @@ func TestY(t *testing.T) {
 				y.Update(tc.update.minVal, tc.update.maxVal)
 			}
 
-			gotWidth := y.RequiredWidth()
+			gotWidth := RequiredWidth(tc.minVal, tc.maxVal)
 			if gotWidth != tc.wantWidth {
 				t.Errorf("RequiredWidth => got %v, want %v", gotWidth, tc.wantWidth)
 			}

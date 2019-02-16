@@ -76,14 +76,15 @@ func (y *Y) Update(minVal, maxVal float64) {
 }
 
 // RequiredWidth calculates the minimum width required in order to draw the Y
-// axis and its labels.
-func (y *Y) RequiredWidth() int {
+// axis and its labels when displaying values that have this minimum and
+// maximum among all the series.
+func RequiredWidth(minVal, maxVal float64) int {
 	// This is an estimation only, it is possible that more labels in the
 	// middle will be generated and might be wider than this. Such cases are
 	// handled on the call to Details when the size of canvas is known.
 	return longestLabel([]*Label{
-		{Value: y.min},
-		{Value: y.max},
+		{Value: NewValue(minVal, nonZeroDecimals)},
+		{Value: NewValue(maxVal, nonZeroDecimals)},
 	}) + axisWidth
 }
 
@@ -94,7 +95,7 @@ func (y *Y) Details(cvsAr image.Rectangle, reqXHeight int, mode YScaleMode) (*YD
 	cvsWidth := cvsAr.Dx()
 	cvsHeight := cvsAr.Dy()
 	maxWidth := cvsWidth - 1 // Reserve one column for the line chart itself.
-	if req := y.RequiredWidth(); maxWidth < req {
+	if req := RequiredWidth(y.min.Value, y.max.Value); maxWidth < req {
 		return nil, fmt.Errorf("the available maxWidth %d is smaller than the reported required width %d", maxWidth, req)
 	}
 

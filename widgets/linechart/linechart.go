@@ -376,7 +376,7 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 		// Skip over series that don't have at least two points since we can't
 		// draw a line for just one point.
 		// Skip over series that fall under the minimum value on the X axis.
-		if got := len(sv.values); got <= 1 || got < int(xdForCap.Scale.Min.Value) {
+		if got := len(sv.values); got <= 1 {
 			continue
 		}
 

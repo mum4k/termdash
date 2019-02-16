@@ -151,10 +151,11 @@ func YAxisCustomScale(min, max float64) Option {
 
 // XAxisUnscaled when provided, stops the LineChart from rescaling the X axis
 // when it can't fit all the values in the series, instead the LineCharts only
-// displays the last n values that fit into its width. This results in hiding
-// some values from the beginning of the series that didn't fit completely and
-// might hide some shorter series as this effectively maked the X axis start at
-// a non-zero value.
+// displays the last n values that fit into its width. This is useful to create
+// an impression of values rolling through the linechart right to left. Note
+// that this results in hiding of values from the beginning of the series
+// that didn't fit completely and might hide some shorter series as this
+// effectively makes the X axis start at a non-zero value.
 //
 // The default behavior is to rescale the X axis to display all the values.
 // This option takes no effect if all the values on the series fit into the

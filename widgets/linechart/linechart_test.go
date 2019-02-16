@@ -134,6 +134,33 @@ func TestLineChartDraws(t *testing.T) {
 			},
 		},
 		{
+			desc:   "empty with just one point",
+			canvas: image.Rect(0, 0, 3, 4),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{1})
+			},
+			wantCapacity: 2,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{1, 0}, End: image.Point{1, 2}},
+					{Start: image.Point{1, 2}, End: image.Point{2, 2}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "…", image.Point{0, 0})
+				testdraw.MustText(c, "0", image.Point{0, 1})
+				testdraw.MustText(c, "0", image.Point{2, 3})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "sets axes cell options",
 			canvas: image.Rect(0, 0, 3, 4),
 			opts: []Option{

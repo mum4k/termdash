@@ -37,6 +37,7 @@ func TestLineChartDraws(t *testing.T) {
 		opts         []Option
 		writes       func(*LineChart) error
 		want         func(size image.Point) *faketerm.Terminal
+		wantCapacity int
 		wantErr      bool
 		wantWriteErr bool
 		wantDrawErr  bool
@@ -110,8 +111,9 @@ func TestLineChartDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "empty without series",
-			canvas: image.Rect(0, 0, 3, 4),
+			desc:         "empty without series",
+			canvas:       image.Rect(0, 0, 3, 4),
+			wantCapacity: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -140,6 +142,7 @@ func TestLineChartDraws(t *testing.T) {
 					cell.FgColor(cell.ColorGreen),
 				),
 			},
+			wantCapacity: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -172,6 +175,7 @@ func TestLineChartDraws(t *testing.T) {
 					cell.FgColor(cell.ColorGreen),
 				),
 			},
+			wantCapacity: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -197,6 +201,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 100})
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -233,6 +238,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 100})
 			},
+			wantCapacity: 26,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -269,6 +275,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, -200})
 			},
+			wantCapacity: 26,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -305,6 +312,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 100})
 			},
+			wantCapacity: 30,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -342,6 +350,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{-200, -100})
 			},
+			wantCapacity: 24,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -378,6 +387,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{-400, 400})
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -411,6 +421,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{1600, 1900})
 			},
+			wantCapacity: 26,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -447,6 +458,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{1600, 1900})
 			},
+			wantCapacity: 24,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -483,6 +495,7 @@ func TestLineChartDraws(t *testing.T) {
 					1: "end",
 				}))
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -521,6 +534,7 @@ func TestLineChartDraws(t *testing.T) {
 					1: "end",
 				}))
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -559,6 +573,7 @@ func TestLineChartDraws(t *testing.T) {
 					1: "end",
 				}))
 			},
+			wantCapacity: 26,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -592,6 +607,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 100}, SeriesCellOpts(cell.BgColor(cell.ColorRed), cell.FgColor(cell.ColorGreen)))
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -625,6 +641,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 50, 100})
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -661,6 +678,7 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 100})
 			},
+			wantCapacity: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -696,6 +714,7 @@ func TestLineChartDraws(t *testing.T) {
 				}
 				return lc.Series("second", []float64{100, 0})
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -734,6 +753,7 @@ func TestLineChartDraws(t *testing.T) {
 				}
 				return lc.Series("second", []float64{100, 0}, SeriesCellOpts(cell.FgColor(cell.ColorBlue)))
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -772,6 +792,7 @@ func TestLineChartDraws(t *testing.T) {
 				}
 				return lc.Series("second", []float64{10, 20})
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -811,6 +832,7 @@ func TestLineChartDraws(t *testing.T) {
 				}
 				return lc.Series("second", []float64{-10, 200})
 			},
+			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -835,6 +857,253 @@ func TestLineChartDraws(t *testing.T) {
 				testdraw.MustBrailleLine(bc, image.Point{0, 30}, image.Point{13, 22})
 				testdraw.MustBrailleLine(bc, image.Point{13, 22}, image.Point{27, 15})
 				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{13, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "more values than capacity, X rescales",
+			canvas: image.Rect(0, 0, 11, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19})
+			},
+			wantCapacity: 12,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{10, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "9.92", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{5, 9})
+				testdraw.MustText(c, "14", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 11, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{1, 29})
+				testdraw.MustBrailleLine(bc, image.Point{1, 29}, image.Point{1, 28})
+				testdraw.MustBrailleLine(bc, image.Point{1, 28}, image.Point{2, 26})
+				testdraw.MustBrailleLine(bc, image.Point{2, 26}, image.Point{2, 25})
+				testdraw.MustBrailleLine(bc, image.Point{2, 25}, image.Point{3, 23})
+				testdraw.MustBrailleLine(bc, image.Point{3, 23}, image.Point{3, 21})
+				testdraw.MustBrailleLine(bc, image.Point{3, 21}, image.Point{4, 20})
+				testdraw.MustBrailleLine(bc, image.Point{4, 20}, image.Point{5, 18})
+				testdraw.MustBrailleLine(bc, image.Point{5, 18}, image.Point{5, 16})
+				testdraw.MustBrailleLine(bc, image.Point{5, 16}, image.Point{6, 15})
+				testdraw.MustBrailleLine(bc, image.Point{6, 15}, image.Point{6, 13})
+				testdraw.MustBrailleLine(bc, image.Point{6, 13}, image.Point{7, 12})
+				testdraw.MustBrailleLine(bc, image.Point{7, 12}, image.Point{8, 10})
+				testdraw.MustBrailleLine(bc, image.Point{8, 10}, image.Point{8, 8})
+				testdraw.MustBrailleLine(bc, image.Point{8, 8}, image.Point{9, 7})
+				testdraw.MustBrailleLine(bc, image.Point{9, 7}, image.Point{9, 5})
+				testdraw.MustBrailleLine(bc, image.Point{9, 5}, image.Point{10, 4})
+				testdraw.MustBrailleLine(bc, image.Point{10, 4}, image.Point{10, 2})
+				testdraw.MustBrailleLine(bc, image.Point{10, 2}, image.Point{11, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "more values than capacity, X unscaled",
+			opts: []Option{
+				XAxisUnscaled(),
+			},
+			canvas: image.Rect(0, 0, 11, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19})
+			},
+			wantCapacity: 12,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{10, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "9.92", image.Point{0, 3})
+				testdraw.MustText(c, "8", image.Point{5, 9})
+				testdraw.MustText(c, "16", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 11, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 18}, image.Point{1, 16})
+				testdraw.MustBrailleLine(bc, image.Point{1, 16}, image.Point{2, 15})
+				testdraw.MustBrailleLine(bc, image.Point{2, 15}, image.Point{3, 13})
+				testdraw.MustBrailleLine(bc, image.Point{3, 13}, image.Point{4, 12})
+				testdraw.MustBrailleLine(bc, image.Point{4, 12}, image.Point{5, 10})
+				testdraw.MustBrailleLine(bc, image.Point{5, 10}, image.Point{6, 8})
+				testdraw.MustBrailleLine(bc, image.Point{6, 8}, image.Point{7, 7})
+				testdraw.MustBrailleLine(bc, image.Point{7, 7}, image.Point{8, 5})
+				testdraw.MustBrailleLine(bc, image.Point{8, 5}, image.Point{9, 4})
+				testdraw.MustBrailleLine(bc, image.Point{9, 4}, image.Point{10, 2})
+				testdraw.MustBrailleLine(bc, image.Point{10, 2}, image.Point{11, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "more values than capacity, X unscaled, hides shorter series",
+			opts: []Option{
+				XAxisUnscaled(),
+			},
+			canvas: image.Rect(0, 0, 11, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}); err != nil {
+					return err
+				}
+				return lc.Series("shorter", []float64{8, 7, 6, 5, 4, 3, 2, 1, 0})
+			},
+			wantCapacity: 12,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{10, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "9.92", image.Point{0, 3})
+				testdraw.MustText(c, "8", image.Point{5, 9})
+				testdraw.MustText(c, "16", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 11, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 18}, image.Point{1, 16})
+				testdraw.MustBrailleLine(bc, image.Point{1, 16}, image.Point{2, 15})
+				testdraw.MustBrailleLine(bc, image.Point{2, 15}, image.Point{3, 13})
+				testdraw.MustBrailleLine(bc, image.Point{3, 13}, image.Point{4, 12})
+				testdraw.MustBrailleLine(bc, image.Point{4, 12}, image.Point{5, 10})
+				testdraw.MustBrailleLine(bc, image.Point{5, 10}, image.Point{6, 8})
+				testdraw.MustBrailleLine(bc, image.Point{6, 8}, image.Point{7, 7})
+				testdraw.MustBrailleLine(bc, image.Point{7, 7}, image.Point{8, 5})
+				testdraw.MustBrailleLine(bc, image.Point{8, 5}, image.Point{9, 4})
+				testdraw.MustBrailleLine(bc, image.Point{9, 4}, image.Point{10, 2})
+				testdraw.MustBrailleLine(bc, image.Point{10, 2}, image.Point{11, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "more values than capacity, X unscaled, shorter series displayed partially",
+			opts: []Option{
+				XAxisUnscaled(),
+			},
+			canvas: image.Rect(0, 0, 11, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}); err != nil {
+					return err
+				}
+				return lc.Series("shorter", []float64{9, 8, 7, 6, 5, 4, 3, 2, 1, 0})
+			},
+			wantCapacity: 12,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{10, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "9.92", image.Point{0, 3})
+				testdraw.MustText(c, "8", image.Point{5, 9})
+				testdraw.MustText(c, "16", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 11, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 18}, image.Point{1, 16})
+				testdraw.MustBrailleLine(bc, image.Point{1, 16}, image.Point{2, 15})
+				testdraw.MustBrailleLine(bc, image.Point{2, 15}, image.Point{3, 13})
+				testdraw.MustBrailleLine(bc, image.Point{3, 13}, image.Point{4, 12})
+				testdraw.MustBrailleLine(bc, image.Point{4, 12}, image.Point{5, 10})
+				testdraw.MustBrailleLine(bc, image.Point{5, 10}, image.Point{6, 8})
+				testdraw.MustBrailleLine(bc, image.Point{6, 8}, image.Point{7, 7})
+				testdraw.MustBrailleLine(bc, image.Point{7, 7}, image.Point{8, 5})
+				testdraw.MustBrailleLine(bc, image.Point{8, 5}, image.Point{9, 4})
+				testdraw.MustBrailleLine(bc, image.Point{9, 4}, image.Point{10, 2})
+				testdraw.MustBrailleLine(bc, image.Point{10, 2}, image.Point{11, 0})
+				testdraw.MustBrailleLine(bc, image.Point{0, 29}, image.Point{1, 31})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "values fit capacity, X unscaled takes no effect",
+			opts: []Option{
+				XAxisUnscaled(),
+			},
+			canvas: image.Rect(0, 0, 11, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11})
+			},
+			wantCapacity: 12,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{10, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "5.76", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{5, 9})
+				testdraw.MustText(c, "8", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 11, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{1, 28})
+				testdraw.MustBrailleLine(bc, image.Point{1, 28}, image.Point{2, 25})
+				testdraw.MustBrailleLine(bc, image.Point{2, 25}, image.Point{3, 23})
+				testdraw.MustBrailleLine(bc, image.Point{3, 23}, image.Point{4, 20})
+				testdraw.MustBrailleLine(bc, image.Point{4, 20}, image.Point{5, 17})
+				testdraw.MustBrailleLine(bc, image.Point{5, 17}, image.Point{6, 14})
+				testdraw.MustBrailleLine(bc, image.Point{6, 14}, image.Point{7, 12})
+				testdraw.MustBrailleLine(bc, image.Point{7, 12}, image.Point{8, 9})
+				testdraw.MustBrailleLine(bc, image.Point{8, 9}, image.Point{9, 6})
+				testdraw.MustBrailleLine(bc, image.Point{9, 6}, image.Point{10, 3})
+				testdraw.MustBrailleLine(bc, image.Point{10, 3}, image.Point{11, 0})
 				testbraille.MustCopyTo(bc, c)
 
 				testcanvas.MustApply(c, ft)
@@ -893,6 +1162,11 @@ func TestLineChartDraws(t *testing.T) {
 			}
 			if diff := faketerm.Diff(want, got); diff != "" {
 				t.Errorf("Draw => %v", diff)
+			}
+
+			gotCapacity := widget.ValueCapacity()
+			if gotCapacity != tc.wantCapacity {
+				t.Errorf("ValueCapacity => %v, want %v", gotCapacity, tc.wantCapacity)
 			}
 		})
 	}

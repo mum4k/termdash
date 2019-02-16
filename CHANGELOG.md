@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The LineChart widget can display X axis labels in vertical orientation.
 - The LineChart widget allows the user to specify a custom scale for the Y
   axis.
+- The LineChart widget now has an option that disables scaling of the X axis.
+  Useful for applications that want to continuously feed data and make them
+  "roll" through the linechart.
+- The LineChart widget now has a method that returns the observed capacity of
+  the LineChart the last time Draw was called.
 - The Text widget now has a Write option that atomically replaces the entire
   text content.
 

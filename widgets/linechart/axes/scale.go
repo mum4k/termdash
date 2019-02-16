@@ -202,15 +202,18 @@ type XScale struct {
 	brailleWidth int
 }
 
-// NewXScale calculates the scale of the X axis, given the number of data
-// points in the series and the width on the canvas that is available to the X
-// axis. The nonZeroDecimals dictates rounding of the calculated scale, see
+// NewXScale calculates the scale of the X axis, given the boundary values and
+// the width on the canvas that is available to the X axis.
+// The nonZeroDecimals dictates rounding of the calculated scale, see
 // NewValue for details.
-// The numPoints must be zero or positive number. The graphWidth must be a
-// positive number.
-func NewXScale(numPoints int, graphWidth, nonZeroDecimals int) (*XScale, error) {
-	if numPoints < 0 {
-		return nil, fmt.Errorf("numPoints cannot be negative, got %d", numPoints)
+// The boundry values must be positive or zero and must be min <= max.
+// The graphWidth must be a positive number.
+func NewXScale(min, max int, graphWidth, nonZeroDecimals int) (*XScale, error) {
+	if min < 0 || max < 0 {
+		return nil, fmt.Errorf("invalid min:%d or max:%d, the values must not be negative", min, max)
+	}
+	if min > max {
+		return nil, fmt.Errorf("invalid min:%d, max:%d, must be min <= max", min, max)
 	}
 	if min := 1; graphWidth < min {
 		return nil, fmt.Errorf("graphWidth must be at least %d, got %d", min, graphWidth)
@@ -219,16 +222,13 @@ func NewXScale(numPoints int, graphWidth, nonZeroDecimals int) (*XScale, error) 
 	brailleWidth := graphWidth * braille.ColMult
 	usablePixels := brailleWidth - 1 // One pixel reserved for value zero.
 
-	const min float64 = 0
-	max := float64(numPoints - 1)
-	if max < 0 {
-		max = 0
-	}
-	diff := max - min
+	minVal := float64(min)
+	maxVal := float64(max)
+	diff := maxVal - minVal
 	step := NewValue(diff/float64(usablePixels), nonZeroDecimals)
 	return &XScale{
-		Min:          NewValue(min, nonZeroDecimals),
-		Max:          NewValue(max, nonZeroDecimals),
+		Min:          NewValue(minVal, nonZeroDecimals),
+		Max:          NewValue(maxVal, nonZeroDecimals),
 		Step:         step,
 		GraphWidth:   graphWidth,
 		brailleWidth: brailleWidth,
@@ -249,7 +249,11 @@ func (xs *XScale) PixelToValue(x int) (float64, error) {
 	case x == xs.brailleWidth-1:
 		return xs.Max.Rounded, nil
 	default:
-		return float64(x) * xs.Step.Rounded, nil
+		v := float64(x) * xs.Step.Rounded
+		if xs.Min.Value > 0 {
+			v += xs.Min.Value
+		}
+		return v, nil
 	}
 }
 
@@ -264,6 +268,9 @@ func (xs *XScale) ValueToPixel(v int) (int, error) {
 	}
 	if xs.Step.Rounded == 0 {
 		return 0, nil
+	}
+	if xs.Min.Value > 0 {
+		fv -= xs.Min.Value
 	}
 	return int(numbers.Round(fv / xs.Step.Rounded)), nil
 }

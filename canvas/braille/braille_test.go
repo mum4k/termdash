@@ -74,11 +74,12 @@ func Example_appliedToTerminal() {
 
 func TestNew(t *testing.T) {
 	tests := []struct {
-		desc     string
-		ar       image.Rectangle
-		wantSize image.Point
-		wantArea image.Rectangle
-		wantErr  bool
+		desc         string
+		ar           image.Rectangle
+		wantSize     image.Point
+		wantArea     image.Rectangle
+		wantCellArea image.Rectangle
+		wantErr      bool
 	}{
 		{
 			desc:    "fails on a negative area",
@@ -86,34 +87,39 @@ func TestNew(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc:     "braille from zero-based single-cell area",
-			ar:       image.Rect(0, 0, 1, 1),
-			wantSize: image.Point{2, 4},
-			wantArea: image.Rect(0, 0, 2, 4),
+			desc:         "braille from zero-based single-cell area",
+			ar:           image.Rect(0, 0, 1, 1),
+			wantSize:     image.Point{2, 4},
+			wantArea:     image.Rect(0, 0, 2, 4),
+			wantCellArea: image.Rect(0, 0, 1, 1),
 		},
 		{
-			desc:     "braille from non-zero-based single-cell area",
-			ar:       image.Rect(3, 3, 4, 4),
-			wantSize: image.Point{2, 4},
-			wantArea: image.Rect(0, 0, 2, 4),
+			desc:         "braille from non-zero-based single-cell area",
+			ar:           image.Rect(3, 3, 4, 4),
+			wantSize:     image.Point{2, 4},
+			wantArea:     image.Rect(0, 0, 2, 4),
+			wantCellArea: image.Rect(0, 0, 1, 1),
 		},
 		{
-			desc:     "braille from zero-based multi-cell area",
-			ar:       image.Rect(0, 0, 3, 3),
-			wantSize: image.Point{6, 12},
-			wantArea: image.Rect(0, 0, 6, 12),
+			desc:         "braille from zero-based multi-cell area",
+			ar:           image.Rect(0, 0, 3, 3),
+			wantSize:     image.Point{6, 12},
+			wantArea:     image.Rect(0, 0, 6, 12),
+			wantCellArea: image.Rect(0, 0, 3, 3),
 		},
 		{
-			desc:     "braille from non-zero-based multi-cell area",
-			ar:       image.Rect(6, 6, 9, 9),
-			wantSize: image.Point{6, 12},
-			wantArea: image.Rect(0, 0, 6, 12),
+			desc:         "braille from non-zero-based multi-cell area",
+			ar:           image.Rect(6, 6, 9, 9),
+			wantSize:     image.Point{6, 12},
+			wantArea:     image.Rect(0, 0, 6, 12),
+			wantCellArea: image.Rect(0, 0, 3, 3),
 		},
 		{
-			desc:     "braille from non-zero-based multi-cell rectangular area",
-			ar:       image.Rect(6, 6, 9, 10),
-			wantSize: image.Point{6, 16},
-			wantArea: image.Rect(0, 0, 6, 16),
+			desc:         "braille from non-zero-based multi-cell rectangular area",
+			ar:           image.Rect(6, 6, 9, 10),
+			wantSize:     image.Point{6, 16},
+			wantArea:     image.Rect(0, 0, 6, 16),
+			wantCellArea: image.Rect(0, 0, 3, 4),
 		},
 	}
 
@@ -135,6 +141,11 @@ func TestNew(t *testing.T) {
 			gotArea := got.Area()
 			if diff := pretty.Compare(tc.wantArea, gotArea); diff != "" {
 				t.Errorf("Area => unexpected diff (-want, +got):\n%s", diff)
+			}
+
+			gotCellArea := got.CellArea()
+			if diff := pretty.Compare(tc.wantCellArea, gotCellArea); diff != "" {
+				t.Errorf("CellArea => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

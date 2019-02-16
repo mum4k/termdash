@@ -110,6 +110,11 @@ func (c *Canvas) Size() image.Point {
 	return image.Point{s.X * ColMult, s.Y * RowMult}
 }
 
+// CellArea returns the area of the underlying cell canvas in cells.
+func (c *Canvas) CellArea() image.Rectangle {
+	return c.regular.Area()
+}
+
 // Area returns the area of the braille canvas in pixels.
 // This will be zero-based area that is two times wider and four times taller
 // than the area used to create the braille canvas.

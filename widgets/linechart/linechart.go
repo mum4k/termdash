@@ -79,8 +79,6 @@ type LineChart struct {
 	// Keyed by the name of the series and updated by calling Series.
 	series map[string]*seriesValues
 
-	// yAxis is the Y axis of the line chart.
-	yAxis *axes.Y
 	// yMin are the min and max values for the Y axis.
 	yMin, yMax float64
 
@@ -99,7 +97,6 @@ func New(opts ...Option) (*LineChart, error) {
 	}
 	return &LineChart{
 		series: map[string]*seriesValues{},
-		yAxis:  axes.NewY(0, 0),
 		opts:   opt,
 	}, nil
 }
@@ -191,7 +188,6 @@ func (lc *LineChart) Series(label string, values []float64, opts ...SeriesOption
 
 	lc.series[label] = series
 	yMin, yMax := lc.yMinMax()
-	lc.yAxis = axes.NewY(yMin, yMax)
 	lc.yMin = yMin
 	lc.yMax = yMax
 	return nil

@@ -49,32 +49,6 @@ type YDetails struct {
 	Labels []*Label
 }
 
-// Y tracks the state of the Y axis throughout the lifetime of a line chart.
-// Implements lazy resize of the axis to decrease visual "jumping".
-// This object is not thread-safe.
-type Y struct {
-	// min is the smallest value on the Y axis.
-	min *Value
-	// max is the largest value on the Y axis.
-	max *Value
-	// details about the Y axis as it will be drawn.
-	details *YDetails
-}
-
-// NewY returns a new Y instance.
-// The minVal and maxVal represent the minimum and maximum value that will be
-// displayed on the line chart among all of the series.
-func NewY(minVal, maxVal float64) *Y {
-	y := &Y{}
-	y.Update(minVal, maxVal)
-	return y
-}
-
-// Update updates the stored minVal and maxVal.
-func (y *Y) Update(minVal, maxVal float64) {
-	y.min, y.max = NewValue(minVal, nonZeroDecimals), NewValue(maxVal, nonZeroDecimals)
-}
-
 // RequiredWidth calculates the minimum width required in order to draw the Y
 // axis and its labels when displaying values that have this minimum and
 // maximum among all the series.

@@ -232,8 +232,8 @@ func (c *Canvas) SetAreaCellOpts(cellArea image.Rectangle, opts ...cell.Option) 
 	if !cellArea.In(haveArea) {
 		return fmt.Errorf("unable to set cell options in area %v, it must fit inside the available cell area is %v", cellArea, haveArea)
 	}
-	for col := haveArea.Min.X; col < haveArea.Max.X; col++ {
-		for row := haveArea.Min.Y; row < haveArea.Max.Y; row++ {
+	for col := cellArea.Min.X; col < cellArea.Max.X; col++ {
+		for row := cellArea.Min.Y; row < cellArea.Max.Y; row++ {
 			if err := c.SetCellOpts(image.Point{col, row}, opts...); err != nil {
 				return err
 			}

@@ -225,6 +225,23 @@ func (c *Canvas) SetCellOpts(cellPoint image.Point, opts ...cell.Option) error {
 	return nil
 }
 
+// SetAreaCellOpts is like SetCellOpts, but sets the specified options on all
+// the cells within the provided area.
+func (c *Canvas) SetAreaCellOpts(cellArea image.Rectangle, opts ...cell.Option) error {
+	haveArea := c.regular.Area()
+	if !cellArea.In(haveArea) {
+		return fmt.Errorf("unable to set cell options in area %v, it must fit inside the available cell area is %v", cellArea, haveArea)
+	}
+	for col := haveArea.Min.X; col < haveArea.Max.X; col++ {
+		for row := haveArea.Min.Y; row < haveArea.Max.Y; row++ {
+			if err := c.SetCellOpts(image.Point{col, row}, opts...); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // Apply applies the canvas to the corresponding area of the terminal.
 // Guarantees to stay within limits of the area the canvas was created with.
 func (c *Canvas) Apply(t terminalapi.Terminal) error {

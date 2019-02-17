@@ -287,6 +287,43 @@ func TestBraille(t *testing.T) {
 			},
 		},
 		{
+			desc: "SetAreaCellOptions fails on area too large",
+			ar:   image.Rect(0, 0, 1, 1),
+			pixelOps: func(c *Canvas) error {
+				return c.SetAreaCellOpts(image.Rect(0, 0, 2, 2), cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			wantErr: true,
+		},
+		{
+			desc: "SetCellOptions sets the cell options",
+			ar:   image.Rect(0, 0, 3, 3),
+			pixelOps: func(c *Canvas) error {
+				return c.SetAreaCellOpts(image.Rect(0, 0, 2, 2), cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				for _, p := range []image.Point{
+					{0, 0},
+					{0, 1},
+					{0, 2},
+					{1, 0},
+					{1, 1},
+					{1, 2},
+					{2, 0},
+					{2, 1},
+					{2, 2},
+				} {
+					c := testcanvas.MustCell(cvs, p)
+					testcanvas.MustSetCell(cvs, p, c.Rune, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+				}
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+
+		{
 			desc: "set pixel 0,0",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {

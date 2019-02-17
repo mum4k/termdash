@@ -68,3 +68,10 @@ func MustSetCellOpts(bc *braille.Canvas, cellPoint image.Point, opts ...cell.Opt
 		panic(fmt.Sprintf("bc.SetCellOpts => unexpected error: %v", err))
 	}
 }
+
+// MustSetAreaCellOpts sets the cell options in the area or panics.
+func MustSetAreaCellOpts(bc *braille.Canvas, cellArea image.Rectangle, opts ...cell.Option) {
+	if err := bc.SetAreaCellOpts(cellArea, opts...); err != nil {
+		panic(fmt.Sprintf("bc.SetAreaCellOpts => unexpected error: %v", err))
+	}
+}

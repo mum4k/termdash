@@ -17,6 +17,7 @@ package numbers
 
 import (
 	"image"
+	"log"
 	"math"
 )
 
@@ -202,5 +203,21 @@ func SimplifyRatio(ratio image.Point) image.Point {
 	return image.Point{
 		X: ratio.X / gcf,
 		Y: ratio.Y / gcf,
+	}
+}
+
+// SplitByRatio splits the provided number by the specified ratio.
+func SplitByRatio(n int, ratio image.Point) image.Point {
+	sr := SimplifyRatio(ratio)
+	log.Printf("sr:%v", sr)
+	if sr.Eq(image.ZP) {
+		return image.ZP
+	}
+	fn := float64(n)
+	sum := float64(sr.X + sr.Y)
+	fact := fn / sum
+	return image.Point{
+		int(Round(fact * float64(sr.X))),
+		int(Round(fact * float64(sr.Y))),
 	}
 }

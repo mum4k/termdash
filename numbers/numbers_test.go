@@ -432,3 +432,58 @@ func TestSimplifyRatio(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitByRatio(t *testing.T) {
+	tests := []struct {
+		desc   string
+		number int
+		ratio  image.Point
+		want   image.Point
+	}{
+		{
+			desc:   "zero numerator",
+			number: 10,
+			ratio:  image.Point{0, 2},
+			want:   image.ZP,
+		},
+		{
+			desc:   "zero denominator",
+			number: 10,
+			ratio:  image.Point{2, 0},
+			want:   image.ZP,
+		},
+		{
+			desc:   "zero number",
+			number: 0,
+			ratio:  image.Point{1, 2},
+			want:   image.ZP,
+		},
+		{
+			desc:   "equal ratio",
+			number: 2,
+			ratio:  image.Point{2, 2},
+			want:   image.Point{1, 1},
+		},
+		{
+			desc:   "unequal ratio",
+			number: 15,
+			ratio:  image.Point{1, 2},
+			want:   image.Point{5, 10},
+		},
+		{
+			desc:   "large ratio",
+			number: 19,
+			ratio:  image.Point{78, 121},
+			want:   image.Point{7, 12},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := SplitByRatio(tc.number, tc.ratio)
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("SplitByRatio => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}

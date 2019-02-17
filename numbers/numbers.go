@@ -17,7 +17,6 @@ package numbers
 
 import (
 	"image"
-	"log"
 	"math"
 )
 
@@ -209,7 +208,6 @@ func SimplifyRatio(ratio image.Point) image.Point {
 // SplitByRatio splits the provided number by the specified ratio.
 func SplitByRatio(n int, ratio image.Point) image.Point {
 	sr := SimplifyRatio(ratio)
-	log.Printf("sr:%v", sr)
 	if sr.Eq(image.ZP) {
 		return image.ZP
 	}

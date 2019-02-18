@@ -612,8 +612,14 @@ func TestTracker(t *testing.T) {
 				}); err != nil {
 					return err
 				}
-				return tr.Mouse(&terminalapi.Mouse{
+				if err := tr.Mouse(&terminalapi.Mouse{
 					Position: image.Point{6, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				return tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{2, 0},
 					Button:   mouse.ButtonRelease,
 				})
 			},
@@ -696,7 +702,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights of single row maximizes zoom",
+			desc: "highlights of single row doesn't zoom",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       5,
@@ -713,6 +719,44 @@ func TestTracker(t *testing.T) {
 				}
 				return tr.Mouse(&terminalapi.Mouse{
 					Position: image.Point{2, 0},
+					Button:   mouse.ButtonRelease,
+				})
+
+			},
+			wantHighlight: false,
+			wantZoom: mustNewXDetails(
+				image.Rect(0, 0, 8, 8),
+				&axes.XProperties{
+					Min:       0,
+					Max:       5,
+					ReqYWidth: 2,
+				},
+			),
+		},
+		{
+			desc: "highlights of multiple rows maximizes zoom",
+			xp: &axes.XProperties{
+				Min:       0,
+				Max:       5,
+				ReqYWidth: 2,
+			},
+			cvsAr:   image.Rect(0, 0, 8, 8),
+			graphAr: image.Rect(2, 0, 8, 8),
+			mutate: func(tr *Tracker) error {
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{2, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				return tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
 					Button:   mouse.ButtonRelease,
 				})
 
@@ -904,7 +948,13 @@ func TestTracker(t *testing.T) {
 					return err
 				}
 				if err := tr.Mouse(&terminalapi.Mouse{
-					Position: image.Point{2, 0},
+					Position: image.Point{3, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
 					Button:   mouse.ButtonRelease,
 				}); err != nil {
 					return err
@@ -1279,13 +1329,22 @@ func TestZoomToHighlight(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc:  "zooms to highlighted area",
+			desc:  "doesn't zoom when only one row selected",
 			cvsAr: image.Rect(0, 0, 4, 4),
 			baseP: &axes.XProperties{
 				Min: 0,
 				Max: 3,
 			},
 			hRange: &Range{Start: 1, End: 2},
+		},
+		{
+			desc:  "zooms to highlighted area",
+			cvsAr: image.Rect(0, 0, 4, 4),
+			baseP: &axes.XProperties{
+				Min: 0,
+				Max: 3,
+			},
+			hRange: &Range{Start: 1, End: 3},
 			wantP: &axes.XProperties{
 				Min: 1,
 				Max: 2,

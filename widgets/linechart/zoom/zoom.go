@@ -201,8 +201,10 @@ func (t *Tracker) Mouse(m *terminalapi.Mouse) error {
 		if err != nil {
 			return err
 		}
-		t.zoomX = zoom
 		t.highlight.reset()
+		if zoom != nil {
+			t.zoomX = zoom
+		}
 
 	default:
 		t.highlight.reset()
@@ -382,7 +384,13 @@ func findCellPair(base *axes.XDetails, minCell, maxCell int) (*axes.Value, *axes
 }
 
 // zoomToHighlight zooms the base X axis according to the highlighted range.
+// Can return nil axis if the highlight didn't result in zooming.
 func zoomToHighlight(base *axes.XDetails, hr *Range, cvsAr image.Rectangle) (*axes.XDetails, error) {
+	// Only zoom if at least two columns were selected.
+	if got := numbers.Abs(hr.End - hr.Start); got < 2 {
+		return nil, nil
+	}
+
 	minL, maxL, err := findCellPair(base, hr.Start, hr.End-1)
 	if err != nil {
 		return nil, err

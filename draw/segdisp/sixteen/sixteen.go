@@ -86,21 +86,37 @@ var segmentNames = map[Segment]string{
 const (
 	segmentUnknown Segment = iota
 
+	// A1 is a segment, see the diagram above.
 	A1
+	// A2 is a segment, see the diagram above.
 	A2
+	// B is a segment, see the diagram above.
 	B
+	// C is a segment, see the diagram above.
 	C
+	// D1 is a segment, see the diagram above.
 	D1
+	// D2 is a segment, see the diagram above.
 	D2
+	// E is a segment, see the diagram above.
 	E
+	// F is a segment, see the diagram above.
 	F
+	// G1 is a segment, see the diagram above.
 	G1
+	// G2 is a segment, see the diagram above.
 	G2
+	// H is a segment, see the diagram above.
 	H
+	// J is a segment, see the diagram above.
 	J
+	// K is a segment, see the diagram above.
 	K
+	// L is a segment, see the diagram above.
 	L
+	// M is a segment, see the diagram above.
 	M
+	// N is a segment, see the diagram above.
 	N
 
 	segmentMax // Used for validation.
@@ -340,7 +356,8 @@ func (d *Display) ToggleSegment(s Segment) error {
 	return nil
 }
 
-// Character sets all the segments that are needed to display the provided character.
+// SetCharacter sets all the segments that are needed to display the provided
+// character.
 // The display only supports a subset of ASCII characters, use SupportsChars()
 // or Sanitize() to ensure the provided character is supported.
 // Doesn't clear the display of segments set previously.
@@ -435,7 +452,7 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 	return bc.CopyTo(cvs)
 }
 
-// Required, when given an area of cells, returns either an area of the same
+// Required when given an area of cells, returns either an area of the same
 // size or a smaller area that is required to draw one display.
 // Returns a smaller area when the provided area didn't have the required
 // aspect ratio.

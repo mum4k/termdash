@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The LineChart widget now correctly determines the Y axis scale when multiple
   series are provided.
+- Lint issues in the codebase, and updated Travis configuration so that golint
+  is executed on every run.
 
 ## [0.6.1] - 12-Feb-2019
 

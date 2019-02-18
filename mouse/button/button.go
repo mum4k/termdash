@@ -112,18 +112,17 @@ func wantRelease(fsm *FSM, m *terminalapi.Mouse) (bool, State, stateFn) {
 			// Remain in the same state, since termbox reports move of mouse with
 			// button held down as a series of clicks, one per position.
 			return false, Down, wantRelease
-		} else {
-			return false, Up, wantPress
 		}
+		return false, Up, wantPress
 
 	case mouse.ButtonRelease:
 		if m.Position.In(fsm.area) {
 			// Seen both press and release, report a click.
 			return true, Up, wantPress
-		} else {
-			// Release the button even if the release event happened outside of the area.
-			return false, Up, wantPress
 		}
+		// Release the button even if the release event happened outside of the area.
+		return false, Up, wantPress
+
 	default:
 		return false, Up, wantPress
 	}

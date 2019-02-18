@@ -45,7 +45,7 @@ const (
 	// flows horizontally.
 	LabelOrientationHorizontal LabelOrientation = iota
 
-	// LabelOrientationvertical is an orientation where text flows vertically.
+	// LabelOrientationVertical is an orientation where text flows vertically.
 	LabelOrientationVertical
 )
 

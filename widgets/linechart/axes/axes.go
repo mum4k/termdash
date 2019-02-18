@@ -147,6 +147,9 @@ type XDetails struct {
 
 	// Labels are the labels for values on the X axis in an increasing order.
 	Labels []*Label
+
+	// Properties are the properties that were used on the call to NewXDetails.
+	Properties *XProperties
 }
 
 // XProperties are the properties of the X axis.
@@ -199,10 +202,11 @@ func NewXDetails(cvsAr image.Rectangle, xp *XProperties) (*XDetails, error) {
 	}
 
 	return &XDetails{
-		Start:  image.Point{xp.ReqYWidth, cvsAr.Dy() - reqHeight}, // Space for the labels.
-		End:    image.Point{xp.ReqYWidth + graphWidth, cvsAr.Dy() - reqHeight},
-		Scale:  scale,
-		Labels: labels,
+		Start:      image.Point{xp.ReqYWidth, cvsAr.Dy() - reqHeight}, // Space for the labels.
+		End:        image.Point{xp.ReqYWidth + graphWidth, cvsAr.Dy() - reqHeight},
+		Scale:      scale,
+		Labels:     labels,
+		Properties: xp,
 	}, nil
 }
 

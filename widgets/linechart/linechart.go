@@ -31,6 +31,7 @@ import (
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/linechart/axes"
+	"github.com/mum4k/termdash/widgets/linechart/zoom"
 )
 
 // seriesValues represent values stored in the series.
@@ -70,6 +71,10 @@ func newSeriesValues(values []float64) *seriesValues {
 // The Y axis will be sized so that it can conveniently accommodate the largest
 // value among all the labeled line charts. This determines the used scale.
 //
+// LineChart supports mouse based zoom, zooming is achieved by either
+// highlighting an area on the graph (left mouse clicking and dragging) or by
+// using the mouse scroll button.
+//
 // Implements widgetapi.Widget. This object is thread-safe.
 type LineChart struct {
 	// mu protects the LineChart widget.
@@ -91,6 +96,9 @@ type LineChart struct {
 
 	// xLabels that were provided on a call to Series.
 	xLabels map[int]string
+
+	// zoom tracks the zooming of the X axis.
+	zoom *zoom.Tracker
 }
 
 // New returns a new line chart widget.
@@ -339,23 +347,18 @@ func (lc *LineChart) drawAxes(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YD
 	return nil
 }
 
-// brailleCvs returns a braille canvas sized so that it fits between the axes
-// and the canvas borders.
-func (lc *LineChart) brailleCvs(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) (*braille.Canvas, error) {
-	// The area available to the graph.
-	graphAr := image.Rect(yd.Start.X+1, yd.Start.Y, cvs.Area().Max.X, xd.End.Y)
-	bc, err := braille.New(graphAr)
-	if err != nil {
-		return nil, fmt.Errorf("braille.New => %v", err)
-	}
-	return bc, nil
+// graphAr returns the area available for the graph itself sized so that it
+// fits between the axes and the canvas borders.
+func (lc *LineChart) graphAr(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) image.Rectangle {
+	return image.Rect(yd.Start.X+1, yd.Start.Y, cvs.Area().Max.X, xd.End.Y)
 }
 
 // drawSeries draws the graph representing the stored series.
 // Returns XDetails that might be adjusted to not start at zero value if some
 // of the series didn't fit the graphs and XAxisUnscaled was provided.
 func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) (*axes.XDetails, error) {
-	bc, err := lc.brailleCvs(cvs, xd, yd)
+	graphAr := lc.graphAr(cvs, xd, yd)
+	bc, err := braille.New(graphAr)
 	if err != nil {
 		return nil, err
 	}
@@ -365,6 +368,19 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 		return nil, err
 	}
 
+	if lc.zoom == nil {
+		z, err := zoom.New(xdForCap, cvs.Area(), graphAr, zoom.ScrollStep(lc.opts.zoomStepPercent))
+		if err != nil {
+			return nil, err
+		}
+		lc.zoom = z
+	} else {
+		if err := lc.zoom.Update(xdForCap, cvs.Area(), graphAr); err != nil {
+			return nil, err
+		}
+	}
+
+	xdZoomed := lc.zoom.Zoom()
 	var names []string
 	for name := range lc.series {
 		names = append(names, name)
@@ -383,7 +399,7 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 		var prev float64
 		for i := 1; i < len(sv.values); i++ {
 			prev = sv.values[i-1]
-			if i < int(xdForCap.Scale.Min.Value)+1 || i > int(xdForCap.Scale.Max.Value) {
+			if i < int(xdZoomed.Scale.Min.Value)+1 || i > int(xdZoomed.Scale.Max.Value) {
 				// Don't draw lines for values that aren't supposed to be visible.
 				// These are either values outside of the current zoom or
 				// values at the beginning of a series that falls before athe
@@ -392,13 +408,13 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 				continue
 			}
 
-			startX, err := xdForCap.Scale.ValueToPixel(i - 1)
+			startX, err := xdZoomed.Scale.ValueToPixel(i - 1)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], xdForCap.Scale.ValueToPixel => %v", name, i-1, err)
+				return nil, fmt.Errorf("failure for series %v[%d], xdZoomed.Scale.ValueToPixel => %v", name, i-1, err)
 			}
-			endX, err := xdForCap.Scale.ValueToPixel(i)
+			endX, err := xdZoomed.Scale.ValueToPixel(i)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], xdForCap.Scale.ValueToPixel => %v", name, i, err)
+				return nil, fmt.Errorf("failure for series %v[%d], xdZoomed.Scale.ValueToPixel => %v", name, i, err)
 			}
 
 			startY, err := yd.Scale.ValueToPixel(prev)
@@ -420,10 +436,24 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 			}
 		}
 	}
+
+	if highlight, hRange := lc.zoom.Highlight(); highlight {
+		if err := lc.highlightRange(bc, hRange); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := bc.CopyTo(cvs); err != nil {
 		return nil, fmt.Errorf("bc.Apply => %v", err)
 	}
-	return xdForCap, nil
+	return xdZoomed, nil
+}
+
+// highlightRange highlights the range of X columns on the braille canvas.
+func (lc *LineChart) highlightRange(bc *braille.Canvas, hRange *zoom.Range) error {
+	cellAr := bc.CellArea()
+	ar := image.Rect(hRange.Start, cellAr.Min.Y, hRange.End, cellAr.Max.Y)
+	return bc.SetAreaCellOpts(ar, cell.BgColor(lc.opts.zoomHightlightColor))
 }
 
 // Keyboard implements widgetapi.Widget.Keyboard.
@@ -433,7 +463,10 @@ func (lc *LineChart) Keyboard(k *terminalapi.Keyboard) error {
 
 // Mouse implements widgetapi.Widget.Mouse.
 func (lc *LineChart) Mouse(m *terminalapi.Mouse) error {
-	return errors.New("the LineChart widget doesn't support mouse events")
+	if lc.zoom == nil {
+		return nil
+	}
+	return lc.zoom.Mouse(m)
 }
 
 // minSize determines the minimum required size to draw the line chart.
@@ -457,6 +490,7 @@ func (lc *LineChart) Options() widgetapi.Options {
 
 	return widgetapi.Options{
 		MinimumSize: lc.minSize(),
+		WantMouse:   true,
 	}
 }
 

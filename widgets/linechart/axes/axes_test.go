@@ -270,6 +270,11 @@ func TestNewXDetails(t *testing.T) {
 						Pos:   image.Point{1, 2},
 					},
 				},
+				Properties: &XProperties{
+					Min:       0,
+					Max:       0,
+					ReqYWidth: 0,
+				},
 			},
 		},
 		{
@@ -291,6 +296,12 @@ func TestNewXDetails(t *testing.T) {
 						Pos:   image.Point{1, 2},
 					},
 				},
+				Properties: &XProperties{
+					Min:       0,
+					Max:       0,
+					ReqYWidth: 0,
+					LO:        LabelOrientationVertical,
+				},
 			},
 		},
 		{
@@ -310,6 +321,11 @@ func TestNewXDetails(t *testing.T) {
 						Value: NewValue(0, nonZeroDecimals),
 						Pos:   image.Point{3, 4},
 					},
+				},
+				Properties: &XProperties{
+					Min:       0,
+					Max:       0,
+					ReqYWidth: 2,
 				},
 			},
 		},
@@ -336,6 +352,12 @@ func TestNewXDetails(t *testing.T) {
 						Pos:   image.Point{7, 6},
 					},
 				},
+				Properties: &XProperties{
+					Min:       0,
+					Max:       1000,
+					ReqYWidth: 2,
+					LO:        LabelOrientationVertical,
+				},
 			},
 		},
 		{
@@ -360,6 +382,12 @@ func TestNewXDetails(t *testing.T) {
 						Value: NewValue(615, nonZeroDecimals),
 						Pos:   image.Point{7, 7},
 					},
+				},
+				Properties: &XProperties{
+					Min:       0,
+					Max:       999,
+					ReqYWidth: 2,
+					LO:        LabelOrientationVertical,
 				},
 			},
 		},
@@ -389,6 +417,16 @@ func TestNewXDetails(t *testing.T) {
 						Value: NewTextValue("end"),
 						Pos:   image.Point{19, 5},
 					},
+				},
+				Properties: &XProperties{
+					Min:       0,
+					Max:       1,
+					ReqYWidth: 5,
+					CustomLabels: map[int]string{
+						0: "start",
+						1: "end",
+					},
+					LO: LabelOrientationVertical,
 				},
 			},
 		},

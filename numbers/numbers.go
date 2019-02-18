@@ -16,6 +16,7 @@
 package numbers
 
 import (
+	"image"
 	"math"
 )
 
@@ -169,4 +170,52 @@ func Abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// findGCF finds the greatest common factor of two integers.
+func findGCF(a, b int) int {
+	if a == 0 || b == 0 {
+		return 0
+	}
+	a = Abs(a)
+	b = Abs(b)
+
+	// https://en.wikipedia.org/wiki/Euclidean_algorithm
+	for {
+		rem := a % b
+		a = b
+		b = rem
+
+		if b == 0 {
+			break
+		}
+	}
+	return a
+}
+
+// SimplifyRatio simplifies the given ratio.
+func SimplifyRatio(ratio image.Point) image.Point {
+	gcf := findGCF(ratio.X, ratio.Y)
+	if gcf == 0 {
+		return image.ZP
+	}
+	return image.Point{
+		X: ratio.X / gcf,
+		Y: ratio.Y / gcf,
+	}
+}
+
+// SplitByRatio splits the provided number by the specified ratio.
+func SplitByRatio(n int, ratio image.Point) image.Point {
+	sr := SimplifyRatio(ratio)
+	if sr.Eq(image.ZP) {
+		return image.ZP
+	}
+	fn := float64(n)
+	sum := float64(sr.X + sr.Y)
+	fact := fn / sum
+	return image.Point{
+		int(Round(fact * float64(sr.X))),
+		int(Round(fact * float64(sr.Y))),
+	}
 }

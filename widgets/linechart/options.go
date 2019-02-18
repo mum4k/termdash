@@ -20,6 +20,7 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/widgets/linechart/axes"
+	"github.com/mum4k/termdash/widgets/linechart/zoom"
 )
 
 // options.go contains configurable options for LineChart.
@@ -32,33 +33,39 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	axesCellOpts      []cell.Option
-	xLabelCellOpts    []cell.Option
-	xLabelOrientation axes.LabelOrientation
-	yLabelCellOpts    []cell.Option
-	xAxisUnscaled     bool
-	yAxisMode         axes.YScaleMode
-	yAxisCustomScale  *customScale
+	axesCellOpts        []cell.Option
+	xLabelCellOpts      []cell.Option
+	xLabelOrientation   axes.LabelOrientation
+	yLabelCellOpts      []cell.Option
+	xAxisUnscaled       bool
+	yAxisMode           axes.YScaleMode
+	yAxisCustomScale    *customScale
+	zoomHightlightColor cell.Color
+	zoomStepPercent     int
 }
 
 // validate validates the provided options.
 func (o *options) validate() error {
-	if o.yAxisCustomScale == nil {
-		return nil
+	if o.yAxisCustomScale != nil {
+		if math.IsNaN(o.yAxisCustomScale.min) || math.IsNaN(o.yAxisCustomScale.max) {
+			return fmt.Errorf("both the min(%v) and the max(%v) provided as custom Y scale must be valid numbers", o.yAxisCustomScale.min, o.yAxisCustomScale.max)
+		}
+		if o.yAxisCustomScale.min >= o.yAxisCustomScale.max {
+			return fmt.Errorf("the min(%v) must be less than the max(%v) provided as custom Y scale", o.yAxisCustomScale.min, o.yAxisCustomScale.max)
+		}
 	}
-
-	if math.IsNaN(o.yAxisCustomScale.min) || math.IsNaN(o.yAxisCustomScale.max) {
-		return fmt.Errorf("both the min(%v) and the max(%v) provided as custom Y scale must be valid numbers", o.yAxisCustomScale.min, o.yAxisCustomScale.max)
-	}
-	if o.yAxisCustomScale.min >= o.yAxisCustomScale.max {
-		return fmt.Errorf("the min(%v) must be less than the max(%v) provided as custom Y scale", o.yAxisCustomScale.min, o.yAxisCustomScale.max)
+	if got, min, max := o.zoomStepPercent, 1, 100; got < min || got > max {
+		return fmt.Errorf("invalid ZoomStepPercent %d, must be in range %d <= value <= %d", got, min, max)
 	}
 	return nil
 }
 
 // newOptions returns a new options instance.
 func newOptions(opts ...Option) *options {
-	opt := &options{}
+	opt := &options{
+		zoomHightlightColor: cell.ColorNumber(235),
+		zoomStepPercent:     zoom.DefaultScrollStep,
+	}
 	for _, o := range opts {
 		o.set(opt)
 	}
@@ -166,5 +173,24 @@ func YAxisCustomScale(min, max float64) Option {
 func XAxisUnscaled() Option {
 	return option(func(opts *options) {
 		opts.xAxisUnscaled = true
+	})
+}
+
+// ZoomHightlightColor sets the background color of the area that is selected
+// with mouse in order to zoom the linechart.
+// Defaults to color number 235.
+func ZoomHightlightColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.zoomHightlightColor = c
+	})
+}
+
+// ZoomStepPercent sets the zooming step on each mouse scroll event as the
+// percentage of the size of the X axis.
+// The value must be in range 0 < value <= 100.
+// Defaults to zoom.DefaultScrollStep.
+func ZoomStepPercent(perc int) Option {
+	return option(func(opts *options) {
+		opts.zoomStepPercent = perc
 	})
 }

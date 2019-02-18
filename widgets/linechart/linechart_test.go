@@ -26,7 +26,9 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/draw/testdraw"
+	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
 
@@ -42,6 +44,22 @@ func TestLineChartDraws(t *testing.T) {
 		wantWriteErr bool
 		wantDrawErr  bool
 	}{
+		{
+			desc:   "fails with scroll step too low",
+			canvas: image.Rect(0, 0, 3, 4),
+			opts: []Option{
+				ZoomStepPercent(0),
+			},
+			wantErr: true,
+		},
+		{
+			desc:   "fails with scroll step too high",
+			canvas: image.Rect(0, 0, 3, 4),
+			opts: []Option{
+				ZoomStepPercent(101),
+			},
+			wantErr: true,
+		},
 		{
 			desc:   "fails with custom scale where min is NaN",
 			canvas: image.Rect(0, 0, 3, 4),
@@ -1136,6 +1154,155 @@ func TestLineChartDraws(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "highlights area for zoom",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 100}); err != nil {
+					return err
+				}
+				// Draw once so zoom tracker is initialized.
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
+				if err := lc.Draw(cvs); err != nil {
+					return err
+				}
+				return lc.Mouse(&terminalapi.Mouse{
+					Position: image.Point{6, 5},
+					Button:   mouse.ButtonLeft,
+				})
+			},
+			wantCapacity: 28,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+
+				// Highlighted area for zoom.
+				testbraille.MustSetAreaCellOpts(bc, image.Rect(0, 0, 1, 8), cell.BgColor(cell.ColorNumber(235)))
+
+				testbraille.MustCopyTo(bc, c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "highlights area for zoom to a custom color",
+			opts: []Option{
+				ZoomHightlightColor(cell.ColorNumber(13)),
+			},
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 100}); err != nil {
+					return err
+				}
+				// Draw once so zoom tracker is initialized.
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
+				if err := lc.Draw(cvs); err != nil {
+					return err
+				}
+				return lc.Mouse(&terminalapi.Mouse{
+					Position: image.Point{6, 5},
+					Button:   mouse.ButtonLeft,
+				})
+			},
+			wantCapacity: 28,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+
+				// Highlighted area for zoom.
+				testbraille.MustSetAreaCellOpts(bc, image.Rect(0, 0, 1, 8), cell.BgColor(cell.ColorNumber(13)))
+
+				testbraille.MustCopyTo(bc, c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "zooms in on scroll up",
+			opts: []Option{
+				ZoomStepPercent(50),
+			},
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 25, 75, 100}); err != nil {
+					return err
+				}
+				// Draw once so zoom tracker is initialized.
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
+				if err := lc.Draw(cvs); err != nil {
+					return err
+				}
+				return lc.Mouse(&terminalapi.Mouse{
+					Position: image.Point{8, 5},
+					Button:   mouse.ButtonWheelUp,
+				})
+			},
+			wantCapacity: 28,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{12, 9})
+				testdraw.MustText(c, "2", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{13, 23})
+				testdraw.MustBrailleLine(bc, image.Point{13, 23}, image.Point{27, 8})
+
+				testbraille.MustCopyTo(bc, c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -1198,6 +1365,26 @@ func TestLineChartDraws(t *testing.T) {
 	}
 }
 
+func TestKeyboard(t *testing.T) {
+	lc, err := New()
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := lc.Keyboard(&terminalapi.Keyboard{}); err == nil {
+		t.Errorf("Keyboard => got nil err, wanted one")
+	}
+}
+
+func TestMouseDoesNothingWithoutZoomTracker(t *testing.T) {
+	lc, err := New()
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := lc.Mouse(&terminalapi.Mouse{}); err != nil {
+		t.Errorf("Mouse => unexpected error: %v", err)
+	}
+}
+
 func TestOptions(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -1210,6 +1397,7 @@ func TestOptions(t *testing.T) {
 			desc: "reserves space for axis without series",
 			want: widgetapi.Options{
 				MinimumSize: image.Point{3, 4},
+				WantMouse:   true,
 			},
 		},
 		{
@@ -1219,6 +1407,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{5, 4},
+				WantMouse:   true,
 			},
 		},
 		{
@@ -1228,6 +1417,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{6, 4},
+				WantMouse:   true,
 			},
 		},
 		{
@@ -1240,6 +1430,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{4, 5},
+				WantMouse:   true,
 			},
 		},
 		{
@@ -1252,6 +1443,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{5, 7},
+				WantMouse:   true,
 			},
 		},
 	}

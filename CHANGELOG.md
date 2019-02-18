@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "roll" through the linechart.
 - The LineChart widget now has a method that returns the observed capacity of
   the LineChart the last time Draw was called.
+- The LineChart widget now supports zoom of the content triggered by mouse
+  events.
 - The Text widget now has a Write option that atomically replaces the entire
   text content.
 

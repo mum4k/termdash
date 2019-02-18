@@ -1303,6 +1303,123 @@ func TestLineChartDraws(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc: "zoom in on unscaled X axis",
+			opts: []Option{
+				XAxisUnscaled(),
+				ZoomStepPercent(80),
+			},
+			canvas: image.Rect(0, 0, 10, 10),
+			writes: func(lc *LineChart) error {
+				var values []float64
+				for v := 0; v < 8; v++ {
+					values = append(values, float64(v))
+				}
+				if err := lc.Series("first", values); err != nil {
+					return err
+				}
+
+				// Draw once so zoom tracker is initialized.
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 11, 10))
+				if err := lc.Draw(cvs); err != nil {
+					return err
+				}
+				return lc.Mouse(&terminalapi.Mouse{
+					Position: image.Point{5, 0},
+					Button:   mouse.ButtonWheelUp,
+				})
+			},
+			wantCapacity: 10,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{9, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "3.68", image.Point{0, 3})
+				testdraw.MustText(c, "1", image.Point{5, 9})
+				testdraw.MustText(c, "3", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 10, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 27}, image.Point{4, 22})
+				testdraw.MustBrailleLine(bc, image.Point{4, 22}, image.Point{9, 18})
+
+				testbraille.MustCopyTo(bc, c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "shifts zoom when values on unscaled X axis roll out of the base axis view",
+			opts: []Option{
+				XAxisUnscaled(),
+				ZoomStepPercent(80),
+			},
+			canvas: image.Rect(0, 0, 10, 10),
+			writes: func(lc *LineChart) error {
+				var values []float64
+				for v := 0; v < 8; v++ {
+					values = append(values, float64(v))
+				}
+				if err := lc.Series("first", values); err != nil {
+					return err
+				}
+
+				// Draw once so zoom tracker is initialized.
+				cvs := testcanvas.MustNew(image.Rect(0, 0, 11, 10))
+				if err := lc.Draw(cvs); err != nil {
+					return err
+				}
+				if err := lc.Mouse(&terminalapi.Mouse{
+					Position: image.Point{5, 0},
+					Button:   mouse.ButtonWheelUp,
+				}); err != nil {
+					return err
+				}
+
+				// Add move values
+				for v := 0; v < 8; v++ {
+					values = append(values, float64(v))
+				}
+				return lc.Series("first", values)
+			},
+			wantCapacity: 10,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{9, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "3.68", image.Point{0, 3})
+				testdraw.MustText(c, "6", image.Point{5, 9})
+				testdraw.MustText(c, "7", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 10, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 5}, image.Point{8, 1})
+
+				testbraille.MustCopyTo(bc, c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

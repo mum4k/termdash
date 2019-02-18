@@ -15,6 +15,7 @@
 package axes
 
 import (
+	"fmt"
 	"image"
 	"testing"
 
@@ -441,6 +442,7 @@ func TestNewXDetails(t *testing.T) {
 			if err != nil {
 				return
 			}
+			t.Log(fmt.Sprintf("got: %v", got))
 
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("NewXDetails => unexpected diff (-want, +got):\n%s", diff)

@@ -124,7 +124,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights single row",
+			desc: "highlights single column",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -150,7 +150,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights multiple rows to the right of start",
+			desc: "highlights multiple columns to the right of start",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -182,7 +182,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights multiple rows to the right of start then middle",
+			desc: "highlights multiple columns to the right of start then middle",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -220,7 +220,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights multiple rows to the right of start then left of start",
+			desc: "highlights multiple columns to the right of start then left of start",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -258,7 +258,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights multiple rows to the left of start",
+			desc: "highlights multiple columns to the left of start",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -290,7 +290,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights multiple rows to the left of start then middle",
+			desc: "highlights multiple columns to the left of start then middle",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -328,7 +328,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights multiple rows to the left of start then right",
+			desc: "highlights multiple columns to the left of start then right",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -366,7 +366,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights multiple rows in the middle",
+			desc: "highlights multiple columns in the middle",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       4,
@@ -418,6 +418,38 @@ func TestTracker(t *testing.T) {
 				&axes.XProperties{
 					Min:       0,
 					Max:       4,
+					ReqYWidth: 2,
+				},
+			),
+		},
+		{
+			desc: "doesn't zoom when only one column highlighted",
+			xp: &axes.XProperties{
+				Min:       0,
+				Max:       5,
+				ReqYWidth: 2,
+			},
+			cvsAr:   image.Rect(0, 0, 8, 8),
+			graphAr: image.Rect(2, 0, 8, 8),
+			mutate: func(tr *Tracker) error {
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				return tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
+					Button:   mouse.ButtonRelease,
+				})
+
+			},
+			wantHighlight: false,
+			wantZoom: mustNewXDetails(
+				image.Rect(0, 0, 8, 8),
+				&axes.XProperties{
+					Min:       0,
+					Max:       5,
 					ReqYWidth: 2,
 				},
 			),
@@ -702,7 +734,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights of single row doesn't zoom",
+			desc: "highlights of single columns doesn't zoom",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       5,
@@ -734,7 +766,7 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
-			desc: "highlights of multiple rows maximizes zoom",
+			desc: "highlights of multiple columns maximizes zoom",
 			xp: &axes.XProperties{
 				Min:       0,
 				Max:       5,
@@ -767,6 +799,34 @@ func TestTracker(t *testing.T) {
 				&axes.XProperties{
 					Min:       0,
 					Max:       1,
+					ReqYWidth: 2,
+				},
+			),
+		},
+		{
+			desc: "ignores scroll events outside of graph area",
+			opts: []Option{
+				ScrollStep(30),
+			},
+			xp: &axes.XProperties{
+				Min:       0,
+				Max:       5,
+				ReqYWidth: 2,
+			},
+			cvsAr:   image.Rect(0, 0, 8, 8),
+			graphAr: image.Rect(2, 0, 8, 8),
+			mutate: func(tr *Tracker) error {
+				return tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{1, 0},
+					Button:   mouse.ButtonWheelUp,
+				})
+			},
+			wantHighlight: false,
+			wantZoom: mustNewXDetails(
+				image.Rect(0, 0, 8, 8),
+				&axes.XProperties{
+					Min:       0,
+					Max:       5,
 					ReqYWidth: 2,
 				},
 			),
@@ -901,7 +961,13 @@ func TestTracker(t *testing.T) {
 					return err
 				}
 				if err := tr.Mouse(&terminalapi.Mouse{
-					Position: image.Point{2, 0},
+					Position: image.Point{3, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
 					Button:   mouse.ButtonRelease,
 				}); err != nil {
 					return err
@@ -927,6 +993,59 @@ func TestTracker(t *testing.T) {
 				&axes.XProperties{
 					Min:       0,
 					Max:       0,
+					ReqYWidth: 2,
+				},
+			),
+		},
+		{
+			desc: "fully unzooms when axis changes",
+			xp: &axes.XProperties{
+				Min:       0,
+				Max:       5,
+				ReqYWidth: 2,
+			},
+			cvsAr:   image.Rect(0, 0, 8, 8),
+			graphAr: image.Rect(2, 0, 8, 8),
+			mutate: func(tr *Tracker) error {
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{2, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
+					Button:   mouse.ButtonLeft,
+				}); err != nil {
+					return err
+				}
+				if err := tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{3, 0},
+					Button:   mouse.ButtonRelease,
+				}); err != nil {
+					return err
+				}
+
+				newX, err := axes.NewXDetails(image.Rect(0, 0, 8, 8), &axes.XProperties{
+					Min:       0,
+					Max:       1,
+					ReqYWidth: 2,
+				})
+				if err != nil {
+					return err
+				}
+				return tr.Update(
+					newX,
+					image.Rect(0, 0, 8, 8),
+					image.Rect(2, 0, 8, 8),
+				)
+			},
+			wantHighlight: false,
+			wantZoom: mustNewXDetails(
+				image.Rect(0, 0, 8, 8),
+				&axes.XProperties{
+					Min:       0,
+					Max:       1,
 					ReqYWidth: 2,
 				},
 			),
@@ -1102,6 +1221,105 @@ func TestNormalize(t *testing.T) {
 			baseMax: axes.NewValue(3, 0),
 			min:     -1,
 			max:     4,
+			wantMin: 0,
+			wantMax: 3,
+		},
+		{
+			desc:    "min is below base, max is the first value",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(3, 0),
+			min:     -1,
+			max:     0,
+			wantMin: 0,
+			wantMax: 1,
+		},
+		{
+			desc:    "min is below base, max is the first value, no space on the axis",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(0, 0),
+			min:     -1,
+			max:     0,
+			wantMin: 0,
+			wantMax: 0,
+		},
+		{
+			desc:    "max is above base, min is the last value",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(3, 0),
+			min:     3,
+			max:     4,
+			wantMin: 2,
+			wantMax: 3,
+		},
+		{
+			desc:    "min is below base, max is the first value, no space on the axis",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(0, 0),
+			min:     0,
+			max:     1,
+			wantMin: 0,
+			wantMax: 0,
+		},
+		{
+			desc:    "both min and max are below base, min < max",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(3, 0),
+			min:     -2,
+			max:     -1,
+			wantMin: 0,
+			wantMax: 1,
+		},
+		{
+			desc:    "both min and max are below base, min > max",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(3, 0),
+			min:     -1,
+			max:     -2,
+			wantMin: 0,
+			wantMax: 1,
+		},
+		{
+			desc:    "both min and max are above base, min < max",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(3, 0),
+			min:     4,
+			max:     5,
+			wantMin: 2,
+			wantMax: 3,
+		},
+		{
+			desc:    "both min and max are above base, min > max",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(3, 0),
+			min:     5,
+			max:     4,
+			wantMin: 2,
+			wantMax: 3,
+		},
+		{
+			desc:    "both min and max are below base, base only has one value",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(0, 0),
+			min:     -2,
+			max:     -1,
+			wantMin: 0,
+			wantMax: 0,
+		},
+		{
+			desc:    "max in the middle, min above base",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(4, 0),
+			min:     5,
+			max:     3,
+			wantMin: 3,
+			wantMax: 4,
+		},
+		{
+			desc:    "min in the middle, max below base",
+			baseMin: axes.NewValue(0, 0),
+			baseMax: axes.NewValue(4, 0),
+			min:     3,
+			max:     -1,
 			wantMin: 0,
 			wantMax: 3,
 		},
@@ -1329,15 +1547,6 @@ func TestZoomToHighlight(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc:  "doesn't zoom when only one row selected",
-			cvsAr: image.Rect(0, 0, 4, 4),
-			baseP: &axes.XProperties{
-				Min: 0,
-				Max: 3,
-			},
-			hRange: &Range{Start: 1, End: 2},
-		},
-		{
 			desc:  "zooms to highlighted area",
 			cvsAr: image.Rect(0, 0, 4, 4),
 			baseP: &axes.XProperties{
@@ -1394,23 +1603,6 @@ func TestZoomToScroll(t *testing.T) {
 		wantP   *axes.XProperties
 		wantErr bool
 	}{
-		{
-			desc: "ignores scroll outside of graphAr",
-			mouse: &terminalapi.Mouse{
-				Position: image.Point{4, 4},
-				Button:   mouse.ButtonWheelUp,
-			},
-			cvsAr: image.Rect(0, 0, 4, 4),
-		},
-		{
-			desc: "ignores other (non scroll) buttons",
-			mouse: &terminalapi.Mouse{
-				Position: image.Point{0, 0},
-				Button:   mouse.ButtonLeft,
-			},
-			cvsAr:   image.Rect(0, 0, 4, 4),
-			graphAr: image.Rect(0, 0, 4, 4),
-		},
 		{
 			desc: "scroll up in the middle zooms in evenly",
 			opts: []Option{
@@ -1541,8 +1733,8 @@ func TestZoomToScroll(t *testing.T) {
 				ReqYWidth: 2,
 			},
 			wantP: &axes.XProperties{
-				Min:       2,
-				Max:       3,
+				Min:       3,
+				Max:       4,
 				ReqYWidth: 2,
 			},
 		},
@@ -1568,8 +1760,8 @@ func TestZoomToScroll(t *testing.T) {
 				ReqYWidth: 2,
 			},
 			wantP: &axes.XProperties{
-				Min:       1,
-				Max:       2,
+				Min:       0,
+				Max:       1,
 				ReqYWidth: 2,
 			},
 		},
@@ -1585,7 +1777,7 @@ func TestZoomToScroll(t *testing.T) {
 			cvsAr:   image.Rect(0, 0, 8, 8),
 			graphAr: image.Rect(2, 0, 8, 8),
 			currP: &axes.XProperties{
-				Min:       1,
+				Min:       2,
 				Max:       3,
 				ReqYWidth: 2,
 			},
@@ -1595,6 +1787,28 @@ func TestZoomToScroll(t *testing.T) {
 				ReqYWidth: 2,
 			},
 			wantP: &axes.XProperties{
+				Min:       1,
+				Max:       4,
+				ReqYWidth: 2,
+			},
+		},
+		{
+			desc: "scroll down in the middle zooms out completely",
+			opts: []Option{
+				ScrollStep(30),
+			},
+			mouse: &terminalapi.Mouse{
+				Position: image.Point{4, 0},
+				Button:   mouse.ButtonWheelDown,
+			},
+			cvsAr:   image.Rect(0, 0, 8, 8),
+			graphAr: image.Rect(2, 0, 8, 8),
+			currP: &axes.XProperties{
+				Min:       1,
+				Max:       3,
+				ReqYWidth: 2,
+			},
+			baseP: &axes.XProperties{
 				Min:       0,
 				Max:       4,
 				ReqYWidth: 2,
@@ -1655,7 +1869,7 @@ func TestZoomToScroll(t *testing.T) {
 			},
 		},
 		{
-			desc: "zoom out moves min below base",
+			desc: "zoom out moves min below base, zooms out completely",
 			opts: []Option{
 				ScrollStep(150),
 			},
@@ -1675,14 +1889,9 @@ func TestZoomToScroll(t *testing.T) {
 				Max:       4,
 				ReqYWidth: 2,
 			},
-			wantP: &axes.XProperties{
-				Min:       0,
-				Max:       4,
-				ReqYWidth: 2,
-			},
 		},
 		{
-			desc: "zoom out moves max above base",
+			desc: "zoom out moves max above base, zooms out completely",
 			opts: []Option{
 				ScrollStep(150),
 			},
@@ -1698,11 +1907,6 @@ func TestZoomToScroll(t *testing.T) {
 				ReqYWidth: 2,
 			},
 			baseP: &axes.XProperties{
-				Min:       0,
-				Max:       4,
-				ReqYWidth: 2,
-			},
-			wantP: &axes.XProperties{
 				Min:       0,
 				Max:       4,
 				ReqYWidth: 2,

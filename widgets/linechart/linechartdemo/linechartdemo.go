@@ -44,28 +44,38 @@ func sineInputs() []float64 {
 // playLineChart continuously adds values to the LineChart, once every delay.
 // Exits when the context expires.
 func playLineChart(ctx context.Context, lc *linechart.LineChart, delay time.Duration) {
-	inputs := sineInputs()
+	//inputs := sineInputs()
+	var inputs []float64
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 	for i := 0; ; {
 		select {
 		case <-ticker.C:
-			i = (i + 1) % len(inputs)
-			rotated := append(inputs[i:], inputs[:i]...)
-			if err := lc.Series("first", rotated,
+			//i = (i + 1) % len(inputs)
+			inputs = append(inputs, float64(i%30))
+			if err := lc.Series("first", inputs,
 				linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
-				linechart.SeriesXLabels(map[int]string{
-					0: "zero",
-				}),
 			); err != nil {
 				panic(err)
 			}
+			i++
 
-			i2 := (i + 100) % len(inputs)
-			rotated2 := append(inputs[i2:], inputs[:i2]...)
-			if err := lc.Series("second", rotated2, linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite))); err != nil {
-				panic(err)
-			}
+			/*
+				rotated := append(inputs[i:], inputs[:i]...)
+				if err := lc.Series("first", rotated,
+					linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
+					linechart.SeriesXLabels(map[int]string{
+						0: "zero",
+					}),
+				); err != nil {
+					panic(err)
+				}
+
+				i2 := (i + 100) % len(inputs)
+				rotated2 := append(inputs[i2:], inputs[:i2]...)
+				if err := lc.Series("second", rotated2, linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite))); err != nil {
+					panic(err)
+				}*/
 
 		case <-ctx.Done():
 			return
@@ -86,11 +96,12 @@ func main() {
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorCyan)),
+		//linechart.XAxisUnscaled(),
 	)
 	if err != nil {
 		panic(err)
 	}
-	go playLineChart(ctx, lc, redrawInterval/3)
+	go playLineChart(ctx, lc, redrawInterval/10)
 	c, err := container.New(
 		t,
 		container.Border(draw.LineStyleLight),

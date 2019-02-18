@@ -119,7 +119,8 @@ go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
 
 ### The LineChart
 
-Displays series of values on a line chart. Run the
+Displays series of values on a line chart, supports zoom triggered by mouse
+events. Run the
 [linechartdemo](widgets/linechart/linechartdemo/linechartdemo.go).
 
 ```go

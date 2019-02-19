@@ -24,7 +24,7 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/eventqueue"
+	"github.com/mum4k/termdash/event/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 )
 

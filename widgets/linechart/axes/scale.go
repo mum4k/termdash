@@ -235,6 +235,11 @@ func NewXScale(min, max int, graphWidth, nonZeroDecimals int) (*XScale, error) {
 	}, nil
 }
 
+// String implements fmt.Stringer.
+func (xs *XScale) String() string {
+	return fmt.Sprintf("XScale{Min:%v, Max:%v, Step:%v, GraphWidth:%v}", xs.Min, xs.Max, xs.Step, xs.GraphWidth)
+}
+
 // PixelToValue given a X coordinate of the pixel, returns its value according
 // to the scale. The coordinate must be within bounds of the canvas width
 // provided to NewXScale. X coordinates grow right.

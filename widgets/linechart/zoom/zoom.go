@@ -146,11 +146,16 @@ func (t *Tracker) Update(baseX *axes.XDetails, cvsAr, graphAr image.Rectangle) e
 			zoomMin := int(t.zoomX.Scale.Min.Value)
 			zoomMax := int(t.zoomX.Scale.Max.Value)
 			min, max := normalize(baseX.Scale.Min, baseX.Scale.Max, zoomMin, zoomMax)
-			zoom, err := newZoomedFromBase(min, max, baseX, cvsAr)
-			if err != nil {
-				return err
+			if !hasMinMax(min, max, baseX) {
+				zoom, err := newZoomedFromBase(min, max, baseX, cvsAr)
+				if err != nil {
+					return err
+				}
+				t.zoomX = zoom
+			} else {
+				// Fully unzoom.
+				t.zoomX = nil
 			}
-			t.zoomX = zoom
 		}
 	}
 
@@ -182,12 +187,15 @@ func (t *Tracker) baseForZoom() *axes.XDetails {
 
 // Mouse is used to forward mouse events to the zoom tracker.
 func (t *Tracker) Mouse(m *terminalapi.Mouse) error {
-	zoom, err := zoomToScroll(m, t.cvsAr, t.graphAr, t.baseForZoom(), t.baseX, t.opts)
-	if err != nil {
-		return err
-	}
-	if zoom != nil {
-		t.zoomX = zoom
+	if m.Position.In(t.graphAr) {
+		switch m.Button {
+		case mouse.ButtonWheelUp, mouse.ButtonWheelDown:
+			zoom, err := zoomToScroll(m, t.cvsAr, t.graphAr, t.baseForZoom(), t.baseX, t.opts)
+			if err != nil {
+				return err
+			}
+			t.zoomX = zoom
+		}
 	}
 
 	clicked, bs := t.fsm.Event(m)
@@ -197,14 +205,14 @@ func (t *Tracker) Mouse(m *terminalapi.Mouse) error {
 		t.highlight.addX(cellX)
 
 	case clicked && bs == button.Up:
-		zoom, err := zoomToHighlight(t.baseForZoom(), t.highlight, t.cvsAr)
-		if err != nil {
-			return err
-		}
-		t.highlight.reset()
-		if zoom != nil {
+		if t.highlight.length() >= 2 {
+			zoom, err := zoomToHighlight(t.baseForZoom(), t.highlight, t.cvsAr)
+			if err != nil {
+				return err
+			}
 			t.zoomX = zoom
 		}
+		t.highlight.reset()
 
 	default:
 		t.highlight.reset()
@@ -222,6 +230,11 @@ type Range struct {
 
 	// last is the last coordinate that was added to the range.
 	last int
+}
+
+// length returns the length of the range.
+func (r *Range) length() int {
+	return numbers.Abs(r.End - r.Start)
 }
 
 // empty asserts if the range is empty.
@@ -301,17 +314,32 @@ func normalize(baseMin, baseMax *axes.Value, min, max int) (int, int) {
 	bMin := int(baseMin.Value)
 	bMax := int(baseMax.Value)
 	var newMin, newMax int
-	// Don't zoom-out above the base axis.
-	if min < bMin {
+
+	// Don't zoom-out above or below the base axis.
+	switch {
+	case min < bMin:
 		newMin = bMin
-	} else {
+	case min > bMax:
+		newMin = bMax
+	default:
 		newMin = min
 	}
 
-	if max > bMax {
+	switch {
+	case max < bMin:
+		newMax = bMin
+	case max > bMax:
 		newMax = bMax
-	} else {
+	default:
 		newMax = max
+	}
+
+	if newMin > newMax {
+		newMin, newMax = newMax, newMin
+	}
+
+	if newMin == newMax {
+		return findValuePair(newMin, newMax, baseMin, baseMax)
 	}
 	return newMin, newMax
 }
@@ -327,6 +355,30 @@ func newZoomedFromBase(min, max int, base *axes.XDetails, cvsAr image.Rectangle)
 		return nil, fmt.Errorf("failed to create zoomed X axis: %v", err)
 	}
 	return zoom, nil
+}
+
+// findValuePair given two values on the base X axis returns the closest
+// possible distinct values  that are still within the range pf base X.
+// Returns the min and max of the base X of no such values exist.
+func findValuePair(min, max int, baseMin, baseMax *axes.Value) (int, int) {
+	bMin := int(baseMin.Value)
+	bMax := int(baseMax.Value)
+
+	// Try above the max.
+	for v := max; v <= bMax; v++ {
+		if v > min {
+			return min, v
+		}
+	}
+
+	// Try below the min.
+	for v := min; v >= bMin; v-- {
+		if v < max {
+			return v, max
+		}
+	}
+
+	return bMin, bMax
 }
 
 // findCellPair given two cells on the base X axis returns the values of the
@@ -384,13 +436,7 @@ func findCellPair(base *axes.XDetails, minCell, maxCell int) (*axes.Value, *axes
 }
 
 // zoomToHighlight zooms the base X axis according to the highlighted range.
-// Can return nil axis if the highlight didn't result in zooming.
 func zoomToHighlight(base *axes.XDetails, hr *Range, cvsAr image.Rectangle) (*axes.XDetails, error) {
-	// Only zoom if at least two columns were selected.
-	if got := numbers.Abs(hr.End - hr.Start); got < 2 {
-		return nil, nil
-	}
-
 	minL, maxL, err := findCellPair(base, hr.Start, hr.End-1)
 	if err != nil {
 		return nil, err
@@ -403,28 +449,26 @@ func zoomToHighlight(base *axes.XDetails, hr *Range, cvsAr image.Rectangle) (*ax
 	return zoom, nil
 }
 
-// zoomToScroll zooms the current X axis in or out depending on the direction of
-// the scroll. Doesn't zoom out above the base X axis view.
-// Doesn't zoom if the scroll button isn't recognized or the event falls
-// outside of the graph area.
-// Can return nil axis if the mouse event didn't result in zooming.
-func zoomToScroll(m *terminalapi.Mouse, cvsAr, graphAr image.Rectangle, curr, base *axes.XDetails, opts *options) (*axes.XDetails, error) {
-	if !m.Position.In(graphAr) {
-		// Ignore scroll events outside of the graph area.
-		return nil, nil
-	}
+// hasMinMax asserts whether the provided min and max values represent the
+// boundary values of the base axis.
+func hasMinMax(min, max int, base *axes.XDetails) bool {
+	return min == int(base.Scale.Min.Value) && max == int(base.Scale.Max.Value)
+}
 
-	var direction int // Positive on zoom in, negative on zoom out.
+// zoomToScroll zooms or unzooms the current X axis in or out depending on the
+// direction of the scroll. Doesn't zoom out above the base X axis view.
+// Can return nil, which indicates that we are at 0% zoom (fully unzoomed).
+func zoomToScroll(m *terminalapi.Mouse, cvsAr, graphAr image.Rectangle, curr, base *axes.XDetails, opts *options) (*axes.XDetails, error) {
+	var direction int         // Positive on zoom in, negative on zoom out.
+	var limits *axes.XDetails // Limit values for the zooming operation.
 	switch m.Button {
 	case mouse.ButtonWheelUp:
 		direction = 1
+		limits = curr
 
 	case mouse.ButtonWheelDown:
 		direction = -1
-
-	default:
-		// Nothing to do for other buttons.
-		return nil, nil
+		limits = base
 	}
 
 	cellX := m.Position.X - graphAr.Min.X
@@ -452,32 +496,17 @@ func zoomToScroll(m *terminalapi.Mouse, cvsAr, graphAr image.Rectangle, curr, ba
 	newMin := currMin + (direction * splitStep.X)
 	newMax := currMax - (direction * splitStep.Y)
 
-	var limits *axes.XDetails
-	switch m.Button {
-	case mouse.ButtonWheelUp:
-		if newMin > currMax {
-			newMin = currMax
-		}
-		if newMax < currMin {
-			newMax = currMin
-		}
-		limits = curr
-
-	case mouse.ButtonWheelDown:
-		if newMin < baseMin {
-			newMin = baseMin
-		}
-		if newMax > baseMax {
-			newMax = baseMax
-		}
-		limits = base
+	min, max := normalize(limits.Scale.Min, limits.Scale.Max, newMin, newMax)
+	if m.Button == mouse.ButtonWheelDown && hasMinMax(min, max, limits) {
+		// Fully unzoom.
+		return nil, nil
 	}
 
-	minCell, err := limits.Scale.ValueToCell(newMin)
+	minCell, err := limits.Scale.ValueToCell(min)
 	if err != nil {
 		return nil, err
 	}
-	maxCell, err := limits.Scale.ValueToCell(newMax)
+	maxCell, err := limits.Scale.ValueToCell(max)
 	if err != nil {
 		return nil, err
 	}
@@ -486,8 +515,7 @@ func zoomToScroll(m *terminalapi.Mouse, cvsAr, graphAr image.Rectangle, curr, ba
 		return nil, err
 	}
 
-	min, max := normalize(limits.Scale.Min, limits.Scale.Max, int(minL.Value), int(maxL.Value))
-	zoom, err := newZoomedFromBase(min, max, curr, cvsAr)
+	zoom, err := newZoomedFromBase(int(minL.Value), int(maxL.Value), curr, cvsAr)
 	if err != nil {
 		return nil, err
 	}

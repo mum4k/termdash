@@ -272,7 +272,6 @@ func (lc *LineChart) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDet
 		return nil, nil, fmt.Errorf("NewYDetails => %v", err)
 	}
 
-	// TODO: Zoom the X axis.
 	const xMin = 0
 	xMax := lc.maxXValue()
 	xd, err := lc.xDetails(cvs, yd.Start.X, xMin, xMax)
@@ -463,6 +462,9 @@ func (lc *LineChart) Keyboard(k *terminalapi.Keyboard) error {
 
 // Mouse implements widgetapi.Widget.Mouse.
 func (lc *LineChart) Mouse(m *terminalapi.Mouse) error {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+
 	if lc.zoom == nil {
 		return nil
 	}
@@ -485,8 +487,8 @@ func (lc *LineChart) minSize() image.Point {
 
 // Options implements widgetapi.Widget.Options.
 func (lc *LineChart) Options() widgetapi.Options {
-	lc.mu.Lock()
-	defer lc.mu.Unlock()
+	lc.mu.RLock()
+	defer lc.mu.RUnlock()
 
 	return widgetapi.Options{
 		MinimumSize: lc.minSize(),

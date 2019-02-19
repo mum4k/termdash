@@ -152,6 +152,11 @@ type XDetails struct {
 	Properties *XProperties
 }
 
+// String implements fmt.Stringer.
+func (xd *XDetails) String() string {
+	return fmt.Sprintf("XDetails{Scale:%v}", xd.Scale)
+}
+
 // XProperties are the properties of the X axis.
 type XProperties struct {
 	// Min is the minimum value on the axis, i.e. the position of the first

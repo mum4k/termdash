@@ -1142,6 +1142,7 @@ func TestXScale(t *testing.T) {
 		if err != nil {
 			continue
 		}
+		t.Log(fmt.Sprintf("scale:%v", scale))
 
 		t.Run(fmt.Sprintf("PixelToValue:%s", test.desc), func(t *testing.T) {
 			for _, tc := range test.pixelToValueTests {

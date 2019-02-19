@@ -16,10 +16,8 @@
 package zoom
 
 import (
-	"bytes"
 	"fmt"
 	"image"
-	"io/ioutil"
 	"reflect"
 
 	"github.com/mum4k/termdash/mouse"
@@ -136,8 +134,6 @@ func (t *Tracker) Update(baseX *axes.XDetails, cvsAr, graphAr image.Rectangle) e
 	// If any of these parameters changed, we need to reset the FSM and ensure
 	// the current zoom is still within the range of the new X axis.
 	ac, sc := t.axisChanged(baseX), t.sizeChanged(cvsAr, graphAr)
-
-	b.WriteString(fmt.Sprintf("Update with\n  baseX:%v\n  oBase:%v\n  oZoom:%v\n", baseX, t.baseX, t.zoomX))
 	if sc {
 		t.highlight.reset()
 	}
@@ -192,14 +188,8 @@ func (t *Tracker) baseForZoom() *axes.XDetails {
 	return t.zoomX
 }
 
-var b bytes.Buffer
-
 // Mouse is used to forward mouse events to the zoom tracker.
 func (t *Tracker) Mouse(m *terminalapi.Mouse) error {
-	if m.Button == mouse.ButtonMiddle {
-		ioutil.WriteFile("/tmp/debug", b.Bytes(), 0644)
-	}
-
 	if m.Position.In(t.graphAr) {
 		switch m.Button {
 		case mouse.ButtonWheelUp, mouse.ButtonWheelDown:

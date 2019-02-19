@@ -13,25 +13,47 @@ import (
 	"github.com/mum4k/termdash/terminalapi"
 )
 
+// receiverMode defines how the receiver behaves.
+type receiverMode int
+
+const (
+	// receiverModeReceive tells the receiver to process the events
+	receiverModeReceive receiverMode = iota
+
+	// receiverModeBlock tells the receiver to block on the call to receive.
+	receiverModeBlock
+)
+
 // receiver receives events from the distribution system.
 type receiver struct {
 	mu sync.Mutex
+
+	// mode sets how the receiver behaves when receive(0 is called.
+	mode receiverMode
 
 	// events are the received events.
 	events []terminalapi.Event
 }
 
 // newReceiver returns a new event receiver.
-func newReceiver() *receiver {
-	return &receiver{}
+func newReceiver(mode receiverMode) *receiver {
+	return &receiver{
+		mode: mode,
+	}
 }
 
 // receive receives an event.
 func (r *receiver) receive(ev terminalapi.Event) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	switch r.mode {
+	case receiverModeBlock:
+		for {
+		}
+	default:
+		r.mu.Lock()
+		defer r.mu.Unlock()
 
-	r.events = append(r.events, ev)
+		r.events = append(r.events, ev)
+	}
 }
 
 // getEvents returns the received events.
@@ -120,7 +142,7 @@ func TestDistributionSystem(t *testing.T) {
 			subCase: []*subscriberCase{
 				{
 					filter: nil,
-					rec:    newReceiver(),
+					rec:    newReceiver(receiverModeReceive),
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}:   true,
 						&terminalapi.Mouse{Position: image.Point{1, 1}}: true,
@@ -143,7 +165,7 @@ func TestDistributionSystem(t *testing.T) {
 						&terminalapi.Keyboard{},
 						&terminalapi.Mouse{},
 					},
-					rec: newReceiver(),
+					rec: newReceiver(receiverModeReceive),
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}:   true,
 						&terminalapi.Mouse{Position: image.Point{1, 1}}: true,
@@ -165,7 +187,7 @@ func TestDistributionSystem(t *testing.T) {
 						&terminalapi.Keyboard{},
 						&terminalapi.Mouse{},
 					},
-					rec: newReceiver(),
+					rec: newReceiver(receiverModeReceive),
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}:   true,
 						&terminalapi.Mouse{Position: image.Point{1, 1}}: true,
@@ -191,7 +213,7 @@ func TestDistributionSystem(t *testing.T) {
 					filter: []terminalapi.Event{
 						&terminalapi.Keyboard{},
 					},
-					rec: newReceiver(),
+					rec: newReceiver(receiverModeReceive),
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
 						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
@@ -204,7 +226,7 @@ func TestDistributionSystem(t *testing.T) {
 						&terminalapi.Mouse{},
 						&terminalapi.Resize{},
 					},
-					rec: newReceiver(),
+					rec: newReceiver(receiverModeReceive),
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Mouse{Position: image.Point{0, 0}}: true,
 						&terminalapi.Mouse{Position: image.Point{1, 1}}: true,
@@ -213,6 +235,42 @@ func TestDistributionSystem(t *testing.T) {
 						terminalapi.NewError("error1"):                  true,
 						terminalapi.NewError("error2"):                  true,
 					},
+				},
+			},
+		},
+		{
+			desc: "a misbehaving receiver only blocks itself",
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				&terminalapi.Keyboard{Key: keyboard.KeyEsc},
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+			},
+			subCase: []*subscriberCase{
+				{
+					filter: []terminalapi.Event{
+						&terminalapi.Keyboard{},
+					},
+					rec: newReceiver(receiverModeReceive),
+					want: map[terminalapi.Event]bool{
+						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
+						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
+						terminalapi.NewError("error1"):                true,
+						terminalapi.NewError("error2"):                true,
+					},
+				},
+				{
+					filter: []terminalapi.Event{
+						&terminalapi.Keyboard{},
+					},
+					rec: newReceiver(receiverModeBlock),
+					want: map[terminalapi.Event]bool{
+						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
+						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
+						terminalapi.NewError("error1"):                true,
+						terminalapi.NewError("error2"):                true,
+					},
+					wantErr: true,
 				},
 			},
 		},
@@ -232,8 +290,11 @@ func TestDistributionSystem(t *testing.T) {
 
 			for i, sc := range tc.subCase {
 				got, err := sc.rec.waitFor(len(sc.want), 5*time.Second)
+				if (err != nil) != sc.wantErr {
+					t.Errorf("sc.rec.waitFor[%d] => unexpected error: %v, wantErr:%v", i, err, sc.wantErr)
+				}
 				if err != nil {
-					t.Fatalf("sc.rec.waitFor[%d] => unexpected error: %v", i, err)
+					continue
 				}
 
 				if diff := pretty.Compare(sc.want, got); diff != "" {

@@ -134,7 +134,6 @@ func (t *Tracker) Update(baseX *axes.XDetails, cvsAr, graphAr image.Rectangle) e
 	// If any of these parameters changed, we need to reset the FSM and ensure
 	// the current zoom is still within the range of the new X axis.
 	ac, sc := t.axisChanged(baseX), t.sizeChanged(cvsAr, graphAr)
-
 	if sc {
 		t.highlight.reset()
 	}
@@ -145,7 +144,11 @@ func (t *Tracker) Update(baseX *axes.XDetails, cvsAr, graphAr image.Rectangle) e
 			// currently visible values (e.g. if the terminal size decreased).
 			zoomMin := int(t.zoomX.Scale.Min.Value)
 			zoomMax := int(t.zoomX.Scale.Max.Value)
-			min, max := normalize(baseX.Scale.Min, baseX.Scale.Max, zoomMin, zoomMax)
+			opt := &normalizeOptions{
+				oldBaseMin: t.baseX.Scale.Min,
+				oldBaseMax: t.baseX.Scale.Max,
+			}
+			min, max := normalize(baseX.Scale.Min, baseX.Scale.Max, zoomMin, zoomMax, opt)
 			if !hasMinMax(min, max, baseX) {
 				zoom, err := newZoomedFromBase(min, max, baseX, cvsAr)
 				if err != nil {
@@ -306,15 +309,53 @@ func (t *Tracker) Zoom() *axes.XDetails {
 	return t.zoomX
 }
 
+// normalizeOptions are optional parameters for zoom normalization.
+type normalizeOptions struct {
+	// oldBaseMin is the previous minimum value before an Update was called.
+	oldBaseMin *axes.Value
+	// oldBaseMax is the previous maximum value before an Update was called.
+	oldBaseMax *axes.Value
+}
+
+// rolledBy returns the number of values by which the current base axis
+// provided to Update rolled as compared to the previous one.
+// The axis rolls if the linechart runs with the XAxisUnscaled option and runs
+// out of capacity.
+// Returns zero if the axis didn't role or if the call didn't provide the old
+// axis boundaries.
+// Returns a positive number of the axis rolled to the left or negative if it
+// rolled to the right.
+// A roll by one is identified if both the minimum and the maximum changed by
+// one in the same direction.
+func (co *normalizeOptions) rolledBy(baseMin, baseMax *axes.Value) int {
+	if co == nil || co.oldBaseMin == nil || co.oldBaseMax == nil {
+		return 0
+	}
+
+	minDiff := int(baseMin.Value) - int(co.oldBaseMin.Value)
+	maxDiff := int(baseMax.Value) - int(co.oldBaseMax.Value)
+	if minDiff != maxDiff {
+		// The axis didn't roll, just the layout or values changed.
+		return 0
+	}
+	return minDiff
+}
+
 // normalize normalizes the zoom range.
 // This handles cases where zoom out would happen above the base axis or
 // when the base axis itself changes (user provided new values) or when the
 // graph areas change (terminal size changed).
-func normalize(baseMin, baseMax *axes.Value, min, max int) (int, int) {
+// Argument opts can be nil.
+func normalize(baseMin, baseMax *axes.Value, min, max int, opts *normalizeOptions) (int, int) {
 	bMin := int(baseMin.Value)
 	bMax := int(baseMax.Value)
-	var newMin, newMax int
 
+	if rolled := opts.rolledBy(baseMin, baseMax); rolled != 0 {
+		min += rolled
+		max += rolled
+	}
+
+	var newMin, newMax int
 	// Don't zoom-out above or below the base axis.
 	switch {
 	case min < bMin:
@@ -496,7 +537,7 @@ func zoomToScroll(m *terminalapi.Mouse, cvsAr, graphAr image.Rectangle, curr, ba
 	newMin := currMin + (direction * splitStep.X)
 	newMax := currMax - (direction * splitStep.Y)
 
-	min, max := normalize(limits.Scale.Min, limits.Scale.Max, newMin, newMax)
+	min, max := normalize(limits.Scale.Min, limits.Scale.Max, newMin, newMax, nil)
 	if m.Button == mouse.ButtonWheelDown && hasMinMax(min, max, limits) {
 		// Fully unzoom.
 		return nil, nil

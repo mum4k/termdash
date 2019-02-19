@@ -1194,6 +1194,7 @@ func TestNormalize(t *testing.T) {
 		baseMax *axes.Value
 		min     int
 		max     int
+		opts    *normalizeOptions
 		wantMin int
 		wantMax int
 	}{
@@ -1323,11 +1324,37 @@ func TestNormalize(t *testing.T) {
 			wantMin: 0,
 			wantMax: 3,
 		},
+		{
+			desc: "zoom rolls when base axis rolls to the left",
+			opts: &normalizeOptions{
+				oldBaseMin: axes.NewValue(10, 0),
+				oldBaseMax: axes.NewValue(20, 0),
+			},
+			baseMin: axes.NewValue(17, 0),
+			baseMax: axes.NewValue(27, 0),
+			min:     15,
+			max:     16,
+			wantMin: 22,
+			wantMax: 23,
+		},
+		{
+			desc: "zoom rolls when base axis rolls to the right",
+			opts: &normalizeOptions{
+				oldBaseMin: axes.NewValue(10, 0),
+				oldBaseMax: axes.NewValue(20, 0),
+			},
+			baseMin: axes.NewValue(1, 0),
+			baseMax: axes.NewValue(11, 0),
+			min:     15,
+			max:     16,
+			wantMin: 6,
+			wantMax: 7,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			gotMin, gotMax := normalize(tc.baseMin, tc.baseMax, tc.min, tc.max)
+			gotMin, gotMax := normalize(tc.baseMin, tc.baseMax, tc.min, tc.max, tc.opts)
 			if gotMin != tc.wantMin || gotMax != tc.wantMax {
 				t.Errorf("normalize => %v, %v, want %v, %v", gotMin, gotMax, tc.wantMin, tc.wantMax)
 			}

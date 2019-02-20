@@ -196,6 +196,7 @@ func newTermdash(t terminalapi.Terminal, c *container.Container, opts ...Option)
 		opt.set(td)
 	}
 	td.subscribers()
+	c.Subscribe(td.eds)
 	return td
 }
 
@@ -214,11 +215,11 @@ func (td *termdash) subscribers() {
 	// Redraws the screen on Keyboard and Mouse events.
 	// These events very likely change the content of the widgets (e.g. zooming
 	// a LineChart) so a redraw is needed to make that visible.
-	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
-		td.keyEvRedraw(ev.(*terminalapi.Keyboard))
+	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(terminalapi.Event) {
+		td.evRedraw()
 	})
-	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {
-		td.mouseEvRedraw(ev.(*terminalapi.Mouse))
+	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(terminalapi.Event) {
+		td.evRedraw()
 	})
 
 	// Keyboard and Mouse subscribers specified via options.
@@ -272,27 +273,10 @@ func (td *termdash) redraw() error {
 	return nil
 }
 
-// keyEvRedraw forwards the keyboard event and redraws the container and its
-// widgets.
-func (td *termdash) keyEvRedraw(ev *terminalapi.Keyboard) error {
+// evRedraw redraws the container and its widgets.
+func (td *termdash) evRedraw() error {
 	td.mu.Lock()
 	defer td.mu.Unlock()
-
-	if err := td.container.Keyboard(ev); err != nil {
-		return err
-	}
-	return td.redraw()
-}
-
-// mouseEvRedraw forwards the mouse event and redraws the container and its
-// widgets.
-func (td *termdash) mouseEvRedraw(ev *terminalapi.Mouse) error {
-	td.mu.Lock()
-	defer td.mu.Unlock()
-
-	if err := td.container.Mouse(ev); err != nil {
-		return err
-	}
 	return td.redraw()
 }
 

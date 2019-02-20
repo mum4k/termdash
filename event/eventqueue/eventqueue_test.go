@@ -84,10 +84,7 @@ func TestPullEventAvailable(t *testing.T) {
 	q.Push(want)
 
 	ctx := context.Background()
-	got, err := q.Pull(ctx)
-	if err != nil {
-		t.Fatalf("Pull => unexpected error: %v", err)
-	}
+	got := q.Pull(ctx)
 	if diff := pretty.Compare(want, got); diff != "" {
 		t.Errorf("Pull => unexpected diff (-want, +got):\n%s", diff)
 	}
@@ -107,16 +104,12 @@ func TestPullBlocksUntilAvailable(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
-	if _, err := q.Pull(ctx); err == nil {
-		t.Fatal("Pull => expected timeout error, got nil")
+	if got := q.Pull(ctx); got != nil {
+		t.Fatalf("Pull => %v, want <nil>", got)
 	}
 
 	close(ch)
-	got, err := q.Pull(context.Background())
-	if err != nil {
-		t.Fatalf("Pull => unexpected error: %v", err)
-	}
-
+	got := q.Pull(context.Background())
 	if diff := pretty.Compare(want, got); diff != "" {
 		t.Errorf("Pull => unexpected diff (-want, +got):\n%s", diff)
 	}

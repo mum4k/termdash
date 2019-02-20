@@ -124,10 +124,10 @@ func (u *Unbound) Pop() terminalapi.Event {
 }
 
 // Pull is like Pop(), but blocks until an item is available or the context
-// expires.
-func (u *Unbound) Pull(ctx context.Context) (terminalapi.Event, error) {
+// expires. Returns a nil event if the context expired.
+func (u *Unbound) Pull(ctx context.Context) terminalapi.Event {
 	if e := u.Pop(); e != nil {
-		return e, nil
+		return e
 	}
 
 	u.cond.L.Lock()
@@ -135,12 +135,12 @@ func (u *Unbound) Pull(ctx context.Context) (terminalapi.Event, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil
 		default:
 		}
 
 		if e := u.Pop(); e != nil {
-			return e, nil
+			return e
 		}
 		u.cond.Wait()
 	}

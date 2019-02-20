@@ -73,21 +73,8 @@ func newSubscriber(filter []terminalapi.Event, cb Callback) *subscriber {
 // Terminates when the context expires.
 func (s *subscriber) run(ctx context.Context) {
 	for {
-		e, err := s.queue.Pull(ctx)
-		if err != nil {
-			e = terminalapi.NewErrorf("failed to pull event off the queue: %v", err)
-		}
-
-		switch ev := e.(type) {
-		case *terminalapi.Error:
-			// Don't forward the error if the context is closed.
-			select {
-			case <-ctx.Done():
-			default:
-				s.cb(ev)
-			}
-
-		default:
+		ev := s.queue.Pull(ctx)
+		if ev != nil {
 			s.cb(ev)
 		}
 
@@ -105,9 +92,8 @@ func (s *subscriber) event(ev terminalapi.Event) {
 		s.queue.Push(ev)
 	}
 
-	var errT *terminalapi.Error
 	t := reflect.TypeOf(ev)
-	if t == reflect.TypeOf(errT) || s.filter[t] {
+	if s.filter[t] {
 		s.queue.Push(ev)
 	}
 }
@@ -167,9 +153,6 @@ type StopFunc func()
 // all kinds. If the filter is non-empty, only events of the provided type will
 // be sent to the subscriber.
 // Returns a function that allows the subscriber to unsubscribe.
-//
-// Subscribers cannot filter out event type terminalapi.Error which is used to
-// forward errors to the Callback.
 func (eds *DistributionSystem) Subscribe(filter []terminalapi.Event, cb Callback) StopFunc {
 	eds.mu.Lock()
 	defer eds.mu.Unlock()

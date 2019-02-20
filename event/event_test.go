@@ -187,7 +187,7 @@ func TestDistributionSystem(t *testing.T) {
 			},
 		},
 		{
-			desc: "single subscriber, errors are always received",
+			desc: "single subscriber, wants errors only",
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				&terminalapi.Mouse{Position: image.Point{1, 1}},
@@ -197,14 +197,11 @@ func TestDistributionSystem(t *testing.T) {
 			subCase: []*subscriberCase{
 				{
 					filter: []terminalapi.Event{
-						&terminalapi.Keyboard{},
-						&terminalapi.Mouse{},
+						terminalapi.NewError(""),
 					},
 					rec: newReceiver(receiverModeReceive),
 					want: map[terminalapi.Event]bool{
-						&terminalapi.Keyboard{Key: keyboard.KeyEnter}:   true,
-						&terminalapi.Mouse{Position: image.Point{1, 1}}: true,
-						terminalapi.NewError("error"):                   true,
+						terminalapi.NewError("error"): true,
 					},
 				},
 			},
@@ -230,8 +227,6 @@ func TestDistributionSystem(t *testing.T) {
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
 						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
-						terminalapi.NewError("error1"):                true,
-						terminalapi.NewError("error2"):                true,
 					},
 				},
 				{
@@ -245,8 +240,6 @@ func TestDistributionSystem(t *testing.T) {
 						&terminalapi.Mouse{Position: image.Point{1, 1}}: true,
 						&terminalapi.Resize{Size: image.Point{1, 1}}:    true,
 						&terminalapi.Resize{Size: image.Point{2, 2}}:    true,
-						terminalapi.NewError("error1"):                  true,
-						terminalapi.NewError("error2"):                  true,
 					},
 				},
 			},
@@ -268,8 +261,6 @@ func TestDistributionSystem(t *testing.T) {
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
 						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
-						terminalapi.NewError("error1"):                true,
-						terminalapi.NewError("error2"):                true,
 					},
 				},
 				{
@@ -280,8 +271,6 @@ func TestDistributionSystem(t *testing.T) {
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
 						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
-						terminalapi.NewError("error1"):                true,
-						terminalapi.NewError("error2"):                true,
 					},
 					wantErr: true,
 				},

@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"sync"
 	"testing"
 	"time"
 
@@ -115,27 +116,54 @@ func Example_triggered() {
 // errorHandler just stores the last error received.
 type errorHandler struct {
 	err error
+	mu  sync.Mutex
+}
+
+func (eh *errorHandler) get() error {
+	eh.mu.Lock()
+	defer eh.mu.Unlock()
+	return eh.err
 }
 
 func (eh *errorHandler) handle(err error) {
+	eh.mu.Lock()
+	defer eh.mu.Unlock()
 	eh.err = err
 }
 
 // keySubscriber just stores the last pressed key.
 type keySubscriber struct {
 	received terminalapi.Keyboard
+	mu       sync.Mutex
+}
+
+func (ks *keySubscriber) get() terminalapi.Keyboard {
+	ks.mu.Lock()
+	defer ks.mu.Unlock()
+	return ks.received
 }
 
 func (ks *keySubscriber) receive(k *terminalapi.Keyboard) {
+	ks.mu.Lock()
+	defer ks.mu.Unlock()
 	ks.received = *k
 }
 
 // mouseSubscriber just stores the last mouse event.
 type mouseSubscriber struct {
 	received terminalapi.Mouse
+	mu       sync.Mutex
+}
+
+func (ms *mouseSubscriber) get() terminalapi.Mouse {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+	return ms.received
 }
 
 func (ms *mouseSubscriber) receive(m *terminalapi.Mouse) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
 	ms.received = *m
 }
 
@@ -243,8 +271,8 @@ func TestRun(t *testing.T) {
 				terminalapi.NewError("input error"),
 			},
 			after: func() error {
-				if want := "input error"; handler.err.Error() != want {
-					return fmt.Errorf("errorHandler got %v, want %v", handler.err, want)
+				if want := "input error"; handler.get().Error() != want {
+					return fmt.Errorf("errorHandler got %v, want %v", handler.get(), want)
 				}
 				return nil
 			},
@@ -271,7 +299,7 @@ func TestRun(t *testing.T) {
 			},
 			after: func() error {
 				want := terminalapi.Keyboard{Key: keyboard.KeyF1}
-				if diff := pretty.Compare(want, keySub.received); diff != "" {
+				if diff := pretty.Compare(want, keySub.get()); diff != "" {
 					return fmt.Errorf("keySubscriber got unexpected value, diff (-want, +got):\n%s", diff)
 				}
 				return nil
@@ -302,7 +330,7 @@ func TestRun(t *testing.T) {
 			},
 			after: func() error {
 				want := terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp}
-				if diff := pretty.Compare(want, mouseSub.received); diff != "" {
+				if diff := pretty.Compare(want, mouseSub.get()); diff != "" {
 					return fmt.Errorf("mouseSubscriber got unexpected value, diff (-want, +got):\n%s", diff)
 				}
 				return nil

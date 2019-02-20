@@ -89,9 +89,8 @@ func (r *receiver) waitFor(want int, timeout time.Duration) (map[terminalapi.Eve
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	tick := time.NewTimer(5 * time.Millisecond)
-	defer tick.Stop()
 	for {
+		tick := time.NewTimer(5 * time.Millisecond)
 		select {
 		case <-tick.C:
 			ev := r.getEvents()
@@ -106,7 +105,7 @@ func (r *receiver) waitFor(want int, timeout time.Duration) (map[terminalapi.Eve
 
 		case <-ctx.Done():
 			ev := r.getEvents()
-			return nil, fmt.Errorf("while waiting for events, got %d so far: %v, err: %v", len(ev), ev, ctx.Err())
+			return nil, fmt.Errorf("while waiting for events, got %d so far: %v, want %d, err: %v", len(ev), ev, want, ctx.Err())
 		}
 	}
 }

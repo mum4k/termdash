@@ -564,9 +564,8 @@ func untilEmpty(timeout time.Duration, q *eventqueue.Unbound) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	tick := time.NewTimer(5 * time.Millisecond)
-	defer tick.Stop()
 	for {
+		tick := time.NewTimer(5 * time.Millisecond)
 		select {
 		case <-tick.C:
 			if q.Empty() {

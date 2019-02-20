@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/event"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
@@ -157,6 +158,9 @@ type termdash struct {
 	// container maintains terminal splits and places widgets.
 	container *container.Container
 
+	// eds distributes input events to subscribers.
+	eds *event.DistributionSystem
+
 	// closeCh gets closed when Stop() is called, which tells the event
 	// collecting goroutine to exit.
 	closeCh chan struct{}
@@ -182,6 +186,7 @@ func newTermdash(t terminalapi.Terminal, c *container.Container, opts ...Option)
 	td := &termdash{
 		term:           t,
 		container:      c,
+		eds:            event.NewDistributionSystem(),
 		closeCh:        make(chan struct{}),
 		exitCh:         make(chan struct{}),
 		redrawInterval: DefaultRedrawInterval,
@@ -190,7 +195,43 @@ func newTermdash(t terminalapi.Terminal, c *container.Container, opts ...Option)
 	for _, opt := range opts {
 		opt.set(td)
 	}
+	td.subscribers()
 	return td
+}
+
+// subscribers subscribes event receivers that live in this package to EDS.
+func (td *termdash) subscribers() {
+	// Handler for all errors that occur during input event processing.
+	td.eds.Subscribe([]terminalapi.Event{terminalapi.NewError("")}, func(ev terminalapi.Event) {
+		td.handleError(ev.(*terminalapi.Error).Error())
+	})
+
+	// Handles terminal resize events.
+	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Resize{}}, func(terminalapi.Event) {
+		td.setClearNeeded()
+	})
+
+	// Redraws the screen on Keyboard and Mouse events.
+	// These events very likely change the content of the widgets (e.g. zooming
+	// a LineChart) so a redraw is needed to make that visible.
+	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
+		td.keyEvRedraw(ev.(*terminalapi.Keyboard))
+	})
+	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {
+		td.mouseEvRedraw(ev.(*terminalapi.Mouse))
+	})
+
+	// Keyboard and Mouse subscribers specified via options.
+	if td.keyboardSubscriber != nil {
+		td.eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
+			td.keyboardSubscriber(ev.(*terminalapi.Keyboard))
+		})
+	}
+	if td.mouseSubscriber != nil {
+		td.eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {
+			td.mouseSubscriber(ev.(*terminalapi.Mouse))
+		})
+	}
 }
 
 // handleError forwards the error to the error handler if one was
@@ -240,9 +281,6 @@ func (td *termdash) keyEvRedraw(ev *terminalapi.Keyboard) error {
 	if err := td.container.Keyboard(ev); err != nil {
 		return err
 	}
-	if td.keyboardSubscriber != nil {
-		td.keyboardSubscriber(ev)
-	}
 	return td.redraw()
 }
 
@@ -254,9 +292,6 @@ func (td *termdash) mouseEvRedraw(ev *terminalapi.Mouse) error {
 
 	if err := td.container.Mouse(ev); err != nil {
 		return err
-	}
-	if td.mouseSubscriber != nil {
-		td.mouseSubscriber(ev)
 	}
 	return td.redraw()
 }
@@ -274,29 +309,9 @@ func (td *termdash) processEvents(ctx context.Context) {
 	defer close(td.exitCh)
 
 	for {
-		event := td.term.Event(ctx)
-		switch ev := event.(type) {
-		case *terminalapi.Keyboard:
-			if err := td.keyEvRedraw(ev); err != nil {
-				td.handleError(err)
-			}
-
-		case *terminalapi.Mouse:
-			if err := td.mouseEvRedraw(ev); err != nil {
-				td.handleError(err)
-			}
-
-		case *terminalapi.Resize:
-			td.setClearNeeded()
-
-		case *terminalapi.Error:
-			// Don't forward the error if the context is closed.
-			// It just says that the context expired.
-			select {
-			case <-ctx.Done():
-			default:
-				td.handleError(ev.Error())
-			}
+		ev := td.term.Event(ctx)
+		if ev != nil {
+			td.eds.Event(ev)
 		}
 
 		select {

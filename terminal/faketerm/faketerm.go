@@ -197,7 +197,7 @@ func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 
 	ev := t.events.Pull(ctx)
 	if ev == nil {
-		return terminalapi.NewError("unable to pull the next event")
+		return nil
 	}
 
 	if res, ok := ev.(*terminalapi.Resize); ok {

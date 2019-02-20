@@ -150,7 +150,7 @@ func (t *Terminal) pollEvents() {
 func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 	ev := t.events.Pull(ctx)
 	if ev == nil {
-		return terminalapi.NewError("unable to pull the next event")
+		return nil
 	}
 	return ev
 }

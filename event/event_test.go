@@ -62,6 +62,7 @@ func (r *receiver) receive(ev terminalapi.Event) {
 	switch r.mode {
 	case receiverModeBlock:
 		for {
+			time.Sleep(1 * time.Minute)
 		}
 	default:
 		r.mu.Lock()
@@ -99,6 +100,8 @@ type subscriberCase struct {
 }
 
 func TestDistributionSystem(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		desc string
 		// events will be sent down the distribution system.
@@ -253,6 +256,8 @@ func TestDistributionSystem(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
 			eds := NewDistributionSystem()
 			for _, sc := range tc.subCase {
 				stop := eds.Subscribe(sc.filter, sc.rec.receive)
@@ -293,6 +298,8 @@ func TestDistributionSystem(t *testing.T) {
 }
 
 func TestProcessed(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		desc string
 		// events will be sent down the distribution system.
@@ -348,6 +355,8 @@ func TestProcessed(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
 			eds := NewDistributionSystem()
 			for _, sc := range tc.subCase {
 				stop := eds.Subscribe(sc.filter, sc.rec.receive)

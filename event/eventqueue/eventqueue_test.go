@@ -114,3 +114,58 @@ func TestPullBlocksUntilAvailable(t *testing.T) {
 		t.Errorf("Pull => unexpected diff (-want, +got):\n%s", diff)
 	}
 }
+
+func TestThrottled(t *testing.T) {
+	tests := []struct {
+		desc      string
+		maxRep    int
+		pushes    []terminalapi.Event
+		wantEmpty bool // Checked after pushes and before pops.
+		wantPops  []terminalapi.Event
+	}{
+		{
+			desc:      "empty queue returns nil",
+			wantEmpty: true,
+			wantPops: []terminalapi.Event{
+				nil,
+			},
+		},
+		{
+			desc: "queue is FIFO",
+			pushes: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+				terminalapi.NewError("error3"),
+			},
+			wantEmpty: false,
+			wantPops: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+				terminalapi.NewError("error3"),
+				nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			q := NewThrottled(tc.maxRep)
+			defer q.Close()
+			for _, ev := range tc.pushes {
+				q.Push(ev)
+			}
+
+			gotEmpty := q.Empty()
+			if gotEmpty != tc.wantEmpty {
+				t.Errorf("Empty => got %v, want %v", gotEmpty, tc.wantEmpty)
+			}
+
+			for i, want := range tc.wantPops {
+				got := q.Pop()
+				if diff := pretty.Compare(want, got); diff != "" {
+					t.Errorf("Pop[%d] => unexpected diff (-want, +got):\n%s", i, diff)
+				}
+			}
+		})
+	}
+}

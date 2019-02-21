@@ -176,6 +176,8 @@ type eventHandlers struct {
 }
 
 func TestRun(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		desc   string
 		size   image.Point
@@ -370,6 +372,7 @@ func TestRun(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
+
 			handlers := &eventHandlers{
 				handler:  errorHandler{},
 				keySub:   keySubscriber{},
@@ -430,6 +433,8 @@ func TestRun(t *testing.T) {
 }
 
 func TestController(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		desc      string
 		size      image.Point
@@ -560,6 +565,7 @@ func TestController(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
+
 			eq := eventqueue.New()
 			for _, ev := range tc.events {
 				eq.Push(ev)

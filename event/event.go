@@ -32,6 +32,13 @@ import (
 // subscriber can build a long tail of events.
 type Callback func(terminalapi.Event)
 
+// queue is a queue of terminal events.
+type queue interface {
+	Push(e terminalapi.Event)
+	Pull(ctx context.Context) terminalapi.Event
+	Close()
+}
+
 // subscriber represents a single subscriber.
 type subscriber struct {
 	// cb is the callback the subscriber receives events on.
@@ -42,7 +49,7 @@ type subscriber struct {
 	filter map[reflect.Type]bool
 
 	// queue is a queue of events towards the subscriber.
-	queue *eventqueue.Unbound
+	queue queue
 
 	// cancel when called terminates the goroutine that forwards events towards
 	// this subscriber.
@@ -57,17 +64,24 @@ type subscriber struct {
 }
 
 // newSubscriber creates a new event subscriber.
-func newSubscriber(filter []terminalapi.Event, cb Callback) *subscriber {
+func newSubscriber(filter []terminalapi.Event, cb Callback, opts *subscribeOptions) *subscriber {
 	f := map[reflect.Type]bool{}
 	for _, ev := range filter {
 		f[reflect.TypeOf(ev)] = true
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	var q queue
+	if opts.throttle {
+		q = eventqueue.NewThrottled(opts.maxRep)
+	} else {
+		q = eventqueue.New()
+	}
+
 	s := &subscriber{
 		cb:     cb,
 		filter: f,
-		queue:  eventqueue.New(),
+		queue:  q,
 		cancel: cancel,
 	}
 
@@ -173,18 +187,54 @@ func (eds *DistributionSystem) Event(ev terminalapi.Event) {
 // releases resources tied to the subscriber.
 type StopFunc func()
 
+// SubscribeOption is used to provide options to Subscribe.
+type SubscribeOption interface {
+	// set sets the provided option.
+	set(*subscribeOptions)
+}
+
+// subscribeOptions stores the provided options.
+type subscribeOptions struct {
+	throttle bool
+	maxRep   int
+}
+
+// subscribeOption implements Option.
+type subscribeOption func(*subscribeOptions)
+
+// set implements SubscribeOption.set.
+func (o subscribeOption) set(sOpts *subscribeOptions) {
+	o(sOpts)
+}
+
+// MaxRepetitive when provided, instructs the system to drop repetitive
+// events instead of delivering them.
+// The argument maxRep indicates the maximum number of repetitive events to
+// enqueue towards the subscriber.
+func MaxRepetitive(maxRep int) SubscribeOption {
+	return subscribeOption(func(sOpts *subscribeOptions) {
+		sOpts.throttle = true
+		sOpts.maxRep = maxRep
+	})
+}
+
 // Subscribe subscribes to events according to the filter.
 // An empty filter indicates that the subscriber wishes to receive events of
 // all kinds. If the filter is non-empty, only events of the provided type will
 // be sent to the subscriber.
 // Returns a function that allows the subscriber to unsubscribe.
-func (eds *DistributionSystem) Subscribe(filter []terminalapi.Event, cb Callback) StopFunc {
+func (eds *DistributionSystem) Subscribe(filter []terminalapi.Event, cb Callback, opts ...SubscribeOption) StopFunc {
 	eds.mu.Lock()
 	defer eds.mu.Unlock()
 
+	opt := &subscribeOptions{}
+	for _, o := range opts {
+		o.set(opt)
+	}
+
 	id := eds.nextID
 	eds.nextID++
-	sub := newSubscriber(filter, cb)
+	sub := newSubscriber(filter, cb, opt)
 	eds.subscribers[id] = sub
 
 	return func() {

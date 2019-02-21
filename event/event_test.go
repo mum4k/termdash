@@ -89,6 +89,9 @@ type subscriberCase struct {
 	// filter is the subscribers filter.
 	filter []terminalapi.Event
 
+	// opts are the options to provide when subscribing.
+	opts []SubscribeOption
+
 	// rec receives the events.
 	rec *receiver
 
@@ -100,8 +103,6 @@ type subscriberCase struct {
 }
 
 func TestDistributionSystem(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		desc string
 		// events will be sent down the distribution system.
@@ -252,15 +253,45 @@ func TestDistributionSystem(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "throttles repetitive events",
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEsc},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				&terminalapi.Keyboard{Key: keyboard.KeyEsc},
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+			},
+			subCase: []*subscriberCase{
+				{
+					filter: []terminalapi.Event{
+						&terminalapi.Keyboard{},
+					},
+					opts: []SubscribeOption{
+						MaxRepetitive(0),
+					},
+					rec: newReceiver(receiverModeReceive),
+					want: map[terminalapi.Event]bool{
+						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
+						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
+						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			tc := tc
 			t.Parallel()
 
 			eds := NewDistributionSystem()
 			for _, sc := range tc.subCase {
-				stop := eds.Subscribe(sc.filter, sc.rec.receive)
+				stop := eds.Subscribe(sc.filter, sc.rec.receive, sc.opts...)
 				defer stop()
 			}
 
@@ -355,6 +386,7 @@ func TestProcessed(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			tc := tc
 			t.Parallel()
 
 			eds := NewDistributionSystem()

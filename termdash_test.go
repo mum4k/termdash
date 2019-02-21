@@ -371,6 +371,7 @@ func TestRun(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			tc := tc
 			t.Parallel()
 
 			handlers := &eventHandlers{
@@ -564,6 +565,7 @@ func TestController(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			tc := tc
 			t.Parallel()
 
 			eq := eventqueue.New()

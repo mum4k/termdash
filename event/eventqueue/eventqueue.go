@@ -195,7 +195,7 @@ func (t *Throttled) Push(e terminalapi.Event) {
 	defer t.queue.mu.Unlock()
 
 	if t.queue.empty() {
-		t.queue.Push(e)
+		t.queue.push(e)
 		return
 	}
 
@@ -203,13 +203,15 @@ func (t *Throttled) Push(e terminalapi.Event) {
 	for n := t.queue.last; n != nil; n = n.prev {
 		if reflect.DeepEqual(e, n.event) {
 			same++
+		} else {
+			break
 		}
 
 		if same > t.max {
 			return // Drop the repetitive event.
 		}
 	}
-	t.queue.Push(e)
+	t.queue.push(e)
 }
 
 // Pop pops an event from the queue. Returns nil if the queue is empty.

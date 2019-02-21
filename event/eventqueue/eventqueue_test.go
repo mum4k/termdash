@@ -145,6 +145,71 @@ func TestThrottled(t *testing.T) {
 				nil,
 			},
 		},
+		{
+			desc:   "allows distinct events",
+			maxRep: 0,
+			pushes: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+				terminalapi.NewError("error3"),
+			},
+			wantEmpty: false,
+			wantPops: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+				terminalapi.NewError("error3"),
+				nil,
+			},
+		},
+		{
+			desc:   "throttles equal events to zero repetitions",
+			maxRep: 0,
+			pushes: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error1"),
+			},
+			wantEmpty: false,
+			wantPops: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				nil,
+			},
+		},
+		{
+			desc:   "throttles equal events to two repetitions",
+			maxRep: 2,
+			pushes: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error1"),
+			},
+			wantEmpty: false,
+			wantPops: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error1"),
+				nil,
+			},
+		},
+		{
+			desc:   "repetitions not recognized when interleaved with other events",
+			maxRep: 0,
+			pushes: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error3"),
+			},
+			wantEmpty: false,
+			wantPops: []terminalapi.Event{
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error2"),
+				terminalapi.NewError("error1"),
+				terminalapi.NewError("error3"),
+				nil,
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -167,5 +232,18 @@ func TestThrottled(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestThrottledPullEventAvailable(t *testing.T) {
+	q := NewThrottled(0)
+	defer q.Close()
+	want := terminalapi.NewError("error event")
+	q.Push(want)
+
+	ctx := context.Background()
+	got := q.Pull(ctx)
+	if diff := pretty.Compare(want, got); diff != "" {
+		t.Errorf("Pull => unexpected diff (-want, +got):\n%s", diff)
 	}
 }

@@ -277,6 +277,12 @@ func (td *termdash) redraw() error {
 func (td *termdash) evRedraw() error {
 	td.mu.Lock()
 	defer td.mu.Unlock()
+
+	// Don't redraw immediately, give widgets that are performing enough time
+	// to update.
+	// We don't want to actually synchronize until all widgets update, we are
+	// purposefully leaving slow widgets behind.
+	time.Sleep(25 * time.Millisecond)
 	return td.redraw()
 }
 

@@ -16,6 +16,7 @@ package termdash
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"image"
 	"sync"
@@ -26,6 +27,7 @@ import (
 	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/event/eventqueue"
+	"github.com/mum4k/termdash/event/testevent"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/faketerm"
@@ -388,8 +390,13 @@ func TestRun(t *testing.T) {
 				return
 			}
 
-			if err := untilEmpty(5*time.Second, eq); err != nil {
-				t.Fatalf("untilEmpty => %v", err)
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if !eq.Empty() {
+					return errors.New("event queue not empty")
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 
 			if tc.after != nil {
@@ -569,8 +576,13 @@ func TestController(t *testing.T) {
 				tc.apiEvents(mi)
 			}
 
-			if err := untilEmpty(5*time.Second, eq); err != nil {
-				t.Fatalf("untilEmpty => %v", err)
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if !eq.Empty() {
+					return errors.New("event queue not empty")
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 			if tc.controls != nil {
 				if err := tc.controls(ctrl); err != nil {
@@ -583,25 +595,5 @@ func TestController(t *testing.T) {
 				t.Errorf("Run => %v", diff)
 			}
 		})
-	}
-}
-
-// untilEmpty waits until the queue empties.
-// Waits at most the specified duration.
-func untilEmpty(timeout time.Duration, q *eventqueue.Unbound) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	for {
-		tick := time.NewTimer(5 * time.Millisecond)
-		select {
-		case <-tick.C:
-			if q.Empty() {
-				return nil
-			}
-
-		case <-ctx.Done():
-			return fmt.Errorf("while waiting for the event queue to empty: %v", ctx.Err())
-		}
 	}
 }

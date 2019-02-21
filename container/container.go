@@ -35,7 +35,7 @@ import (
 
 // Container wraps either sub containers or widgets and positions them on the
 // terminal.
-// This is not thread-safe.
+// This is thread-safe.
 type Container struct {
 	// parent is the parent container, nil if this is the root container.
 	parent *Container
@@ -247,6 +247,9 @@ func (c *Container) mouseToWidget(m *terminalapi.Mouse) error {
 // Subscribe tells the container to subscribe itself and widgets to the
 // provided event distribution system.
 func (c *Container) Subscribe(eds *event.DistributionSystem) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	root := rootCont(c)
 	// Subscriber the container itself in order to track keyboard focus.
 	eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {

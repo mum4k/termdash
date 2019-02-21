@@ -15,11 +15,15 @@
 package container
 
 import (
+	"fmt"
 	"image"
 	"testing"
+	"time"
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/event"
+	"github.com/mum4k/termdash/event/testevent"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/faketerm"
 	"github.com/mum4k/termdash/terminalapi"
@@ -396,8 +400,18 @@ func TestFocusTrackerMouse(t *testing.T) {
 				t.Fatalf("New => unexpected error: %v", err)
 			}
 
+			eds := event.NewDistributionSystem()
+			root.Subscribe(eds)
 			for _, ev := range tc.events {
-				root.Mouse(ev)
+				eds.Event(ev)
+			}
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if got, want := eds.Processed(), len(tc.events); got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 
 			var wantFocused *Container

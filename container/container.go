@@ -250,11 +250,15 @@ func (c *Container) Subscribe(eds *event.DistributionSystem) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// maxReps is the maximum number of repetitive events towards widgets
+	// before we throttle them.
+	const maxReps = 10
+
 	root := rootCont(c)
 	// Subscriber the container itself in order to track keyboard focus.
 	eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {
 		root.updateFocus(ev.(*terminalapi.Mouse))
-	})
+	}, event.MaxRepetitive(0)) // One event is enough to change the focus.
 
 	// Subscribe any widgets that specify Keyboard or Mouse in their options.
 	var errStr string
@@ -266,7 +270,7 @@ func (c *Container) Subscribe(eds *event.DistributionSystem) {
 					if err := c.keyboardToWidget(ev.(*terminalapi.Keyboard)); err != nil {
 						eds.Event(terminalapi.NewErrorf("failed to send keyboard event %v to widget %T: %v", ev, c.opts.widget, err))
 					}
-				})
+				}, event.MaxRepetitive(maxReps))
 			}
 
 			if wOpt.WantMouse {
@@ -274,7 +278,7 @@ func (c *Container) Subscribe(eds *event.DistributionSystem) {
 					if err := c.mouseToWidget(ev.(*terminalapi.Mouse)); err != nil {
 						eds.Event(terminalapi.NewErrorf("failed to send mouse event %v to widget %T: %v", ev, c.opts.widget, err))
 					}
-				})
+				}, event.MaxRepetitive(maxReps))
 			}
 		}
 		return nil

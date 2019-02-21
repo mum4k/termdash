@@ -37,6 +37,10 @@ const (
 
 	// receiverModeBlock tells the receiver to block on the call to receive.
 	receiverModeBlock
+
+	// receiverModePause tells the receiver to pause before starting to
+	// receive.
+	receiverModePause
 )
 
 // receiver receives events from the distribution system.
@@ -48,6 +52,9 @@ type receiver struct {
 
 	// events are the received events.
 	events []terminalapi.Event
+
+	// resumed indicates if the receiver was resumed.
+	resumed bool
 }
 
 // newReceiver returns a new event receiver.
@@ -64,12 +71,14 @@ func (r *receiver) receive(ev terminalapi.Event) {
 		for {
 			time.Sleep(1 * time.Minute)
 		}
-	default:
-		r.mu.Lock()
-		defer r.mu.Unlock()
-
-		r.events = append(r.events, ev)
+	case receiverModePause:
+		time.Sleep(3 * time.Second)
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.events = append(r.events, ev)
 }
 
 // getEvents returns the received events.
@@ -273,7 +282,7 @@ func TestDistributionSystem(t *testing.T) {
 					opts: []SubscribeOption{
 						MaxRepetitive(0),
 					},
-					rec: newReceiver(receiverModeReceive),
+					rec: newReceiver(receiverModePause),
 					want: map[terminalapi.Event]bool{
 						&terminalapi.Keyboard{Key: keyboard.KeyEsc}:   true,
 						&terminalapi.Keyboard{Key: keyboard.KeyEnter}: true,
@@ -301,7 +310,7 @@ func TestDistributionSystem(t *testing.T) {
 
 			for i, sc := range tc.subCase {
 				gotEv := map[terminalapi.Event]bool{}
-				err := testevent.WaitFor(5*time.Second, func() error {
+				err := testevent.WaitFor(10*time.Second, func() error {
 					ev := sc.rec.getEvents()
 					want := len(sc.want)
 					switch got := len(ev); {

@@ -215,12 +215,12 @@ func (td *termdash) subscribers() {
 	// Redraws the screen on Keyboard and Mouse events.
 	// These events very likely change the content of the widgets (e.g. zooming
 	// a LineChart) so a redraw is needed to make that visible.
-	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(terminalapi.Event) {
+	td.eds.Subscribe([]terminalapi.Event{
+		&terminalapi.Keyboard{},
+		&terminalapi.Mouse{},
+	}, func(terminalapi.Event) {
 		td.evRedraw()
-	})
-	td.eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(terminalapi.Event) {
-		td.evRedraw()
-	})
+	}, event.MaxRepetitive(0)) // No repetitive events that cause terminal redraw.
 
 	// Keyboard and Mouse subscribers specified via options.
 	if td.keyboardSubscriber != nil {

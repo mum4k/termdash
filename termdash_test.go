@@ -169,28 +169,30 @@ func (ms *mouseSubscriber) receive(m *terminalapi.Mouse) {
 	ms.received = *m
 }
 
-func TestRun(t *testing.T) {
-	var (
-		handler  errorHandler
-		keySub   keySubscriber
-		mouseSub mouseSubscriber
-	)
+type eventHandlers struct {
+	handler  errorHandler
+	keySub   keySubscriber
+	mouseSub mouseSubscriber
+}
 
+func TestRun(t *testing.T) {
 	tests := []struct {
 		desc   string
 		size   image.Point
-		opts   []Option
+		opts   func(*eventHandlers) []Option
 		events []terminalapi.Event
 		// function to execute after the test case, can do additional comparison.
-		after   func() error
+		after   func(*eventHandlers) error
 		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
 	}{
 		{
 			desc: "draws the dashboard until closed",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -206,8 +208,10 @@ func TestRun(t *testing.T) {
 		{
 			desc: "fails when the widget doesn't draw due to size too small",
 			size: image.Point{1, 1},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -218,8 +222,10 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards mouse events to container",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
@@ -241,8 +247,10 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards keyboard events to container",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
@@ -265,16 +273,18 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards input errors to the error handler",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
-				ErrorHandler(handler.handle),
+			opts: func(eh *eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+					ErrorHandler(eh.handler.handle),
+				}
 			},
 			events: []terminalapi.Event{
 				terminalapi.NewError("input error"),
 			},
-			after: func() error {
-				if want := "input error"; handler.get().Error() != want {
-					return fmt.Errorf("errorHandler got %v, want %v", handler.get(), want)
+			after: func(eh *eventHandlers) error {
+				if want := "input error"; eh.handler.get().Error() != want {
+					return fmt.Errorf("errorHandler got %v, want %v", eh.handler.get(), want)
 				}
 				return nil
 			},
@@ -292,16 +302,18 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards keyboard events to the subscriber",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
-				KeyboardSubscriber(keySub.receive),
+			opts: func(eh *eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+					KeyboardSubscriber(eh.keySub.receive),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyF1},
 			},
-			after: func() error {
+			after: func(eh *eventHandlers) error {
 				want := terminalapi.Keyboard{Key: keyboard.KeyF1}
-				if diff := pretty.Compare(want, keySub.get()); diff != "" {
+				if diff := pretty.Compare(want, eh.keySub.get()); diff != "" {
 					return fmt.Errorf("keySubscriber got unexpected value, diff (-want, +got):\n%s", diff)
 				}
 				return nil
@@ -323,16 +335,18 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards mouse events to the subscriber",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
-				MouseSubscriber(mouseSub.receive),
+			opts: func(eh *eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+					MouseSubscriber(eh.mouseSub.receive),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
 			},
-			after: func() error {
+			after: func(eh *eventHandlers) error {
 				want := terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp}
-				if diff := pretty.Compare(want, mouseSub.get()); diff != "" {
+				if diff := pretty.Compare(want, eh.mouseSub.get()); diff != "" {
 					return fmt.Errorf("mouseSubscriber got unexpected value, diff (-want, +got):\n%s", diff)
 				}
 				return nil
@@ -355,9 +369,12 @@ func TestRun(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			handler = errorHandler{}
-			keySub = keySubscriber{}
-			mouseSub = mouseSubscriber{}
+			t.Parallel()
+			handlers := &eventHandlers{
+				handler:  errorHandler{},
+				keySub:   keySubscriber{},
+				mouseSub: mouseSubscriber{},
+			}
 
 			eq := eventqueue.New()
 			for _, ev := range tc.events {
@@ -381,7 +398,7 @@ func TestRun(t *testing.T) {
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			err = Run(ctx, got, cont, tc.opts...)
+			err = Run(ctx, got, cont, tc.opts(handlers)...)
 			cancel()
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Run => unexpected error: %v, wantErr: %v", err, tc.wantErr)
@@ -400,7 +417,7 @@ func TestRun(t *testing.T) {
 			}
 
 			if tc.after != nil {
-				if err := tc.after(); err != nil {
+				if err := tc.after(handlers); err != nil {
 					t.Errorf("after => unexpected error: %v", err)
 				}
 			}
@@ -542,6 +559,7 @@ func TestController(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
 			eq := eventqueue.New()
 			for _, ev := range tc.events {
 				eq.Push(ev)

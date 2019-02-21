@@ -47,6 +47,13 @@ type subscriber struct {
 	// cancel when called terminates the goroutine that forwards events towards
 	// this subscriber.
 	cancel context.CancelFunc
+
+	// processes is the number of events that were fully processed, i.e.
+	// delivered to the callback.
+	processed int
+
+	// mu protects busy.
+	mu sync.Mutex
 }
 
 // newSubscriber creates a new event subscriber.
@@ -69,13 +76,24 @@ func newSubscriber(filter []terminalapi.Event, cb Callback) *subscriber {
 	return s
 }
 
+// callback sends the event to the callback.
+func (s *subscriber) callback(ev terminalapi.Event) {
+	s.cb(ev)
+
+	func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.processed++
+	}()
+}
+
 // run periodically forwards events towards the subscriber.
 // Terminates when the context expires.
 func (s *subscriber) run(ctx context.Context) {
 	for {
 		ev := s.queue.Pull(ctx)
 		if ev != nil {
-			s.cb(ev)
+			s.callback(ev)
 		}
 
 		select {
@@ -96,6 +114,13 @@ func (s *subscriber) event(ev terminalapi.Event) {
 	if s.filter[t] {
 		s.queue.Push(ev)
 	}
+}
+
+// processedEvents returns the number of events processed by this subscriber.
+func (s *subscriber) processedEvents() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.processed
 }
 
 // stop stops the event subscriber.
@@ -123,7 +148,7 @@ type DistributionSystem struct {
 	nextID int
 
 	// mu protects the distribution system.
-	mu sync.RWMutex
+	mu sync.Mutex
 }
 
 // NewDistributionSystem creates a new event distribution system.
@@ -136,8 +161,8 @@ func NewDistributionSystem() *DistributionSystem {
 // Event should be called with events coming from the terminal.
 // The distribution system will distribute these to all the subscribers.
 func (eds *DistributionSystem) Event(ev terminalapi.Event) {
-	eds.mu.RLock()
-	defer eds.mu.RUnlock()
+	eds.mu.Lock()
+	defer eds.mu.Unlock()
 
 	for _, sub := range eds.subscribers {
 		sub.event(ev)
@@ -169,4 +194,17 @@ func (eds *DistributionSystem) Subscribe(filter []terminalapi.Event, cb Callback
 		sub.stop()
 		delete(eds.subscribers, id)
 	}
+}
+
+// Processed returns the number of events that were fully processed, i.e.
+// delivered to all the subscribers and their callbacks returned.
+func (eds *DistributionSystem) Processed() int {
+	eds.mu.Lock()
+	defer eds.mu.Unlock()
+
+	var res int
+	for _, sub := range eds.subscribers {
+		res += sub.processedEvents()
+	}
+	return res
 }

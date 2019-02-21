@@ -15,7 +15,7 @@
 package event
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"image"
 	"sync"
@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/event/testevent"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/terminalapi"
 )
@@ -82,34 +83,6 @@ func (r *receiver) getEvents() map[terminalapi.Event]bool {
 	return res
 }
 
-// waitFor waits until the receiver receives the specified number of events or
-// the timeout.
-// Returns the received events in an unspecified order.
-func (r *receiver) waitFor(want int, timeout time.Duration) (map[terminalapi.Event]bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	for {
-		tick := time.NewTimer(5 * time.Millisecond)
-		select {
-		case <-tick.C:
-			ev := r.getEvents()
-
-			switch got := len(ev); {
-			case got > want:
-				return nil, fmt.Errorf("got %d events %v, want %d", got, ev, want)
-
-			case got == want:
-				return ev, nil
-			}
-
-		case <-ctx.Done():
-			ev := r.getEvents()
-			return nil, fmt.Errorf("while waiting for events, got %d so far: %v, want %d, err: %v", len(ev), ev, want, ctx.Err())
-		}
-	}
-}
-
 // subscriberCase holds test case specifics for one subscriber.
 type subscriberCase struct {
 	// filter is the subscribers filter.
@@ -121,7 +94,7 @@ type subscriberCase struct {
 	// want are the expected events that should be delivered to this subscriber.
 	want map[terminalapi.Event]bool
 
-	// wantErr asserts whether we want an error from waitFor.
+	// wantErr asserts whether we want an error from testevent.WaitFor.
 	wantErr bool
 }
 
@@ -291,17 +264,111 @@ func TestDistributionSystem(t *testing.T) {
 			}
 
 			for i, sc := range tc.subCase {
-				got, err := sc.rec.waitFor(len(sc.want), 5*time.Second)
+				gotEv := map[terminalapi.Event]bool{}
+				err := testevent.WaitFor(5*time.Second, func() error {
+					ev := sc.rec.getEvents()
+					want := len(sc.want)
+					switch got := len(ev); {
+					case got == want:
+						gotEv = ev
+						return nil
+
+					default:
+						return fmt.Errorf("got %d events %v, want %d", got, ev, want)
+					}
+				})
 				if (err != nil) != sc.wantErr {
-					t.Errorf("sc.rec.waitFor[%d] => unexpected error: %v, wantErr:%v", i, err, sc.wantErr)
+					t.Errorf("testevent.WaitFor subscriber[%d] => unexpected error: %v, wantErr: %v", i, err, sc.wantErr)
 				}
 				if err != nil {
 					continue
 				}
 
-				if diff := pretty.Compare(sc.want, got); diff != "" {
-					t.Errorf("sc.rec.waitFor[%d] => unexpected diff (-want, +got):\n%s", i, diff)
+				if diff := pretty.Compare(sc.want, gotEv); diff != "" {
+					t.Errorf("testevent.WaitFor subscriber[%d] => unexpected diff (-want, +got):\n%s", i, diff)
 				}
+			}
+		})
+	}
+}
+
+func TestProcessed(t *testing.T) {
+	tests := []struct {
+		desc string
+		// events will be sent down the distribution system.
+		events []terminalapi.Event
+
+		// subCase are the event subscribers and their expectations.
+		subCase []*subscriberCase
+
+		want int
+	}{
+		{
+			desc: "zero without events",
+			want: 0,
+		},
+		{
+			desc: "zero without subscribers",
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			want: 0,
+		},
+		{
+			desc: "zero when a receiver blocks",
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			subCase: []*subscriberCase{
+				{
+					filter: []terminalapi.Event{
+						&terminalapi.Keyboard{},
+					},
+					rec: newReceiver(receiverModeBlock),
+				},
+			},
+			want: 0,
+		},
+		{
+			desc: "counts processed events",
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			subCase: []*subscriberCase{
+				{
+					filter: []terminalapi.Event{
+						&terminalapi.Keyboard{},
+					},
+					rec: newReceiver(receiverModeReceive),
+				},
+			},
+			want: 1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			eds := NewDistributionSystem()
+			for _, sc := range tc.subCase {
+				stop := eds.Subscribe(sc.filter, sc.rec.receive)
+				defer stop()
+			}
+
+			for _, ev := range tc.events {
+				eds.Event(ev)
+			}
+
+			for _, sc := range tc.subCase {
+				testevent.WaitFor(5*time.Second, func() error {
+					if len(sc.rec.getEvents()) > 0 {
+						return nil
+					}
+					return errors.New("the receiver got no events")
+				})
+			}
+
+			if got := eds.Processed(); got != tc.want {
+				t.Errorf("Processed => %v, want %d", got, tc.want)
 			}
 		})
 	}

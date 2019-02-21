@@ -20,7 +20,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/eventqueue"
+	"github.com/mum4k/termdash/event/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 	tbx "github.com/nsf/termbox-go"
 )
@@ -148,9 +148,9 @@ func (t *Terminal) pollEvents() {
 
 // Event implements terminalapi.Terminal.Event.
 func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
-	ev, err := t.events.Pull(ctx)
-	if err != nil {
-		return terminalapi.NewErrorf("unable to pull the next event: %v", err)
+	ev := t.events.Pull(ctx)
+	if ev == nil {
+		return nil
 	}
 	return ev
 }

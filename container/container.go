@@ -24,16 +24,18 @@ package container
 import (
 	"fmt"
 	"image"
+	"sync"
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/event"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the
 // terminal.
-// This is not thread-safe.
+// This is thread-safe.
 type Container struct {
 	// parent is the parent container, nil if this is the root container.
 	parent *Container
@@ -54,6 +56,10 @@ type Container struct {
 
 	// opts are the options provided to the container.
 	opts *options
+
+	// mu protects the container tree.
+	// All containers in the tree share the same lock.
+	mu *sync.Mutex
 }
 
 // String represents the container metadata in a human readable format.
@@ -71,6 +77,7 @@ func New(t terminalapi.Terminal, opts ...Option) (*Container, error) {
 		// The root container has access to the entire terminal.
 		area: image.Rect(0, 0, size.X, size.Y),
 		opts: newOptions( /* parent = */ nil),
+		mu:   &sync.Mutex{},
 	}
 
 	// Initially the root is focused.
@@ -89,6 +96,7 @@ func newChild(parent *Container, area image.Rectangle) *Container {
 		focusTracker: parent.focusTracker,
 		area:         area,
 		opts:         newOptions(parent.opts),
+		mu:           parent.mu,
 	}
 }
 
@@ -172,37 +180,42 @@ func (c *Container) createSecond() (*Container, error) {
 
 // Draw draws this container and all of its sub containers.
 func (c *Container) Draw() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return drawTree(c)
 }
 
-// Keyboard is used to forward a keyboard event to the container.
-// Keyboard events are forwarded to the widget in the currently focused
-// container, assuming that the widget registered for keyboard events.
-func (c *Container) Keyboard(k *terminalapi.Keyboard) error {
-	w := c.focusTracker.active().opts.widget
-	if w == nil || !w.Options().WantKeyboard {
-		return nil
-	}
-	return w.Keyboard(k)
-}
+// updateFocus processes the mouse event and determines if it changes the
+// focused container.
+func (c *Container) updateFocus(m *terminalapi.Mouse) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-// Mouse is used to forward a mouse event to the container.
-// Container uses mouse events to track and change which is the active
-// (focused) container.
-//
-// If the container that receives the mouse click contains a widget that
-// registered for mouse events, the mouse event is further forwarded to that
-// widget. Only mouse events that fall within the widget's canvas are forwarded
-// and the coordinates are adjusted relative to the widget's canvas.
-func (c *Container) Mouse(m *terminalapi.Mouse) error {
 	target := pointCont(c, m.Position)
 	if target == nil { // Ignore mouse clicks where no containers are.
-		return nil
+		return
 	}
 	c.focusTracker.mouse(target, m)
+}
 
-	w := target.opts.widget
-	if w == nil || !w.Options().WantMouse {
+// keyboardToWidget forwards the keyboard event to the widget.
+func (c *Container) keyboardToWidget(k *terminalapi.Keyboard) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if !c.focusTracker.isActive(c) {
+		return nil
+	}
+	return c.opts.widget.Keyboard(k)
+}
+
+// mouseToWidget forwards the mouse event to the widget.
+func (c *Container) mouseToWidget(m *terminalapi.Mouse) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	target := pointCont(c, m.Position)
+	if target == nil { // Ignore mouse clicks where no containers are.
 		return nil
 	}
 
@@ -212,7 +225,7 @@ func (c *Container) Mouse(m *terminalapi.Mouse) error {
 	}
 
 	// Ignore clicks falling outside of the widget's canvas.
-	wa, err := target.widgetArea()
+	wa, err := c.widgetArea()
 	if err != nil {
 		return err
 	}
@@ -228,5 +241,46 @@ func (c *Container) Mouse(m *terminalapi.Mouse) error {
 		Position: m.Position.Sub(offset),
 		Button:   m.Button,
 	}
-	return w.Mouse(wm)
+	return c.opts.widget.Mouse(wm)
+}
+
+// Subscribe tells the container to subscribe itself and widgets to the
+// provided event distribution system.
+func (c *Container) Subscribe(eds *event.DistributionSystem) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// maxReps is the maximum number of repetitive events towards widgets
+	// before we throttle them.
+	const maxReps = 10
+
+	root := rootCont(c)
+	// Subscriber the container itself in order to track keyboard focus.
+	eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {
+		root.updateFocus(ev.(*terminalapi.Mouse))
+	}, event.MaxRepetitive(0)) // One event is enough to change the focus.
+
+	// Subscribe any widgets that specify Keyboard or Mouse in their options.
+	var errStr string
+	preOrder(root, &errStr, visitFunc(func(c *Container) error {
+		if c.hasWidget() {
+			wOpt := c.opts.widget.Options()
+			if wOpt.WantKeyboard {
+				eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
+					if err := c.keyboardToWidget(ev.(*terminalapi.Keyboard)); err != nil {
+						eds.Event(terminalapi.NewErrorf("failed to send keyboard event %v to widget %T: %v", ev, c.opts.widget, err))
+					}
+				}, event.MaxRepetitive(maxReps))
+			}
+
+			if wOpt.WantMouse {
+				eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {
+					if err := c.mouseToWidget(ev.(*terminalapi.Mouse)); err != nil {
+						eds.Event(terminalapi.NewErrorf("failed to send mouse event %v to widget %T: %v", ev, c.opts.widget, err))
+					}
+				}, event.MaxRepetitive(maxReps))
+			}
+		}
+		return nil
+	}))
 }

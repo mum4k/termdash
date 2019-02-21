@@ -22,12 +22,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   events.
 - The Text widget now has a Write option that atomically replaces the entire
   text content.
+- A non-blocking event distribution system that can throttle repetitive events.
 
 ### Changed
 
 - Termbox is now initialized in 256 color mode by default.
 - Generalized mouse button FSM for use in widgets that need to track mouse
   button clicks.
+- The infrastructure now uses the non-blocking event distribution system to
+  distribute events to subscribers. Each widget is now an individual
+  subscriber.
+- The infrastructure now throttles event driven screen redraw rather than
+  redrawing for each input event.
 
 #### Breaking API changes
 

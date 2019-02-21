@@ -47,5 +47,6 @@ type Terminal interface {
 
 	// Event waits for the next event and returns it.
 	// This call blocks until the next event or cancellation of the context.
+	// Returns nil when the context gets canceled.
 	Event(ctx context.Context) Event
 }

@@ -36,10 +36,11 @@ neither the users of this library nor the widgets interact with the terminal
 directly.
 
 The **infrastructure layer** is responsible for container management, tracking
-of keyboard and mouse focus and handling external events like resizing of the
-terminal. The infrastructure layer also decides when to flush the buffer and
-refresh the screen. I.e. The widgets update content of a back buffer and the
-infrastructure decides when it is synchronized to the terminal.
+of keyboard and mouse focus and distribution and handling of external events
+like resizing of the terminal. The infrastructure layer also decides when to
+flush the buffer and refresh the screen. I.e. The widgets update content of a
+back buffer and the infrastructure decides when it is synchronized to the
+terminal.
 
 The **widgets layer** contains the implementations of individual widgets. Each
 widget receives a canvas from the container on which it presents its content to
@@ -65,29 +66,39 @@ It allows to:
   canvas.
 - Flush the content of the back buffer to the output.
 - Manipulate the cursor position and visibility.
-- Read input events (keyboard, mouse, terminal resize, etc...).
-
-The terminal buffers input events until they are read by the client. The buffer
-is bound, if the client isn't picking up events fast enough, new events are
-dropped and a message is logged.
+- Allow the infrastructure to read input events (keyboard, mouse, terminal
+  resize, etc...).
 
 ### Infrastructure
 
 The infrastructure handles terminal setup, input events and manages containers.
 
-#### Keyboard and mouse input
+#### Input events
 
-The raw keyboard and mouse events received from the terminal are pre-processed
-by the infrastructure. The pre-processing involves recognizing keyboard
-shortcuts (i.e. Key combination). The infrastructure recognizes globally
-configurable keyboard shortcuts that are processed by the infrastructure. All
-other keyboard and mouse events are forwarded to the currently focused widget.
+The infrastructure regularly polls events from the terminal layer and feeds
+them into the event distribution system (EDS). The EDS fulfills the following
+functions:
 
-#### Input focus
+- Allow subscribers to specify the type of events they want to receive.
+- Distributeis events in a non-blocking manner, i.e. a single slow subscriber
+  cannot slow down other subscribers.
+- Events to each subscriber are throttled, if a subscriber builds a long tail
+  of unprocessed input events, the EDS selectively drops repetitive events
+  towards the subscriber and eventually implements a tail-drop strategy.
 
-The infrastructure tracks focus. Only the focused widget receives keyboard and
-mouse events. Focus can be changed using mouse or global keyboard shortcuts.
-The focused widget is highlighted on the dashboard.
+The infrastructure itself is an input event subscriber and processes resize and
+error events. The infrastructure panics on error events by default, unless an
+error handler is provided by the user. Each widget that registers for keyboard
+or mouse events is also an event subscriber. Any errors that happen while
+processing an input event are send back to the EDS in the form of an Error
+event and are processed by the infrastructure.
+
+
+#### Input keyboard focus
+
+The infrastructure tracks focus. Only the focused widget receives keyboard
+events. Focus can be changed using mouse or keyboard shortcuts. The focused
+widget is highlighted on the dashboard.
 
 #### Containers
 
@@ -105,8 +116,9 @@ Containers can be styled with borders and other options.
 
 #### Flushing the terminal
 
-All widgets indirectly write to the back buffer of the terminal implementation. The changes
-to the back buffer only become visible when the infrastructure flushes its content.
+All widgets indirectly write to the back buffer of the terminal implementation.
+The changes to the back buffer only become visible when the infrastructure
+flushes its content.
 
 #### Terminal resizing
 
@@ -133,7 +145,7 @@ container splits and place each widget into a dedicated container.
 Each widget receives a canvas from the parent container, the widget can draw
 anything on the canvas as long as it stays within the limits. Helper libraries
 are developed that allow placement and drawing of common elements like lines or
-geometrical shapes.
+geometric shapes.
 
 ## APIs
 
@@ -185,14 +197,17 @@ package.
 
 ## Testing plan
 
-Unit test helpers are provided with the terminal dashboard library, these include:
+Unit test helpers are provided with the terminal dashboard library, these
+include:
 
 - A fake implementation of the terminal API.
 - Unit test comparison helpers to verify the content of the fake terminal.
-- Visualization tools to display differences between the expected and the actual.
+- Visualization tools to display differences between the expected and the
+  actual.
 
 ## Document history
 
 Date        | Author | Description
-------------|--------|---------------
+------------|--------|-----------------------------------
 24-Mar-2018 | mum4k  | Initial draft.
+20-Feb-2019 | mum4k  | Added notes on event distribution.

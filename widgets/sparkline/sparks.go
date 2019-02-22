@@ -20,7 +20,7 @@ package sparkline
 import (
 	"fmt"
 
-	runewidth "github.com/mattn/go-runewidth"
+	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/numbers"
 )
 

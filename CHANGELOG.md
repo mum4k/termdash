@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   series are provided.
 - Lint issues in the codebase, and updated Travis configuration so that golint
   is executed on every run.
+- Termdash now correctly starts in locales like zh_CN.UTF-8 where some of the
+  characters it uses internally can have ambiguous width.
 
 ## [0.6.1] - 12-Feb-2019
 

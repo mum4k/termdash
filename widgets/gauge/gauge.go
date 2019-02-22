@@ -22,11 +22,11 @@ import (
 	"image"
 	"sync"
 
-	runewidth "github.com/mattn/go-runewidth"
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"

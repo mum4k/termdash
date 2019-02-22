@@ -17,7 +17,7 @@ package draw
 import (
 	"fmt"
 
-	runewidth "github.com/mattn/go-runewidth"
+	"github.com/mum4k/termdash/cell/runewidth"
 )
 
 // line_style.go contains the Unicode characters used for drawing lines of

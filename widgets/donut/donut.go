@@ -22,10 +22,10 @@ import (
 	"image"
 	"sync"
 
-	runewidth "github.com/mattn/go-runewidth"
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/canvas/braille"
+	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/numbers"
 	"github.com/mum4k/termdash/terminalapi"

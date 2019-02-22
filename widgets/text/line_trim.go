@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"image"
 
-	runewidth "github.com/mattn/go-runewidth"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/cell/runewidth"
 )
 
 // line_trim.go contains code that trims lines that are too long.

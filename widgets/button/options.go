@@ -21,6 +21,7 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // Option is used to provide options.
@@ -45,6 +46,7 @@ type options struct {
 	height      int
 	width       int
 	key         keyboard.Key
+	keyScope    widgetapi.KeyScope
 }
 
 // validate validates the provided options.
@@ -103,7 +105,7 @@ func ShadowColor(c cell.Color) Option {
 }
 
 // DefaultHeight is the default for the Height option.
-const DefaultHeight = 2
+const DefaultHeight = 3
 
 // Height sets the height of the button in cells.
 // Must be a positive non-zero integer.
@@ -123,13 +125,22 @@ func Width(cells int) Option {
 	})
 }
 
-// DefaultKey is the default value for the Key option.
-const DefaultKey = keyboard.KeyEnter
-
 // Key configures the keyboard key that presses the button.
-// Defaults to DefaultKey.
+// The widget responds to this key only if its container if focused.
+// When not provided, the widget ignores all keyboard events.
 func Key(k keyboard.Key) Option {
 	return option(func(opts *options) {
 		opts.key = k
+		opts.keyScope = widgetapi.KeyScopeFocused
+	})
+}
+
+// GlobalKey is like Key, but makes the widget respond to the key even if its
+// container isn't focused.
+// When not provided, the widget ignores all keyboard events.
+func GlobalKey(k keyboard.Key) Option {
+	return option(func(opts *options) {
+		opts.key = k
+		opts.keyScope = widgetapi.KeyScopeFocused
 	})
 }

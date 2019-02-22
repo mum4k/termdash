@@ -28,8 +28,8 @@ import (
 )
 
 // CallbackFn is the function called when the button is pressed.
-// The callback function must be non-blocking, ideally just storing a value and
-// returning, since event processing blocks the redraws.
+// The callback function must be light-weight, ideally just storing a value and
+// returning, since more button presses might occur.
 //
 // The callback function must be thread-safe as the mouse or keyboard events
 // that press the button are processed in a separate goroutine.
@@ -100,10 +100,12 @@ func (*Button) Mouse(m *terminalapi.Mouse) error {
 func (b *Button) Options() widgetapi.Options {
 	// No need to lock, as the height and width get fixed when New is called.
 
+	// TODO calculate width and set MaximumSize too.
 	height := b.opts.height + 1 // One for the shadow.
 	return widgetapi.Options{
 		MinimumSize:  image.Point{b.opts.width, height},
-		WantKeyboard: true,
+		MaximumSize:  image.Point{b.opts.width, height},
+		WantKeyboard: b.opts.keyScope,
 		WantMouse:    true,
 	}
 }

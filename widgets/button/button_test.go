@@ -22,6 +22,7 @@ import (
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/terminal/faketerm"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -150,18 +151,56 @@ func TestMouse(t *testing.T) {
 }
 
 func TestOptions(t *testing.T) {
-	ct := &callbackTracker{}
-	b, err := New("text", ct.callback)
-	if err != nil {
-		t.Fatalf("New => unexpected error: %v", err)
+	tests := []struct {
+		desc string
+		opts []Option
+		want widgetapi.Options
+	}{
+		{
+			desc: "doesn't want keyboard by default",
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{6, 3},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    true,
+			},
+		},
+		{
+			desc: "registers for focused keyboard events",
+			opts: []Option{
+				Key(keyboard.KeyEnter),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{6, 3},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    true,
+			},
+		},
+		{
+			desc: "registers for global keyboard events",
+			opts: []Option{
+				GlobalKey(keyboard.KeyEnter),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{6, 3},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    true,
+			},
+		},
 	}
-	got := b.Options()
-	want := widgetapi.Options{
-		MinimumSize:  image.Point{6, 3},
-		WantKeyboard: true,
-		WantMouse:    true,
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			ct := &callbackTracker{}
+			b, err := New("text", ct.callback, tc.opts...)
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
+
+			got := b.Options()
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
 	}
-	if diff := pretty.Compare(want, got); diff != "" {
-		t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)
-	}
+
 }

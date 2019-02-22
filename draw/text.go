@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"image"
 
-	runewidth "github.com/mattn/go-runewidth"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/cell/runewidth"
 )
 
 // OverrunMode represents

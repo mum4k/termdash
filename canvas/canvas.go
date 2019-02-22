@@ -16,6 +16,7 @@
 package canvas
 
 import (
+	"errors"
 	"fmt"
 	"image"
 
@@ -92,6 +93,20 @@ func (c *Canvas) Cell(p image.Point) (*cell.Cell, error) {
 	}
 
 	return c.buffer[p.X][p.Y].Copy(), nil
+}
+
+// SetCellOpts sets options on the specified cell of the canvas without
+// modifying the content of the cell.
+// Sets the default cell options if no options are provided.
+// This method is idempotent.
+func (c *Canvas) SetCellOpts(p image.Point, opts ...cell.Option) error {
+	return errors.New("unimplemented")
+}
+
+// SetAreaCellOpts is like SetCellOpts, but sets the specified options on all
+// the cells within the provided area.
+func (c *Canvas) SetAreaCellOpts(cellArea image.Rectangle, opts ...cell.Option) error {
+	return errors.New("unimplemented")
 }
 
 // setCellFunc is a function that sets cell content on a terminal or a canvas.

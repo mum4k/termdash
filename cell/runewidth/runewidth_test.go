@@ -39,6 +39,50 @@ func TestRuneWidth(t *testing.T) {
 			eastAsian: true,
 			want:      2,
 		},
+		{
+			desc:  "braille runes",
+			runes: []rune{'⠀', '⠴', '⠷', '⣿'},
+			want:  1,
+		},
+		{
+			desc:      "braille runes in eastAsian",
+			runes:     []rune{'⠀', '⠴', '⠷', '⣿'},
+			eastAsian: true,
+			want:      1,
+		},
+		{
+			desc:  "termdash special runes",
+			runes: []rune{'⇄', '…', '⇧', '⇩'},
+			want:  1,
+		},
+		{
+			desc:      "termdash special runes in eastAsian",
+			runes:     []rune{'⇄', '…', '⇧', '⇩'},
+			eastAsian: true,
+			want:      1,
+		},
+		{
+			desc:  "termdash sparks",
+			runes: []rune{'▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'},
+			want:  1,
+		},
+		{
+			desc:      "termdash sparks in eastAsian",
+			runes:     []rune{'▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'},
+			eastAsian: true,
+			want:      1,
+		},
+		{
+			desc:  "termdash line styles",
+			runes: []rune{'─', '═', '─', '┼', '╬', '┼'},
+			want:  1,
+		},
+		{
+			desc:      "termdash line styles in eastAsian",
+			runes:     []rune{'─', '═', '─', '┼', '╬', '┼'},
+			eastAsian: true,
+			want:      1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -50,7 +94,7 @@ func TestRuneWidth(t *testing.T) {
 
 			for _, r := range tc.runes {
 				if got := RuneWidth(r); got != tc.want {
-					t.Errorf("RuneWidth(%v) => %v, want %v", r, got, tc.want)
+					t.Errorf("RuneWidth(%c, %#x) => %v, want %v", r, r, got, tc.want)
 				}
 			}
 		})
@@ -79,6 +123,17 @@ func TestStringWidth(t *testing.T) {
 			str:       "■㈱の世界①",
 			eastAsian: true,
 			want:      12,
+		},
+		{
+			desc: "string using termdash characters",
+			str:  "⇄…⇧⇩",
+			want: 4,
+		},
+		{
+			desc:      "string in eastAsien using termdash characters",
+			str:       "⇄…⇧⇩",
+			eastAsian: true,
+			want:      4,
 		},
 	}
 

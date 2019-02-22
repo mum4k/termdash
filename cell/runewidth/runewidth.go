@@ -1,5 +1,5 @@
-// runewidth is a wrapper over github.com/mattn/go-runewidth which gives
-// different treatment to certain runes with ambiguous width.
+// Package runewidth is a wrapper over github.com/mattn/go-runewidth which
+// gives different treatment to certain runes with ambiguous width.
 package runewidth
 
 import runewidth "github.com/mattn/go-runewidth"

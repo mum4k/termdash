@@ -72,8 +72,7 @@ func ErrorHandler(f func(error)) Option {
 
 // KeyboardSubscriber registers a subscriber for Keyboard events. Each
 // keyboard event is forwarded to the container and the registered subscriber.
-// The provided function must be non-blocking, ideally just storing the value
-// and returning as termdash blocks on each subscriber.
+// The provided function must be thread-safe.
 func KeyboardSubscriber(f func(*terminalapi.Keyboard)) Option {
 	return option(func(td *termdash) {
 		td.keyboardSubscriber = f
@@ -82,8 +81,7 @@ func KeyboardSubscriber(f func(*terminalapi.Keyboard)) Option {
 
 // MouseSubscriber registers a subscriber for Mouse events. Each mouse event
 // is forwarded to the container and the registered subscriber.
-// The provided function must be non-blocking, ideally just storing the value
-// and returning as termdash blocks on each subscriber.
+// The provided function must be thread-safe.
 func MouseSubscriber(f func(*terminalapi.Mouse)) Option {
 	return option(func(td *termdash) {
 		td.mouseSubscriber = f

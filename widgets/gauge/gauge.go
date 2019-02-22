@@ -329,7 +329,7 @@ func (g *Gauge) Options() widgetapi.Options {
 	return widgetapi.Options{
 		MaximumSize:  g.maxSize(),
 		MinimumSize:  g.minSize(),
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 }

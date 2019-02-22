@@ -230,7 +230,7 @@ func (sl *SparkLine) Options() widgetapi.Options {
 	return widgetapi.Options{
 		MinimumSize:  min,
 		MaximumSize:  max,
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 }

@@ -469,7 +469,7 @@ func TestOptions(t *testing.T) {
 			desc: "no label and no fixed height",
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
+				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    false,
 			},
 		},
@@ -480,7 +480,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 2},
-				WantKeyboard: false,
+				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    false,
 			},
 		},
@@ -492,7 +492,7 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 3},
 				MaximumSize:  image.Point{1, 3},
-				WantKeyboard: false,
+				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    false,
 			},
 		},
@@ -505,7 +505,7 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 4},
 				MaximumSize:  image.Point{1, 4},
-				WantKeyboard: false,
+				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    false,
 			},
 		},

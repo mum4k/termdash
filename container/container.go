@@ -31,6 +31,7 @@ import (
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/event"
 	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the
@@ -198,8 +199,16 @@ func (c *Container) updateFocus(m *terminalapi.Mouse) {
 	c.focusTracker.mouse(target, m)
 }
 
-// keyboardToWidget forwards the keyboard event to the widget.
+// keyboardToWidget forwards the keyboard event to the widget unconditionally.
 func (c *Container) keyboardToWidget(k *terminalapi.Keyboard) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.opts.widget.Keyboard(k)
+}
+
+// keyboardToFocusedWidget forwards the keyboard event to the widget if its
+// container is focused.
+func (c *Container) keyboardToFocusedWidget(k *terminalapi.Keyboard) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -265,10 +274,21 @@ func (c *Container) Subscribe(eds *event.DistributionSystem) {
 	preOrder(root, &errStr, visitFunc(func(c *Container) error {
 		if c.hasWidget() {
 			wOpt := c.opts.widget.Options()
-			if wOpt.WantKeyboard {
+			switch wOpt.WantKeyboard {
+			case widgetapi.KeyScopeNone:
+				// Widget doesn't want any keyboard events.
+
+			case widgetapi.KeyScopeFocused:
+				eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
+					if err := c.keyboardToFocusedWidget(ev.(*terminalapi.Keyboard)); err != nil {
+						eds.Event(terminalapi.NewErrorf("failed to send keyboard event %v to widget %T: %v", ev, c.opts.widget, err))
+					}
+				}, event.MaxRepetitive(maxReps))
+
+			case widgetapi.KeyScopeGlobal:
 				eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
 					if err := c.keyboardToWidget(ev.(*terminalapi.Keyboard)); err != nil {
-						eds.Event(terminalapi.NewErrorf("failed to send keyboard event %v to widget %T: %v", ev, c.opts.widget, err))
+						eds.Event(terminalapi.NewErrorf("failed to send global keyboard event %v to widget %T: %v", ev, c.opts.widget, err))
 					}
 				}, event.MaxRepetitive(maxReps))
 			}

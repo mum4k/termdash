@@ -247,7 +247,7 @@ func (d *Donut) Options() widgetapi.Options {
 
 		// The smallest circle that "looks" like a circle on the canvas.
 		MinimumSize:  image.Point{3, 3},
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 }

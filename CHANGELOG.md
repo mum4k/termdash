@@ -34,13 +34,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subscriber.
 - The infrastructure now throttles event driven screen redraw rather than
   redrawing for each input event.
+- Widgets can now specify the scope at which they want to receive keyboard
+  events, i.e. KeyScopeNone for no events, KeyScopeFocused to receive events
+  only if the parent container is focused and KeyScopeGlobal to receive all
+  keyboard events.
 
 #### Breaking API changes
+
+##### High impact
 
 - The constructors of all the widgets now also return an error so that they
   can validate the options. This is a breaking change for the following
   widgets: BarChart, Gauge, LineChart, SparkLine, Text. The callers will have
   to handle the returned error.
+
+##### Low impact
+
+- The container package no longer exports separate methods to receive Keyboard
+  and Mouse events which were replaced by a Subscribe method for the event
+  distribution system. This shouldn't affect users as the removed methods
+  aren't needed by container users.
+- The widgetapi.Options struct now uses an enum instead of a boolean when
+  widget specifies if it wants keyboard events. This affects development of new
+  widgets.
 
 ### Fixed
 

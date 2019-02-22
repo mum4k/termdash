@@ -302,11 +302,18 @@ func (t *Text) Mouse(m *terminalapi.Mouse) error {
 
 // Options of the widget
 func (t *Text) Options() widgetapi.Options {
+	var ks widgetapi.KeyScope
+	if t.opts.disableScrolling {
+		ks = widgetapi.KeyScopeNone
+	} else {
+		ks = widgetapi.KeyScopeFocused
+	}
+
 	return widgetapi.Options{
 		// At least one line with at least one full-width rune.
 		MinimumSize:  image.Point{1, 1},
 		WantMouse:    !t.opts.disableScrolling,
-		WantKeyboard: !t.opts.disableScrolling,
+		WantKeyboard: ks,
 	}
 }
 

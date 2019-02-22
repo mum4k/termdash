@@ -665,7 +665,7 @@ func TestOptions(t *testing.T) {
 	want := widgetapi.Options{
 		Ratio:        image.Point{4, 2},
 		MinimumSize:  image.Point{3, 3},
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 	if diff := pretty.Compare(want, got); diff != "" {

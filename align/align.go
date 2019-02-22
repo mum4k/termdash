@@ -20,7 +20,7 @@ import (
 	"image"
 	"strings"
 
-	runewidth "github.com/mattn/go-runewidth"
+	"github.com/mum4k/termdash/cell/runewidth"
 )
 
 // Horizontal indicates the type of horizontal alignment.

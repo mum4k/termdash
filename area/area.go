@@ -96,42 +96,11 @@ func ExcludeBorder(area image.Rectangle) image.Rectangle {
 	)
 }
 
-// findGCF finds the greatest common factor of two integers.
-func findGCF(a, b int) int {
-	if a == 0 || b == 0 {
-		return 0
-	}
-
-	// https://en.wikipedia.org/wiki/Euclidean_algorithm
-	for {
-		rem := a % b
-		a = b
-		b = rem
-
-		if b == 0 {
-			break
-		}
-	}
-	return a
-}
-
-// simplifyRatio simplifies the given ratio.
-func simplifyRatio(ratio image.Point) image.Point {
-	gcf := findGCF(ratio.X, ratio.Y)
-	if gcf == 0 {
-		return image.ZP
-	}
-	return image.Point{
-		X: ratio.X / gcf,
-		Y: ratio.Y / gcf,
-	}
-}
-
 // WithRatio returns the largest area that has the requested ratio but is
 // either equal or smaller than the provided area. Returns zero area if the
 // area or the ratio are zero, or if there is no such area.
 func WithRatio(area image.Rectangle, ratio image.Point) image.Rectangle {
-	ratio = simplifyRatio(ratio)
+	ratio = numbers.SimplifyRatio(ratio)
 	if area == image.ZR || ratio == image.ZP {
 		return image.ZR
 	}

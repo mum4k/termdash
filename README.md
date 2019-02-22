@@ -1,5 +1,6 @@
 [![Doc Status](https://godoc.org/github.com/mum4k/termdash?status.png)](https://godoc.org/github.com/mum4k/termdash)
 [![Build Status](https://travis-ci.org/mum4k/termdash.svg?branch=master)](https://travis-ci.org/mum4k/termdash)
+[![Sourcegraph](https://sourcegraph.com/github.com/mum4k/termdash/-/badge.svg)](https://sourcegraph.com/github.com/mum4k/termdash?badge)
 [![Coverage Status](https://coveralls.io/repos/github/mum4k/termdash/badge.svg?branch=master)](https://coveralls.io/github/mum4k/termdash?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mum4k/termdash)](https://goreportcard.com/report/github.com/mum4k/termdash)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/mum4k/termdash/blob/master/LICENSE)
@@ -119,7 +120,8 @@ go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
 
 ### The LineChart
 
-Displays series of values on a line chart. Run the
+Displays series of values on a line chart, supports zoom triggered by mouse
+events. Run the
 [linechartdemo](widgets/linechart/linechartdemo/linechartdemo.go).
 
 ```go

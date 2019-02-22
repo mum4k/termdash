@@ -64,14 +64,14 @@ func startEndAngles(current, total, startAngle, direction int) (start, end int) 
 func midAndRadius(ar image.Rectangle) (image.Point, int) {
 	mid := image.Point{ar.Dx() / 2, ar.Dy() / 2}
 	if mid.X%2 != 0 {
-		mid.X -= 1
+		mid.X--
 	}
 	switch mid.Y % 4 {
 	case 0:
-		mid.Y += 1
+		mid.Y++
 	case 1:
 	case 2:
-		mid.Y -= 1
+		mid.Y--
 	case 3:
 		mid.Y -= 2
 

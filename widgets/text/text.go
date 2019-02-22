@@ -69,20 +69,27 @@ type Text struct {
 }
 
 // New returns a new text widget.
-func New(opts ...Option) *Text {
+func New(opts ...Option) (*Text, error) {
 	opt := newOptions(opts...)
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
 	return &Text{
 		wOptsTracker: attrrange.NewTracker(),
 		scroll:       newScrollTracker(opt),
 		opts:         opt,
-	}
+	}, nil
 }
 
 // Reset resets the widget back to empty content.
 func (t *Text) Reset() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.reset()
+}
 
+// reset implements Reset, caller must hold t.mu.
+func (t *Text) reset() {
 	t.buff.Reset()
 	t.givenWOpts = nil
 	t.wOptsTracker = attrrange.NewTracker()
@@ -106,8 +113,13 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 		return err
 	}
 
+	opts := newWriteOptions(wOpts...)
+	if opts.replace {
+		t.reset()
+	}
+
 	pos := t.buff.Len()
-	t.givenWOpts = append(t.givenWOpts, newWriteOptions(wOpts...))
+	t.givenWOpts = append(t.givenWOpts, opts)
 	wOptsIdx := len(t.givenWOpts) - 1
 	if err := t.wOptsTracker.Add(pos, pos+len(text), wOptsIdx); err != nil {
 		return err
@@ -290,11 +302,18 @@ func (t *Text) Mouse(m *terminalapi.Mouse) error {
 
 // Options of the widget
 func (t *Text) Options() widgetapi.Options {
+	var ks widgetapi.KeyScope
+	if t.opts.disableScrolling {
+		ks = widgetapi.KeyScopeNone
+	} else {
+		ks = widgetapi.KeyScopeFocused
+	}
+
 	return widgetapi.Options{
 		// At least one line with at least one full-width rune.
 		MinimumSize:  image.Point{1, 1},
 		WantMouse:    !t.opts.disableScrolling,
-		WantKeyboard: !t.opts.disableScrolling,
+		WantKeyboard: ks,
 	}
 }
 

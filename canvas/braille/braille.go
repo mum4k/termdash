@@ -110,6 +110,11 @@ func (c *Canvas) Size() image.Point {
 	return image.Point{s.X * ColMult, s.Y * RowMult}
 }
 
+// CellArea returns the area of the underlying cell canvas in cells.
+func (c *Canvas) CellArea() image.Rectangle {
+	return c.regular.Area()
+}
+
 // Area returns the area of the braille canvas in pixels.
 // This will be zero-based area that is two times wider and four times taller
 // than the area used to create the braille canvas.
@@ -186,15 +191,55 @@ func (c *Canvas) TogglePixel(p image.Point, opts ...cell.Option) error {
 	if err != nil {
 		return err
 	}
-	cell, err := c.regular.Cell(cp)
+	curCell, err := c.regular.Cell(cp)
 	if err != nil {
 		return err
 	}
 
-	if isBraille(cell.Rune) && pixelSet(cell.Rune, p) {
+	if isBraille(curCell.Rune) && pixelSet(curCell.Rune, p) {
 		return c.ClearPixel(p, opts...)
 	}
 	return c.SetPixel(p, opts...)
+}
+
+// SetCellOpts sets options on the specified cell of the braille canvas without
+// modifying the content of the cell.
+// Sets the default cell options if no options are provided.
+// This method is idempotent.
+func (c *Canvas) SetCellOpts(cellPoint image.Point, opts ...cell.Option) error {
+	curCell, err := c.regular.Cell(cellPoint)
+	if err != nil {
+		return err
+	}
+
+	if len(opts) == 0 {
+		// Set the default options.
+		opts = []cell.Option{
+			cell.FgColor(cell.ColorDefault),
+			cell.BgColor(cell.ColorDefault),
+		}
+	}
+	if _, err := c.regular.SetCell(cellPoint, curCell.Rune, opts...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetAreaCellOpts is like SetCellOpts, but sets the specified options on all
+// the cells within the provided area.
+func (c *Canvas) SetAreaCellOpts(cellArea image.Rectangle, opts ...cell.Option) error {
+	haveArea := c.regular.Area()
+	if !cellArea.In(haveArea) {
+		return fmt.Errorf("unable to set cell options in area %v, it must fit inside the available cell area is %v", cellArea, haveArea)
+	}
+	for col := cellArea.Min.X; col < cellArea.Max.X; col++ {
+		for row := cellArea.Min.Y; row < cellArea.Max.Y; row++ {
+			if err := c.SetCellOpts(image.Point{col, row}, opts...); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Apply applies the canvas to the corresponding area of the terminal.

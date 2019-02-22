@@ -38,6 +38,13 @@ func MustText(c *canvas.Canvas, text string, start image.Point, opts ...draw.Tex
 	}
 }
 
+// MustVerticalText draws the vertical text on the canvas or panics.
+func MustVerticalText(c *canvas.Canvas, text string, start image.Point, opts ...draw.VerticalTextOption) {
+	if err := draw.VerticalText(c, text, start, opts...); err != nil {
+		panic(fmt.Sprintf("draw.VerticalText => unexpected error: %v", err))
+	}
+}
+
 // MustRectangle draws the rectangle on the canvas or panics.
 func MustRectangle(c *canvas.Canvas, r image.Rectangle, opts ...draw.RectangleOption) {
 	if err := draw.Rectangle(c, r, opts...); err != nil {

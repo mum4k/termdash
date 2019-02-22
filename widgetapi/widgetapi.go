@@ -22,6 +22,39 @@ import (
 	"github.com/mum4k/termdash/terminalapi"
 )
 
+// KeyScope indicates the scope at which the widget wants to receive keyboard
+// events.
+type KeyScope int
+
+// String implements fmt.Stringer()
+func (ks KeyScope) String() string {
+	if n, ok := keyScopeNames[ks]; ok {
+		return n
+	}
+	return "KeyScopeUnknown"
+}
+
+// keyScopeNames maps KeyScope values to human readable names.
+var keyScopeNames = map[KeyScope]string{
+	KeyScopeNone:    "KeyScopeNone",
+	KeyScopeFocused: "KeyScopeFocused",
+	KeyScopeGlobal:  "KeyScopeGlobal",
+}
+
+const (
+	// KeyScopeNone is used when the widget doesn't want to receive any
+	// keyboard events.
+	KeyScopeNone KeyScope = iota
+
+	// KeyScopeFocused is used when the widget wants to only receive keyboard
+	// events when its container is focused.
+	KeyScopeFocused
+
+	// KeyScopeGlobal is used when the widget wants to receive all keyboard
+	// events regardless of which container is focused.
+	KeyScopeGlobal
+)
+
 // Options contains registration options for a widget.
 // This is how the widget indicates its needs to the infrastructure.
 type Options struct {
@@ -44,11 +77,10 @@ type Options struct {
 	// unlimited.
 	MaximumSize image.Point
 
-	// WantKeyboard allows a widget to request keyboard events.
-	// If false, keyboard events won't be forwarded to the widget.
-	// If true, the widget receives keyboard events if its container is
-	// focused.
-	WantKeyboard bool
+	// WantKeyboard allows a widget to request keyboard events and specify
+	// their desired scope. If set to KeyScopeNone, no keyboard events are
+	// forwarded to the widget.
+	WantKeyboard KeyScope
 
 	// WantMouse allows a widget to request mouse events.
 	// If false, mouse events won't be forwarded to the widget.

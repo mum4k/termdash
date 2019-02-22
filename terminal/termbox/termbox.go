@@ -20,7 +20,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/eventqueue"
+	"github.com/mum4k/termdash/event/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 	tbx "github.com/nsf/termbox-go"
 )
@@ -39,7 +39,11 @@ func (o option) set(t *Terminal) {
 	o(t)
 }
 
+// DefaultColorMode is the default value for the ColorMode option.
+const DefaultColorMode = terminalapi.ColorMode256
+
 // ColorMode sets the terminal color mode.
+// Defaults to DefaultColorMode.
 func ColorMode(cm terminalapi.ColorMode) Option {
 	return option(func(t *Terminal) {
 		t.colorMode = cm
@@ -60,6 +64,19 @@ type Terminal struct {
 	colorMode terminalapi.ColorMode
 }
 
+// newTerminal creates the terminal and applies the options.
+func newTerminal(opts ...Option) *Terminal {
+	t := &Terminal{
+		events:    eventqueue.New(),
+		done:      make(chan struct{}),
+		colorMode: DefaultColorMode,
+	}
+	for _, opt := range opts {
+		opt.set(t)
+	}
+	return t
+}
+
 // New returns a new termbox based Terminal.
 // Call Close() when the terminal isn't required anymore.
 func New(opts ...Option) (*Terminal, error) {
@@ -68,14 +85,7 @@ func New(opts ...Option) (*Terminal, error) {
 	}
 	tbx.SetInputMode(tbx.InputEsc | tbx.InputMouse)
 
-	t := &Terminal{
-		events: eventqueue.New(),
-		done:   make(chan struct{}),
-	}
-	for _, opt := range opts {
-		opt.set(t)
-	}
-
+	t := newTerminal(opts...)
 	om, err := colorMode(t.colorMode)
 	if err != nil {
 		return nil, err
@@ -138,9 +148,9 @@ func (t *Terminal) pollEvents() {
 
 // Event implements terminalapi.Terminal.Event.
 func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
-	ev, err := t.events.Pull(ctx)
-	if err != nil {
-		return terminalapi.NewErrorf("unable to pull the next event: %v", err)
+	ev := t.events.Pull(ctx)
+	if ev == nil {
+		return nil
 	}
 	return ev
 }

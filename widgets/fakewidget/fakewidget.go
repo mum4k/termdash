@@ -180,7 +180,7 @@ func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, 
 				return err
 			}
 		case *terminalapi.Keyboard:
-			if !mirror.opts.WantKeyboard {
+			if mirror.opts.WantKeyboard == widgetapi.KeyScopeNone {
 				continue
 			}
 			if err := mirror.Keyboard(e); err != nil {

@@ -22,11 +22,11 @@ import (
 	"image"
 	"sync"
 
-	runewidth "github.com/mattn/go-runewidth"
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -77,14 +77,18 @@ type Gauge struct {
 }
 
 // New returns a new Gauge.
-func New(opts ...Option) *Gauge {
+func New(opts ...Option) (*Gauge, error) {
 	opt := newOptions()
 	for _, o := range opts {
 		o.set(opt)
 	}
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
+
 	return &Gauge{
 		opts: opt,
-	}
+	}, nil
 }
 
 // Absolute sets the progress in absolute numbers, i.e. 7 out of 10.
@@ -325,7 +329,7 @@ func (g *Gauge) Options() widgetapi.Options {
 	return widgetapi.Options{
 		MaximumSize:  g.maxSize(),
 		MinimumSize:  g.minSize(),
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 }

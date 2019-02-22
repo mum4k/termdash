@@ -24,7 +24,7 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/eventqueue"
+	"github.com/mum4k/termdash/event/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
@@ -195,9 +195,9 @@ func (t *Terminal) Event(ctx context.Context) terminalapi.Event {
 		return terminalapi.NewErrorf("no event queue provided, use the WithEventQueue option when creating the fake terminal")
 	}
 
-	ev, err := t.events.Pull(ctx)
-	if err != nil {
-		return terminalapi.NewErrorf("unable to pull the next event: %v", err)
+	ev := t.events.Pull(ctx)
+	if ev == nil {
+		return nil
 	}
 
 	if res, ok := ev.(*terminalapi.Resize); ok {

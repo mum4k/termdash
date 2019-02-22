@@ -15,11 +15,15 @@
 package container
 
 import (
+	"fmt"
 	"image"
 	"testing"
+	"time"
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/event"
+	"github.com/mum4k/termdash/event/testevent"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/faketerm"
 	"github.com/mum4k/termdash/terminalapi"
@@ -290,8 +294,9 @@ func TestFocusTrackerMouse(t *testing.T) {
 	tests := []struct {
 		desc string
 		// Can be either the mouse event or a time.Duration to pause for.
-		events      []*terminalapi.Mouse
-		wantFocused contLoc
+		events        []*terminalapi.Mouse
+		wantFocused   contLoc
+		wantProcessed int
 	}{
 		{
 			desc:        "initially the root is focused",
@@ -303,7 +308,8 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				{Position: image.Point{1, 1}, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocLeft,
+			wantFocused:   contLocLeft,
+			wantProcessed: 2,
 		},
 		{
 			desc: "click and release moves focus to the right",
@@ -311,7 +317,8 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: image.Point{5, 5}, Button: mouse.ButtonLeft},
 				{Position: image.Point{6, 6}, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocRight,
+			wantFocused:   contLocRight,
+			wantProcessed: 2,
 		},
 		{
 			desc: "click in the same container is a no-op",
@@ -321,7 +328,8 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: insideRight, Button: mouse.ButtonLeft},
 				{Position: insideRight, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocRight,
+			wantFocused:   contLocRight,
+			wantProcessed: 4,
 		},
 		{
 			desc: "click in the same container and release never happens",
@@ -330,7 +338,8 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: insideLeft, Button: mouse.ButtonLeft},
 				{Position: insideLeft, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocLeft,
+			wantFocused:   contLocLeft,
+			wantProcessed: 3,
 		},
 		{
 			desc: "click in the same container, release elsewhere",
@@ -338,7 +347,8 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: insideRight, Button: mouse.ButtonLeft},
 				{Position: insideLeft, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocRoot,
+			wantFocused:   contLocRoot,
+			wantProcessed: 2,
 		},
 		{
 			desc: "other buttons are ignored",
@@ -350,7 +360,8 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: insideLeft, Button: mouse.ButtonWheelUp},
 				{Position: insideLeft, Button: mouse.ButtonWheelDown},
 			},
-			wantFocused: contLocRoot,
+			wantFocused:   contLocRoot,
+			wantProcessed: 6,
 		},
 		{
 			desc: "moving mouse with pressed button and then releasing moves focus",
@@ -359,7 +370,8 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: image.Point{1, 1}, Button: mouse.ButtonLeft},
 				{Position: image.Point{2, 2}, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocLeft,
+			wantFocused:   contLocLeft,
+			wantProcessed: 3,
 		},
 		{
 			desc: "click ignored if followed by another click of the same button elsewhere",
@@ -367,9 +379,9 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: insideRight, Button: mouse.ButtonLeft},
 				{Position: insideLeft, Button: mouse.ButtonLeft},
 				{Position: insideRight, Button: mouse.ButtonRelease},
-				{Position: insideRight, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocRoot,
+			wantFocused:   contLocRoot,
+			wantProcessed: 3,
 		},
 		{
 			desc: "click ignored if followed by another click of a different button",
@@ -377,9 +389,9 @@ func TestFocusTrackerMouse(t *testing.T) {
 				{Position: insideRight, Button: mouse.ButtonLeft},
 				{Position: insideRight, Button: mouse.ButtonMiddle},
 				{Position: insideRight, Button: mouse.ButtonRelease},
-				{Position: insideRight, Button: mouse.ButtonRelease},
 			},
-			wantFocused: contLocRoot,
+			wantFocused:   contLocRoot,
+			wantProcessed: 3,
 		},
 	}
 
@@ -396,8 +408,18 @@ func TestFocusTrackerMouse(t *testing.T) {
 				t.Fatalf("New => unexpected error: %v", err)
 			}
 
+			eds := event.NewDistributionSystem()
+			root.Subscribe(eds)
 			for _, ev := range tc.events {
-				root.Mouse(ev)
+				eds.Event(ev)
+			}
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if got, want := eds.Processed(), tc.wantProcessed; got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 
 			var wantFocused *Container

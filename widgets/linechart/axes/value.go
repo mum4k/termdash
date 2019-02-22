@@ -43,7 +43,7 @@ type Value struct {
 
 // String implements fmt.Stringer.
 func (v *Value) String() string {
-	return fmt.Sprintf("Value{%v, %v}", v.Value, v.Rounded)
+	return fmt.Sprintf("Value{Round(%v) => %v}", v.Value, v.Rounded)
 }
 
 // NewValue returns a new instance representing the provided value, rounding

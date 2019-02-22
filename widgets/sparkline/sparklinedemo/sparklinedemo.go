@@ -59,20 +59,29 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	green := sparkline.New(
+	green, err := sparkline.New(
 		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorGreen),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playSparkLine(ctx, green, 250*time.Millisecond)
-	red := sparkline.New(
+	red, err := sparkline.New(
 		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorRed),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playSparkLine(ctx, red, 500*time.Millisecond)
-	yellow := sparkline.New(
+	yellow, err := sparkline.New(
 		sparkline.Label("Yellow SparkLine", cell.FgColor(cell.ColorGreen)),
 		sparkline.Color(cell.ColorYellow),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playSparkLine(ctx, yellow, 1*time.Second)
 
 	c, err := container.New(

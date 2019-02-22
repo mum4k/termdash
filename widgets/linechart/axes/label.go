@@ -23,6 +23,32 @@ import (
 	"github.com/mum4k/termdash/align"
 )
 
+// LabelOrientation represents the orientation of text labels.
+type LabelOrientation int
+
+// String implements fmt.Stringer()
+func (lo LabelOrientation) String() string {
+	if n, ok := labelOrientationNames[lo]; ok {
+		return n
+	}
+	return "LabelOrientationUnknown"
+}
+
+// labelOrientationNames maps LabelOrientation values to human readable names.
+var labelOrientationNames = map[LabelOrientation]string{
+	LabelOrientationHorizontal: "LabelOrientationHorizontal",
+	LabelOrientationVertical:   "LabelOrientationVertical",
+}
+
+const (
+	// LabelOrientationHorizontal is the default label orientation where text
+	// flows horizontally.
+	LabelOrientationHorizontal LabelOrientation = iota
+
+	// LabelOrientationVertical is an orientation where text flows vertically.
+	LabelOrientationVertical
+)
+
 // Label is one value label on an axis.
 type Label struct {
 	// Value if the value to be displayed.
@@ -162,14 +188,14 @@ func (xs *xSpace) Sub(size int) error {
 // fit under the width of the axis.
 // The customLabels map value positions in the series to the desired custom
 // label. These are preferred if present.
-func xLabels(scale *XScale, graphZero image.Point, customLabels map[int]string) ([]*Label, error) {
+func xLabels(scale *XScale, graphZero image.Point, customLabels map[int]string, lo LabelOrientation) ([]*Label, error) {
 	space := newXSpace(graphZero, scale.GraphWidth)
 	const minSpacing = 3
 	var res []*Label
 
-	next := 0
+	next := int(scale.Min.Value)
 	for haveLabels := 0; haveLabels <= int(scale.Max.Value); haveLabels = len(res) {
-		label, err := colLabel(scale, space, next, customLabels)
+		label, err := colLabel(scale, space, customLabels, lo)
 		if err != nil {
 			return nil, err
 		}
@@ -202,23 +228,27 @@ func xLabels(scale *XScale, graphZero image.Point, customLabels map[int]string) 
 	return res, nil
 }
 
-// colLabel returns a label placed either at the beginning of the space.
+// colLabel returns a label placed at the beginning of the space.
 // The space is adjusted according to how much space was taken by the label.
 // Returns nil, nil if the label doesn't fit in the space.
-func colLabel(scale *XScale, space *xSpace, labelNum int, customLabels map[int]string) (*Label, error) {
-	var val *Value
-	if custom, ok := customLabels[labelNum]; ok {
-		val = NewTextValue(custom)
-	} else {
-		pos := space.Relative()
-		v, err := scale.CellLabel(pos.X)
-		if err != nil {
-			return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
-		}
-		val = v
+func colLabel(scale *XScale, space *xSpace, customLabels map[int]string, lo LabelOrientation) (*Label, error) {
+	pos := space.Relative()
+	label, err := scale.CellLabel(pos.X)
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine label value for column %d: %v", pos.X, err)
 	}
 
-	labelLen := len(val.Text())
+	if custom, ok := customLabels[int(label.Value)]; ok {
+		label = NewTextValue(custom)
+	}
+
+	var labelLen int
+	switch lo {
+	case LabelOrientationHorizontal:
+		labelLen = len(label.Text())
+	case LabelOrientationVertical:
+		labelLen = 1
+	}
 	if labelLen > space.Remaining() {
 		return nil, nil
 	}
@@ -229,7 +259,7 @@ func colLabel(scale *XScale, space *xSpace, labelNum int, customLabels map[int]s
 	}
 
 	return &Label{
-		Value: val,
+		Value: label,
 		Pos:   abs,
 	}, nil
 }

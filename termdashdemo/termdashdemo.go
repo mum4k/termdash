@@ -48,7 +48,14 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	if err != nil {
 		return nil, err
 	}
-	spGreen, spRed := newSparkLines(ctx)
+	rollT, err := newRollText(ctx)
+	if err != nil {
+		return nil, err
+	}
+	spGreen, spRed, err := newSparkLines(ctx)
+	if err != nil {
+		return nil, err
+	}
 	segmentTextSpark := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
@@ -61,7 +68,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 					container.Left(
 						container.Border(draw.LineStyleLight),
 						container.BorderTitle("A rolling text"),
-						container.PlaceWidget(newRollText(ctx)),
+						container.PlaceWidget(rollT),
 					),
 					container.Right(
 						container.Border(draw.LineStyleLight),
@@ -77,18 +84,27 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
+	g, err := newGauge(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	heartLC, err := newHeartbeat(ctx)
+	if err != nil {
+		return nil, err
+	}
 	gaugeAndHeartbeat := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("A Gauge"),
 				container.BorderColor(cell.ColorNumber(39)),
-				container.PlaceWidget(newGauge(ctx)),
+				container.PlaceWidget(g),
 			),
 			container.Bottom(
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("A LineChart"),
-				container.PlaceWidget(newHeartbeat(ctx)),
+				container.PlaceWidget(heartLC),
 			),
 			container.SplitPercent(20),
 		),
@@ -102,17 +118,26 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		),
 	}
 
+	bc, err := newBarChart(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	don, err := newDonut(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	sineLC, err := newSines(ctx)
+	if err != nil {
+		return nil, err
+	}
 	rightSide := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
 				container.Border(draw.LineStyleLight),
 				container.BorderTitle("BarChart"),
-				container.PlaceWidget(newBarChart(ctx)),
+				container.PlaceWidget(bc),
 				container.BorderTitleAlignRight(),
 			),
 			container.Bottom(
@@ -127,7 +152,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 						container.Border(draw.LineStyleLight),
 						container.BorderTitle("Multiple series"),
 						container.BorderTitleAlignRight(),
-						container.PlaceWidget(newSines(ctx)),
+						container.PlaceWidget(sineLC),
 					),
 					container.SplitPercent(30),
 				),
@@ -232,8 +257,11 @@ func newSegmentDisplay(ctx context.Context) (*segmentdisplay.SegmentDisplay, err
 }
 
 // newRollText creates a new Text widget that displays rolling text.
-func newRollText(ctx context.Context) *text.Text {
-	t := text.New(text.RollContent())
+func newRollText(ctx context.Context) (*text.Text, error) {
+	t, err := text.New(text.RollContent())
+	if err != nil {
+		return nil, err
+	}
 
 	i := 0
 	go periodic(ctx, 1*time.Second, func() error {
@@ -243,15 +271,18 @@ func newRollText(ctx context.Context) *text.Text {
 		i++
 		return nil
 	})
-	return t
+	return t, nil
 }
 
 // newSparkLines creates two new sparklines displaying random values.
-func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkLine) {
-	spGreen := sparkline.New(
+func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkLine, error) {
+	spGreen, err := sparkline.New(
 		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorGreen),
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	const max = 100
 	go periodic(ctx, 250*time.Millisecond, func() error {
@@ -259,21 +290,27 @@ func newSparkLines(ctx context.Context) (*sparkline.SparkLine, *sparkline.SparkL
 		return spGreen.Add([]int{v})
 	})
 
-	spRed := sparkline.New(
+	spRed, err := sparkline.New(
 		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorRed),
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 	go periodic(ctx, 500*time.Millisecond, func() error {
 		v := int(rand.Int31n(max + 1))
 		return spRed.Add([]int{v})
 	})
-	return spGreen, spRed
+	return spGreen, spRed, nil
 
 }
 
 // newGauge creates a demo Gauge widget.
-func newGauge(ctx context.Context) *gauge.Gauge {
-	g := gauge.New()
+func newGauge(ctx context.Context) (*gauge.Gauge, error) {
+	g, err := gauge.New()
+	if err != nil {
+		return nil, err
+	}
 
 	const start = 35
 	progress := start
@@ -288,7 +325,7 @@ func newGauge(ctx context.Context) *gauge.Gauge {
 		}
 		return nil
 	})
-	return g
+	return g, nil
 }
 
 // newDonut creates a demo Donut widget.
@@ -317,18 +354,21 @@ func newDonut(ctx context.Context) (*donut.Donut, error) {
 }
 
 // newHeartbeat returns a line chart that displays a heartbeat-like progression.
-func newHeartbeat(ctx context.Context) *linechart.LineChart {
+func newHeartbeat(ctx context.Context) (*linechart.LineChart, error) {
 	var inputs []float64
 	for i := 0; i < 100; i++ {
 		v := math.Pow(math.Sin(float64(i)), 63) * math.Sin(float64(i)+1.5) * 8
 		inputs = append(inputs, v)
 	}
 
-	lc := linechart.New(
+	lc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 	)
+	if err != nil {
+		return nil, err
+	}
 	step := 0
 	go periodic(ctx, redrawInterval/3, func() error {
 		step = (step + 1) % len(inputs)
@@ -339,12 +379,12 @@ func newHeartbeat(ctx context.Context) *linechart.LineChart {
 			}),
 		)
 	})
-	return lc
+	return lc, nil
 }
 
 // newBarChart returns a BarcChart that displays random values on multiple bars.
-func newBarChart(ctx context.Context) *barchart.BarChart {
-	bc := barchart.New(
+func newBarChart(ctx context.Context) (*barchart.BarChart, error) {
+	bc, err := barchart.New(
 		barchart.BarColors([]cell.Color{
 			cell.ColorNumber(33),
 			cell.ColorNumber(39),
@@ -363,6 +403,9 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 		}),
 		barchart.ShowValues(),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	const (
 		bars = 6
@@ -376,22 +419,25 @@ func newBarChart(ctx context.Context) *barchart.BarChart {
 
 		return bc.Values(values, max)
 	})
-	return bc
+	return bc, nil
 }
 
 // newSines returns a line chart that displays multiple sine series.
-func newSines(ctx context.Context) *linechart.LineChart {
+func newSines(ctx context.Context) (*linechart.LineChart, error) {
 	var inputs []float64
 	for i := 0; i < 200; i++ {
 		v := math.Sin(float64(i) / 100 * math.Pi)
 		inputs = append(inputs, v)
 	}
 
-	lc := linechart.New(
+	lc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 	)
+	if err != nil {
+		return nil, err
+	}
 	step1 := 0
 	go periodic(ctx, redrawInterval/3, func() error {
 		step1 = (step1 + 1) % len(inputs)
@@ -404,7 +450,7 @@ func newSines(ctx context.Context) *linechart.LineChart {
 		step2 := (step1 + 100) % len(inputs)
 		return lc.Series("second", rotateFloats(inputs, step2), linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite)))
 	})
-	return lc
+	return lc, nil
 }
 
 // rotateFloats returns a new slice with inputs rotated by step.

@@ -17,6 +17,7 @@ package eventqueue
 
 import (
 	"context"
+	"reflect"
 	"sync"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 
 // node is a single data item on the queue.
 type node struct {
+	prev  *node
 	next  *node
 	event terminalapi.Event
 }
@@ -91,7 +93,12 @@ func (u *Unbound) empty() bool {
 func (u *Unbound) Push(e terminalapi.Event) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
+	u.push(e)
+}
 
+// push is the implementation of Push.
+// Caller must hold u.mu.
+func (u *Unbound) push(e terminalapi.Event) {
 	n := &node{
 		event: e,
 	}
@@ -99,8 +106,10 @@ func (u *Unbound) Push(e terminalapi.Event) {
 		u.first = n
 		u.last = n
 	} else {
+		prev := u.last
 		u.last.next = n
 		u.last = n
+		u.last.prev = prev
 	}
 	u.cond.Signal()
 }
@@ -124,10 +133,10 @@ func (u *Unbound) Pop() terminalapi.Event {
 }
 
 // Pull is like Pop(), but blocks until an item is available or the context
-// expires.
-func (u *Unbound) Pull(ctx context.Context) (terminalapi.Event, error) {
+// expires. Returns a nil event if the context expired.
+func (u *Unbound) Pull(ctx context.Context) terminalapi.Event {
 	if e := u.Pop(); e != nil {
-		return e, nil
+		return e
 	}
 
 	u.cond.L.Lock()
@@ -135,12 +144,12 @@ func (u *Unbound) Pull(ctx context.Context) (terminalapi.Event, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil
 		default:
 		}
 
 		if e := u.Pop(); e != nil {
-			return e, nil
+			return e
 		}
 		u.cond.Wait()
 	}
@@ -149,4 +158,74 @@ func (u *Unbound) Pull(ctx context.Context) (terminalapi.Event, error) {
 // Close should be called when the queue isn't needed anymore.
 func (u *Unbound) Close() {
 	close(u.done)
+}
+
+// Throttled is an unbound and throttled FIFO queue of terminal events.
+// Throttled must not be copied, pass it by reference only.
+// This implementation is thread-safe.
+type Throttled struct {
+	queue *Unbound
+	max   int
+}
+
+// NewThrottled returns a new Throttled queue of terminal events.
+//
+// This queue scans the queue content on each Push call and won't Push the
+// event if there already is a continuous chain of exactly the same events
+// en queued. The argument maxRep specifies the maximum number of repetitive
+// events.
+//
+// Call Close() when done with the queue.
+func NewThrottled(maxRep int) *Throttled {
+	t := &Throttled{
+		queue: New(),
+		max:   maxRep,
+	}
+	return t
+}
+
+// Empty determines if the queue is empty.
+func (t *Throttled) Empty() bool {
+	return t.queue.empty()
+}
+
+// Push pushes an event onto the queue.
+func (t *Throttled) Push(e terminalapi.Event) {
+	t.queue.mu.Lock()
+	defer t.queue.mu.Unlock()
+
+	if t.queue.empty() {
+		t.queue.push(e)
+		return
+	}
+
+	var same int
+	for n := t.queue.last; n != nil; n = n.prev {
+		if reflect.DeepEqual(e, n.event) {
+			same++
+		} else {
+			break
+		}
+
+		if same > t.max {
+			return // Drop the repetitive event.
+		}
+	}
+	t.queue.push(e)
+}
+
+// Pop pops an event from the queue. Returns nil if the queue is empty.
+func (t *Throttled) Pop() terminalapi.Event {
+	return t.queue.Pop()
+}
+
+// Pull is like Pop(), but blocks until an item is available or the context
+// expires. Returns a nil event if the context expired.
+func (t *Throttled) Pull(ctx context.Context) terminalapi.Event {
+	return t.queue.Pull(ctx)
+}
+
+// Close should be called when the queue isn't needed anymore.
+func (t *Throttled) Close() {
+	close(t.queue.done)
 }

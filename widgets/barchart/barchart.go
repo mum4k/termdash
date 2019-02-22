@@ -53,14 +53,17 @@ type BarChart struct {
 }
 
 // New returns a new BarChart.
-func New(opts ...Option) *BarChart {
+func New(opts ...Option) (*BarChart, error) {
 	opt := newOptions()
 	for _, o := range opts {
 		o.set(opt)
 	}
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
 	return &BarChart{
 		opts: opt,
-	}
+	}, nil
 }
 
 // Draw draws the BarChart widget onto the canvas.
@@ -155,7 +158,7 @@ func (bc *BarChart) barWidth(cvs *canvas.Canvas) int {
 	}
 
 	if bc.opts.barWidth >= 1 {
-		// Prefer width set via the options if it is positive.
+		// Prefer width set via the options.
 		return bc.opts.barWidth
 	}
 
@@ -266,7 +269,7 @@ func (bc *BarChart) Options() widgetapi.Options {
 	defer bc.mu.Unlock()
 	return widgetapi.Options{
 		MinimumSize:  bc.minSize(),
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 }

@@ -15,7 +15,6 @@
 package area
 
 import (
-	"fmt"
 	"image"
 	"testing"
 
@@ -316,30 +315,6 @@ func TestExcludeBorder(t *testing.T) {
 			got := ExcludeBorder(tc.area)
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("ExcludeBorder => unexpected diff (-want, +got):\n%s", diff)
-			}
-		})
-	}
-}
-
-func TestFindGCF(t *testing.T) {
-	tests := []struct {
-		a    int
-		b    int
-		want int
-	}{
-		{0, 0, 0},
-		{0, 1, 0},
-		{1, 0, 0},
-		{1, 1, 1},
-		{2, 2, 2},
-		{50, 35, 5},
-		{16, 88, 8},
-	}
-
-	for _, tc := range tests {
-		t.Run(fmt.Sprintf("findGCF(%d,%d)", tc.a, tc.b), func(t *testing.T) {
-			if got := findGCF(tc.a, tc.b); got != tc.want {
-				t.Errorf("findGCF(%d,%d) => got %v, want %v", tc.a, tc.b, got, tc.want)
 			}
 		})
 	}

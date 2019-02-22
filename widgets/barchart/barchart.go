@@ -269,7 +269,7 @@ func (bc *BarChart) Options() widgetapi.Options {
 	defer bc.mu.Unlock()
 	return widgetapi.Options{
 		MinimumSize:  bc.minSize(),
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 }

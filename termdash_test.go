@@ -48,7 +48,7 @@ func Example() {
 
 	wOpts := widgetapi.Options{
 		MinimumSize:  fakewidget.MinimumSize,
-		WantKeyboard: true,
+		WantKeyboard: widgetapi.KeyScopeFocused,
 		WantMouse:    true,
 	}
 
@@ -88,7 +88,7 @@ func Example_triggered() {
 
 	wOpts := widgetapi.Options{
 		MinimumSize:  fakewidget.MinimumSize,
-		WantKeyboard: true,
+		WantKeyboard: widgetapi.KeyScopeFocused,
 		WantMouse:    true,
 	}
 
@@ -264,7 +264,7 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantKeyboard: true,
+						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    true,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
@@ -327,7 +327,7 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantKeyboard: true,
+						WantKeyboard: widgetapi.KeyScopeFocused,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyF1},
 				)
@@ -393,7 +393,7 @@ func TestRun(t *testing.T) {
 			cont, err := container.New(
 				got,
 				container.PlaceWidget(fakewidget.New(widgetapi.Options{
-					WantKeyboard: true,
+					WantKeyboard: widgetapi.KeyScopeFocused,
 					WantMouse:    true,
 				})),
 			)
@@ -459,7 +459,7 @@ func TestController(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantKeyboard: true,
+						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    true,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
@@ -579,7 +579,7 @@ func TestController(t *testing.T) {
 			}
 
 			mi := fakewidget.New(widgetapi.Options{
-				WantKeyboard: true,
+				WantKeyboard: widgetapi.KeyScopeFocused,
 				WantMouse:    true,
 			})
 			cont, err := container.New(

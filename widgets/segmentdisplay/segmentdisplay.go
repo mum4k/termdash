@@ -258,7 +258,7 @@ func (sd *SegmentDisplay) Options() widgetapi.Options {
 	return widgetapi.Options{
 		// The smallest supported size of a display segment.
 		MinimumSize:  image.Point{sixteen.MinCols, sixteen.MinRows},
-		WantKeyboard: false,
+		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    false,
 	}
 }

@@ -589,15 +589,15 @@ func TestKeyboard(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: true})),
+							PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
 						),
 						Right(
 							SplitHorizontal(
 								Top(
-									PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: true})),
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
 								),
 								Bottom(
-									PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: true})),
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
 								),
 							),
 						),
@@ -629,19 +629,89 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 20, 20)),
-					widgetapi.Options{WantKeyboard: true},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(20, 0, 40, 10)),
-					widgetapi.Options{WantKeyboard: true},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 				)
 
 				// The focused widget receives the key.
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(20, 10, 40, 20)),
-					widgetapi.Options{WantKeyboard: true},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
+					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				)
+				return ft
+			},
+		},
+		{
+			desc:     "event forwarded to all widgets that requested global key scope",
+			termSize: image.Point{40, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeGlobal})),
+						),
+						Right(
+							SplitHorizontal(
+								Top(
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
+								),
+								Bottom(
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
+								),
+							),
+						),
+					),
+				)
+			},
+			eventGroups: []*eventGroup{
+				// Move focus to the target container.
+				{
+					events: []terminalapi.Event{
+						&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonLeft},
+						&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonRelease},
+					},
+					wantProcessed: 2,
+				},
+				// Send the keyboard event.
+				{
+					events: []terminalapi.Event{
+						&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					},
+					wantProcessed: 5,
+				},
+			},
+
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				// Widget that isn't focused, but registered for global
+				// keyboard events.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 0, 20, 20)),
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeGlobal},
+					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				)
+
+				// Widget that isn't focused and only wants focused events.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(20, 0, 40, 10)),
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
+				)
+
+				// The focused widget receives the key.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(20, 10, 40, 20)),
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
 				return ft
@@ -653,7 +723,7 @@ func TestKeyboard(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: false})),
+					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeNone})),
 				)
 			},
 			eventGroups: []*eventGroup{
@@ -681,7 +751,7 @@ func TestKeyboard(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: true})),
+					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
 				)
 			},
 			eventGroups: []*eventGroup{

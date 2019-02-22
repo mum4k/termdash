@@ -784,7 +784,7 @@ func TestOptions(t *testing.T) {
 			desc: "minimum size for one character",
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: true,
+				WantKeyboard: widgetapi.KeyScopeFocused,
 				WantMouse:    true,
 			},
 		},
@@ -795,7 +795,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
+				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    false,
 			},
 		},

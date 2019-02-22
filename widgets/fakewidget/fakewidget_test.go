@@ -281,7 +281,7 @@ func TestMirror(t *testing.T) {
 func TestOptions(t *testing.T) {
 	want := widgetapi.Options{
 		Ratio:        image.Point{1, 2},
-		WantKeyboard: true,
+		WantKeyboard: widgetapi.KeyScopeFocused,
 	}
 
 	w := New(want)
@@ -323,7 +323,7 @@ func TestDraw(t *testing.T) {
 		{
 			desc: "draws both keyboard and mouse events",
 			opts: widgetapi.Options{
-				WantKeyboard: true,
+				WantKeyboard: widgetapi.KeyScopeFocused,
 				WantMouse:    true,
 			},
 			cvs: testcanvas.MustNew(image.Rect(0, 0, 17, 5)),

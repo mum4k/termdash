@@ -90,6 +90,12 @@ func (fsm *FSM) Event(m *terminalapi.Mouse) (bool, State) {
 	return clicked, bs
 }
 
+// UpdateArea informs FSM of an area change.
+// This method is idempotent.
+func (fsm *FSM) UpdateArea(area image.Rectangle) {
+	fsm.area = area
+}
+
 // stateFn is a single state in the state machine.
 // Returns bool indicating if a click happened, the state of the button and the
 // next state of the FSM.

@@ -324,7 +324,7 @@ func TestDraw(t *testing.T) {
 			desc: "draws both keyboard and mouse events",
 			opts: widgetapi.Options{
 				WantKeyboard: widgetapi.KeyScopeFocused,
-				WantMouse:    true,
+				WantMouse: widgetapi.MouseScopeWidget,
 			},
 			cvs: testcanvas.MustNew(image.Rect(0, 0, 17, 5)),
 			events: []terminalapi.Event{

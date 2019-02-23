@@ -49,7 +49,7 @@ func Example() {
 	wOpts := widgetapi.Options{
 		MinimumSize:  fakewidget.MinimumSize,
 		WantKeyboard: widgetapi.KeyScopeFocused,
-		WantMouse:    true,
+		WantMouse: widgetapi.MouseScopeWidget,
 	}
 
 	// Create the container with two fake widgets.
@@ -89,7 +89,7 @@ func Example_triggered() {
 	wOpts := widgetapi.Options{
 		MinimumSize:  fakewidget.MinimumSize,
 		WantKeyboard: widgetapi.KeyScopeFocused,
-		WantMouse:    true,
+		WantMouse: widgetapi.MouseScopeWidget,
 	}
 
 	// Create the container with a widget.
@@ -239,7 +239,7 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantMouse: true,
+						WantMouse: widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				)
@@ -265,7 +265,7 @@ func TestRun(t *testing.T) {
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
-						WantMouse:    true,
+						WantMouse: widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -360,7 +360,7 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantMouse: true,
+						WantMouse: widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
 				)
@@ -394,7 +394,7 @@ func TestRun(t *testing.T) {
 				got,
 				container.PlaceWidget(fakewidget.New(widgetapi.Options{
 					WantKeyboard: widgetapi.KeyScopeFocused,
-					WantMouse:    true,
+					WantMouse: widgetapi.MouseScopeWidget,
 				})),
 			)
 			if err != nil {
@@ -460,7 +460,7 @@ func TestController(t *testing.T) {
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
-						WantMouse:    true,
+						WantMouse: widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -580,7 +580,7 @@ func TestController(t *testing.T) {
 
 			mi := fakewidget.New(widgetapi.Options{
 				WantKeyboard: widgetapi.KeyScopeFocused,
-				WantMouse:    true,
+				WantMouse: widgetapi.MouseScopeWidget,
 			})
 			cont, err := container.New(
 				got,

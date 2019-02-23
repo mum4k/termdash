@@ -200,26 +200,18 @@ func (c *Container) updateFocus(m *terminalapi.Mouse) {
 }
 
 // keyboardToWidget forwards the keyboard event to the widget unconditionally.
-func (c *Container) keyboardToWidget(k *terminalapi.Keyboard) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.opts.widget.Keyboard(k)
-}
-
-// keyboardToFocusedWidget forwards the keyboard event to the widget if its
-// container is focused.
-func (c *Container) keyboardToFocusedWidget(k *terminalapi.Keyboard) error {
+func (c *Container) keyboardToWidget(k *terminalapi.Keyboard, scope widgetapi.KeyScope) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if !c.focusTracker.isActive(c) {
+	if scope == widgetapi.KeyScopeFocused && !c.focusTracker.isActive(c) {
 		return nil
 	}
 	return c.opts.widget.Keyboard(k)
 }
 
 // mouseToWidget forwards the mouse event to the widget.
-func (c *Container) mouseToWidget(m *terminalapi.Mouse) error {
+func (c *Container) mouseToWidget(m *terminalapi.Mouse, scope widgetapi.MouseScope) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -229,7 +221,7 @@ func (c *Container) mouseToWidget(m *terminalapi.Mouse) error {
 	}
 
 	// Ignore clicks falling outside of the container.
-	if !m.Position.In(target.usable()) {
+	if scope != widgetapi.MouseScopeGlobal && !m.Position.In(c.area) {
 		return nil
 	}
 
@@ -238,7 +230,7 @@ func (c *Container) mouseToWidget(m *terminalapi.Mouse) error {
 	if err != nil {
 		return err
 	}
-	if !m.Position.In(wa) {
+	if scope == widgetapi.MouseScopeWidget && !m.Position.In(wa) {
 		return nil
 	}
 
@@ -246,9 +238,17 @@ func (c *Container) mouseToWidget(m *terminalapi.Mouse) error {
 	// based, even though the widget might not be in the top left corner on the
 	// terminal.
 	offset := wa.Min
-	wm := &terminalapi.Mouse{
-		Position: m.Position.Sub(offset),
-		Button:   m.Button,
+	var wm *terminalapi.Mouse
+	if m.Position.In(wa) {
+		wm = &terminalapi.Mouse{
+			Position: m.Position.Sub(offset),
+			Button:   m.Button,
+		}
+	} else {
+		wm = &terminalapi.Mouse{
+			Position: image.Point{-1, -1},
+			Button:   m.Button,
+		}
 	}
 	return c.opts.widget.Mouse(wm)
 }
@@ -274,28 +274,25 @@ func (c *Container) Subscribe(eds *event.DistributionSystem) {
 	preOrder(root, &errStr, visitFunc(func(c *Container) error {
 		if c.hasWidget() {
 			wOpt := c.opts.widget.Options()
-			switch wOpt.WantKeyboard {
+			switch scope := wOpt.WantKeyboard; scope {
 			case widgetapi.KeyScopeNone:
 				// Widget doesn't want any keyboard events.
 
-			case widgetapi.KeyScopeFocused:
+			default:
 				eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
-					if err := c.keyboardToFocusedWidget(ev.(*terminalapi.Keyboard)); err != nil {
-						eds.Event(terminalapi.NewErrorf("failed to send keyboard event %v to widget %T: %v", ev, c.opts.widget, err))
-					}
-				}, event.MaxRepetitive(maxReps))
-
-			case widgetapi.KeyScopeGlobal:
-				eds.Subscribe([]terminalapi.Event{&terminalapi.Keyboard{}}, func(ev terminalapi.Event) {
-					if err := c.keyboardToWidget(ev.(*terminalapi.Keyboard)); err != nil {
+					if err := c.keyboardToWidget(ev.(*terminalapi.Keyboard), scope); err != nil {
 						eds.Event(terminalapi.NewErrorf("failed to send global keyboard event %v to widget %T: %v", ev, c.opts.widget, err))
 					}
 				}, event.MaxRepetitive(maxReps))
 			}
 
-			if wOpt.WantMouse {
+			switch scope := wOpt.WantMouse; scope {
+			case widgetapi.MouseScopeNone:
+				// Widget doesn't want any mouse events.
+
+			default:
 				eds.Subscribe([]terminalapi.Event{&terminalapi.Mouse{}}, func(ev terminalapi.Event) {
-					if err := c.mouseToWidget(ev.(*terminalapi.Mouse)); err != nil {
+					if err := c.mouseToWidget(ev.(*terminalapi.Mouse), scope); err != nil {
 						eds.Event(terminalapi.NewErrorf("failed to send mouse event %v to widget %T: %v", ev, c.opts.widget, err))
 					}
 				}, event.MaxRepetitive(maxReps))

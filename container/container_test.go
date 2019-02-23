@@ -841,7 +841,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: true})),
+					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
 				)
 			},
 			events: []terminalapi.Event{
@@ -883,15 +883,15 @@ func TestMouse(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: true})),
+							PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
 						),
 						Right(
 							SplitHorizontal(
 								Top(
-									PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: true})),
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
 								),
 								Bottom(
-									PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: true})),
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
 								),
 							),
 						),
@@ -913,7 +913,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(25, 10, 50, 20)),
-					widgetapi.Options{WantMouse: true},
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Keyboard{},
 				)
 
@@ -921,7 +921,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(25, 0, 50, 10)),
-					widgetapi.Options{WantMouse: true},
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{24, 9}, Button: mouse.ButtonLeft},
 					&terminalapi.Mouse{Position: image.Point{24, 9}, Button: mouse.ButtonRelease},
 				)
@@ -935,7 +935,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: false})),
+					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeNone})),
 				)
 			},
 			events: []terminalapi.Event{
@@ -954,14 +954,14 @@ func TestMouse(t *testing.T) {
 			wantProcessed: 1,
 		},
 		{
-			desc:     "event not forwarded if it falls on the container's border",
+			desc:     "MouseScopeWidget, event not forwarded if it falls on the container's border",
 			termSize: image.Point{20, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					Border(draw.LineStyleLight),
 					PlaceWidget(
-						fakewidget.New(widgetapi.Options{WantMouse: true}),
+						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget}),
 					),
 				)
 			},
@@ -989,14 +989,86 @@ func TestMouse(t *testing.T) {
 			wantProcessed: 2,
 		},
 		{
-			desc:     "event not forwarded if it falls outside of widget's canvas",
+			desc:     "MouseScopeContainer, event forwarded if it falls on the container's border",
+			termSize: image.Point{21, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(
+						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeContainer}),
+					),
+				)
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					ft.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testcanvas.MustApply(cvs, ft)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(1, 1, 20, 19)),
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
+				)
+				return ft
+			},
+			wantProcessed: 2,
+		},
+		{
+			desc:     "MouseScopeGlobal, event forwarded if it falls on the container's border",
+			termSize: image.Point{21, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(draw.LineStyleLight),
+					PlaceWidget(
+						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeGlobal}),
+					),
+				)
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					ft.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testcanvas.MustApply(cvs, ft)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(1, 1, 20, 19)),
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
+				)
+				return ft
+			},
+			wantProcessed: 2,
+		},
+		{
+			desc:     "MouseScopeWidget event not forwarded if it falls outside of widget's canvas",
 			termSize: image.Point{20, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{
-							WantMouse: true,
+							WantMouse: widgetapi.MouseScopeWidget,
 							Ratio:     image.Point{2, 1},
 						}),
 					),
@@ -1020,14 +1092,187 @@ func TestMouse(t *testing.T) {
 			wantProcessed: 2,
 		},
 		{
-			desc:     "mouse poisition adjusted relative to widget's canvas, vertical offset",
+			desc:     "MouseScopeContainer event forwarded if it falls outside of widget's canvas",
 			termSize: image.Point{20, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{
-							WantMouse: true,
+							WantMouse: widgetapi.MouseScopeContainer,
+							Ratio:     image.Point{2, 1},
+						}),
+					),
+					AlignVertical(align.VerticalMiddle),
+					AlignHorizontal(align.HorizontalCenter),
+				)
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
+				)
+				return ft
+			},
+			wantProcessed: 2,
+		},
+		{
+			desc:     "MouseScopeGlobal event forwarded if it falls outside of widget's canvas",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					PlaceWidget(
+						fakewidget.New(widgetapi.Options{
+							WantMouse: widgetapi.MouseScopeGlobal,
+							Ratio:     image.Point{2, 1},
+						}),
+					),
+					AlignVertical(align.VerticalMiddle),
+					AlignHorizontal(align.HorizontalCenter),
+				)
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
+				)
+				return ft
+			},
+			wantProcessed: 2,
+		},
+		{
+			desc:     "MouseScopeWidget event not forwarded if it falls to another container",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(),
+						Bottom(
+							PlaceWidget(
+								fakewidget.New(widgetapi.Options{
+									WantMouse: widgetapi.MouseScopeWidget,
+									Ratio:     image.Point{2, 1},
+								}),
+							),
+							AlignVertical(align.VerticalMiddle),
+							AlignHorizontal(align.HorizontalCenter),
+						),
+					),
+				)
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 10, 20, 20)),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+			wantProcessed: 2,
+		},
+		{
+			desc:     "MouseScopeContainer event not forwarded if it falls to another container",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(),
+						Bottom(
+							PlaceWidget(
+								fakewidget.New(widgetapi.Options{
+									WantMouse: widgetapi.MouseScopeContainer,
+									Ratio:     image.Point{2, 1},
+								}),
+							),
+							AlignVertical(align.VerticalMiddle),
+							AlignHorizontal(align.HorizontalCenter),
+						),
+					),
+				)
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 10, 20, 20)),
+					widgetapi.Options{},
+				)
+				return ft
+			},
+			wantProcessed: 2,
+		},
+		{
+			desc:     "MouseScopeGlobal event forwarded if it falls to another container",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(),
+						Bottom(
+							PlaceWidget(
+								fakewidget.New(widgetapi.Options{
+									WantMouse: widgetapi.MouseScopeGlobal,
+									Ratio:     image.Point{2, 1},
+								}),
+							),
+							AlignVertical(align.VerticalMiddle),
+							AlignHorizontal(align.HorizontalCenter),
+						),
+					),
+				)
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 10, 20, 20)),
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
+				)
+				return ft
+			},
+			wantProcessed: 2,
+		},
+		{
+			desc:     "mouse position adjusted relative to widget's canvas, vertical offset",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					PlaceWidget(
+						fakewidget.New(widgetapi.Options{
+							WantMouse: widgetapi.MouseScopeWidget,
 							Ratio:     image.Point{2, 1},
 						}),
 					),
@@ -1044,7 +1289,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
-					widgetapi.Options{WantMouse: true},
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				)
 				return ft
@@ -1059,7 +1304,7 @@ func TestMouse(t *testing.T) {
 					ft,
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{
-							WantMouse: true,
+							WantMouse: widgetapi.MouseScopeWidget,
 							Ratio:     image.Point{9, 10},
 						}),
 					),
@@ -1076,7 +1321,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(6, 0, 24, 20)),
-					widgetapi.Options{WantMouse: true},
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				)
 				return ft
@@ -1089,7 +1334,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: true})),
+					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
 				)
 			},
 			events: []terminalapi.Event{

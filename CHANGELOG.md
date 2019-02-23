@@ -34,10 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subscriber.
 - The infrastructure now throttles event driven screen redraw rather than
   redrawing for each input event.
-- Widgets can now specify the scope at which they want to receive keyboard
-  events, i.e. KeyScopeNone for no events, KeyScopeFocused to receive events
-  only if the parent container is focused and KeyScopeGlobal to receive all
-  keyboard events.
+- Widgets can now specify the scope at which they want to receive keyboard and
+  mouse events.
 
 #### Breaking API changes
 
@@ -55,8 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   distribution system. This shouldn't affect users as the removed methods
   aren't needed by container users.
 - The widgetapi.Options struct now uses an enum instead of a boolean when
-  widget specifies if it wants keyboard events. This affects development of new
-  widgets.
+  widget specifies if it wants keyboard or mouse events. This only impacts
+  development of new widgets.
 
 ### Fixed
 

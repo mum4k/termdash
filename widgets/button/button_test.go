@@ -128,28 +128,6 @@ func TestButton(t *testing.T) {
 	}
 }
 
-func TestKeyboard(t *testing.T) {
-	ct := &callbackTracker{}
-	b, err := New("text", ct.callback)
-	if err != nil {
-		t.Fatalf("New => unexpected error: %v", err)
-	}
-	if err := b.Keyboard(&terminalapi.Keyboard{}); err == nil {
-		t.Errorf("Keyboard => got nil err, wanted one")
-	}
-}
-
-func TestMouse(t *testing.T) {
-	ct := &callbackTracker{}
-	b, err := New("text", ct.callback)
-	if err != nil {
-		t.Fatalf("New => unexpected error: %v", err)
-	}
-	if err := b.Mouse(&terminalapi.Mouse{}); err == nil {
-		t.Errorf("Mouse => got nil err, wanted one")
-	}
-}
-
 func TestOptions(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -164,7 +142,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{14, 4},
 				MaximumSize:  image.Point{14, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -174,7 +152,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{13, 4},
 				MaximumSize:  image.Point{13, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -187,7 +165,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{13, 4},
 				MaximumSize:  image.Point{13, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -200,7 +178,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 11},
 				MaximumSize:  image.Point{8, 11},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -213,7 +191,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{11, 4},
 				MaximumSize:  image.Point{11, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 
@@ -224,7 +202,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -237,7 +215,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeFocused,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -250,7 +228,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeGlobal,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 	}

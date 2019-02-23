@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -61,43 +62,31 @@ func (o *options) validate() error {
 }
 
 // newOptions returns options with the default values set.
-func newOptions(textWidth int) *options {
+func newOptions(text string) *options {
 	return &options{
-		fillColor:   DefaultFillColor,
-		textColor:   DefaultTextColor,
-		shadowColor: DefaultShadowColor,
+		fillColor:   cell.ColorNumber(117),
+		textColor:   cell.ColorBlack,
+		shadowColor: cell.ColorNumber(240),
 		height:      DefaultHeight,
-		width:       textWidth + 2, // One empty cell on each side of the text.
+		width:       widthFor(text),
 	}
 }
 
-// DefaultFillColor is the default for the FillColor option.
-const DefaultFillColor = cell.ColorCyan
-
 // FillColor sets the fill color of the button.
-// Defaults to DefaultFillColor.
 func FillColor(c cell.Color) Option {
 	return option(func(opts *options) {
 		opts.fillColor = c
 	})
 }
 
-// DefaultTextColor is the default for the TextColor option.
-const DefaultTextColor = cell.ColorBlack
-
 // TextColor sets the color of the text label in the button.
-// Defaults to DefaultTextColor.
 func TextColor(c cell.Color) Option {
 	return option(func(opts *options) {
 		opts.textColor = c
 	})
 }
 
-// DefaultShadowColor is the default of the ShadowColor option.
-const DefaultShadowColor = cell.Color(250)
-
 // ShadowColor sets the color of the shadow under the button.
-// Defaults to DefaultShadowColor.
 func ShadowColor(c cell.Color) Option {
 	return option(func(opts *options) {
 		opts.shadowColor = c
@@ -125,6 +114,15 @@ func Width(cells int) Option {
 	})
 }
 
+// WidthFor sets the width of the button as if it was displaying the provided text.
+// Useful when displaying multiple buttons with the intention to set all of
+// their sizes equal to the one with the longest text.
+func WidthFor(text string) Option {
+	return option(func(opts *options) {
+		opts.width = widthFor(text)
+	})
+}
+
 // Key configures the keyboard key that presses the button.
 // The widget responds to this key only if its container if focused.
 // When not provided, the widget ignores all keyboard events.
@@ -141,6 +139,11 @@ func Key(k keyboard.Key) Option {
 func GlobalKey(k keyboard.Key) Option {
 	return option(func(opts *options) {
 		opts.key = k
-		opts.keyScope = widgetapi.KeyScopeFocused
+		opts.keyScope = widgetapi.KeyScopeGlobal
 	})
+}
+
+// widthFor returns the required width for the specified text.
+func widthFor(text string) int {
+	return runewidth.StringWidth(text) + 2 // One empty cell at each side.
 }

@@ -153,36 +153,103 @@ func TestMouse(t *testing.T) {
 func TestOptions(t *testing.T) {
 	tests := []struct {
 		desc string
+		text string
 		opts []Option
 		want widgetapi.Options
 	}{
 		{
-			desc: "doesn't want keyboard by default",
+			desc: "width is based on the text width by default",
+			text: "hello world",
 			want: widgetapi.Options{
-				MinimumSize:  image.Point{6, 3},
+				MinimumSize:  image.Point{14, 4},
+				MaximumSize:  image.Point{14, 4},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    true,
+			},
+		},
+		{
+			desc: "width supports full-width unicode characters",
+			text: "■㈱の世界①",
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{13, 4},
+				MaximumSize:  image.Point{13, 4},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    true,
+			},
+		},
+		{
+			desc: "width specified via WidthFor",
+			text: "hello",
+			opts: []Option{
+				WidthFor("■㈱の世界①"),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{13, 4},
+				MaximumSize:  image.Point{13, 4},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    true,
+			},
+		},
+		{
+			desc: "custom height specified",
+			text: "hello",
+			opts: []Option{
+				Height(10),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{8, 11},
+				MaximumSize:  image.Point{8, 11},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    true,
+			},
+		},
+		{
+			desc: "custom width specified",
+			text: "hello",
+			opts: []Option{
+				Width(10),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{11, 4},
+				MaximumSize:  image.Point{11, 4},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    true,
+			},
+		},
+
+		{
+			desc: "doesn't want keyboard by default",
+			text: "hello",
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{8, 4},
+				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    true,
 			},
 		},
 		{
 			desc: "registers for focused keyboard events",
+			text: "hello",
 			opts: []Option{
 				Key(keyboard.KeyEnter),
 			},
 			want: widgetapi.Options{
-				MinimumSize:  image.Point{6, 3},
+				MinimumSize:  image.Point{8, 4},
+				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeFocused,
 				WantMouse:    true,
 			},
 		},
 		{
 			desc: "registers for global keyboard events",
+			text: "hello",
 			opts: []Option{
 				GlobalKey(keyboard.KeyEnter),
 			},
 			want: widgetapi.Options{
-				MinimumSize:  image.Point{6, 3},
-				WantKeyboard: widgetapi.KeyScopeFocused,
+				MinimumSize:  image.Point{8, 4},
+				MaximumSize:  image.Point{8, 4},
+				WantKeyboard: widgetapi.KeyScopeGlobal,
 				WantMouse:    true,
 			},
 		},
@@ -191,7 +258,7 @@ func TestOptions(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			ct := &callbackTracker{}
-			b, err := New("text", ct.callback, tc.opts...)
+			b, err := New(tc.text, ct.callback, tc.opts...)
 			if err != nil {
 				t.Fatalf("New => unexpected error: %v", err)
 			}

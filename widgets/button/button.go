@@ -17,12 +17,15 @@
 package button
 
 import (
-	"errors"
 	"image"
 	"sync"
 
-	runewidth "github.com/mattn/go-runewidth"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/mouse/button"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -48,6 +51,14 @@ type Button struct {
 	// text in the text label displayed in the button.
 	text string
 
+	// mouseFSM tracks left mouse clicks.
+	mouseFSM *button.FSM
+	// state is the current state of the button.
+	state button.State
+
+	// callback gets called on each button press.
+	callback CallbackFn
+
 	// mu protects the widget.
 	mu sync.Mutex
 
@@ -58,7 +69,7 @@ type Button struct {
 // New returns a new Button that will display the provided text.
 // Each press of the button will invoke the callback function.
 func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
-	opt := newOptions(runewidth.StringWidth(text))
+	opt := newOptions(text)
 	for _, o := range opts {
 		o.set(opt)
 	}
@@ -66,8 +77,10 @@ func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
 		return nil, err
 	}
 	return &Button{
-		text: text,
-		opts: opt,
+		text:     text,
+		mouseFSM: button.NewFSM(mouse.ButtonLeft, image.ZR),
+		callback: cFn,
+		opts:     opt,
 	}, nil
 }
 
@@ -77,34 +90,83 @@ func (b *Button) Draw(cvs *canvas.Canvas) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	return errors.New("unimplemented")
+	cvsAr := cvs.Area()
+
+	shadowAr := image.Rect(1, 1, cvsAr.Dx(), cvsAr.Dy())
+	if err := cvs.SetAreaCellOpts(shadowAr, cell.BgColor(b.opts.shadowColor)); err != nil {
+		return err
+	}
+
+	var buttonAr image.Rectangle
+	if b.state == button.Up {
+		buttonAr = image.Rect(0, 0, cvsAr.Dx()-shadowWidth, cvsAr.Dy()-shadowWidth)
+	} else {
+		buttonAr = shadowAr
+	}
+
+	if err := cvs.SetAreaCellOpts(buttonAr, cell.BgColor(b.opts.fillColor)); err != nil {
+		return err
+	}
+	b.mouseFSM.UpdateArea(buttonAr)
+
+	textAr := image.Rect(buttonAr.Min.X+1, buttonAr.Min.Y, buttonAr.Dx()-1, buttonAr.Max.Y)
+	start, err := align.Text(textAr, b.text, align.HorizontalCenter, align.VerticalMiddle)
+	if err != nil {
+		return err
+	}
+	if err := draw.Text(cvs, b.text, start,
+		draw.TextOverrunMode(draw.OverrunModeThreeDot),
+		draw.TextMaxX(textAr.Max.X),
+		draw.TextCellOpts(cell.FgColor(b.opts.textColor)),
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Keyboard processes keyboard events, acts as a button press on the configured
 // Key.
 //
 // Implements widgetapi.Widget.Keyboard.
-func (*Button) Keyboard(k *terminalapi.Keyboard) error {
-	return errors.New("unimplemented")
+func (b *Button) Keyboard(k *terminalapi.Keyboard) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if k.Key == b.opts.key {
+		return b.callback()
+	}
+	return nil
 }
 
 // Mouse processes mouse events, acts as a button press if both the press and
 // the release happen inside the button.
 //
 // Implements widgetapi.Widget.Mouse.
-func (*Button) Mouse(m *terminalapi.Mouse) error {
-	return errors.New("the SegmentDisplay widget doesn't support mouse events")
+func (b *Button) Mouse(m *terminalapi.Mouse) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	clicked, state := b.mouseFSM.Event(m)
+	b.state = state
+	if clicked {
+		return b.callback()
+	}
+	return nil
 }
+
+// shadowWidth is the width of the shadow under the button in cell.
+const shadowWidth = 1
 
 // Options implements widgetapi.Widget.Options.
 func (b *Button) Options() widgetapi.Options {
 	// No need to lock, as the height and width get fixed when New is called.
 
-	// TODO calculate width and set MaximumSize too.
-	height := b.opts.height + 1 // One for the shadow.
+	width := b.opts.width + shadowWidth
+	height := b.opts.height + shadowWidth
 	return widgetapi.Options{
-		MinimumSize:  image.Point{b.opts.width, height},
-		MaximumSize:  image.Point{b.opts.width, height},
+		MinimumSize:  image.Point{width, height},
+		MaximumSize:  image.Point{width, height},
 		WantKeyboard: b.opts.keyScope,
 		WantMouse:    true,
 	}

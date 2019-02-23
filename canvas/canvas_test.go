@@ -100,6 +100,278 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestCanvas(t *testing.T) {
+	tests := []struct {
+		desc    string
+		canvas  image.Rectangle
+		ops     func(*Canvas) error
+		want    func(size image.Point) (*faketerm.Terminal, error)
+		wantErr bool
+	}{
+		{
+			desc:   "SetCellOpts fails on a point outside of the canvas",
+			canvas: image.Rect(0, 0, 1, 1),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetCellOpts(image.Point{1, 1})
+			},
+			wantErr: true,
+		},
+		{
+			desc:   "SetCellOpts sets options on a cell with no options",
+			canvas: image.Rect(0, 0, 2, 2),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetCellOpts(image.Point{0, 1}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				c, err := cvs.Cell(image.Point{0, 1})
+				if err != nil {
+					return nil, err
+				}
+				if _, err := cvs.SetCell(image.Point{0, 1}, c.Rune, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetCellOpts preserves cell rune",
+			canvas: image.Rect(0, 0, 2, 2),
+			ops: func(cvs *Canvas) error {
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X'); err != nil {
+					return err
+				}
+				return cvs.SetCellOpts(image.Point{0, 1}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetCellOpts overwrites options set previously",
+			canvas: image.Rect(0, 0, 2, 2),
+			ops: func(cvs *Canvas) error {
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return err
+				}
+				return cvs.SetCellOpts(image.Point{0, 1}, cell.FgColor(cell.ColorGreen), cell.BgColor(cell.ColorYellow))
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X', cell.FgColor(cell.ColorGreen), cell.BgColor(cell.ColorYellow)); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetCellOpts sets default options when no options provided",
+			canvas: image.Rect(0, 0, 2, 2),
+			ops: func(cvs *Canvas) error {
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return err
+				}
+				return cvs.SetCellOpts(image.Point{0, 1})
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X'); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetCellOpts is idempotent",
+			canvas: image.Rect(0, 0, 2, 2),
+			ops: func(cvs *Canvas) error {
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X'); err != nil {
+					return err
+				}
+				if err := cvs.SetCellOpts(image.Point{0, 1}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return err
+				}
+				return cvs.SetCellOpts(image.Point{0, 1}, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err := cvs.SetCell(image.Point{0, 1}, 'X', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetAreaCellOpts fails on area too large",
+			canvas: image.Rect(0, 0, 1, 1),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCellOpts(image.Rect(0, 0, 2, 2), cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			wantErr: true,
+		},
+		{
+			desc:   "SetAreaCellOpts sets options in the full canvas",
+			canvas: image.Rect(0, 0, 1, 1),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCellOpts(image.Rect(0, 0, 1, 1), cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				for _, p := range []image.Point{
+					{0, 0},
+				} {
+					c, err := cvs.Cell(p)
+					if err != nil {
+						return nil, err
+					}
+					if _, err := cvs.SetCell(p, c.Rune, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+						return nil, err
+					}
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetAreaCellOpts sets options in a sub-area",
+			canvas: image.Rect(0, 0, 3, 3),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCellOpts(image.Rect(0, 0, 2, 2), cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				for _, p := range []image.Point{
+					{0, 0},
+					{0, 1},
+					{1, 0},
+					{1, 1},
+				} {
+					c, err := cvs.Cell(p)
+					if err != nil {
+						return nil, err
+					}
+					if _, err := cvs.SetCell(p, c.Rune, cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+						return nil, err
+					}
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			cvs, err := New(tc.canvas)
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
+
+			if tc.ops != nil {
+				err := tc.ops(cvs)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("tc.ops => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+				if err != nil {
+					return
+				}
+			}
+
+			size := cvs.Size()
+			got, err := faketerm.New(size)
+			if err != nil {
+				t.Fatalf("faketerm.New => unexpected error: %v", err)
+			}
+			if err := cvs.Apply(got); err != nil {
+				t.Fatalf("cvs.Apply => %v", err)
+			}
+
+			var want *faketerm.Terminal
+			if tc.want != nil {
+				want, err = tc.want(size)
+				if err != nil {
+					t.Fatalf("tc.want => unexpected error: %v", err)
+				}
+			} else {
+				w, err := faketerm.New(size)
+				if err != nil {
+					t.Fatalf("faketerm.New => unexpected error: %v", err)
+				}
+				want = w
+			}
+
+			if diff := faketerm.Diff(want, got); diff != "" {
+				t.Errorf("cvs.SetCellOpts => %v", diff)
+			}
+		})
+	}
+}
+
 func TestSetCellAndApply(t *testing.T) {
 	tests := []struct {
 		desc           string

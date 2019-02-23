@@ -470,7 +470,7 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse: widgetapi.MouseScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
@@ -481,7 +481,7 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 2},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse: widgetapi.MouseScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
@@ -493,7 +493,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{1, 3},
 				MaximumSize:  image.Point{1, 3},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse: widgetapi.MouseScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
@@ -506,7 +506,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{1, 4},
 				MaximumSize:  image.Point{1, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse: widgetapi.MouseScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 	}

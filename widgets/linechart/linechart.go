@@ -492,7 +492,7 @@ func (lc *LineChart) Options() widgetapi.Options {
 
 	return widgetapi.Options{
 		MinimumSize: lc.minSize(),
-		WantMouse: widgetapi.MouseScopeWidget,
+		WantMouse:   widgetapi.MouseScopeWidget,
 	}
 }
 

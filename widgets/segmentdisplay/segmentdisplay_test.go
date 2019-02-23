@@ -822,7 +822,7 @@ func TestOptions(t *testing.T) {
 	want := widgetapi.Options{
 		MinimumSize:  image.Point{sixteen.MinCols, sixteen.MinRows},
 		WantKeyboard: widgetapi.KeyScopeNone,
-		WantMouse: widgetapi.MouseScopeNone,
+		WantMouse:    widgetapi.MouseScopeNone,
 	}
 	if diff := pretty.Compare(want, got); diff != "" {
 		t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)

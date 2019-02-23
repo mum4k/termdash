@@ -168,6 +168,6 @@ func (b *Button) Options() widgetapi.Options {
 		MinimumSize:  image.Point{width, height},
 		MaximumSize:  image.Point{width, height},
 		WantKeyboard: b.opts.keyScope,
-		WantMouse: widgetapi.MouseScopeWidget,
+		WantMouse:    widgetapi.MouseScopeWidget,
 	}
 }

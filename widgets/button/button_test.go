@@ -19,10 +19,16 @@ import (
 	"image"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/canvas/testcanvas"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/faketerm"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -61,6 +67,7 @@ func TestButton(t *testing.T) {
 	tests := []struct {
 		desc         string
 		text         string
+		callback     *callbackTracker
 		opts         []Option
 		events       []terminalapi.Event
 		canvas       image.Rectangle
@@ -68,12 +75,311 @@ func TestButton(t *testing.T) {
 		wantCallback *callbackTracker
 		wantNewErr   bool
 		wantDrawErr  bool
-	}{}
+	}{
+		{
+			desc:       "New fails with nil callback",
+			canvas:     image.Rect(0, 0, 1, 1),
+			wantNewErr: true,
+		},
+		{
+			desc:     "New fails with negative keyUpDelay",
+			callback: &callbackTracker{},
+			opts: []Option{
+				KeyUpDelay(-1 * time.Second),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			wantNewErr: true,
+		},
+		{
+			desc:     "New fails with zero Height",
+			callback: &callbackTracker{},
+			opts: []Option{
+				Height(0),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			wantNewErr: true,
+		},
+		{
+			desc:     "New fails with zero Width",
+			callback: &callbackTracker{},
+			opts: []Option{
+				Width(0),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			wantNewErr: true,
+		},
+		{
+			desc:     "draws button in up state",
+			callback: &callbackTracker{},
+			text:     "hello",
+			canvas:   image.Rect(0, 0, 8, 4),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
 
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "draws button in down state due to a mouse event",
+			callback: &callbackTracker{},
+			text:     "hello",
+			canvas:   image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{2, 2},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "mouse triggered the callback",
+			callback: &callbackTracker{},
+			text:     "hello",
+			canvas:   image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				called: true,
+				count:  1,
+			},
+		},
+		{
+			desc:     "draws button in down state due to a keyboard event, callback triggered",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				Key(keyboard.KeyEnter),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{2, 2},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				called: true,
+				count:  1,
+			},
+		},
+		{
+			desc:     "keyboard event ignored when no key specified",
+			callback: &callbackTracker{},
+			text:     "hello",
+			canvas:   image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+
+		// Keyboard event ignored when no key configured
+		// Draws button down by key + trigger.
+		// Releases button after key press.
+		// Doesn't release button after key press if before KeyUpDelay.
+		// Ignores unrelated key.
+		// Key works when KeyScopeFocused.
+		// sets custom key
+		// Ignores key outside of the container on KeyScopeFocused.
+		// Accepts key outside of the container on KeyScopeFlobal.
+		// Triggers callback multiple times.
+		// Callback returns an error.
+		// Custom height.
+		// Different width due to text.
+		// Different width due to WidthFor.
+		// Trims text on custom width.
+
+		{
+			desc:     "sets custom text color",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				TextColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorRed),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "sets custom fill color",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				FillColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorRed))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorRed)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "sets custom shadow color",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				ShadowColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorRed))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+	}
+
+	buttonRune = 'x'
+	shadowRune = 's'
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			gotCallback := &callbackTracker{}
-			b, err := New(tc.text, gotCallback.callback, tc.opts...)
+			gotCallback := tc.callback
+			var cFn CallbackFn
+			if gotCallback == nil {
+				cFn = nil
+			} else {
+				cFn = gotCallback.callback
+			}
+			b, err := New(tc.text, cFn, tc.opts...)
 			if (err != nil) != tc.wantNewErr {
 				t.Errorf("New => unexpected error: %v, wantNewErr: %v", err, tc.wantNewErr)
 			}
@@ -81,8 +387,33 @@ func TestButton(t *testing.T) {
 				return
 			}
 
+			{
+				// Draw once which initializes the mouse state machine with the current canvas area.
+				c, err := canvas.New(tc.canvas)
+				if err != nil {
+					t.Fatalf("canvas.New => unexpected error: %v", err)
+				}
+				err = b.Draw(c)
+				if (err != nil) != tc.wantDrawErr {
+					t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
+				}
+				if err != nil {
+					return
+				}
+			}
+
 			for _, ev := range tc.events {
-				switch ev.(type) {
+				switch e := ev.(type) {
+				case *terminalapi.Mouse:
+					if err := b.Mouse(e); err != nil {
+						t.Fatalf("Mouse => unexpected error: %v", err)
+					}
+
+				case *terminalapi.Keyboard:
+					if err := b.Keyboard(e); err != nil {
+						t.Fatalf("Keyboard => unexpected error: %v", err)
+					}
+
 				default:
 					t.Fatalf("unsupported event type: %T", ev)
 				}
@@ -142,7 +473,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{14, 4},
 				MaximumSize:  image.Point{14, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -152,7 +483,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{13, 4},
 				MaximumSize:  image.Point{13, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -165,7 +496,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{13, 4},
 				MaximumSize:  image.Point{13, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -178,7 +509,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 11},
 				MaximumSize:  image.Point{8, 11},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -191,7 +522,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{11, 4},
 				MaximumSize:  image.Point{11, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 
@@ -202,7 +533,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -215,7 +546,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeFocused,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -228,7 +559,7 @@ func TestOptions(t *testing.T) {
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
 				WantKeyboard: widgetapi.KeyScopeGlobal,
-				WantMouse:    widgetapi.MouseScopeWidget,
+				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 	}

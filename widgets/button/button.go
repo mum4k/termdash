@@ -17,8 +17,10 @@
 package button
 
 import (
+	"errors"
 	"image"
 	"sync"
+	"time"
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/canvas"
@@ -56,6 +58,12 @@ type Button struct {
 	// state is the current state of the button.
 	state button.State
 
+	// keyTriggerTime is the last time the button was pressed using a keyboard
+	// key. It is nil if the button was triggered by a mouse event.
+	// Used to draw button presses on keyboard events, since termbox doesn't
+	// provide us with release events for keys.
+	keyTriggerTime *time.Time
+
 	// callback gets called on each button press.
 	callback CallbackFn
 
@@ -69,6 +77,10 @@ type Button struct {
 // New returns a new Button that will display the provided text.
 // Each press of the button will invoke the callback function.
 func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
+	if cFn == nil {
+		return nil, errors.New("the CallbackFn argument cannot be nil")
+	}
+
 	opt := newOptions(text)
 	for _, o := range opts {
 		o.set(opt)
@@ -84,16 +96,33 @@ func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
 	}, nil
 }
 
+var (
+	// Runes to use in cells that contain the button.
+	// Changed from tests to provide readable test failures.
+	buttonRune = ' '
+	// Runes to use in cells that contain the shadow.
+	// Changed from tests to provide readable test failures.
+	shadowRune = ' '
+)
+
 // Draw draws the Button widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
 func (b *Button) Draw(cvs *canvas.Canvas) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	cvsAr := cvs.Area()
+	if b.keyTriggerTime != nil {
+		since := time.Since(*b.keyTriggerTime)
+		if since > b.opts.keyUpDelay {
+			b.state = button.Up
+		}
+	}
 
-	shadowAr := image.Rect(1, 1, cvsAr.Dx(), cvsAr.Dy())
-	if err := cvs.SetAreaCellOpts(shadowAr, cell.BgColor(b.opts.shadowColor)); err != nil {
+	cvsAr := cvs.Area()
+	b.mouseFSM.UpdateArea(cvsAr)
+
+	shadowAr := image.Rect(shadowWidth, shadowWidth, cvsAr.Dx(), cvsAr.Dy())
+	if err := cvs.SetAreaCells(shadowAr, shadowRune, cell.BgColor(b.opts.shadowColor)); err != nil {
 		return err
 	}
 
@@ -104,10 +133,9 @@ func (b *Button) Draw(cvs *canvas.Canvas) error {
 		buttonAr = shadowAr
 	}
 
-	if err := cvs.SetAreaCellOpts(buttonAr, cell.BgColor(b.opts.fillColor)); err != nil {
+	if err := cvs.SetAreaCells(buttonAr, buttonRune, cell.BgColor(b.opts.fillColor)); err != nil {
 		return err
 	}
-	b.mouseFSM.UpdateArea(buttonAr)
 
 	textAr := image.Rect(buttonAr.Min.X+1, buttonAr.Min.Y, buttonAr.Dx()-1, buttonAr.Max.Y)
 	start, err := align.Text(textAr, b.text, align.HorizontalCenter, align.VerticalMiddle)
@@ -116,12 +144,11 @@ func (b *Button) Draw(cvs *canvas.Canvas) error {
 	}
 	if err := draw.Text(cvs, b.text, start,
 		draw.TextOverrunMode(draw.OverrunModeThreeDot),
-		draw.TextMaxX(textAr.Max.X),
+		draw.TextMaxX(buttonAr.Max.X),
 		draw.TextCellOpts(cell.FgColor(b.opts.textColor)),
 	); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -134,6 +161,9 @@ func (b *Button) Keyboard(k *terminalapi.Keyboard) error {
 	defer b.mu.Unlock()
 
 	if k.Key == b.opts.key {
+		b.state = button.Down
+		now := time.Now().UTC()
+		b.keyTriggerTime = &now
 		return b.callback()
 	}
 	return nil
@@ -149,6 +179,8 @@ func (b *Button) Mouse(m *terminalapi.Mouse) error {
 
 	clicked, state := b.mouseFSM.Event(m)
 	b.state = state
+	b.keyTriggerTime = nil
+
 	if clicked {
 		return b.callback()
 	}
@@ -168,6 +200,6 @@ func (b *Button) Options() widgetapi.Options {
 		MinimumSize:  image.Point{width, height},
 		MaximumSize:  image.Point{width, height},
 		WantKeyboard: b.opts.keyScope,
-		WantMouse:    widgetapi.MouseScopeWidget,
+		WantMouse:    widgetapi.MouseScopeGlobal,
 	}
 }

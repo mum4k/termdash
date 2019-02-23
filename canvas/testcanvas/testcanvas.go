@@ -51,6 +51,13 @@ func MustSetCell(c *canvas.Canvas, p image.Point, r rune, opts ...cell.Option) i
 	return cells
 }
 
+// MustSetAreaCells sets the cells in the area  or panics.
+func MustSetAreaCells(c *canvas.Canvas, cellArea image.Rectangle, r rune, opts ...cell.Option) {
+	if err := c.SetAreaCells(cellArea, r, opts...); err != nil {
+		panic(fmt.Sprintf("canvas.SetAreaCells => unexpected error: %v", err))
+	}
+}
+
 // MustCell returns the cell or panics.
 func MustCell(c *canvas.Canvas, p image.Point) *cell.Cell {
 	cell, err := c.Cell(p)

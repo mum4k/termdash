@@ -18,6 +18,7 @@ package button
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/cell/runewidth"
@@ -48,6 +49,7 @@ type options struct {
 	width       int
 	key         keyboard.Key
 	keyScope    widgetapi.KeyScope
+	keyUpDelay  time.Duration
 }
 
 // validate validates the provided options.
@@ -57,6 +59,9 @@ func (o *options) validate() error {
 	}
 	if min := 1; o.width < min {
 		return fmt.Errorf("invalid width %d, must be %d <= width", o.width, min)
+	}
+	if min := time.Duration(0); o.keyUpDelay < min {
+		return fmt.Errorf("invalid keyUpDelay %v, must be %v <= keyUpDelay", o.keyUpDelay, min)
 	}
 	return nil
 }
@@ -69,6 +74,7 @@ func newOptions(text string) *options {
 		shadowColor: cell.ColorNumber(240),
 		height:      DefaultHeight,
 		width:       widthFor(text),
+		keyUpDelay:  DefaultKeyUpDelay,
 	}
 }
 
@@ -140,6 +146,22 @@ func GlobalKey(k keyboard.Key) Option {
 	return option(func(opts *options) {
 		opts.key = k
 		opts.keyScope = widgetapi.KeyScopeGlobal
+	})
+}
+
+// DefaultKeyUpDelay is the default value for the KeyUpDelay option.
+const DefaultKeyUpDelay = 250 * time.Millisecond
+
+// KeyUpDelay is the amount of time the button will remain "pressed down" after
+// triggered by the configured key. Termbox doesn't emit events for key
+// releases so the button simulates it by timing it.
+// This only works if the manual termdash redraw or the periodic redraw
+// interval are reasonably close to this delay.
+// The duration cannot be negative.
+// Defaults to DefaultKeyUpDelay.
+func KeyUpDelay(d time.Duration) Option {
+	return option(func(opts *options) {
+		opts.keyUpDelay = d
 	})
 }
 

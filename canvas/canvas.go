@@ -21,6 +21,7 @@ import (
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
@@ -113,6 +114,32 @@ func (c *Canvas) SetCellOpts(p image.Point, opts ...cell.Option) error {
 	}
 	if _, err := c.SetCell(p, curCell.Rune, opts...); err != nil {
 		return err
+	}
+	return nil
+}
+
+// SetAreaCells is like SetCell, but sets the specified rune and options on all
+// the cells within the provided area.
+// This method is idempotent.
+func (c *Canvas) SetAreaCells(cellArea image.Rectangle, r rune, opts ...cell.Option) error {
+	haveArea := c.Area()
+	if !cellArea.In(haveArea) {
+		return fmt.Errorf("unable to set cell runes in area %v, it must fit inside the available cell area is %v", cellArea, haveArea)
+	}
+
+	rw := runewidth.RuneWidth(r)
+	for row := cellArea.Min.Y; row < cellArea.Max.Y; row++ {
+		for col := cellArea.Min.X; col < cellArea.Max.X; {
+			p := image.Point{col, row}
+			if col+rw > cellArea.Max.X {
+				break
+			}
+			cells, err := c.SetCell(p, r, opts...)
+			if err != nil {
+				return err
+			}
+			col += cells
+		}
 	}
 	return nil
 }

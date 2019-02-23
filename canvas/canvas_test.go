@@ -323,6 +323,173 @@ func TestCanvas(t *testing.T) {
 				return ft, nil
 			},
 		},
+		{
+			desc:   "SetAreaCells sets cells in the full canvas",
+			canvas: image.Rect(0, 0, 1, 1),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCells(image.Rect(0, 0, 1, 1), 'r')
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err := cvs.SetCell(image.Point{0, 0}, 'r'); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetAreaCells is idempotent",
+			canvas: image.Rect(0, 0, 1, 1),
+			ops: func(cvs *Canvas) error {
+				if err := cvs.SetAreaCells(image.Rect(0, 0, 1, 1), 'r'); err != nil {
+					return err
+				}
+				return cvs.SetAreaCells(image.Rect(0, 0, 1, 1), 'r')
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err := cvs.SetCell(image.Point{0, 0}, 'r'); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetAreaCells fails on area too large",
+			canvas: image.Rect(0, 0, 1, 1),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCells(image.Rect(0, 0, 2, 2), 'r', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			wantErr: true,
+		},
+		{
+			desc:   "SetAreaCells sets cell options",
+			canvas: image.Rect(0, 0, 1, 1),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCells(image.Rect(0, 0, 1, 1), 'r', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err := cvs.SetCell(image.Point{0, 0}, 'r', cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)); err != nil {
+					return nil, err
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetAreaCells sets cell in a sub-area",
+			canvas: image.Rect(0, 0, 3, 3),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCells(image.Rect(0, 0, 2, 2), 'p')
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				for _, p := range []image.Point{
+					{0, 0},
+					{0, 1},
+					{1, 0},
+					{1, 1},
+				} {
+					if _, err := cvs.SetCell(p, 'p'); err != nil {
+						return nil, err
+					}
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetAreaCells sets full-width runes that fit",
+			canvas: image.Rect(0, 0, 3, 3),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCells(image.Rect(0, 0, 2, 2), '世')
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				for _, p := range []image.Point{
+					{0, 0},
+					{0, 1},
+				} {
+					if _, err := cvs.SetCell(p, '世'); err != nil {
+						return nil, err
+					}
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
+		{
+			desc:   "SetAreaCells sets full-width runes that will leave a gap at the end of each row",
+			canvas: image.Rect(0, 0, 3, 3),
+			ops: func(cvs *Canvas) error {
+				return cvs.SetAreaCells(image.Rect(0, 0, 3, 3), '世')
+			},
+			want: func(size image.Point) (*faketerm.Terminal, error) {
+				ft := faketerm.MustNew(size)
+				cvs, err := New(ft.Area())
+				if err != nil {
+					return nil, err
+				}
+
+				for _, p := range []image.Point{
+					{0, 0},
+					{0, 1},
+					{0, 2},
+				} {
+					if _, err := cvs.SetCell(p, '世'); err != nil {
+						return nil, err
+					}
+				}
+
+				if err := cvs.Apply(ft); err != nil {
+					return nil, err
+				}
+				return ft, nil
+			},
+		},
 	}
 
 	for _, tc := range tests {

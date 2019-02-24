@@ -22,7 +22,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/faketerm"
 )
 
 func TestBorder(t *testing.T) {

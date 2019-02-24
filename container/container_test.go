@@ -28,11 +28,11 @@ import (
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/event/testevent"
+	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/keyboard"
 	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminal/faketerm"
 	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
@@ -40,6 +40,9 @@ import (
 // Example demonstrates how to use the Container API.
 func Example() {
 	bc, err := barchart.New()
+	if err != nil {
+		panic(err)
+	}
 	if _, err := New(
 		/* terminal = */ nil,
 		SplitVertical(

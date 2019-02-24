@@ -28,7 +28,7 @@ import (
 	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/faketerm"
 )
 
 func TestTextDraws(t *testing.T) {

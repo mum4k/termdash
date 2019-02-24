@@ -26,7 +26,7 @@ import (
 	"github.com/mum4k/termdash/internal/event/testevent"
 	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/terminalapi"
-	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/faketerm"
 )
 
 // pointCase is a test case for the pointCont function.

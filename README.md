@@ -23,7 +23,8 @@ for more details.
 
 # Public API and status
 
-The public API surface is documented in the [wiki](wiki/).
+The public API surface is documented in the
+[wiki](http://github.com/mum4k/termdash/wiki).
 
 Private packages can be identified by the presence of the **/internal/**
 directory in their import path. Stability of the private packages isn't

@@ -25,7 +25,7 @@ import (
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/text"
@@ -123,7 +123,7 @@ func main() {
 
 	c, err := container.New(
 		t,
-		container.Border(draw.LineStyleLight),
+		container.Border(linestyle.Light),
 		container.BorderTitle("PRESS Q TO QUIT"),
 		container.SplitVertical(
 			container.Left(
@@ -136,28 +136,28 @@ func main() {
 										container.PlaceWidget(borderless),
 									),
 									container.Right(
-										container.Border(draw.LineStyleLight),
+										container.Border(linestyle.Light),
 										container.BorderTitle("你好，世界!"),
 										container.PlaceWidget(unicode),
 									),
 								),
 							),
 							container.Bottom(
-								container.Border(draw.LineStyleLight),
+								container.Border(linestyle.Light),
 								container.BorderTitle("Trims lines"),
 								container.PlaceWidget(trimmed),
 							),
 						),
 					),
 					container.Bottom(
-						container.Border(draw.LineStyleLight),
+						container.Border(linestyle.Light),
 						container.BorderTitle("Wraps lines at rune boundaries"),
 						container.PlaceWidget(wrapped),
 					),
 				),
 			),
 			container.Right(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.BorderTitle("Rolls and scrolls content"),
 				container.PlaceWidget(rolled),
 			),

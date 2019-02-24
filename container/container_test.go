@@ -32,6 +32,7 @@ import (
 	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/testdraw"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/fakewidget"
@@ -49,15 +50,15 @@ func Example() {
 			Left(
 				SplitHorizontal(
 					Top(
-						Border(draw.LineStyleLight),
+						Border(linestyle.Light),
 					),
 					Bottom(
 						SplitHorizontal(
 							Top(
-								Border(draw.LineStyleLight),
+								Border(linestyle.Light),
 							),
 							Bottom(
-								Border(draw.LineStyleLight),
+								Border(linestyle.Light),
 							),
 						),
 					),
@@ -65,7 +66,7 @@ func Example() {
 				),
 			),
 			Right(
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 				PlaceWidget(bc),
 			),
 		),
@@ -98,7 +99,7 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -121,10 +122,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -146,10 +147,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(0),
 					),
@@ -168,10 +169,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(100),
 					),
@@ -190,10 +191,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(20),
 					),
@@ -214,13 +215,13 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -247,10 +248,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -272,10 +273,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(0),
 					),
@@ -294,10 +295,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(100),
 					),
@@ -316,10 +317,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(20),
 					),
@@ -340,13 +341,13 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -375,22 +376,22 @@ func TestNew(t *testing.T) {
 						Left(
 							SplitHorizontal(
 								Top(
-									Border(draw.LineStyleLight),
+									Border(linestyle.Light),
 								),
 								Bottom(
 									SplitHorizontal(
 										Top(
-											Border(draw.LineStyleLight),
+											Border(linestyle.Light),
 										),
 										Bottom(
-											Border(draw.LineStyleLight),
+											Border(linestyle.Light),
 										),
 									),
 								),
 							),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -412,15 +413,15 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderColor(cell.ColorRed),
 					FocusedColor(cell.ColorBlue),
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -453,14 +454,14 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -487,10 +488,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
@@ -964,7 +965,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget}),
 					),
@@ -999,7 +1000,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeContainer}),
 					),
@@ -1035,7 +1036,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeGlobal}),
 					),

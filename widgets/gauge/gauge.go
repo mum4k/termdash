@@ -29,6 +29,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
@@ -145,7 +146,7 @@ func (g *Gauge) width(ar image.Rectangle) int {
 
 // hasBorder determines of the gauge has a border.
 func (g *Gauge) hasBorder() bool {
-	return g.opts.border != draw.LineStyleNone
+	return g.opts.border != linestyle.None
 }
 
 // usable determines the usable area for the gauge itself.

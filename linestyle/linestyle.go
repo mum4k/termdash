@@ -14,6 +14,7 @@ func (ls LineStyle) String() string {
 
 // lineStyleNames maps LineStyle values to human readable names.
 var lineStyleNames = map[LineStyle]string{
+	None:   "LineStyleNone",
 	Light:  "LineStyleLight",
 	Double: "LineStyleDouble",
 	Round:  "LineStyleRound",
@@ -22,7 +23,9 @@ var lineStyleNames = map[LineStyle]string{
 // Supported line styles.
 // See https://en.wikipedia.org/wiki/Box-drawing_character.
 const (
+	// None indicates that no line should be present.
 	None LineStyle = iota
+
 	// Light is line style using the '─' characters.
 	Light
 

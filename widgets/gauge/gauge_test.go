@@ -27,6 +27,7 @@ import (
 	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/testdraw"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 // percentCall contains arguments for a call to GaugePercent().
@@ -89,7 +90,7 @@ func TestGauge(t *testing.T) {
 			desc: "draws resize needed character when canvas is smaller than requested",
 			opts: []Option{
 				Char('o'),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 			},
 			percent: &percentCall{p: 35},
 			canvas:  image.Rect(0, 0, 1, 1),
@@ -126,7 +127,7 @@ func TestGauge(t *testing.T) {
 				Char('o'),
 				HorizontalTextAlign(align.HorizontalLeft),
 				VerticalTextAlign(align.VerticalTop),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 4),
@@ -164,7 +165,7 @@ func TestGauge(t *testing.T) {
 				Char('o'),
 				HorizontalTextAlign(align.HorizontalRight),
 				VerticalTextAlign(align.VerticalBottom),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 4),
@@ -182,7 +183,7 @@ func TestGauge(t *testing.T) {
 			desc: "gauge showing percentage with border",
 			opts: []Option{
 				Char('o'),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 				BorderTitle("title"),
 			},
 			percent: &percentCall{p: 35},
@@ -207,7 +208,7 @@ func TestGauge(t *testing.T) {
 			desc: "respects border options",
 			opts: []Option{
 				Char('o'),
-				Border(draw.LineStyleLight, cell.FgColor(cell.ColorBlue)),
+				Border(linestyle.Light, cell.FgColor(cell.ColorBlue)),
 				BorderTitle("title"),
 				BorderTitleAlign(align.HorizontalRight),
 			},
@@ -273,7 +274,7 @@ func TestGauge(t *testing.T) {
 			desc: "gauge showing 100 percent with border",
 			opts: []Option{
 				Char('o'),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
@@ -622,7 +623,7 @@ func TestGauge(t *testing.T) {
 			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 3),
@@ -666,7 +667,7 @@ func TestGauge(t *testing.T) {
 			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
@@ -717,7 +718,7 @@ func TestGauge(t *testing.T) {
 			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 			},
 			percent: &percentCall{p: 50},
 			canvas:  image.Rect(0, 0, 10, 4),
@@ -832,7 +833,7 @@ func TestOptions(t *testing.T) {
 		{
 			desc: "border is accounted for in maximum and minimum size",
 			opts: []Option{
-				Border(draw.LineStyleLight),
+				Border(linestyle.Light),
 				Height(2),
 			},
 			want: widgetapi.Options{

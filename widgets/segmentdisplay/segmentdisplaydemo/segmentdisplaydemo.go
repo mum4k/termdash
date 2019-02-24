@@ -23,7 +23,7 @@ import (
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/segmentdisplay"
@@ -134,7 +134,7 @@ func main() {
 
 	c, err := container.New(
 		t,
-		container.Border(draw.LineStyleLight),
+		container.Border(linestyle.Light),
 		container.BorderTitle("PRESS Q TO QUIT"),
 		container.SplitHorizontal(
 			container.Top(

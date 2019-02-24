@@ -508,6 +508,9 @@ func newSines(ctx context.Context) (left, right *button.Button, lc *linechart.Li
 		button.WidthFor("(r)ight"),
 		button.FillColor(cell.ColorNumber(220)),
 	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	rightB, err := button.New("(r)ight", func() error {
 		secondDist.add(-diff)
@@ -516,6 +519,9 @@ func newSines(ctx context.Context) (left, right *button.Button, lc *linechart.Li
 		button.GlobalKey('r'),
 		button.FillColor(cell.ColorNumber(196)),
 	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	return leftB, rightB, sineLc, nil
 }
 

@@ -206,7 +206,7 @@ type XScale struct {
 // the width on the canvas that is available to the X axis.
 // The nonZeroDecimals dictates rounding of the calculated scale, see
 // NewValue for details.
-// The boundry values must be positive or zero and must be min <= max.
+// The boundary values must be positive or zero and must be min <= max.
 // The graphWidth must be a positive number.
 func NewXScale(min, max int, graphWidth, nonZeroDecimals int) (*XScale, error) {
 	if min < 0 || max < 0 {

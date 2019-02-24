@@ -47,7 +47,7 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 const (

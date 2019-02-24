@@ -33,7 +33,7 @@ import (
 	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 	"github.com/mum4k/termdash/widgets/gauge"

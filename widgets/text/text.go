@@ -26,7 +26,7 @@ import (
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // Text displays a block of text.

@@ -21,13 +21,13 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw/segdisp/sixteen"
-	"github.com/mum4k/termdash/draw/segdisp/sixteen/testsixteen"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/internal/segdisp/sixteen"
+	"github.com/mum4k/termdash/internal/segdisp/sixteen/testsixteen"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // mustDrawChar draws the provided character in the area of the canvas or panics.

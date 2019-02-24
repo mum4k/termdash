@@ -21,13 +21,13 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/internal/testdraw"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 func TestDonut(t *testing.T) {

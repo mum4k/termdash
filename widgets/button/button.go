@@ -29,7 +29,7 @@ import (
 	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/mouse/button"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // CallbackFn is the function called when the button is pressed.

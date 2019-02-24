@@ -46,10 +46,10 @@ import (
 	"math"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw/segdisp/segment"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille"
+	"github.com/mum4k/termdash/internal/segdisp/segment"
 )
 
 // Segment represents a single segment in the display.

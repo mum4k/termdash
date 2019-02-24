@@ -28,7 +28,7 @@ import (
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // BarChart displays multiple bars showing relative ratios of values.

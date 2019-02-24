@@ -31,7 +31,7 @@ import (
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the

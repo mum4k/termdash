@@ -20,7 +20,7 @@ import (
 	"image"
 	"strings"
 
-	"github.com/mum4k/termdash/cell/runewidth"
+	"github.com/mum4k/termdash/internal/runewidth"
 )
 
 // Horizontal indicates the type of horizontal alignment.

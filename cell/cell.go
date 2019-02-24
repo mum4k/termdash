@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/runewidth"
 )
 
 // Option is used to provide options for cells on a 2-D terminal.

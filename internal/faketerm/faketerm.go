@@ -25,7 +25,7 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/event/eventqueue"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // Option is used to provide options.

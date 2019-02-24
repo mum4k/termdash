@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // eventTestCase is one mouse event and the output expectation.

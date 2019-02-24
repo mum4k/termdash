@@ -21,7 +21,7 @@ import (
 
 	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/mouse/button"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // pointCont finds the top-most (on the screen) container whose area contains

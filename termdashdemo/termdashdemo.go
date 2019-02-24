@@ -30,7 +30,7 @@ import (
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/donut"

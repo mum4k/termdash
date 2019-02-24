@@ -29,7 +29,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/numbers"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/linechart/internal/axes"
 	"github.com/mum4k/termdash/widgets/linechart/internal/zoom"
 )

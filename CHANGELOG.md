@@ -7,12 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 25-Feb-2019
+
+### Added
+
+- Test coverage for data only packages.
+
+### Changed
+
+- Refactoring packages that contained a mix of public and internal identifiers.
+
+#### Breaking API changes
+
+The following packages were refactored, no impact is expected as the removed
+identifiers shouldn't be used externally.
+
+- Functions align.Text and align.Rectangle were moved to a new
+  internal/alignfor package.
+- Types cell.Cell and cell.Buffer were moved into a new internal/canvas/buffer
+  package.
+
 ## [0.7.1] - 24-Feb-2019
 
 ### Fixed
 
 - Some of the packages that were moved into internal are required externally.
   This release makes them available again.
+
+### Changed
 
 #### Breaking API changes
 
@@ -185,7 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.1...devel
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.2...devel
+[0.7.2]: https://github.com/mum4k/termdash/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/mum4k/termdash/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/mum4k/termdash/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/mum4k/termdash/compare/v0.6.0...v0.6.1

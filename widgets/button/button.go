@@ -24,6 +24,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/button"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw"
@@ -142,7 +143,7 @@ func (b *Button) Draw(cvs *canvas.Canvas) error {
 	}
 
 	textAr := image.Rect(buttonAr.Min.X+1, buttonAr.Min.Y, buttonAr.Dx()-1, buttonAr.Max.Y)
-	start, err := align.Text(textAr, b.text, align.HorizontalCenter, align.VerticalMiddle)
+	start, err := alignfor.Text(textAr, b.text, align.HorizontalCenter, align.VerticalMiddle)
 	if err != nil {
 		return err
 	}

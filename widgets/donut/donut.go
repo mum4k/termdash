@@ -23,9 +23,9 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille"
+	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/numbers"
 	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/internal/widgetapi"

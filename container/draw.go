@@ -22,9 +22,9 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/draw"
 )
 
 // drawTree draws this container and all of its sub containers.

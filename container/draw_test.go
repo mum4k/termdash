@@ -20,10 +20,10 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/testdraw"
 	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/widgets/fakewidget"

@@ -23,7 +23,7 @@ import (
 	"reflect"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/cell"
 )
 
 // optDiff is used to display differences in cell options.

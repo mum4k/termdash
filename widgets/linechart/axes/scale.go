@@ -19,7 +19,7 @@ package axes
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/canvas/braille"
+	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/numbers"
 )
 

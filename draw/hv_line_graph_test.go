@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/internal/canvas"
 )
 
 func TestMultiEdgeNodes(t *testing.T) {

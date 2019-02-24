@@ -23,10 +23,10 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/attrrange"
-	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/draw/segdisp/sixteen"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/attrrange"
+	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )

@@ -16,7 +16,7 @@ package segmentdisplay
 
 // write_options.go contains options used when writing content to the widget.
 
-import "github.com/mum4k/termdash/cell"
+import "github.com/mum4k/termdash/internal/cell"
 
 // WriteOption is used to provide options to Write().
 type WriteOption interface {

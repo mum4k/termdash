@@ -23,8 +23,8 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/mum4k/termdash/attrrange"
-	"github.com/mum4k/termdash/canvas"
+	"github.com/mum4k/termdash/internal/attrrange"
+	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )

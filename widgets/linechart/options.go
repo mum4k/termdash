@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/widgets/linechart/axes"
 	"github.com/mum4k/termdash/widgets/linechart/zoom"
 )

@@ -19,9 +19,9 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/draw/testdraw"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/terminal/faketerm"
 )
 

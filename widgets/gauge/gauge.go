@@ -22,12 +22,12 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/area"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/cell/runewidth"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )

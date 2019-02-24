@@ -18,8 +18,8 @@ package testsixteen
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/canvas"
 	"github.com/mum4k/termdash/draw/segdisp/sixteen"
+	"github.com/mum4k/termdash/internal/canvas"
 )
 
 // MustSetCharacter sets the character on the display or panics.

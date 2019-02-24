@@ -19,9 +19,9 @@ package gauge
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/cell"
 )
 
 // Option is used to provide options.

@@ -20,9 +20,9 @@ import (
 	"image"
 	"reflect"
 
+	"github.com/mum4k/termdash/internal/button"
 	"github.com/mum4k/termdash/internal/numbers"
 	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/mouse/button"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/linechart/internal/axes"
 )

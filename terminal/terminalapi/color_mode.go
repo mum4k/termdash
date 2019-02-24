@@ -16,7 +16,7 @@ package terminalapi
 
 // color_mode.go defines the terminal color modes.
 
-// ColorMode represents
+// ColorMode represents a color mode of a terminal.
 type ColorMode int
 
 // String implements fmt.Stringer()

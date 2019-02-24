@@ -21,6 +21,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas/buffer"
 	"github.com/mum4k/termdash/internal/faketerm"
 )
 
@@ -547,7 +548,7 @@ func TestSetCellAndApply(t *testing.T) {
 		point          image.Point
 		r              rune
 		opts           []cell.Option
-		want           cell.Buffer // Expected back buffer in the fake terminal.
+		want           buffer.Buffer // Expected back buffer in the fake terminal.
 		wantCells      int
 		wantSetCellErr bool
 		wantApplyErr   bool
@@ -566,21 +567,21 @@ func TestSetCellAndApply(t *testing.T) {
 			point:      image.Point{0, 0},
 			r:          'X',
 			wantCells:  1,
-			want: cell.Buffer{
+			want: buffer.Buffer{
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New('X'),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell('X'),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 			},
 		},
@@ -591,21 +592,21 @@ func TestSetCellAndApply(t *testing.T) {
 			point:      image.Point{0, 0},
 			r:          '界',
 			wantCells:  2,
-			want: cell.Buffer{
+			want: buffer.Buffer{
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New('界'),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell('界'),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 			},
 		},
@@ -624,21 +625,21 @@ func TestSetCellAndApply(t *testing.T) {
 			point:      image.Point{1, 0},
 			r:          'X',
 			wantCells:  1,
-			want: cell.Buffer{
+			want: buffer.Buffer{
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New('X'),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell('X'),
+					buffer.NewCell(0),
 				},
 			},
 		},
@@ -649,21 +650,21 @@ func TestSetCellAndApply(t *testing.T) {
 			point:      image.Point{0, 1},
 			r:          'X',
 			wantCells:  1,
-			want: cell.Buffer{
+			want: buffer.Buffer{
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New('X'),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell('X'),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 			},
 		},
@@ -674,21 +675,21 @@ func TestSetCellAndApply(t *testing.T) {
 			point:      image.Point{1, 1},
 			r:          'Z',
 			wantCells:  1,
-			want: cell.Buffer{
+			want: buffer.Buffer{
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New('Z'),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell('Z'),
 				},
 			},
 		},
@@ -702,21 +703,21 @@ func TestSetCellAndApply(t *testing.T) {
 				cell.BgColor(cell.ColorRed),
 			},
 			wantCells: 1,
-			want: cell.Buffer{
+			want: buffer.Buffer{
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
 				},
 				{
-					cell.New(0),
-					cell.New(0),
-					cell.New('A', cell.BgColor(cell.ColorRed)),
+					buffer.NewCell(0),
+					buffer.NewCell(0),
+					buffer.NewCell('A', cell.BgColor(cell.ColorRed)),
 				},
 			},
 		},
@@ -727,9 +728,9 @@ func TestSetCellAndApply(t *testing.T) {
 			point:      image.Point{0, 0},
 			r:          'A',
 			wantCells:  1,
-			want: cell.Buffer{
+			want: buffer.Buffer{
 				{
-					cell.New('A'),
+					buffer.NewCell('A'),
 				},
 			},
 		},
@@ -806,21 +807,21 @@ func TestClear(t *testing.T) {
 		t.Fatalf("Apply => unexpected error: %v", err)
 	}
 
-	want := cell.Buffer{
+	want := buffer.Buffer{
 		{
-			cell.New('A'),
-			cell.New(0),
-			cell.New(0),
+			buffer.NewCell('A'),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
 		},
 		{
-			cell.New(0),
-			cell.New('X'),
-			cell.New(0),
+			buffer.NewCell(0),
+			buffer.NewCell('X'),
+			buffer.NewCell(0),
 		},
 		{
-			cell.New(0),
-			cell.New(0),
-			cell.New(0),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
 		},
 	}
 	got := ft.BackBuffer()
@@ -837,21 +838,21 @@ func TestClear(t *testing.T) {
 		t.Fatalf("Apply => unexpected error: %v", err)
 	}
 
-	want = cell.Buffer{
+	want = buffer.Buffer{
 		{
-			cell.New('A'),
-			cell.New(0),
-			cell.New(0),
+			buffer.NewCell('A'),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
 		},
 		{
-			cell.New(0),
-			cell.New(0),
-			cell.New(0),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
 		},
 		{
-			cell.New(0),
-			cell.New(0),
-			cell.New(0),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
+			buffer.NewCell(0),
 		},
 	}
 
@@ -889,9 +890,9 @@ func TestApplyFullWidthRunes(t *testing.T) {
 		t.Fatalf("Apply => unexpected error: %v", err)
 	}
 
-	want, err := cell.NewBuffer(area.Size(ar))
+	want, err := buffer.New(area.Size(ar))
 	if err != nil {
-		t.Fatalf("NewBuffer => unexpected error: %v", err)
+		t.Fatalf("buffer.New => unexpected error: %v", err)
 	}
 	want[fullP.X][fullP.Y].Rune = '界'
 	want[partP.X][partP.Y].Rune = 'A'
@@ -907,7 +908,7 @@ func TestCell(t *testing.T) {
 		desc    string
 		cvs     func() (*Canvas, error)
 		point   image.Point
-		want    *cell.Cell
+		want    *buffer.Cell
 		wantErr bool
 	}{
 		{
@@ -939,7 +940,7 @@ func TestCell(t *testing.T) {
 				return cvs, nil
 			},
 			point: image.Point{1, 1},
-			want: &cell.Cell{
+			want: &buffer.Cell{
 				Rune: 'A',
 				Opts: cell.NewOptions(
 					cell.FgColor(cell.ColorRed),

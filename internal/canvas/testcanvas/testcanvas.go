@@ -21,6 +21,7 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/buffer"
 	"github.com/mum4k/termdash/internal/faketerm"
 )
 
@@ -59,7 +60,7 @@ func MustSetAreaCells(c *canvas.Canvas, cellArea image.Rectangle, r rune, opts .
 }
 
 // MustCell returns the cell or panics.
-func MustCell(c *canvas.Canvas, p image.Point) *cell.Cell {
+func MustCell(c *canvas.Canvas, p image.Point) *buffer.Cell {
 	cell, err := c.Cell(p)
 	if err != nil {
 		panic(fmt.Sprintf("canvas.Cell => unexpected error: %v", err))

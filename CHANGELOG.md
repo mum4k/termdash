@@ -11,13 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Some of the packages moved into internal are required externally. This
-  release makes them available again.
+- Some of the packages that were moved into internal are required externally.
+  This release makes them available again.
 
 #### Breaking API changes
 
 - The draw.LineStyle enum was refactored into its own package
-  linestyle.LineStyle.
+  linestyle.LineStyle. Users will have to replace:
+    draw.LineStyleNone -> linestyle.None
+    draw.LineStyleLight -> linestyle.Light
+    draw.LineStyleDouble -> linestyle.Double
+    draw.LineStyleRound -> linestyle.Round
 
 ## [0.7.0] - 24-Feb-2019
 
@@ -180,7 +184,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.0...devel
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.1...devel
+[0.7.1]: https://github.com/mum4k/termdash/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/mum4k/termdash/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/mum4k/termdash/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/mum4k/termdash/compare/v0.5.0...v0.6.0

@@ -10,16 +10,28 @@
 
 [<img src="./images/termdashdemo_0_7_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
-This project implements a cross-platform customizable terminal based dashboard.
+Termdash is a cross-platform customizable terminal based dashboard.
 The feature set is inspired by the
 [gizak/termui](http://github.com/gizak/termui) project, which in turn was
-inspired by a javascript based
+inspired by
 [yaronn/blessed-contrib](http://github.com/yaronn/blessed-contrib).
 
 This rewrite focuses on code readability, maintainability and testability, see
 the [design goals](doc/design_goals.md). It aims to achieve the following
 [requirements](doc/requirements.md). See the [high-level design](doc/hld.md)
 for more details.
+
+# Public API and status
+
+The public API surface is documented in the [wiki](wiki/).
+
+Private packages can be identified by the presence of the **/internal/**
+directory in their import path. Stability of the private packages isn't
+guaranteed and changes won't be backward compatible.
+
+There might still be breaking changes to the public API, at least until the
+project reaches version 1.0.0. Any breaking changes will be published in the
+[changelog](CHANGELOG.md).
 
 # Current feature set
 
@@ -32,8 +44,6 @@ for more details.
 - UTF-8 for all text elements.
 - Drawing primitives (Go functions) for widget development with character and
   sub-character resolution.
-
-See the [changelog](CHANGELOG.md) for more details.
 
 # Installation
 

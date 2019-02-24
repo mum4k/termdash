@@ -19,8 +19,8 @@ package gauge
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/align"
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/draw"
 )
 

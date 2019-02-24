@@ -22,13 +22,13 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/terminalapi"
 )
 
 // BarChart displays multiple bars showing relative ratios of values.

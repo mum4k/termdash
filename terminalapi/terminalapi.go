@@ -19,7 +19,7 @@ import (
 	"context"
 	"image"
 
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/cell"
 )
 
 // Terminal abstracts an implementation of a 2-D terminal.

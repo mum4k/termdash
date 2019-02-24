@@ -23,12 +23,12 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw/segdisp/sixteen"
-	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/terminalapi"
 )
 
 // SegmentDisplay displays ASCII content by simulating a segment display.

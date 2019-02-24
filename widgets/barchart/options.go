@@ -19,7 +19,7 @@ package barchart
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/draw"
 )
 

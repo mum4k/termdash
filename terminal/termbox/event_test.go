@@ -23,7 +23,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/internal/keyboard"
 	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/terminalapi"
 
 	tbx "github.com/nsf/termbox-go"
 )

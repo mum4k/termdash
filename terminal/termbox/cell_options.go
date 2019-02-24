@@ -17,7 +17,7 @@ package termbox
 // cell_options.go converts termdash cell options to the termbox format.
 
 import (
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/cell"
 	tbx "github.com/nsf/termbox-go"
 )
 

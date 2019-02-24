@@ -19,9 +19,9 @@ import (
 	"context"
 	"image"
 
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/event/eventqueue"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/terminalapi"
 	tbx "github.com/nsf/termbox-go"
 )
 

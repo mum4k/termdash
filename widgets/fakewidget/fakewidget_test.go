@@ -22,11 +22,11 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
+	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/keyboard"
 	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
-	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/terminalapi"
 )
 
 // keyEvents are keyboard events to send to the widget.

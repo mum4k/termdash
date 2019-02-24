@@ -20,11 +20,11 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
-	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw/segdisp/segment"
 	"github.com/mum4k/termdash/internal/draw/segdisp/segment/testsegment"
 	"github.com/mum4k/termdash/internal/faketerm"

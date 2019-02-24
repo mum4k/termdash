@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/internal/event/eventqueue"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/terminalapi"
 )
 
 // Callback is a function provided by an event subscriber.

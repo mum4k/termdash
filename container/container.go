@@ -26,12 +26,12 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/event"
-	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/terminalapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the

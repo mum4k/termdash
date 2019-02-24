@@ -19,7 +19,7 @@ package donut
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/cell"
 )
 
 // Option is used to provide options.

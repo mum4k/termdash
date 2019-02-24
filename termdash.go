@@ -64,6 +64,7 @@ func RedrawInterval(t time.Duration) Option {
 // ErrorHandler is used to provide a function that will be called with all
 // errors that occur while the dashboard is running. If not provided, any
 // errors panic the application.
+// The provided function must be thread-safe.
 func ErrorHandler(f func(error)) Option {
 	return option(func(td *termdash) {
 		td.errorHandler = f

@@ -295,7 +295,7 @@ func TestBraille(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "SetCellOptions sets the cell options in full area",
+			desc: "SetAreaCellOptions sets the cell options in full area",
 			ar:   image.Rect(0, 0, 1, 1),
 			pixelOps: func(c *Canvas) error {
 				return c.SetAreaCellOpts(image.Rect(0, 0, 1, 1), cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))
@@ -315,7 +315,7 @@ func TestBraille(t *testing.T) {
 			},
 		},
 		{
-			desc: "SetCellOptions sets the cell options in a sub-area",
+			desc: "SetAreaCellOptions sets the cell options in a sub-area",
 			ar:   image.Rect(0, 0, 3, 3),
 			pixelOps: func(c *Canvas) error {
 				return c.SetAreaCellOpts(image.Rect(0, 0, 2, 2), cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue))

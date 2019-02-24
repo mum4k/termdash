@@ -25,6 +25,9 @@ import (
 
 // eventTestCase is one mouse event and the output expectation.
 type eventTestCase struct {
+	// area if specified, will be provided to UpdateArea *before* processing the event.
+	area *image.Rectangle
+
 	// event is the mouse event to send.
 	event *terminalapi.Mouse
 
@@ -54,6 +57,69 @@ func TestFSM(t *testing.T) {
 				},
 				{
 					event:     &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					wantClick: true,
+					wantState: Up,
+				},
+			},
+		},
+		{
+			desc:   "updates area so the clicks falls outside",
+			button: mouse.ButtonLeft,
+			area:   image.Rect(0, 0, 1, 1),
+			eventCases: []*eventTestCase{
+				{
+					area: func() *image.Rectangle {
+						ar := image.Rect(1, 1, 2, 2)
+						return &ar
+					}(),
+					event:     &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					wantClick: false,
+					wantState: Up,
+				},
+				{
+					event:     &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					wantClick: false,
+					wantState: Up,
+				},
+			},
+		},
+		{
+			desc:   "updates area before release, so the release falls outside",
+			button: mouse.ButtonLeft,
+			area:   image.Rect(0, 0, 1, 1),
+			eventCases: []*eventTestCase{
+				{
+					event:     &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					wantClick: false,
+					wantState: Down,
+				},
+				{
+					area: func() *image.Rectangle {
+						ar := image.Rect(1, 1, 2, 2)
+						return &ar
+					}(),
+					event:     &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					wantClick: false,
+					wantState: Up,
+				},
+			},
+		},
+		{
+			desc:   "increased area makes the release count",
+			button: mouse.ButtonLeft,
+			area:   image.Rect(0, 0, 1, 1),
+			eventCases: []*eventTestCase{
+				{
+					event:     &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					wantClick: false,
+					wantState: Down,
+				},
+				{
+					area: func() *image.Rectangle {
+						ar := image.Rect(0, 0, 2, 2)
+						return &ar
+					}(),
+					event:     &terminalapi.Mouse{Position: image.Point{1, 1}, Button: mouse.ButtonRelease},
 					wantClick: true,
 					wantState: Up,
 				},
@@ -234,6 +300,10 @@ func TestFSM(t *testing.T) {
 		t.Run(fmt.Sprintf(tc.desc), func(t *testing.T) {
 			fsm := NewFSM(tc.button, tc.area)
 			for _, etc := range tc.eventCases {
+				if etc.area != nil {
+					fsm.UpdateArea(*etc.area)
+				}
+
 				gotClick, gotState := fsm.Event(etc.event)
 				t.Logf("Called fsm.Event(%v) => %v, %v", etc.event, gotClick, gotState)
 				if gotClick != etc.wantClick || gotState != etc.wantState {

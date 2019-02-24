@@ -270,7 +270,7 @@ func (bc *BarChart) Options() widgetapi.Options {
 	return widgetapi.Options{
 		MinimumSize:  bc.minSize(),
 		WantKeyboard: widgetapi.KeyScopeNone,
-		WantMouse:    false,
+		WantMouse:    widgetapi.MouseScopeNone,
 	}
 }
 

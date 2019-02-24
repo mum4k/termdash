@@ -785,7 +785,7 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
 				WantKeyboard: widgetapi.KeyScopeFocused,
-				WantMouse:    true,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -796,7 +796,7 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
 				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    false,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 	}

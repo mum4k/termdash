@@ -21,6 +21,7 @@ import (
 
 	"github.com/mum4k/termdash/area"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/cell/runewidth"
 	"github.com/mum4k/termdash/terminalapi"
 )
 
@@ -92,6 +93,72 @@ func (c *Canvas) Cell(p image.Point) (*cell.Cell, error) {
 	}
 
 	return c.buffer[p.X][p.Y].Copy(), nil
+}
+
+// SetCellOpts sets options on the specified cell of the canvas without
+// modifying the content of the cell.
+// Sets the default cell options if no options are provided.
+// This method is idempotent.
+func (c *Canvas) SetCellOpts(p image.Point, opts ...cell.Option) error {
+	curCell, err := c.Cell(p)
+	if err != nil {
+		return err
+	}
+
+	if len(opts) == 0 {
+		// Set the default options.
+		opts = []cell.Option{
+			cell.FgColor(cell.ColorDefault),
+			cell.BgColor(cell.ColorDefault),
+		}
+	}
+	if _, err := c.SetCell(p, curCell.Rune, opts...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetAreaCells is like SetCell, but sets the specified rune and options on all
+// the cells within the provided area.
+// This method is idempotent.
+func (c *Canvas) SetAreaCells(cellArea image.Rectangle, r rune, opts ...cell.Option) error {
+	haveArea := c.Area()
+	if !cellArea.In(haveArea) {
+		return fmt.Errorf("unable to set cell runes in area %v, it must fit inside the available cell area is %v", cellArea, haveArea)
+	}
+
+	rw := runewidth.RuneWidth(r)
+	for row := cellArea.Min.Y; row < cellArea.Max.Y; row++ {
+		for col := cellArea.Min.X; col < cellArea.Max.X; {
+			p := image.Point{col, row}
+			if col+rw > cellArea.Max.X {
+				break
+			}
+			cells, err := c.SetCell(p, r, opts...)
+			if err != nil {
+				return err
+			}
+			col += cells
+		}
+	}
+	return nil
+}
+
+// SetAreaCellOpts is like SetCellOpts, but sets the specified options on all
+// the cells within the provided area.
+func (c *Canvas) SetAreaCellOpts(cellArea image.Rectangle, opts ...cell.Option) error {
+	haveArea := c.Area()
+	if !cellArea.In(haveArea) {
+		return fmt.Errorf("unable to set cell options in area %v, it must fit inside the available cell area is %v", cellArea, haveArea)
+	}
+	for col := cellArea.Min.X; col < cellArea.Max.X; col++ {
+		for row := cellArea.Min.Y; row < cellArea.Max.Y; row++ {
+			if err := c.SetCellOpts(image.Point{col, row}, opts...); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // setCellFunc is a function that sets cell content on a terminal or a canvas.

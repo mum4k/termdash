@@ -173,7 +173,7 @@ func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, 
 	for _, ev := range events {
 		switch e := ev.(type) {
 		case *terminalapi.Mouse:
-			if !mirror.opts.WantMouse {
+			if mirror.opts.WantMouse == widgetapi.MouseScopeNone {
 				continue
 			}
 			if err := mirror.Mouse(e); err != nil {

@@ -55,6 +55,54 @@ const (
 	KeyScopeGlobal
 )
 
+// MouseScope indicates the scope at which the widget wants to receive mouse
+// events.
+type MouseScope int
+
+// String implements fmt.Stringer()
+func (ms MouseScope) String() string {
+	if n, ok := mouseScopeNames[ms]; ok {
+		return n
+	}
+	return "MouseScopeUnknown"
+}
+
+// mouseScopeNames maps MouseScope values to human readable names.
+var mouseScopeNames = map[MouseScope]string{
+	MouseScopeNone:      "MouseScopeNone",
+	MouseScopeWidget:    "MouseScopeWidget",
+	MouseScopeContainer: "MouseScopeContainer",
+	MouseScopeGlobal:    "MouseScopeGlobal",
+}
+
+const (
+	// MouseScopeNone is used when the widget doesn't want to receive any mouse
+	// events.
+	MouseScopeNone MouseScope = iota
+
+	// MouseScopeWidget is used when the widget only wants mouse events that
+	// fall onto its canvas.
+	// The position of these widgets is always relative to widget's canvas.
+	MouseScopeWidget
+
+	// MouseScopeContainer is used when the widget only wants mouse events that
+	// fall onto its container. The area size of a container is always larger
+	// or equal to the one of the widget's canvas. So a widget selecting
+	// MouseScopeContainer will either receive the same or larger amount of
+	// events as compared to MouseScopeWidget.
+	// The position of mouse events that fall outside of widget's canvas is
+	// reset to image.Point{-1, -1}.
+	// The widgets are allowed to process the button event.
+	MouseScopeContainer
+
+	// MouseScopeGlobal is used when the widget wants to receive all mouse
+	// events regardless on where on the terminal they land.
+	// The position of mouse events that fall outside of widget's canvas is
+	// reset to image.Point{-1, -1} and must not be used by the widgets.
+	// The widgets are allowed to process the button event.
+	MouseScopeGlobal
+)
+
 // Options contains registration options for a widget.
 // This is how the widget indicates its needs to the infrastructure.
 type Options struct {
@@ -82,11 +130,13 @@ type Options struct {
 	// forwarded to the widget.
 	WantKeyboard KeyScope
 
-	// WantMouse allows a widget to request mouse events.
-	// If false, mouse events won't be forwarded to the widget.
-	// If true, the widget receives all mouse events whose coordinates fall
-	// within its canvas.
-	WantMouse bool
+	// WantMouse allows a widget to request mouse events and specify their
+	// desired scope. If set to MouseScopeNone, no mouse events are forwarded
+	// to the widget.
+	// Note that the widget is only able to see the position of the mouse event
+	// if it falls onto its canvas. See the documentation next to individual
+	// MouseScope values for details.
+	WantMouse MouseScope
 }
 
 // Widget is a single widget on the dashboard.

@@ -8,7 +8,7 @@
 
 # termdash
 
-[<img src="./images/termdashdemo_0_7_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
+[<img src="./doc/images/termdashdemo_0_7_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
 Termdash is a cross-platform customizable terminal based dashboard.
 The feature set is inspired by the
@@ -83,7 +83,7 @@ Run the
 go run github.com/mum4k/termdash/widgets/button/buttondemo/buttondemo.go
 ```
 
-[<img src="./images/buttondemo.gif" alt="buttondemo" type="image/gif" width="50%">](widgets/button/buttondemo/buttondemo.go)
+[<img src="./doc/images/buttondemo.gif" alt="buttondemo" type="image/gif" width="50%">](widgets/button/buttondemo/buttondemo.go)
 
 ### The Gauge
 
@@ -94,7 +94,7 @@ Displays the progress of an operation. Run the
 go run github.com/mum4k/termdash/widgets/gauge/gaugedemo/gaugedemo.go
 ```
 
-[<img src="./images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
+[<img src="./doc/images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
 
 ### The Donut
 
@@ -105,7 +105,7 @@ Visualizes progress of an operation as a partial or a complete donut. Run the
 go run github.com/mum4k/termdash/widgets/donut/donutdemo/donutdemo.go
 ```
 
-[<img src="./images/donutdemo.gif" alt="donutdemo" type="image/gif">](widgets/donut/donutdemo/donutdemo.go)
+[<img src="./doc/images/donutdemo.gif" alt="donutdemo" type="image/gif">](widgets/donut/donutdemo/donutdemo.go)
 
 ### The Text
 
@@ -116,7 +116,7 @@ Displays text content, supports trimming and scrolling of content. Run the
 go run github.com/mum4k/termdash/widgets/text/textdemo/textdemo.go
 ```
 
-[<img src="./images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/text/textdemo/textdemo.go)
+[<img src="./doc/images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/text/textdemo/textdemo.go)
 
 ### The SparkLine
 
@@ -128,7 +128,7 @@ sub-cell height. Run the
 go run github.com/mum4k/termdash/widgets/sparkline/sparklinedemo/sparklinedemo.go
 ```
 
-[<img src="./images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif" width="50%">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
+[<img src="./doc/images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif" width="50%">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
 
 ### The BarChart
 
@@ -139,7 +139,7 @@ Displays multiple bars showing relative ratios of values. Run the
 go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
 ```
 
-[<img src="./images/barchartdemo.gif" alt="barchartdemo" type="image/gif" width="50%">](widgets/barchart/barchartdemo/barchartdemo.go)
+[<img src="./doc/images/barchartdemo.gif" alt="barchartdemo" type="image/gif" width="50%">](widgets/barchart/barchartdemo/barchartdemo.go)
 
 ### The LineChart
 
@@ -151,7 +151,7 @@ events. Run the
 go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.go
 ```
 
-[<img src="./images/linechartdemo.gif" alt="linechartdemo" type="image/gif" width="70%">](widgets/linechart/linechartdemo/linechartdemo.go)
+[<img src="./doc/images/linechartdemo.gif" alt="linechartdemo" type="image/gif" width="70%">](widgets/linechart/linechartdemo/linechartdemo.go)
 
 ### The SegmentDisplay
 
@@ -162,7 +162,7 @@ Displays text by simulating a 16-segment display. Run the
 go run github.com/mum4k/termdash/widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go
 ```
 
-[<img src="./images/segmentdisplaydemo.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)
+[<img src="./doc/images/segmentdisplaydemo.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)
 
 # Contributing
 

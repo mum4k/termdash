@@ -22,13 +22,13 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/area"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // BarChart displays multiple bars showing relative ratios of values.
@@ -53,14 +53,17 @@ type BarChart struct {
 }
 
 // New returns a new BarChart.
-func New(opts ...Option) *BarChart {
+func New(opts ...Option) (*BarChart, error) {
 	opt := newOptions()
 	for _, o := range opts {
 		o.set(opt)
 	}
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
 	return &BarChart{
 		opts: opt,
-	}
+	}, nil
 }
 
 // Draw draws the BarChart widget onto the canvas.
@@ -155,7 +158,7 @@ func (bc *BarChart) barWidth(cvs *canvas.Canvas) int {
 	}
 
 	if bc.opts.barWidth >= 1 {
-		// Prefer width set via the options if it is positive.
+		// Prefer width set via the options.
 		return bc.opts.barWidth
 	}
 
@@ -266,8 +269,8 @@ func (bc *BarChart) Options() widgetapi.Options {
 	defer bc.mu.Unlock()
 	return widgetapi.Options{
 		MinimumSize:  bc.minSize(),
-		WantKeyboard: false,
-		WantMouse:    false,
+		WantKeyboard: widgetapi.KeyScopeNone,
+		WantMouse:    widgetapi.MouseScopeNone,
 	}
 }
 

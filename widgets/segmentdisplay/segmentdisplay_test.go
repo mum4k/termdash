@@ -19,15 +19,15 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/testcanvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw/segdisp/sixteen"
-	"github.com/mum4k/termdash/draw/segdisp/sixteen/testsixteen"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw/segdisp/sixteen"
+	"github.com/mum4k/termdash/internal/draw/segdisp/sixteen/testsixteen"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // mustDrawChar draws the provided character in the area of the canvas or panics.
@@ -821,8 +821,8 @@ func TestOptions(t *testing.T) {
 	got := sd.Options()
 	want := widgetapi.Options{
 		MinimumSize:  image.Point{sixteen.MinCols, sixteen.MinRows},
-		WantKeyboard: false,
-		WantMouse:    false,
+		WantKeyboard: widgetapi.KeyScopeNone,
+		WantMouse:    widgetapi.MouseScopeNone,
 	}
 	if diff := pretty.Compare(want, got); diff != "" {
 		t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)

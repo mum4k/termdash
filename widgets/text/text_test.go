@@ -19,16 +19,16 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/testcanvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/draw/testdraw"
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
+	"github.com/mum4k/termdash/internal/keyboard"
+	"github.com/mum4k/termdash/internal/mouse"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 func TestTextDraws(t *testing.T) {
@@ -39,8 +39,31 @@ func TestTextDraws(t *testing.T) {
 		writes       func(*Text) error
 		events       func(*Text)
 		want         func(size image.Point) *faketerm.Terminal
+		wantErr      bool
 		wantWriteErr bool
 	}{
+		{
+			desc: "fails when scroll keys aren't unique",
+			opts: []Option{
+				ScrollKeys('a', 'a', 'a', 'a'),
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
+			desc: "fails when scroll mouse buttons aren't unique",
+			opts: []Option{
+				ScrollMouseButtons(mouse.ButtonLeft, mouse.ButtonLeft),
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
 		{
 			desc:   "empty when no written text",
 			canvas: image.Rect(0, 0, 1, 1),
@@ -106,6 +129,24 @@ func TestTextDraws(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testdraw.MustText(c, "hello world", image.Point{0, 0})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "multiple writes replace when requested",
+			canvas: image.Rect(0, 0, 12, 1),
+			writes: func(widget *Text) error {
+				if err := widget.Write("hello", WriteReplace()); err != nil {
+					return err
+				}
+				return widget.Write("world", WriteReplace())
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "world", image.Point{0, 0})
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -691,7 +732,14 @@ func TestTextDraws(t *testing.T) {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			widget := New(tc.opts...)
+			widget, err := New(tc.opts...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("New => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
 			if tc.writes != nil {
 				err := tc.writes(widget)
 				if (err != nil) != tc.wantWriteErr {
@@ -736,8 +784,8 @@ func TestOptions(t *testing.T) {
 			desc: "minimum size for one character",
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: true,
-				WantMouse:    true,
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
 		{
@@ -747,15 +795,19 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			text := New(tc.opts...)
+			text, err := New(tc.opts...)
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
+
 			got := text.Options()
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)

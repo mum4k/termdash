@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/terminal/termbox"
+	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/widgets/sparkline"
 )
 
@@ -59,20 +59,29 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	green := sparkline.New(
+	green, err := sparkline.New(
 		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorGreen),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playSparkLine(ctx, green, 250*time.Millisecond)
-	red := sparkline.New(
+	red, err := sparkline.New(
 		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
 		sparkline.Color(cell.ColorRed),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playSparkLine(ctx, red, 500*time.Millisecond)
-	yellow := sparkline.New(
+	yellow, err := sparkline.New(
 		sparkline.Label("Yellow SparkLine", cell.FgColor(cell.ColorGreen)),
 		sparkline.Color(cell.ColorYellow),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playSparkLine(ctx, yellow, 1*time.Second)
 
 	c, err := container.New(

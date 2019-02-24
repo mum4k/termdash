@@ -7,6 +7,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 24-Feb-2019
+
+### Added
+
+#### New widgets
+
+- The Button widget.
+
+#### Improvements to documentation
+
+- Clearly marked the public API surface by moving private packages into
+  internal directory.
+- Started a GitHub wiki for Termdash.
+
+#### Improvements to the LineChart widget
+
+- The LineChart widget can display X axis labels in vertical orientation.
+- The LineChart widget allows the user to specify a custom scale for the Y
+  axis.
+- The LineChart widget now has an option that disables scaling of the X axis.
+  Useful for applications that want to continuously feed data and make them
+  "roll" through the linechart.
+- The LineChart widget now has a method that returns the observed capacity of
+  the LineChart the last time Draw was called.
+- The LineChart widget now supports zoom of the content triggered by mouse
+  events.
+
+#### Improvements to the Text widget
+
+- The Text widget now has a Write option that atomically replaces the entire
+  text content.
+
+
+#### Improvements to the infrastructure
+
+- A function that draws text vertically.
+- A non-blocking event distribution system that can throttle repetitive events.
+- Generalized mouse button FSM for use in widgets that need to track mouse
+  button clicks.
+
+### Changed
+
+- Termbox is now initialized in 256 color mode by default.
+- The infrastructure now uses the non-blocking event distribution system to
+  distribute events to subscribers. Each widget is now an individual
+  subscriber.
+- The infrastructure now throttles event driven screen redraw rather than
+  redrawing for each input event.
+- Widgets can now specify the scope at which they want to receive keyboard and
+  mouse events.
+
+#### Breaking API changes
+
+##### High impact
+
+- The constructors of all the widgets now also return an error so that they
+  can validate the options. This is a breaking change for the following
+  widgets: BarChart, Gauge, LineChart, SparkLine, Text. The callers will have
+  to handle the returned error.
+
+##### Low impact
+
+- The container package no longer exports separate methods to receive Keyboard
+  and Mouse events which were replaced by a Subscribe method for the event
+  distribution system. This shouldn't affect users as the removed methods
+  aren't needed by container users.
+- The widgetapi.Options struct now uses an enum instead of a boolean when
+  widget specifies if it wants keyboard or mouse events. This only impacts
+  development of new widgets.
+
+### Fixed
+
+- The LineChart widget now correctly determines the Y axis scale when multiple
+  series are provided.
+- Lint issues in the codebase, and updated Travis configuration so that golint
+  is executed on every run.
+- Termdash now correctly starts in locales like zh_CN.UTF-8 where some of the
+  characters it uses internally can have ambiguous width.
+
 ## [0.6.1] - 12-Feb-2019
 
 ### Fixed
@@ -89,7 +168,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.6.1...devel
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.0...devel
+[0.7.0]: https://github.com/mum4k/termdash/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/mum4k/termdash/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/mum4k/termdash/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/mum4k/termdash/compare/v0.4.0...v0.5.0

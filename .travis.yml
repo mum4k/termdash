@@ -6,10 +6,12 @@ go:
         - stable
 script:
         - go get -t ./...
+        - go get -u golang.org/x/lint/golint
         - go test ./...
         - go test -race ./...
         - go vet ./...
         - diff -u <(echo -n) <(gofmt -d -s .)
-        - diff -u <(echo -n) <(./scripts/autogen_licences.sh .)
+        - diff -u <(echo -n) <(./internal/scripts/autogen_licences.sh .)
+        - diff -u <(echo -n) <(golint ./...)
 after_success:
         - ./scripts/coverage.sh

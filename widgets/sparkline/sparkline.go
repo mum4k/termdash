@@ -21,12 +21,12 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/area"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // SparkLine draws a graph showing a series of values as vertical bars.
@@ -47,14 +47,18 @@ type SparkLine struct {
 }
 
 // New returns a new SparkLine.
-func New(opts ...Option) *SparkLine {
+func New(opts ...Option) (*SparkLine, error) {
 	opt := newOptions()
 	for _, o := range opts {
 		o.set(opt)
 	}
+	if err := opt.validate(); err != nil {
+		return nil, err
+	}
+
 	return &SparkLine{
 		opts: opt,
-	}
+	}, nil
 }
 
 // Draw draws the SparkLine widget onto the canvas.
@@ -226,7 +230,7 @@ func (sl *SparkLine) Options() widgetapi.Options {
 	return widgetapi.Options{
 		MinimumSize:  min,
 		MaximumSize:  max,
-		WantKeyboard: false,
-		WantMouse:    false,
+		WantKeyboard: widgetapi.KeyScopeNone,
+		WantMouse:    widgetapi.MouseScopeNone,
 	}
 }

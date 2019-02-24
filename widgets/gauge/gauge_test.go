@@ -19,14 +19,14 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/testcanvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/draw/testdraw"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // percentCall contains arguments for a call to GaugePercent().
@@ -45,20 +45,31 @@ type absoluteCall struct {
 func TestGauge(t *testing.T) {
 	tests := []struct {
 		desc          string
-		gauge         *Gauge
+		opts          []Option
 		percent       *percentCall  // if set, the test case calls Gauge.Percent().
 		absolute      *absoluteCall // if set the test case calls Gauge.Absolute().
 		canvas        image.Rectangle
-		opts          []Option
 		want          func(size image.Point) *faketerm.Terminal
+		wantErr       bool
 		wantUpdateErr bool // whether to expect an error on a call to Gauge.Percent() or Gauge.Absolute().
 		wantDrawErr   bool
 	}{
 		{
+			desc: "fails on negative height",
+			opts: []Option{
+				Height(-1),
+			},
+			canvas: image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
 			desc: "gauge showing percentage",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			percent: &percentCall{p: 35},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -76,10 +87,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "draws resize needed character when canvas is smaller than requested",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				Border(draw.LineStyleLight),
-			),
+			},
 			percent: &percentCall{p: 35},
 			canvas:  image.Rect(0, 0, 1, 1),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -93,11 +104,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "aligns the progress text top and left",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HorizontalTextAlign(align.HorizontalLeft),
 				VerticalTextAlign(align.VerticalTop),
-			),
+			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -111,12 +122,12 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "aligns the progress text top and left with border",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HorizontalTextAlign(align.HorizontalLeft),
 				VerticalTextAlign(align.VerticalTop),
 				Border(draw.LineStyleLight),
-			),
+			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -131,11 +142,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "aligns the progress text bottom and right",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HorizontalTextAlign(align.HorizontalRight),
 				VerticalTextAlign(align.VerticalBottom),
-			),
+			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -149,12 +160,12 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "aligns the progress text bottom and right with border",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HorizontalTextAlign(align.HorizontalRight),
 				VerticalTextAlign(align.VerticalBottom),
 				Border(draw.LineStyleLight),
-			),
+			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -169,11 +180,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge showing percentage with border",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				Border(draw.LineStyleLight),
 				BorderTitle("title"),
-			),
+			},
 			percent: &percentCall{p: 35},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -194,12 +205,12 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "respects border options",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				Border(draw.LineStyleLight, cell.FgColor(cell.ColorBlue)),
 				BorderTitle("title"),
 				BorderTitleAlign(align.HorizontalRight),
-			),
+			},
 			percent: &percentCall{p: 35},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -222,9 +233,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge showing zero percentage",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			percent: &percentCall{},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -238,9 +249,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge showing 100 percent",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -260,10 +271,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge showing 100 percent with border",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				Border(draw.LineStyleLight),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -284,9 +295,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge showing absolute progress",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			absolute: &absoluteCall{done: 20, total: 100},
 			canvas:   image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -304,10 +315,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge without text progress",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
-			),
+			},
 			percent: &percentCall{p: 35},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -324,10 +335,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "passing option to Percent() overrides one provided to New()",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
-			),
+			},
 			percent: &percentCall{p: 35, opts: []Option{ShowTextProgress()}},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -345,10 +356,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "passing option to Absolute() overrides one provided to New()",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
-			),
+			},
 			absolute: &absoluteCall{done: 20, total: 100, opts: []Option{ShowTextProgress()}},
 			canvas:   image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -366,10 +377,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge takes full size of the canvas",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 5, 2),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -386,11 +397,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge with text label, half-width runes",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
 				TextLabel("label"),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -410,11 +421,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge with text label, full-width runes",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
 				TextLabel("你好"),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -434,11 +445,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge with text label, full-width runes, gauge falls on rune boundary",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
 				TextLabel("你好"),
-			),
+			},
 			percent: &percentCall{p: 50},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -461,11 +472,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge with text label, full-width runes, gauge extended to cover full rune",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				HideTextProgress(),
 				TextLabel("你好"),
-			),
+			},
 			percent: &percentCall{p: 40},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -488,10 +499,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "gauge with progress text and text label",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("l"),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -511,12 +522,12 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "text fully outside of gauge respects EmptyTextColor",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("l"),
 				EmptyTextColor(cell.ColorMagenta),
 				FilledTextColor(cell.ColorBlue),
-			),
+			},
 			percent: &percentCall{p: 10},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -536,12 +547,12 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "text fully inside of gauge respects FilledTextColor",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("l"),
 				EmptyTextColor(cell.ColorMagenta),
 				FilledTextColor(cell.ColorBlue),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -561,12 +572,12 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "part of the text is inside and part outside of gauge",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("l"),
 				EmptyTextColor(cell.ColorMagenta),
 				FilledTextColor(cell.ColorBlue),
-			),
+			},
 			percent: &percentCall{p: 50},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -589,10 +600,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "truncates text that is outside of gauge",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
-			),
+			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -608,11 +619,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "truncates text that is outside of gauge when drawn with border",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
 				Border(draw.LineStyleLight),
-			),
+			},
 			percent: &percentCall{p: 0},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -629,10 +640,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "truncates text that is inside of gauge",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -652,11 +663,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "truncates text that is inside of gauge when drawn with border",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
 				Border(draw.LineStyleLight),
-			),
+			},
 			percent: &percentCall{p: 100},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -677,10 +688,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "truncates text that is inside and outside of gauge",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
-			),
+			},
 			percent: &percentCall{p: 50},
 			canvas:  image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -703,11 +714,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "truncates text that is inside and outside of gauge with border",
-			gauge: New(
+			opts: []Option{
 				Char('o'),
 				TextLabel("long label"),
 				Border(draw.LineStyleLight),
-			),
+			},
 			percent: &percentCall{p: 50},
 			canvas:  image.Rect(0, 0, 10, 4),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -733,6 +744,14 @@ func TestGauge(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			g, err := New(tc.opts...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("New => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
 			c, err := canvas.New(tc.canvas)
 			if err != nil {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
@@ -740,7 +759,7 @@ func TestGauge(t *testing.T) {
 
 			switch {
 			case tc.percent != nil:
-				err := tc.gauge.Percent(tc.percent.p, tc.percent.opts...)
+				err := g.Percent(tc.percent.p, tc.percent.opts...)
 				if (err != nil) != tc.wantUpdateErr {
 					t.Errorf("Percent => unexpected error: %v, wantUpdateErr: %v", err, tc.wantUpdateErr)
 				}
@@ -749,7 +768,7 @@ func TestGauge(t *testing.T) {
 				}
 
 			case tc.absolute != nil:
-				err := tc.gauge.Absolute(tc.absolute.done, tc.absolute.total, tc.absolute.opts...)
+				err := g.Absolute(tc.absolute.done, tc.absolute.total, tc.absolute.opts...)
 				if (err != nil) != tc.wantUpdateErr {
 					t.Errorf("Absolute => unexpected error: %v, wantUpdateErr: %v", err, tc.wantUpdateErr)
 				}
@@ -759,7 +778,7 @@ func TestGauge(t *testing.T) {
 
 			}
 
-			err = tc.gauge.Draw(c)
+			err = g.Draw(c)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}
@@ -785,50 +804,53 @@ func TestGauge(t *testing.T) {
 
 func TestOptions(t *testing.T) {
 	tests := []struct {
-		desc  string
-		gauge *Gauge
-		want  widgetapi.Options
+		desc string
+		opts []Option
+		want widgetapi.Options
 	}{
 		{
-			desc:  "reports correct minimum and maximum size",
-			gauge: New(),
+			desc: "reports correct minimum and maximum size",
 			want: widgetapi.Options{
 				MaximumSize:  image.Point{0, 0}, // Unlimited.
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
 			desc: "maximum size is limited when height is specified",
-			gauge: New(
+			opts: []Option{
 				Height(2),
-			),
+			},
 			want: widgetapi.Options{
 				MaximumSize:  image.Point{0, 2},
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
 			desc: "border is accounted for in maximum and minimum size",
-			gauge: New(
+			opts: []Option{
 				Border(draw.LineStyleLight),
 				Height(2),
-			),
+			},
 			want: widgetapi.Options{
 				MaximumSize:  image.Point{0, 4},
 				MinimumSize:  image.Point{3, 3},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.gauge.Options()
+			g, err := New(tc.opts...)
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
+			got := g.Options()
 
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)

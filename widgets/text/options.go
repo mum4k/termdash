@@ -15,8 +15,10 @@
 package text
 
 import (
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
+	"fmt"
+
+	"github.com/mum4k/termdash/internal/keyboard"
+	"github.com/mum4k/termdash/internal/mouse"
 )
 
 // options.go contains configurable options for Text.
@@ -54,6 +56,23 @@ func newOptions(opts ...Option) *options {
 		o.set(opt)
 	}
 	return opt
+}
+
+// validate validates the provided options.
+func (o *options) validate() error {
+	keys := map[keyboard.Key]bool{
+		o.keyUp:     true,
+		o.keyDown:   true,
+		o.keyPgUp:   true,
+		o.keyPgDown: true,
+	}
+	if len(keys) != 4 {
+		return fmt.Errorf("invalid ScrollKeys(up:%v, down:%v, pageUp:%v, pageDown:%v), the keys must be unique", o.keyUp, o.keyDown, o.keyPgUp, o.keyPgDown)
+	}
+	if o.mouseUpButton == o.mouseDownButton {
+		return fmt.Errorf("invalid ScrollMouseButtons(up:%v, down:%v), the buttons must be unique", o.mouseUpButton, o.mouseDownButton)
+	}
+	return nil
 }
 
 // option implements Option.
@@ -97,6 +116,8 @@ const (
 )
 
 // ScrollMouseButtons configures the mouse buttons that scroll the content.
+// The provided buttons must be unique, e.g. the same button cannot be both up
+// and down.
 func ScrollMouseButtons(up, down mouse.Button) Option {
 	return option(func(opts *options) {
 		opts.mouseUpButton = up
@@ -113,6 +134,8 @@ const (
 )
 
 // ScrollKeys configures the mouse buttons that scroll the content.
+// The provided keys must be unique, e.g. the same key cannot be both up and
+// down.
 func ScrollKeys(up, down, pageUp, pageDown keyboard.Key) Option {
 	return option(func(opts *options) {
 		opts.keyUp = up

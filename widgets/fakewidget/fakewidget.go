@@ -21,13 +21,13 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/area"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/keyboard"
+	"github.com/mum4k/termdash/internal/mouse"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // outputLines are the number of lines written by this plugin.
@@ -173,14 +173,14 @@ func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, 
 	for _, ev := range events {
 		switch e := ev.(type) {
 		case *terminalapi.Mouse:
-			if !mirror.opts.WantMouse {
+			if mirror.opts.WantMouse == widgetapi.MouseScopeNone {
 				continue
 			}
 			if err := mirror.Mouse(e); err != nil {
 				return err
 			}
 		case *terminalapi.Keyboard:
-			if !mirror.opts.WantKeyboard {
+			if mirror.opts.WantKeyboard == widgetapi.KeyScopeNone {
 				continue
 			}
 			if err := mirror.Keyboard(e); err != nil {

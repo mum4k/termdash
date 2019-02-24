@@ -19,15 +19,15 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/braille/testbraille"
-	"github.com/mum4k/termdash/canvas/testcanvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/draw/testdraw"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 func TestDonut(t *testing.T) {
@@ -665,8 +665,8 @@ func TestOptions(t *testing.T) {
 	want := widgetapi.Options{
 		Ratio:        image.Point{4, 2},
 		MinimumSize:  image.Point{3, 3},
-		WantKeyboard: false,
-		WantMouse:    false,
+		WantKeyboard: widgetapi.KeyScopeNone,
+		WantMouse:    widgetapi.MouseScopeNone,
 	}
 	if diff := pretty.Compare(want, got); diff != "" {
 		t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)

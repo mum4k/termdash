@@ -16,7 +16,11 @@ package sparkline
 
 // options.go contains configurable options for SparkLine.
 
-import "github.com/mum4k/termdash/cell"
+import (
+	"fmt"
+
+	"github.com/mum4k/termdash/internal/cell"
+)
 
 // Option is used to provide options.
 type Option interface {
@@ -47,6 +51,14 @@ func newOptions() *options {
 	}
 }
 
+// validate validates the provided options.
+func (o *options) validate() error {
+	if got, min := o.height, 0; got < min {
+		return fmt.Errorf("invalid Height %d, must be %d <= Height", got, min)
+	}
+	return nil
+}
+
 // Label adds a label above the SparkLine.
 func Label(text string, cOpts ...cell.Option) Option {
 	return option(func(opts *options) {
@@ -56,8 +68,8 @@ func Label(text string, cOpts ...cell.Option) Option {
 }
 
 // Height sets a fixed height for the SparkLine.
-// If not provided, the SparkLine takes all the available vertical space in the
-// container.
+// If not provided or set to zero, the SparkLine takes all the available
+// vertical space in the container. Must be a positive or zero integer.
 func Height(h int) Option {
 	return option(func(opts *options) {
 		opts.height = h

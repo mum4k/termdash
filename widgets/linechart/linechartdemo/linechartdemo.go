@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/terminal/termbox"
+	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/widgets/linechart"
 )
 
@@ -82,11 +82,14 @@ func main() {
 
 	const redrawInterval = 250 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
-	lc := linechart.New(
+	lc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorCyan)),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playLineChart(ctx, lc, redrawInterval/3)
 	c, err := container.New(
 		t,

@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/terminal/termbox"
+	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 )
 
@@ -67,7 +67,7 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	bc := barchart.New(
+	bc, err := barchart.New(
 		barchart.BarColors([]cell.Color{
 			cell.ColorBlue,
 			cell.ColorRed,
@@ -91,6 +91,9 @@ func main() {
 			"CPU3",
 		}),
 	)
+	if err != nil {
+		panic(err)
+	}
 	go playBarChart(ctx, bc, 1*time.Second)
 
 	c, err := container.New(

@@ -23,11 +23,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/terminal/termbox"
+	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/widgets/text"
 )
 
@@ -74,22 +74,34 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	borderless := text.New()
+	borderless, err := text.New()
+	if err != nil {
+		panic(err)
+	}
 	if err := borderless.Write("Text without border."); err != nil {
 		panic(err)
 	}
 
-	unicode := text.New()
+	unicode, err := text.New()
+	if err != nil {
+		panic(err)
+	}
 	if err := unicode.Write("你好，世界!"); err != nil {
 		panic(err)
 	}
 
-	trimmed := text.New()
+	trimmed, err := text.New()
+	if err != nil {
+		panic(err)
+	}
 	if err := trimmed.Write("Trims lines that don't fit onto the canvas because they are too long for its width.."); err != nil {
 		panic(err)
 	}
 
-	wrapped := text.New(text.WrapAtRunes())
+	wrapped, err := text.New(text.WrapAtRunes())
+	if err != nil {
+		panic(err)
+	}
 	if err := wrapped.Write("Supports", text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 		panic(err)
 	}
@@ -100,7 +112,10 @@ func main() {
 		panic(err)
 	}
 
-	rolled := text.New(text.RollContent(), text.WrapAtRunes())
+	rolled, err := text.New(text.RollContent(), text.WrapAtRunes())
+	if err != nil {
+		panic(err)
+	}
 	if err := rolled.Write("Rolls the content upwards if RollContent() option is provided.\nSupports keyboard and mouse scrolling.\n\n"); err != nil {
 		panic(err)
 	}

@@ -19,30 +19,59 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/testcanvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/draw/testdraw"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
-func TestGauge(t *testing.T) {
+func TestBarChart(t *testing.T) {
 	tests := []struct {
 		desc          string
-		bc            *BarChart
+		opts          []Option
 		update        func(*BarChart) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
 		want          func(size image.Point) *faketerm.Terminal
+		wantErr       bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
 		wantDrawErr   bool
 	}{
 		{
+			desc: "fails on negative bar width",
+			opts: []Option{
+				BarWidth(-1),
+			},
+			update: func(bc *BarChart) error {
+				return nil
+			},
+			canvas: image.Rect(0, 0, 3, 10),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
+			desc: "fails on negative bar gap",
+			opts: []Option{
+				BarGap(-1),
+			},
+			update: func(bc *BarChart) error {
+				return nil
+			},
+			canvas: image.Rect(0, 0, 3, 10),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
 			desc: "draws empty for no values",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return nil
 			},
@@ -53,9 +82,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "fails for zero max",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{0, 2, 5, 10}, 0)
 			},
@@ -67,9 +96,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "fails for negative max",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{0, 2, 5, 10}, -1)
 			},
@@ -81,9 +110,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "fails when negative value",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{0, -2, 5, 10}, 10)
 			},
@@ -95,9 +124,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "fails for value larger than max",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{0, 2, 5, 11}, 10)
 			},
@@ -109,9 +138,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "draws resize needed character when canvas is smaller than requested",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{0, 2, 5, 10}, 10)
 			},
@@ -127,9 +156,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "displays bars",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{0, 2, 5, 10}, 10)
 			},
@@ -156,14 +185,14 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "displays bars with labels",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				Labels([]string{
 					"1",
 					"2",
 					"3",
 				}),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2, 5, 10}, 10)
 			},
@@ -205,14 +234,14 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "trims too long labels",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				Labels([]string{
 					"1",
 					"22",
 					"3",
 				}),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2, 5, 10}, 10)
 			},
@@ -254,7 +283,7 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "displays bars with labels and values",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				Labels([]string{
 					"1",
@@ -262,7 +291,7 @@ func TestGauge(t *testing.T) {
 					"3",
 				}),
 				ShowValues(),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2, 5, 10}, 10)
 			},
@@ -320,9 +349,9 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "bars take as much width as available",
-			bc: New(
+			opts: []Option{
 				Char('o'),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2}, 10)
 			},
@@ -345,10 +374,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "respects set bar width",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				BarWidth(1),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2}, 10)
 			},
@@ -371,7 +400,6 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "options can be set on a call to Values",
-			bc:   New(),
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2}, 10, Char('o'), BarWidth(1))
 			},
@@ -394,10 +422,10 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "respects set bar gap",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				BarGap(2),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2}, 10)
 			},
@@ -420,11 +448,11 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "respects both width and gap",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				BarGap(2),
 				BarWidth(2),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{5, 3}, 10)
 			},
@@ -447,7 +475,7 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "respects bar and label colors",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				BarColors([]cell.Color{
 					cell.ColorBlue,
@@ -461,7 +489,7 @@ func TestGauge(t *testing.T) {
 					"1",
 					"2",
 				}),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{1, 2, 3}, 10)
 			},
@@ -496,14 +524,14 @@ func TestGauge(t *testing.T) {
 		},
 		{
 			desc: "respects value colors",
-			bc: New(
+			opts: []Option{
 				Char('o'),
 				ValueColors([]cell.Color{
 					cell.ColorBlue,
 					cell.ColorBlack,
 				}),
 				ShowValues(),
-			),
+			},
 			update: func(bc *BarChart) error {
 				return bc.Values([]int{0, 2, 3}, 10)
 			},
@@ -541,12 +569,20 @@ func TestGauge(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			bc, err := New(tc.opts...)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("New => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
 			c, err := canvas.New(tc.canvas)
 			if err != nil {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			err = tc.update(tc.bc)
+			err = tc.update(bc)
 			if (err != nil) != tc.wantUpdateErr {
 				t.Errorf("update => unexpected error: %v, wantUpdateErr: %v", err, tc.wantUpdateErr)
 
@@ -555,7 +591,7 @@ func TestGauge(t *testing.T) {
 				return
 			}
 
-			err = tc.bc.Draw(c)
+			err = bc.Draw(c)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}
@@ -588,12 +624,12 @@ func TestOptions(t *testing.T) {
 		{
 			desc: "minimum size for no bars",
 			create: func() (*BarChart, error) {
-				return New(), nil
+				return New()
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
@@ -601,18 +637,21 @@ func TestOptions(t *testing.T) {
 			create: func() (*BarChart, error) {
 				return New(
 					Labels([]string{"foo"}),
-				), nil
+				)
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
 			desc: "minimum size for one bar, default width, gap and no labels",
 			create: func() (*BarChart, error) {
-				bc := New()
+				bc, err := New()
+				if err != nil {
+					return nil, err
+				}
 				if err := bc.Values([]int{1}, 3); err != nil {
 					return nil, err
 				}
@@ -620,14 +659,17 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{1, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
 			desc: "minimum size for two bars, default width, gap and no labels",
 			create: func() (*BarChart, error) {
-				bc := New()
+				bc, err := New()
+				if err != nil {
+					return nil, err
+				}
 				if err := bc.Values([]int{1, 2}, 3); err != nil {
 					return nil, err
 				}
@@ -635,17 +677,20 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{3, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
 			desc: "minimum size for two bars, custom width, gap and no labels",
 			create: func() (*BarChart, error) {
-				bc := New(
+				bc, err := New(
 					BarWidth(3),
 					BarGap(2),
 				)
+				if err != nil {
+					return nil, err
+				}
 				if err := bc.Values([]int{1, 2}, 3); err != nil {
 					return nil, err
 				}
@@ -653,17 +698,20 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{8, 1},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
 			desc: "minimum size for two bars, custom width, gap and labels",
 			create: func() (*BarChart, error) {
-				bc := New(
+				bc, err := New(
 					BarWidth(3),
 					BarGap(2),
 				)
+				if err != nil {
+					return nil, err
+				}
 				if err := bc.Values([]int{1, 2}, 3, Labels([]string{"foo", "bar"})); err != nil {
 					return nil, err
 				}
@@ -671,8 +719,8 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{8, 2},
-				WantKeyboard: false,
-				WantMouse:    false,
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 	}

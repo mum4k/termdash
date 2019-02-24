@@ -19,14 +19,14 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/testcanvas"
-	"github.com/mum4k/termdash/draw/testdraw"
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
+	"github.com/mum4k/termdash/internal/keyboard"
+	"github.com/mum4k/termdash/internal/mouse"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // keyEvents are keyboard events to send to the widget.
@@ -281,7 +281,7 @@ func TestMirror(t *testing.T) {
 func TestOptions(t *testing.T) {
 	want := widgetapi.Options{
 		Ratio:        image.Point{1, 2},
-		WantKeyboard: true,
+		WantKeyboard: widgetapi.KeyScopeFocused,
 	}
 
 	w := New(want)
@@ -323,8 +323,8 @@ func TestDraw(t *testing.T) {
 		{
 			desc: "draws both keyboard and mouse events",
 			opts: widgetapi.Options{
-				WantKeyboard: true,
-				WantMouse:    true,
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 			cvs: testcanvas.MustNew(image.Rect(0, 0, 17, 5)),
 			events: []terminalapi.Event{

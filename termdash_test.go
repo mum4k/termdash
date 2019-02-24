@@ -16,21 +16,24 @@ package termdash
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"image"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/canvas/testcanvas"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/eventqueue"
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/event/eventqueue"
+	"github.com/mum4k/termdash/internal/event/testevent"
+	"github.com/mum4k/termdash/internal/keyboard"
+	"github.com/mum4k/termdash/internal/mouse"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminal/termbox"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
@@ -45,8 +48,8 @@ func Example() {
 
 	wOpts := widgetapi.Options{
 		MinimumSize:  fakewidget.MinimumSize,
-		WantKeyboard: true,
-		WantMouse:    true,
+		WantKeyboard: widgetapi.KeyScopeFocused,
+		WantMouse:    widgetapi.MouseScopeWidget,
 	}
 
 	// Create the container with two fake widgets.
@@ -85,8 +88,8 @@ func Example_triggered() {
 
 	wOpts := widgetapi.Options{
 		MinimumSize:  fakewidget.MinimumSize,
-		WantKeyboard: true,
-		WantMouse:    true,
+		WantKeyboard: widgetapi.KeyScopeFocused,
+		WantMouse:    widgetapi.MouseScopeWidget,
 	}
 
 	// Create the container with a widget.
@@ -115,52 +118,83 @@ func Example_triggered() {
 // errorHandler just stores the last error received.
 type errorHandler struct {
 	err error
+	mu  sync.Mutex
+}
+
+func (eh *errorHandler) get() error {
+	eh.mu.Lock()
+	defer eh.mu.Unlock()
+	return eh.err
 }
 
 func (eh *errorHandler) handle(err error) {
+	eh.mu.Lock()
+	defer eh.mu.Unlock()
 	eh.err = err
 }
 
 // keySubscriber just stores the last pressed key.
 type keySubscriber struct {
 	received terminalapi.Keyboard
+	mu       sync.Mutex
+}
+
+func (ks *keySubscriber) get() terminalapi.Keyboard {
+	ks.mu.Lock()
+	defer ks.mu.Unlock()
+	return ks.received
 }
 
 func (ks *keySubscriber) receive(k *terminalapi.Keyboard) {
+	ks.mu.Lock()
+	defer ks.mu.Unlock()
 	ks.received = *k
 }
 
 // mouseSubscriber just stores the last mouse event.
 type mouseSubscriber struct {
 	received terminalapi.Mouse
+	mu       sync.Mutex
+}
+
+func (ms *mouseSubscriber) get() terminalapi.Mouse {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+	return ms.received
 }
 
 func (ms *mouseSubscriber) receive(m *terminalapi.Mouse) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
 	ms.received = *m
 }
 
+type eventHandlers struct {
+	handler  errorHandler
+	keySub   keySubscriber
+	mouseSub mouseSubscriber
+}
+
 func TestRun(t *testing.T) {
-	var (
-		handler  errorHandler
-		keySub   keySubscriber
-		mouseSub mouseSubscriber
-	)
+	t.Parallel()
 
 	tests := []struct {
 		desc   string
 		size   image.Point
-		opts   []Option
+		opts   func(*eventHandlers) []Option
 		events []terminalapi.Event
 		// function to execute after the test case, can do additional comparison.
-		after   func() error
+		after   func(*eventHandlers) error
 		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
 	}{
 		{
 			desc: "draws the dashboard until closed",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -176,8 +210,10 @@ func TestRun(t *testing.T) {
 		{
 			desc: "fails when the widget doesn't draw due to size too small",
 			size: image.Point{1, 1},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -188,8 +224,10 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards mouse events to container",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
@@ -201,7 +239,7 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantMouse: true,
+						WantMouse: widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				)
@@ -211,8 +249,10 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards keyboard events to container",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
+			opts: func(*eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
@@ -224,8 +264,8 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantKeyboard: true,
-						WantMouse:    true,
+						WantKeyboard: widgetapi.KeyScopeFocused,
+						WantMouse:    widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -235,16 +275,18 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards input errors to the error handler",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
-				ErrorHandler(handler.handle),
+			opts: func(eh *eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+					ErrorHandler(eh.handler.handle),
+				}
 			},
 			events: []terminalapi.Event{
 				terminalapi.NewError("input error"),
 			},
-			after: func() error {
-				if want := "input error"; handler.err.Error() != want {
-					return fmt.Errorf("errorHandler got %v, want %v", handler.err, want)
+			after: func(eh *eventHandlers) error {
+				if want := "input error"; eh.handler.get().Error() != want {
+					return fmt.Errorf("errorHandler got %v, want %v", eh.handler.get(), want)
 				}
 				return nil
 			},
@@ -262,16 +304,18 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards keyboard events to the subscriber",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
-				KeyboardSubscriber(keySub.receive),
+			opts: func(eh *eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+					KeyboardSubscriber(eh.keySub.receive),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyF1},
 			},
-			after: func() error {
+			after: func(eh *eventHandlers) error {
 				want := terminalapi.Keyboard{Key: keyboard.KeyF1}
-				if diff := pretty.Compare(want, keySub.received); diff != "" {
+				if diff := pretty.Compare(want, eh.keySub.get()); diff != "" {
 					return fmt.Errorf("keySubscriber got unexpected value, diff (-want, +got):\n%s", diff)
 				}
 				return nil
@@ -283,7 +327,7 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantKeyboard: true,
+						WantKeyboard: widgetapi.KeyScopeFocused,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyF1},
 				)
@@ -293,16 +337,18 @@ func TestRun(t *testing.T) {
 		{
 			desc: "forwards mouse events to the subscriber",
 			size: image.Point{60, 10},
-			opts: []Option{
-				RedrawInterval(1),
-				MouseSubscriber(mouseSub.receive),
+			opts: func(eh *eventHandlers) []Option {
+				return []Option{
+					RedrawInterval(1),
+					MouseSubscriber(eh.mouseSub.receive),
+				}
 			},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
 			},
-			after: func() error {
+			after: func(eh *eventHandlers) error {
 				want := terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp}
-				if diff := pretty.Compare(want, mouseSub.received); diff != "" {
+				if diff := pretty.Compare(want, eh.mouseSub.get()); diff != "" {
 					return fmt.Errorf("mouseSubscriber got unexpected value, diff (-want, +got):\n%s", diff)
 				}
 				return nil
@@ -314,7 +360,7 @@ func TestRun(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantMouse: true,
+						WantMouse: widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
 				)
@@ -325,9 +371,14 @@ func TestRun(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			handler = errorHandler{}
-			keySub = keySubscriber{}
-			mouseSub = mouseSubscriber{}
+			tc := tc
+			t.Parallel()
+
+			handlers := &eventHandlers{
+				handler:  errorHandler{},
+				keySub:   keySubscriber{},
+				mouseSub: mouseSubscriber{},
+			}
 
 			eq := eventqueue.New()
 			for _, ev := range tc.events {
@@ -342,8 +393,8 @@ func TestRun(t *testing.T) {
 			cont, err := container.New(
 				got,
 				container.PlaceWidget(fakewidget.New(widgetapi.Options{
-					WantKeyboard: true,
-					WantMouse:    true,
+					WantKeyboard: widgetapi.KeyScopeFocused,
+					WantMouse:    widgetapi.MouseScopeWidget,
 				})),
 			)
 			if err != nil {
@@ -351,7 +402,7 @@ func TestRun(t *testing.T) {
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			err = Run(ctx, got, cont, tc.opts...)
+			err = Run(ctx, got, cont, tc.opts(handlers)...)
 			cancel()
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Run => unexpected error: %v, wantErr: %v", err, tc.wantErr)
@@ -360,12 +411,17 @@ func TestRun(t *testing.T) {
 				return
 			}
 
-			if err := untilEmpty(5*time.Second, eq); err != nil {
-				t.Fatalf("untilEmpty => %v", err)
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if !eq.Empty() {
+					return errors.New("event queue not empty")
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 
 			if tc.after != nil {
-				if err := tc.after(); err != nil {
+				if err := tc.after(handlers); err != nil {
 					t.Errorf("after => unexpected error: %v", err)
 				}
 			}
@@ -378,6 +434,8 @@ func TestRun(t *testing.T) {
 }
 
 func TestController(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		desc      string
 		size      image.Point
@@ -401,8 +459,8 @@ func TestController(t *testing.T) {
 					ft,
 					testcanvas.MustNew(ft.Area()),
 					widgetapi.Options{
-						WantKeyboard: true,
-						WantMouse:    true,
+						WantKeyboard: widgetapi.KeyScopeFocused,
+						WantMouse:    widgetapi.MouseScopeWidget,
 					},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -507,6 +565,9 @@ func TestController(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			tc := tc
+			t.Parallel()
+
 			eq := eventqueue.New()
 			for _, ev := range tc.events {
 				eq.Push(ev)
@@ -518,8 +579,8 @@ func TestController(t *testing.T) {
 			}
 
 			mi := fakewidget.New(widgetapi.Options{
-				WantKeyboard: true,
-				WantMouse:    true,
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
 			})
 			cont, err := container.New(
 				got,
@@ -541,8 +602,13 @@ func TestController(t *testing.T) {
 				tc.apiEvents(mi)
 			}
 
-			if err := untilEmpty(5*time.Second, eq); err != nil {
-				t.Fatalf("untilEmpty => %v", err)
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if !eq.Empty() {
+					return errors.New("event queue not empty")
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 			if tc.controls != nil {
 				if err := tc.controls(ctrl); err != nil {
@@ -555,26 +621,5 @@ func TestController(t *testing.T) {
 				t.Errorf("Run => %v", diff)
 			}
 		})
-	}
-}
-
-// untilEmpty waits until the queue empties.
-// Waits at most the specified duration.
-func untilEmpty(timeout time.Duration, q *eventqueue.Unbound) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	tick := time.NewTimer(5 * time.Millisecond)
-	defer tick.Stop()
-	for {
-		select {
-		case <-tick.C:
-			if q.Empty() {
-				return nil
-			}
-
-		case <-ctx.Done():
-			return fmt.Errorf("while waiting for the event queue to empty: %v", ctx.Err())
-		}
 	}
 }

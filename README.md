@@ -66,10 +66,8 @@ go run github.com/mum4k/termdash/termdashdemo/termdashdemo.go
 
 # Documentation
 
-Code documentation can be viewed in
-[godoc](https://godoc.org/github.com/mum4k/termdash).
-
-Project documentation is available in the [doc](doc/) directory.
+Please refer to the [Termdash wiki](http://github.com/mum4k/termdash/wiki) for
+all documentation and resources.
 
 ## Implemented Widgets
 

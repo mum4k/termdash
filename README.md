@@ -83,7 +83,7 @@ Run the
 go run github.com/mum4k/termdash/widgets/button/buttondemo/buttondemo.go
 ```
 
-[<img src="./images/buttondemo.gif" alt="buttondemo" type="image/gif">](widgets/button/buttondemo/buttondemo.go)
+[<img src="./images/buttondemo.gif" alt="buttondemo" type="image/gif" width="50%">](widgets/button/buttondemo/buttondemo.go)
 
 ### The Gauge
 

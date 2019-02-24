@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/mum4k/termdash/internal/runewidth"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 // line_style.go contains the Unicode characters used for drawing lines of
@@ -25,8 +26,8 @@ import (
 
 // lineStyleChars maps the line styles to the corresponding component characters.
 // Source: http://en.wikipedia.org/wiki/Box-drawing_character.
-var lineStyleChars = map[LineStyle]map[linePart]rune{
-	LineStyleLight: {
+var lineStyleChars = map[linestyle.LineStyle]map[linePart]rune{
+	linestyle.Light: {
 		hLine:             '─',
 		vLine:             '│',
 		topLeftCorner:     '┌',
@@ -39,7 +40,7 @@ var lineStyleChars = map[LineStyle]map[linePart]rune{
 		vAndRight:         '├',
 		vAndH:             '┼',
 	},
-	LineStyleDouble: {
+	linestyle.Double: {
 		hLine:             '═',
 		vLine:             '║',
 		topLeftCorner:     '╔',
@@ -52,7 +53,7 @@ var lineStyleChars = map[LineStyle]map[linePart]rune{
 		vAndRight:         '╠',
 		vAndH:             '╬',
 	},
-	LineStyleRound: {
+	linestyle.Round: {
 		hLine:             '─',
 		vLine:             '│',
 		topLeftCorner:     '╭',
@@ -80,39 +81,13 @@ func init() {
 }
 
 // lineParts returns the line component characters for the provided line style.
-func lineParts(ls LineStyle) (map[linePart]rune, error) {
+func lineParts(ls linestyle.LineStyle) (map[linePart]rune, error) {
 	parts, ok := lineStyleChars[ls]
 	if !ok {
 		return nil, fmt.Errorf("unsupported line style %d", ls)
 	}
 	return parts, nil
 }
-
-// LineStyle defines the supported line styles.Q
-type LineStyle int
-
-// String implements fmt.Stringer()
-func (ls LineStyle) String() string {
-	if n, ok := lineStyleNames[ls]; ok {
-		return n
-	}
-	return "LineStyleUnknown"
-}
-
-// lineStyleNames maps LineStyle values to human readable names.
-var lineStyleNames = map[LineStyle]string{
-	LineStyleLight:  "LineStyleLight",
-	LineStyleDouble: "LineStyleDouble",
-	LineStyleRound:  "LineStyleRound",
-}
-
-// Supported line styles.
-const (
-	LineStyleNone LineStyle = iota
-	LineStyleLight
-	LineStyleDouble
-	LineStyleRound
-)
 
 // linePart identifies individual line parts.
 type linePart int

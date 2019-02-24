@@ -21,6 +21,7 @@ import (
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 func TestMultiEdgeNodes(t *testing.T) {
@@ -180,7 +181,7 @@ func TestNodeRune(t *testing.T) {
 	tests := []struct {
 		desc    string
 		node    *hVLineNode
-		ls      LineStyle
+		ls      linestyle.LineStyle
 		want    rune
 		wantErr bool
 	}{
@@ -197,7 +198,7 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{1, 1}, image.Point{2, 2}): true,
 				},
 			},
-			ls:      LineStyleLight,
+			ls:      linestyle.Light,
 			wantErr: true,
 		},
 		{
@@ -209,13 +210,13 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{1, 1}, image.Point{2, 2}): true,
 				},
 			},
-			ls:      LineStyleLight,
+			ls:      linestyle.Light,
 			wantErr: true,
 		},
 		{
 			desc:    "fails on unsupported line style",
 			node:    &hVLineNode{},
-			ls:      LineStyle(-1),
+			ls:      linestyle.LineStyle(-1),
 			wantErr: true,
 		},
 		{
@@ -227,8 +228,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{1, 1}, image.Point{2, 1}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][hLine],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][hLine],
 		},
 		{
 			desc: "vertical line",
@@ -239,8 +240,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{1, 1}, image.Point{1, 2}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][vLine],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][vLine],
 		},
 		{
 			desc: "top left corner",
@@ -251,8 +252,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{0, 0}, image.Point{0, 1}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][topLeftCorner],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][topLeftCorner],
 		},
 		{
 			desc: "top right corner",
@@ -263,8 +264,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{2, 0}, image.Point{2, 1}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][topRightCorner],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][topRightCorner],
 		},
 		{
 			desc: "bottom left corner",
@@ -275,8 +276,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{0, 2}, image.Point{1, 2}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][bottomLeftCorner],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][bottomLeftCorner],
 		},
 		{
 			desc: "bottom right corner",
@@ -287,8 +288,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{2, 1}, image.Point{2, 2}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][bottomRightCorner],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][bottomRightCorner],
 		},
 		{
 			desc: "T horizontal and up",
@@ -300,8 +301,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{1, 2}, image.Point{2, 2}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][hAndUp],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][hAndUp],
 		},
 		{
 			desc: "T horizontal and down",
@@ -313,8 +314,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{1, 0}, image.Point{1, 1}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][hAndDown],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][hAndDown],
 		},
 		{
 			desc: "T vertical and right",
@@ -326,8 +327,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{0, 1}, image.Point{0, 2}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][vAndRight],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][vAndRight],
 		},
 		{
 			desc: "T vertical and left",
@@ -339,8 +340,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{2, 1}, image.Point{2, 2}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][vAndLeft],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][vAndLeft],
 		},
 		{
 			desc: "cross",
@@ -353,8 +354,8 @@ func TestNodeRune(t *testing.T) {
 					newHVLineEdge(image.Point{1, 1}, image.Point{1, 2}): true,
 				},
 			},
-			ls:   LineStyleLight,
-			want: lineStyleChars[LineStyleLight][vAndH],
+			ls:   linestyle.Light,
+			want: lineStyleChars[linestyle.Light][vAndH],
 		},
 	}
 

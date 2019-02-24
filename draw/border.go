@@ -23,6 +23,7 @@ import (
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 // BorderOption is used to provide options to Border().
@@ -34,7 +35,7 @@ type BorderOption interface {
 // borderOptions stores the provided options.
 type borderOptions struct {
 	cellOpts      []cell.Option
-	lineStyle     LineStyle
+	lineStyle     linestyle.LineStyle
 	title         string
 	titleOM       OverrunMode
 	titleCellOpts []cell.Option
@@ -50,10 +51,10 @@ func (bo borderOption) set(bOpts *borderOptions) {
 }
 
 // DefaultBorderLineStyle is the default value for the BorderLineStyle option.
-const DefaultBorderLineStyle = LineStyleLight
+const DefaultBorderLineStyle = linestyle.Light
 
 // BorderLineStyle sets the style of the line used to draw the border.
-func BorderLineStyle(ls LineStyle) BorderOption {
+func BorderLineStyle(ls linestyle.LineStyle) BorderOption {
 	return borderOption(func(bOpts *borderOptions) {
 		bOpts.lineStyle = ls
 	})

@@ -22,6 +22,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 func TestHVLines(t *testing.T) {
@@ -102,7 +103,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{2, 0}, parts[hLine])
@@ -121,13 +122,13 @@ func TestHVLines(t *testing.T) {
 				},
 			},
 			opts: []HVLineOption{
-				HVLineStyle(LineStyleLight),
+				HVLineStyle(linestyle.Light),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{2, 0}, parts[hLine])
@@ -155,7 +156,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[hLine],
 					cell.FgColor(cell.ColorYellow),
 					cell.BgColor(cell.ColorBlue),
@@ -186,7 +187,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[hLine])
 
@@ -207,7 +208,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{1, 1}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{1, 2}, parts[vLine])
@@ -229,7 +230,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{1, 1}, parts[vLine])
 
@@ -254,7 +255,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{2, 0}, parts[hLine])
@@ -284,7 +285,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{0, 1}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{0, 2}, parts[vLine])
@@ -314,7 +315,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{0, 1}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{0, 2}, parts[vLine])
@@ -343,7 +344,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[topLeftCorner])
 				testcanvas.MustSetCell(c, image.Point{0, 1}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{0, 2}, parts[vLine])
@@ -372,7 +373,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{2, 0}, parts[topRightCorner])
 				testcanvas.MustSetCell(c, image.Point{2, 1}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{2, 2}, parts[vLine])
@@ -401,7 +402,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{0, 1}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{0, 2}, parts[bottomLeftCorner])
@@ -430,7 +431,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{2, 0}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{2, 1}, parts[vLine])
 				testcanvas.MustSetCell(c, image.Point{2, 2}, parts[bottomRightCorner])
@@ -459,7 +460,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 2}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 2}, parts[hAndUp])
 				testcanvas.MustSetCell(c, image.Point{2, 2}, parts[hLine])
@@ -488,7 +489,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[hAndDown])
 				testcanvas.MustSetCell(c, image.Point{2, 0}, parts[hLine])
@@ -517,7 +518,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 1}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 1}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{2, 1}, parts[vAndLeft])
@@ -546,7 +547,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 1}, parts[vAndRight])
 				testcanvas.MustSetCell(c, image.Point{1, 1}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{2, 1}, parts[hLine])
@@ -575,7 +576,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 1}, parts[hLine])
 				testcanvas.MustSetCell(c, image.Point{1, 1}, parts[vAndH])
 				testcanvas.MustSetCell(c, image.Point{2, 1}, parts[hLine])
@@ -622,7 +623,7 @@ func TestHVLines(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				parts := lineStyleChars[LineStyleLight]
+				parts := lineStyleChars[linestyle.Light]
 				testcanvas.MustSetCell(c, image.Point{0, 0}, parts[topLeftCorner])
 				testcanvas.MustSetCell(c, image.Point{1, 0}, parts[hAndDown])
 				testcanvas.MustSetCell(c, image.Point{2, 0}, parts[topRightCorner])

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 24-Feb-2019
+
+### Fixed
+
+- Some of the packages moved into internal are required externally. This
+  release makes them available again.
+
+#### Breaking API changes
+
+- The draw.LineStyle enum was refactored into its own package
+  linestyle.LineStyle.
+
 ## [0.7.0] - 24-Feb-2019
 
 ### Added

@@ -22,7 +22,7 @@ import (
 	"image"
 	"math"
 
-	"github.com/mum4k/termdash/draw/segdisp/segment"
+	"github.com/mum4k/termdash/internal/draw/segdisp/segment"
 	"github.com/mum4k/termdash/numbers"
 )
 

@@ -21,9 +21,9 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminalapi"

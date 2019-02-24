@@ -19,11 +19,11 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/faketerm"

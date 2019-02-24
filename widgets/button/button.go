@@ -22,10 +22,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/align"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/mouse/button"
 	"github.com/mum4k/termdash/terminalapi"

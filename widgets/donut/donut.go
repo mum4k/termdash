@@ -22,11 +22,11 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/align"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/cell/runewidth"
+	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/numbers"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"

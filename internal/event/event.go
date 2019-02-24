@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/mum4k/termdash/event/eventqueue"
+	"github.com/mum4k/termdash/internal/event/eventqueue"
 	"github.com/mum4k/termdash/terminalapi"
 )
 

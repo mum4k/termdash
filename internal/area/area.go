@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/numbers"
+	"github.com/mum4k/termdash/internal/numbers"
 )
 
 // Size returns the size of the provided area.

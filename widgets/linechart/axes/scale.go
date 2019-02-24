@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/numbers"
+	"github.com/mum4k/termdash/internal/numbers"
 )
 
 // YScaleMode determines whether the Y scale is anchored to the zero value.

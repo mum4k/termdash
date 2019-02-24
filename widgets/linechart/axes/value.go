@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/mum4k/termdash/numbers"
+	"github.com/mum4k/termdash/internal/numbers"
 )
 
 // Value represents one value.

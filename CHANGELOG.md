@@ -7,10 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 24-Feb-2019
+
 ### Added
 
+#### New widgets
+
 - The Button widget.
-- A function that draws text vertically.
+
+#### Improvements to documentation
+
+- Clearly marked the public API surface by moving private packages into
+  internal directory.
+- Started a GitHub wiki for Termdash.
+
+#### Improvements to the LineChart widget
+
 - The LineChart widget can display X axis labels in vertical orientation.
 - The LineChart widget allows the user to specify a custom scale for the Y
   axis.
@@ -21,15 +33,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the LineChart the last time Draw was called.
 - The LineChart widget now supports zoom of the content triggered by mouse
   events.
+
+#### Improvements to the Text widget
+
 - The Text widget now has a Write option that atomically replaces the entire
   text content.
+
+
+#### Improvements to the infrastructure
+
+- A function that draws text vertically.
 - A non-blocking event distribution system that can throttle repetitive events.
+- Generalized mouse button FSM for use in widgets that need to track mouse
+  button clicks.
 
 ### Changed
 
 - Termbox is now initialized in 256 color mode by default.
-- Generalized mouse button FSM for use in widgets that need to track mouse
-  button clicks.
 - The infrastructure now uses the non-blocking event distribution system to
   distribute events to subscribers. Each widget is now an individual
   subscriber.
@@ -148,7 +168,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.6.1...devel
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.0...devel
+[0.7.0]: https://github.com/mum4k/termdash/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/mum4k/termdash/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/mum4k/termdash/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/mum4k/termdash/compare/v0.4.0...v0.5.0

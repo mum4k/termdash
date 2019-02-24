@@ -1573,7 +1573,7 @@ func TestOptions(t *testing.T) {
 			desc: "reserves space for axis without series",
 			want: widgetapi.Options{
 				MinimumSize: image.Point{3, 4},
-				WantMouse:   widgetapi.MouseScopeWidget,
+				WantMouse:   widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -1583,7 +1583,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{5, 4},
-				WantMouse:   widgetapi.MouseScopeWidget,
+				WantMouse:   widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -1593,7 +1593,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{6, 4},
-				WantMouse:   widgetapi.MouseScopeWidget,
+				WantMouse:   widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -1606,7 +1606,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{4, 5},
-				WantMouse:   widgetapi.MouseScopeWidget,
+				WantMouse:   widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
@@ -1619,7 +1619,7 @@ func TestOptions(t *testing.T) {
 			},
 			want: widgetapi.Options{
 				MinimumSize: image.Point{5, 7},
-				WantMouse:   widgetapi.MouseScopeWidget,
+				WantMouse:   widgetapi.MouseScopeGlobal,
 			},
 		},
 	}

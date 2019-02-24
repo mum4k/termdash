@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/event/testevent"
 	"github.com/mum4k/termdash/internal/faketerm"

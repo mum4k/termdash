@@ -20,11 +20,11 @@ import (
 	"testing"
 
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/draw"
+	"github.com/mum4k/termdash/draw/testdraw"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
 )
 

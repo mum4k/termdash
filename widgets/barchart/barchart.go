@@ -24,9 +24,9 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/terminalapi"
 )

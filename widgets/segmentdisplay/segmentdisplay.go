@@ -24,9 +24,9 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/draw/segdisp/sixteen"
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/draw/segdisp/sixteen"
 	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/terminalapi"
 )

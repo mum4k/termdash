@@ -18,10 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The draw.LineStyle enum was refactored into its own package
   linestyle.LineStyle. Users will have to replace:
-    draw.LineStyleNone -> linestyle.None
-    draw.LineStyleLight -> linestyle.Light
-    draw.LineStyleDouble -> linestyle.Double
-    draw.LineStyleRound -> linestyle.Round
+
+  -  draw.LineStyleNone -> linestyle.None
+  -  draw.LineStyleLight -> linestyle.Light
+  -  draw.LineStyleDouble -> linestyle.Double
+  -  draw.LineStyleRound -> linestyle.Round
 
 ## [0.7.0] - 24-Feb-2019
 

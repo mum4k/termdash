@@ -255,6 +255,8 @@ func (c *Container) mouseToWidget(m *terminalapi.Mouse, scope widgetapi.MouseSco
 
 // Subscribe tells the container to subscribe itself and widgets to the
 // provided event distribution system.
+// This method is private to termdash, stability isn't guaranteed and changes
+// won't be backward compatible.
 func (c *Container) Subscribe(eds *event.DistributionSystem) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

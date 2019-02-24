@@ -51,7 +51,7 @@ The user interacts with the widget API when constructing individual widgets and
 with the container API when placing the widgets onto the dashboard.
 
 <p align="center">
-  <img src="hld.png" width="50%">
+  <img src="images/hld.png" width="50%">
 </p>
 
 ## Detailed design

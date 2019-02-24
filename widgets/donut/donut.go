@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/draw"
@@ -173,9 +174,9 @@ func (d *Donut) drawText(cvs *canvas.Canvas, mid image.Point, holeR int) error {
 	}
 
 	ar := image.Rect(first.X, first.Y, first.X+cells+2, first.Y+1)
-	start, err := align.Text(ar, t, align.HorizontalCenter, align.VerticalMiddle)
+	start, err := alignfor.Text(ar, t, align.HorizontalCenter, align.VerticalMiddle)
 	if err != nil {
-		return fmt.Errorf("align.Text => %v", err)
+		return fmt.Errorf("alignfor.Text => %v", err)
 	}
 	if err := draw.Text(cvs, t, start, draw.TextMaxX(start.X+needCells), draw.TextCellOpts(d.opts.textCellOpts...)); err != nil {
 		return fmt.Errorf("draw.Text => %v", err)

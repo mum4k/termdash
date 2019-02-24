@@ -24,6 +24,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw"
@@ -139,7 +140,7 @@ func (bc *BarChart) drawText(cvs *canvas.Canvas, i int, text string, color cell.
 		barCol = image.Rect(r.Min.X, cvs.Area().Min.Y, r.Max.X, cvs.Area().Max.Y)
 	}
 
-	start, err := align.Text(barCol, text, align.HorizontalCenter, align.VerticalBottom)
+	start, err := alignfor.Text(barCol, text, align.HorizontalCenter, align.VerticalBottom)
 	if err != nil {
 		return err
 	}

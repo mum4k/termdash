@@ -20,7 +20,7 @@ import (
 	"strings"
 	"text/scanner"
 
-	"github.com/mum4k/termdash/internal/cell/runewidth"
+	"github.com/mum4k/termdash/internal/runewidth"
 )
 
 // wrapNeeded returns true if wrapping is needed for the rune at the horizontal

@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"image"
 
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/faketerm"
 )
 
 // MustNew returns a new canvas or panics.

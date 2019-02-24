@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/internal/draw/segdisp/sixteen"
+	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 )
 
 // segArea contains information about the area that will contain the segments.

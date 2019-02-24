@@ -19,9 +19,9 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/faketerm"
 )
 
 func TestNew(t *testing.T) {

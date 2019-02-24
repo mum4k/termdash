@@ -26,12 +26,12 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/event"
-	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the
@@ -103,7 +103,7 @@ func newChild(parent *Container, area image.Rectangle) *Container {
 
 // hasBorder determines if this container has a border.
 func (c *Container) hasBorder() bool {
-	return c.opts.border != draw.LineStyleNone
+	return c.opts.border != linestyle.None
 }
 
 // hasWidget determines if this container has a widget.

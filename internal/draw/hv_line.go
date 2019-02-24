@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"image"
 
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 // HVLineOption is used to provide options to HVLine().
@@ -33,13 +34,13 @@ type HVLineOption interface {
 // hVLineOptions stores the provided options.
 type hVLineOptions struct {
 	cellOpts  []cell.Option
-	lineStyle LineStyle
+	lineStyle linestyle.LineStyle
 }
 
 // newHVLineOptions returns a new hVLineOptions instance.
 func newHVLineOptions() *hVLineOptions {
 	return &hVLineOptions{
-		lineStyle: DefaultHVLineStyle,
+		lineStyle: DefaultLineStyle,
 	}
 }
 
@@ -51,12 +52,12 @@ func (o hVLineOption) set(opts *hVLineOptions) {
 	o(opts)
 }
 
-// DefaultHVLineStyle is the default value for the HVLineStyle option.
-const DefaultHVLineStyle = LineStyleLight
+// DefaultLineStyle is the default value for the HVLineStyle option.
+const DefaultLineStyle = linestyle.Light
 
 // HVLineStyle sets the style of the line.
-// Defaults to DefaultHVLineStyle.
-func HVLineStyle(ls LineStyle) HVLineOption {
+// Defaults to DefaultLineStyle.
+func HVLineStyle(ls linestyle.LineStyle) HVLineOption {
 	return hVLineOption(func(opts *hVLineOptions) {
 		opts.lineStyle = ls
 	})

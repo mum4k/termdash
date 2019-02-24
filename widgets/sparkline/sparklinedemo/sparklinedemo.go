@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/terminal/termbox"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/sparkline"
 )
 
@@ -86,14 +86,14 @@ func main() {
 
 	c, err := container.New(
 		t,
-		container.Border(draw.LineStyleLight),
+		container.Border(linestyle.Light),
 		container.BorderTitle("PRESS Q TO QUIT"),
 		container.SplitVertical(
 			container.Left(
 				container.SplitHorizontal(
 					container.Top(),
 					container.Bottom(
-						container.Border(draw.LineStyleLight),
+						container.Border(linestyle.Light),
 						container.BorderTitle("SparkLine group"),
 						container.SplitHorizontal(
 							container.Top(
@@ -107,7 +107,7 @@ func main() {
 				),
 			),
 			container.Right(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.PlaceWidget(yellow),
 			),
 		),

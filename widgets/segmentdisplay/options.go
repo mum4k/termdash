@@ -17,7 +17,7 @@ package segmentdisplay
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
 )
 
 // options.go contains configurable options for SegmentDisplay.

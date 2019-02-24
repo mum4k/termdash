@@ -25,12 +25,12 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/internal/align"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/terminal/termbox"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/donut"
@@ -62,19 +62,19 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	segmentTextSpark := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.BorderTitle("Press Q to quit"),
 				container.PlaceWidget(sd),
 			),
 			container.Bottom(
 				container.SplitVertical(
 					container.Left(
-						container.Border(draw.LineStyleLight),
+						container.Border(linestyle.Light),
 						container.BorderTitle("A rolling text"),
 						container.PlaceWidget(rollT),
 					),
 					container.Right(
-						container.Border(draw.LineStyleLight),
+						container.Border(linestyle.Light),
 						container.BorderTitle("A SparkLine group"),
 						container.SplitHorizontal(
 							container.Top(container.PlaceWidget(spGreen)),
@@ -99,13 +99,13 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	gaugeAndHeartbeat := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.BorderTitle("A Gauge"),
 				container.BorderColor(cell.ColorNumber(39)),
 				container.PlaceWidget(g),
 			),
 			container.Bottom(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.BorderTitle("A LineChart"),
 				container.PlaceWidget(heartLC),
 			),
@@ -138,7 +138,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	lcAndButtons := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.BorderTitle("Multiple series"),
 				container.BorderTitleAlignRight(),
 				container.PlaceWidget(sineLC),
@@ -162,7 +162,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 	rightSide := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.BorderTitle("BarChart"),
 				container.PlaceWidget(bc),
 				container.BorderTitleAlignRight(),
@@ -170,7 +170,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 			container.Bottom(
 				container.SplitHorizontal(
 					container.Top(
-						container.Border(draw.LineStyleLight),
+						container.Border(linestyle.Light),
 						container.BorderTitle("A Donut"),
 						container.BorderTitleAlignRight(),
 						container.PlaceWidget(don),

@@ -18,13 +18,14 @@ import (
 	"image"
 	"testing"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
-	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
@@ -42,7 +43,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
 				)
 			},
@@ -69,7 +70,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderTitle("ab"),
 					BorderTitleAlignLeft(),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
@@ -103,7 +104,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderTitle("ab"),
 					BorderTitleAlignCenter(),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
@@ -138,7 +139,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderTitle("ab"),
 					BorderTitleAlignRight(),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
@@ -173,7 +174,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderTitle("abcdefgh"),
 					BorderTitleAlignRight(),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
@@ -228,7 +229,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
 				)
 			},
@@ -243,7 +244,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -279,7 +280,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						MaximumSize: image.Point{10, 10},
 					})),
@@ -311,7 +312,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						MaximumSize: image.Point{10, 0},
 					})),
@@ -343,7 +344,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						MaximumSize: image.Point{0, 10},
 					})),
@@ -375,7 +376,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
 					)),
@@ -407,7 +408,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						MaximumSize: image.Point{20, 19},
 						Ratio:       image.Point{1, 1},
@@ -439,7 +440,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					AlignHorizontal(align.HorizontalLeft),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
@@ -470,7 +471,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					AlignHorizontal(align.HorizontalCenter),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
@@ -501,7 +502,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					AlignHorizontal(align.HorizontalRight),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{1, 2}},
@@ -532,7 +533,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					AlignVertical(align.VerticalTop),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{2, 1}},
@@ -563,7 +564,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					AlignVertical(align.VerticalMiddle),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{2, 1}},
@@ -594,7 +595,7 @@ func TestDrawWidget(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					AlignVertical(align.VerticalBottom),
 					PlaceWidget(fakewidget.New(widgetapi.Options{
 						Ratio: image.Point{2, 1}},

@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/terminal/termbox"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 )
 
@@ -98,7 +98,7 @@ func main() {
 
 	c, err := container.New(
 		t,
-		container.Border(draw.LineStyleLight),
+		container.Border(linestyle.Light),
 		container.BorderTitle("PRESS Q TO QUIT"),
 		container.PlaceWidget(bc),
 	)

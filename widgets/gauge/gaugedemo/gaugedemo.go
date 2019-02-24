@@ -21,11 +21,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/terminal/termbox"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/gauge"
 )
 
@@ -88,7 +88,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	slim, err := gauge.New(
 		gauge.Height(1),
-		gauge.Border(draw.LineStyleLight),
+		gauge.Border(linestyle.Light),
 		gauge.BorderTitle("Percentage progress"),
 	)
 	if err != nil {
@@ -99,7 +99,7 @@ func main() {
 	absolute, err := gauge.New(
 		gauge.Height(1),
 		gauge.Color(cell.ColorBlue),
-		gauge.Border(draw.LineStyleLight),
+		gauge.Border(linestyle.Light),
 		gauge.BorderTitle("Absolute progress"),
 	)
 	if err != nil {
@@ -109,7 +109,7 @@ func main() {
 
 	noProgress, err := gauge.New(
 		gauge.Height(1),
-		gauge.Border(draw.LineStyleLight, cell.FgColor(cell.ColorMagenta)),
+		gauge.Border(linestyle.Light, cell.FgColor(cell.ColorMagenta)),
 		gauge.BorderTitle("Without progress text"),
 		gauge.HideTextProgress(),
 	)
@@ -134,7 +134,7 @@ func main() {
 		t,
 		container.SplitVertical(
 			container.Left(
-				container.Border(draw.LineStyleLight),
+				container.Border(linestyle.Light),
 				container.BorderTitle("PRESS Q TO QUIT"),
 				container.SplitHorizontal(
 					container.Top(

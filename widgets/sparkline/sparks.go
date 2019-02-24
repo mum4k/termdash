@@ -20,8 +20,8 @@ package sparkline
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/cell/runewidth"
 	"github.com/mum4k/termdash/internal/numbers"
+	"github.com/mum4k/termdash/internal/runewidth"
 )
 
 // sparks are the characters used to draw the SparkLine.

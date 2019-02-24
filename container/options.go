@@ -19,10 +19,10 @@ package container
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/align"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 // applyOptions applies the options to the container.
@@ -60,7 +60,7 @@ type options struct {
 	vAlign align.Vertical
 
 	// border is the border around the container.
-	border            draw.LineStyle
+	border            linestyle.LineStyle
 	borderTitle       string
 	borderTitleHAlign align.Horizontal
 }
@@ -224,7 +224,7 @@ func AlignVertical(v align.Vertical) Option {
 }
 
 // Border configures the container to have a border of the specified style.
-func Border(ls draw.LineStyle) Option {
+func Border(ls linestyle.LineStyle) Option {
 	return option(func(c *Container) error {
 		c.opts.border = ls
 		return nil

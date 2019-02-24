@@ -22,14 +22,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/button"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/internal/mouse/button"
-	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // CallbackFn is the function called when the button is pressed.
@@ -146,14 +146,11 @@ func (b *Button) Draw(cvs *canvas.Canvas) error {
 	if err != nil {
 		return err
 	}
-	if err := draw.Text(cvs, b.text, start,
+	return draw.Text(cvs, b.text, start,
 		draw.TextOverrunMode(draw.OverrunModeThreeDot),
 		draw.TextMaxX(buttonAr.Max.X),
 		draw.TextCellOpts(cell.FgColor(b.opts.textColor)),
-	); err != nil {
-		return err
-	}
-	return nil
+	)
 }
 
 // Keyboard processes keyboard events, acts as a button press on the configured

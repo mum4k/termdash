@@ -28,13 +28,15 @@ import (
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/event/eventqueue"
 	"github.com/mum4k/termdash/internal/event/testevent"
-	"github.com/mum4k/termdash/internal/keyboard"
-	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
-	"github.com/mum4k/termdash/internal/terminal/termbox"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/fakewidget"
+	"github.com/mum4k/termdash/widgets/gauge"
 )
 
 // Example shows how to setup and run termdash with periodic redraw.
@@ -46,21 +48,25 @@ func Example() {
 	}
 	defer t.Close()
 
-	wOpts := widgetapi.Options{
-		MinimumSize:  fakewidget.MinimumSize,
-		WantKeyboard: widgetapi.KeyScopeFocused,
-		WantMouse:    widgetapi.MouseScopeWidget,
+	// Create some widgets.
+	bc, err := barchart.New()
+	if err != nil {
+		panic(err)
+	}
+	g, err := gauge.New()
+	if err != nil {
+		panic(err)
 	}
 
-	// Create the container with two fake widgets.
+	// Create the container with two widgets.
 	c, err := container.New(
 		t,
 		container.SplitVertical(
 			container.Left(
-				container.PlaceWidget(fakewidget.New(wOpts)),
+				container.PlaceWidget(bc),
 			),
 			container.Right(
-				container.PlaceWidget(fakewidget.New(wOpts)),
+				container.PlaceWidget(g),
 			),
 			container.SplitPercent(30),
 		),
@@ -86,16 +92,16 @@ func Example_triggered() {
 	}
 	defer t.Close()
 
-	wOpts := widgetapi.Options{
-		MinimumSize:  fakewidget.MinimumSize,
-		WantKeyboard: widgetapi.KeyScopeFocused,
-		WantMouse:    widgetapi.MouseScopeWidget,
+	// Create a widget.
+	bc, err := barchart.New()
+	if err != nil {
+		panic(err)
 	}
 
 	// Create the container with a widget.
 	c, err := container.New(
 		t,
-		container.PlaceWidget(fakewidget.New(wOpts)),
+		container.PlaceWidget(bc),
 	)
 	if err != nil {
 		panic(err)

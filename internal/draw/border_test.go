@@ -18,11 +18,12 @@ import (
 	"image"
 	"testing"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 func TestBorder(t *testing.T) {
@@ -57,7 +58,7 @@ func TestBorder(t *testing.T) {
 			canvas: image.Rect(0, 0, 4, 4),
 			border: image.Rect(0, 0, 2, 2),
 			opts: []BorderOption{
-				BorderLineStyle(LineStyle(-1)),
+				BorderLineStyle(linestyle.LineStyle(-1)),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
@@ -72,21 +73,21 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
-				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -97,27 +98,27 @@ func TestBorder(t *testing.T) {
 			canvas: image.Rect(0, 0, 4, 4),
 			border: image.Rect(0, 0, 4, 4),
 			opts: []BorderOption{
-				BorderLineStyle(LineStyleDouble),
+				BorderLineStyle(linestyle.Double),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleDouble][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleDouble][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleDouble][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleDouble][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Double][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Double][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Double][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Double][bottomLeftCorner])
 
-				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleDouble][hLine])
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleDouble][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[linestyle.Double][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Double][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[LineStyleDouble][hLine])
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleDouble][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[linestyle.Double][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Double][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleDouble][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleDouble][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleDouble][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleDouble][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Double][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[linestyle.Double][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[linestyle.Double][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Double][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -128,27 +129,27 @@ func TestBorder(t *testing.T) {
 			canvas: image.Rect(0, 0, 4, 4),
 			border: image.Rect(0, 0, 4, 4),
 			opts: []BorderOption{
-				BorderLineStyle(LineStyleRound),
+				BorderLineStyle(linestyle.Round),
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleRound][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleRound][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleRound][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleRound][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Round][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Round][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Round][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Round][bottomLeftCorner])
 
-				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleRound][hLine])
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleRound][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[linestyle.Round][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Round][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[LineStyleRound][hLine])
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleRound][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[linestyle.Round][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Round][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleRound][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleRound][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleRound][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleRound][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Round][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[linestyle.Round][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[linestyle.Round][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Round][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -162,11 +163,11 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{1, 1}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{1, 2}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{1, 1}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{1, 2}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
-				testcanvas.MustSetCell(c, image.Point{2, 1}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{2, 2}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{2, 1}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{2, 2}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -184,14 +185,14 @@ func TestBorder(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testcanvas.MustSetCell(c, image.Point{1, 1},
-					lineStyleChars[LineStyleLight][topLeftCorner], cell.FgColor(cell.ColorRed))
+					lineStyleChars[linestyle.Light][topLeftCorner], cell.FgColor(cell.ColorRed))
 				testcanvas.MustSetCell(c, image.Point{1, 2},
-					lineStyleChars[LineStyleLight][bottomLeftCorner], cell.FgColor(cell.ColorRed))
+					lineStyleChars[linestyle.Light][bottomLeftCorner], cell.FgColor(cell.ColorRed))
 
 				testcanvas.MustSetCell(c, image.Point{2, 1},
-					lineStyleChars[LineStyleLight][topRightCorner], cell.FgColor(cell.ColorRed))
+					lineStyleChars[linestyle.Light][topRightCorner], cell.FgColor(cell.ColorRed))
 				testcanvas.MustSetCell(c, image.Point{2, 2},
-					lineStyleChars[LineStyleLight][bottomRightCorner], cell.FgColor(cell.ColorRed))
+					lineStyleChars[linestyle.Light][bottomRightCorner], cell.FgColor(cell.ColorRed))
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -208,21 +209,21 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
 				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b')
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -239,21 +240,21 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
 				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a', cell.FgColor(cell.ColorRed))
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b', cell.FgColor(cell.ColorRed))
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -282,11 +283,11 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{1, 1}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{1, 2}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{1, 1}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{1, 2}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
-				testcanvas.MustSetCell(c, image.Point{2, 1}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{2, 2}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{2, 1}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{2, 2}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -303,21 +304,21 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
 				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b')
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -334,21 +335,21 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
 				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{2, 0}, '…')
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{3, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -366,27 +367,27 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
 				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a')
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b')
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{4, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -404,27 +405,27 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
-				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{2, 0}, 'a')
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{3, 0}, 'b')
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{4, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -442,27 +443,27 @@ func TestBorder(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
 
-				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[LineStyleLight][topLeftCorner])
-				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[LineStyleLight][bottomLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
 
-				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[LineStyleLight][hLine])
-				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{3, 0}, 'a')
-				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][hLine])
 
 				testcanvas.MustSetCell(c, image.Point{4, 0}, 'b')
-				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[LineStyleLight][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[linestyle.Light][hLine])
 
-				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[LineStyleLight][topRightCorner])
-				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[LineStyleLight][vLine])
-				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[LineStyleLight][bottomRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
 
 				testcanvas.MustApply(c, ft)
 				return ft

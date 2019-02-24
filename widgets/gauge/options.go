@@ -19,9 +19,10 @@ package gauge
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/align"
-	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 // Option is used to provide options.
@@ -42,7 +43,7 @@ type options struct {
 	filledTextColor  cell.Color
 	emptyTextColor   cell.Color
 	// If set, draws a border around the gauge.
-	border            draw.LineStyle
+	border            linestyle.LineStyle
 	borderCellOpts    []cell.Option
 	borderTitle       string
 	borderTitleHAlign align.Horizontal
@@ -179,7 +180,7 @@ func VerticalTextAlign(v align.Vertical) Option {
 }
 
 // Border configures the gauge to have a border of the specified style.
-func Border(ls draw.LineStyle, cOpts ...cell.Option) Option {
+func Border(ls linestyle.LineStyle, cOpts ...cell.Option) Option {
 	return option(func(opts *options) {
 		opts.border = ls
 		opts.borderCellOpts = cOpts

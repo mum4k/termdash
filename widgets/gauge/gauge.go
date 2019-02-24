@@ -22,14 +22,15 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/cell/runewidth"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // progressType indicates how was the current progress provided by the caller.
@@ -145,7 +146,7 @@ func (g *Gauge) width(ar image.Rectangle) int {
 
 // hasBorder determines of the gauge has a border.
 func (g *Gauge) hasBorder() bool {
-	return g.opts.border != draw.LineStyleNone
+	return g.opts.border != linestyle.None
 }
 
 // usable determines the usable area for the gauge itself.

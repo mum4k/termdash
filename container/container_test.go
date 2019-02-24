@@ -21,38 +21,44 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
-	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/event/testevent"
-	"github.com/mum4k/termdash/internal/keyboard"
-	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
 // Example demonstrates how to use the Container API.
 func Example() {
+	bc, err := barchart.New()
+	if err != nil {
+		panic(err)
+	}
 	if _, err := New(
 		/* terminal = */ nil,
 		SplitVertical(
 			Left(
 				SplitHorizontal(
 					Top(
-						Border(draw.LineStyleLight),
+						Border(linestyle.Light),
 					),
 					Bottom(
 						SplitHorizontal(
 							Top(
-								Border(draw.LineStyleLight),
+								Border(linestyle.Light),
 							),
 							Bottom(
-								Border(draw.LineStyleLight),
+								Border(linestyle.Light),
 							),
 						),
 					),
@@ -60,8 +66,8 @@ func Example() {
 				),
 			),
 			Right(
-				Border(draw.LineStyleLight),
-				PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				Border(linestyle.Light),
+				PlaceWidget(bc),
 			),
 		),
 	); err != nil {
@@ -93,7 +99,7 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 				)
 			},
 			want: func(size image.Point) *faketerm.Terminal {
@@ -116,10 +122,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -141,10 +147,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(0),
 					),
@@ -163,10 +169,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(100),
 					),
@@ -185,10 +191,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(20),
 					),
@@ -209,13 +215,13 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					SplitHorizontal(
 						Top(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Bottom(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -242,10 +248,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -267,10 +273,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(0),
 					),
@@ -289,10 +295,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(100),
 					),
@@ -311,10 +317,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						SplitPercent(20),
 					),
@@ -335,13 +341,13 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -370,22 +376,22 @@ func TestNew(t *testing.T) {
 						Left(
 							SplitHorizontal(
 								Top(
-									Border(draw.LineStyleLight),
+									Border(linestyle.Light),
 								),
 								Bottom(
 									SplitHorizontal(
 										Top(
-											Border(draw.LineStyleLight),
+											Border(linestyle.Light),
 										),
 										Bottom(
-											Border(draw.LineStyleLight),
+											Border(linestyle.Light),
 										),
 									),
 								),
 							),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -407,15 +413,15 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderColor(cell.ColorRed),
 					FocusedColor(cell.ColorBlue),
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -448,14 +454,14 @@ func TestNew(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 				)
@@ -482,10 +488,10 @@ func TestNew(t *testing.T) {
 					ft,
 					SplitVertical(
 						Left(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 						Right(
-							Border(draw.LineStyleLight),
+							Border(linestyle.Light),
 						),
 					),
 					PlaceWidget(fakewidget.New(widgetapi.Options{})),
@@ -959,7 +965,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget}),
 					),
@@ -994,7 +1000,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeContainer}),
 					),
@@ -1030,7 +1036,7 @@ func TestMouse(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					PlaceWidget(
 						fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeGlobal}),
 					),

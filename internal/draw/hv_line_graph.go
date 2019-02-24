@@ -19,6 +19,8 @@ package draw
 import (
 	"fmt"
 	"image"
+
+	"github.com/mum4k/termdash/linestyle"
 )
 
 // hVLineEdge is an edge between two points on the graph.
@@ -90,7 +92,7 @@ func (n *hVLineNode) hasRight() bool {
 // rune, given the selected line style returns the correct line character to
 // represent this node.
 // Only handles nodes with two or more edges, as returned by multiEdgeNodes().
-func (n *hVLineNode) rune(ls LineStyle) (rune, error) {
+func (n *hVLineNode) rune(ls linestyle.LineStyle) (rune, error) {
 	parts, err := lineParts(ls)
 	if err != nil {
 		return -1, err

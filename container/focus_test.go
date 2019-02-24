@@ -20,13 +20,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/event/testevent"
-	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
-	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // pointCase is a test case for the pointCont function.
@@ -97,7 +97,7 @@ func TestPointCont(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderColor(cell.ColorBlue),
 				)
 			},
@@ -167,7 +167,7 @@ func TestPointCont(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
-					Border(draw.LineStyleLight),
+					Border(linestyle.Light),
 					BorderColor(cell.ColorBlack),
 					SplitVertical(
 						Left(

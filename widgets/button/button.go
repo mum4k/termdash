@@ -26,9 +26,9 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/internal/mouse/button"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/mouse/button"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 

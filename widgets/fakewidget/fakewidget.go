@@ -24,9 +24,9 @@ import (
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/keyboard"
-	"github.com/mum4k/termdash/internal/mouse"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 

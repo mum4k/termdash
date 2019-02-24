@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/canvas/buffer"
 	"github.com/mum4k/termdash/internal/event/eventqueue"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
@@ -55,7 +56,7 @@ func WithEventQueue(eq *eventqueue.Unbound) Option {
 // This implementation is thread-safe.
 type Terminal struct {
 	// buffer holds the terminal cells.
-	buffer cell.Buffer
+	buffer buffer.Buffer
 
 	// events is a queue of input events.
 	events *eventqueue.Unbound
@@ -66,7 +67,7 @@ type Terminal struct {
 
 // New returns a new fake Terminal.
 func New(size image.Point, opts ...Option) (*Terminal, error) {
-	b, err := cell.NewBuffer(size)
+	b, err := buffer.New(size)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (t *Terminal) Resize(size image.Point) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	b, err := cell.NewBuffer(size)
+	b, err := buffer.New(size)
 	if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func (t *Terminal) Resize(size image.Point) error {
 }
 
 // BackBuffer returns the back buffer of the fake terminal.
-func (t *Terminal) BackBuffer() cell.Buffer {
+func (t *Terminal) BackBuffer() buffer.Buffer {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -155,7 +156,7 @@ func (t *Terminal) Clear(opts ...cell.Option) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	b, err := cell.NewBuffer(t.buffer.Size())
+	b, err := buffer.New(t.buffer.Size())
 	if err != nil {
 		return err
 	}

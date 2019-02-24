@@ -22,8 +22,8 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw"
@@ -200,7 +200,7 @@ func (g *Gauge) drawText(cvs *canvas.Canvas, progress image.Rectangle) error {
 		return err
 	}
 
-	cur, err := align.Text(ar, trimmed, g.opts.hTextAlign, g.opts.vTextAlign)
+	cur, err := alignfor.Text(ar, trimmed, g.opts.hTextAlign, g.opts.vTextAlign)
 	if err != nil {
 		return err
 	}

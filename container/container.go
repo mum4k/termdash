@@ -26,7 +26,7 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/widgetapi"
@@ -142,7 +142,7 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 	if wOpts.Ratio.X > 0 && wOpts.Ratio.Y > 0 {
 		adjusted = area.WithRatio(adjusted, wOpts.Ratio)
 	}
-	adjusted, err := align.Rectangle(c.usable(), adjusted, c.opts.hAlign, c.opts.vAlign)
+	adjusted, err := alignfor.Rectangle(c.usable(), adjusted, c.opts.hAlign, c.opts.vAlign)
 	if err != nil {
 		return image.ZR, err
 	}

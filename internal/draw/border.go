@@ -22,6 +22,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/linestyle"
 )
@@ -120,7 +121,7 @@ func drawTitle(c *canvas.Canvas, border image.Rectangle, opt *borderOptions) err
 		border.Max.X-1, // One space for the top right corner char.
 		border.Min.Y+1,
 	)
-	start, err := align.Text(available, opt.title, opt.titleHAlign, align.VerticalTop)
+	start, err := alignfor.Text(available, opt.title, opt.titleHAlign, align.VerticalTop)
 	if err != nil {
 		return err
 	}

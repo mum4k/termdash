@@ -23,7 +23,7 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
@@ -188,9 +188,9 @@ func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas) error {
 	}
 
 	text := sd.buff.String()
-	aligned, err := align.Rectangle(cvs.Area(), segAr.needArea(), sd.opts.hAlign, sd.opts.vAlign)
+	aligned, err := alignfor.Rectangle(cvs.Area(), segAr.needArea(), sd.opts.hAlign, sd.opts.vAlign)
 	if err != nil {
-		return fmt.Errorf("align.Rectangle => %v", err)
+		return fmt.Errorf("alignfor.Rectangle => %v", err)
 	}
 
 	optRange, err := sd.wOptsTracker.ForPosition(0) // Text options for the current byte.

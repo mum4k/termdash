@@ -21,6 +21,7 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas/buffer"
 	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
@@ -33,7 +34,7 @@ type Canvas struct {
 	area image.Rectangle
 
 	// buffer is where the drawing happens.
-	buffer cell.Buffer
+	buffer buffer.Buffer
 }
 
 // New returns a new Canvas with a buffer for the provided area.
@@ -42,7 +43,7 @@ func New(ar image.Rectangle) (*Canvas, error) {
 		return nil, fmt.Errorf("area cannot start or end on the negative axis, got: %+v", ar)
 	}
 
-	b, err := cell.NewBuffer(area.Size(ar))
+	b, err := buffer.New(area.Size(ar))
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +66,7 @@ func (c *Canvas) Area() image.Rectangle {
 
 // Clear clears all the content on the canvas.
 func (c *Canvas) Clear() error {
-	b, err := cell.NewBuffer(c.Size())
+	b, err := buffer.New(c.Size())
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func (c *Canvas) SetCell(p image.Point, r rune, opts ...cell.Option) (int, error
 }
 
 // Cell returns a copy of the specified cell.
-func (c *Canvas) Cell(p image.Point) (*cell.Cell, error) {
+func (c *Canvas) Cell(p image.Point) (*buffer.Cell, error) {
 	ar, err := area.FromSize(c.Size())
 	if err != nil {
 		return nil, err

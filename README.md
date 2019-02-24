@@ -8,7 +8,7 @@
 
 # termdash
 
-[<img src="./images/termdashdemo_0_6_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
+[<img src="./images/termdashdemo_0_7_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
 This project implements a cross-platform customizable terminal based dashboard.
 The feature set is inspired by the
@@ -61,6 +61,18 @@ Code documentation can be viewed in
 Project documentation is available in the [doc](doc/) directory.
 
 ## Implemented Widgets
+
+### The Button
+
+Allows users to interact with the application, each button press runs a callback function.
+Run the
+[buttondemo](widgets/button/buttondemo/buttondemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/button/buttondemo/buttondemo.go
+```
+
+[<img src="./images/buttondemo.gif" alt="buttondemo" type="image/gif">](widgets/button/buttondemo/buttondemo.go)
 
 ### The Gauge
 

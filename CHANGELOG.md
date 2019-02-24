@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The Button widget.
 - A function that draws text vertically.
 - The LineChart widget can display X axis labels in vertical orientation.
 - The LineChart widget allows the user to specify a custom scale for the Y

@@ -21,15 +21,18 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
+	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/donut"
 	"github.com/mum4k/termdash/widgets/gauge"
 	"github.com/mum4k/termdash/widgets/linechart"
@@ -128,10 +131,34 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 		return nil, err
 	}
 
-	sineLC, err := newSines(ctx)
+	leftB, rightB, sineLC, err := newSines(ctx)
 	if err != nil {
 		return nil, err
 	}
+	lcAndButtons := []container.Option{
+		container.SplitHorizontal(
+			container.Top(
+				container.Border(draw.LineStyleLight),
+				container.BorderTitle("Multiple series"),
+				container.BorderTitleAlignRight(),
+				container.PlaceWidget(sineLC),
+			),
+			container.Bottom(
+				container.SplitVertical(
+					container.Left(
+						container.PlaceWidget(leftB),
+						container.AlignHorizontal(align.HorizontalRight),
+					),
+					container.Right(
+						container.PlaceWidget(rightB),
+						container.AlignHorizontal(align.HorizontalLeft),
+					),
+				),
+			),
+			container.SplitPercent(80),
+		),
+	}
+
 	rightSide := []container.Option{
 		container.SplitHorizontal(
 			container.Top(
@@ -148,12 +175,7 @@ func layout(ctx context.Context, t terminalapi.Terminal) (*container.Container, 
 						container.BorderTitleAlignRight(),
 						container.PlaceWidget(don),
 					),
-					container.Bottom(
-						container.Border(draw.LineStyleLight),
-						container.BorderTitle("Multiple series"),
-						container.BorderTitleAlignRight(),
-						container.PlaceWidget(sineLC),
-					),
+					container.Bottom(lcAndButtons...),
 					container.SplitPercent(30),
 				),
 			),
@@ -422,23 +444,47 @@ func newBarChart(ctx context.Context) (*barchart.BarChart, error) {
 	return bc, nil
 }
 
-// newSines returns a line chart that displays multiple sine series.
-func newSines(ctx context.Context) (*linechart.LineChart, error) {
+// distance is a thread-safe int value used by the newSince method.
+// Buttons write it and the line chart reads it.
+type distance struct {
+	v  int
+	mu sync.Mutex
+}
+
+// add adds the provided value to the one stored.
+func (d *distance) add(v int) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.v += v
+}
+
+// get returns the current value.
+func (d *distance) get() int {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.v
+}
+
+// newSines returns a line chart that displays multiple sine series and two buttons.
+// The left button shifts the second series relative to the first series to
+// the left and the right button shifts it to the right.
+func newSines(ctx context.Context) (left, right *button.Button, lc *linechart.LineChart, err error) {
 	var inputs []float64
 	for i := 0; i < 200; i++ {
 		v := math.Sin(float64(i) / 100 * math.Pi)
 		inputs = append(inputs, v)
 	}
 
-	lc, err := linechart.New(
+	sineLc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorRed)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorGreen)),
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 	step1 := 0
+	secondDist := &distance{v: 100}
 	go periodic(ctx, redrawInterval/3, func() error {
 		step1 = (step1 + 1) % len(inputs)
 		if err := lc.Series("first", rotateFloats(inputs, step1),
@@ -447,10 +493,30 @@ func newSines(ctx context.Context) (*linechart.LineChart, error) {
 			return err
 		}
 
-		step2 := (step1 + 100) % len(inputs)
+		step2 := (step1 + secondDist.get()) % len(inputs)
 		return lc.Series("second", rotateFloats(inputs, step2), linechart.SeriesCellOpts(cell.FgColor(cell.ColorWhite)))
 	})
-	return lc, nil
+
+	// diff is the difference a single button press adds or removes to the
+	// second series.
+	const diff = 20
+	leftB, err := button.New("(l)eft", func() error {
+		secondDist.add(diff)
+		return nil
+	},
+		button.GlobalKey('l'),
+		button.WidthFor("(r)ight"),
+		button.FillColor(cell.ColorNumber(220)),
+	)
+
+	rightB, err := button.New("(r)ight", func() error {
+		secondDist.add(-diff)
+		return nil
+	},
+		button.GlobalKey('r'),
+		button.FillColor(cell.ColorNumber(196)),
+	)
+	return leftB, rightB, sineLc, nil
 }
 
 // rotateFloats returns a new slice with inputs rotated by step.

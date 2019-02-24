@@ -96,6 +96,7 @@ func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
 	}, nil
 }
 
+// Vars to be replaced from tests.
 var (
 	// Runes to use in cells that contain the button.
 	// Changed from tests to provide readable test failures.
@@ -103,6 +104,9 @@ var (
 	// Runes to use in cells that contain the shadow.
 	// Changed from tests to provide readable test failures.
 	shadowRune = ' '
+
+	// timeSince is a function that calculates duration since some time.
+	timeSince = time.Since
 )
 
 // Draw draws the Button widget onto the canvas.
@@ -112,7 +116,7 @@ func (b *Button) Draw(cvs *canvas.Canvas) error {
 	defer b.mu.Unlock()
 
 	if b.keyTriggerTime != nil {
-		since := time.Since(*b.keyTriggerTime)
+		since := timeSince(*b.keyTriggerTime)
 		if since > b.opts.keyUpDelay {
 			b.state = button.Up
 		}

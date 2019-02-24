@@ -22,6 +22,7 @@ import (
 
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/draw"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -69,6 +70,7 @@ func main() {
 			segmentdisplay.NewChunk(fmt.Sprintf("%d", val)),
 		})
 	},
+		button.FillColor(cell.ColorNumber(220)),
 		button.GlobalKey('s'),
 	)
 	if err != nil {

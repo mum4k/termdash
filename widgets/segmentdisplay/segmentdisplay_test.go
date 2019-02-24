@@ -25,9 +25,9 @@ import (
 	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw/segdisp/sixteen"
 	"github.com/mum4k/termdash/internal/draw/segdisp/sixteen/testsixteen"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
 	"github.com/mum4k/termdash/internal/terminalapi"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
 // mustDrawChar draws the provided character in the area of the canvas or panics.

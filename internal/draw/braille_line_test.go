@@ -22,7 +22,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
 	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/terminal/faketerm"
 )
 
 func TestBrailleLine(t *testing.T) {

@@ -1304,6 +1304,65 @@ func TestLineChartDraws(t *testing.T) {
 			},
 		},
 		{
+			desc: "tracks mouse clicks when canvas size increases, regression for #148",
+			opts: []Option{
+				ZoomHightlightColor(cell.ColorNumber(13)),
+			},
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				if err := lc.Series("first", []float64{0, 100}); err != nil {
+					return err
+				}
+				// Draw twice with different canvas size to simulate resize.
+				{
+					cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 7))
+					if err := lc.Draw(cvs); err != nil {
+						return err
+					}
+				}
+				{
+					cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
+					if err := lc.Draw(cvs); err != nil {
+						return err
+					}
+				}
+				return lc.Mouse(&terminalapi.Mouse{
+					Position: image.Point{6, 7},
+					Button:   mouse.ButtonLeft,
+				})
+			},
+			wantCapacity: 28,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+
+				// Highlighted area for zoom.
+				testbraille.MustSetAreaCellOpts(bc, image.Rect(0, 0, 1, 8), cell.BgColor(cell.ColorNumber(13)))
+
+				testbraille.MustCopyTo(bc, c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc: "zoom in on unscaled X axis",
 			opts: []Option{
 				XAxisUnscaled(),

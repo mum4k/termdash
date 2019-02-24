@@ -136,6 +136,7 @@ func (t *Tracker) Update(baseX *axes.XDetails, cvsAr, graphAr image.Rectangle) e
 	ac, sc := t.axisChanged(baseX), t.sizeChanged(cvsAr, graphAr)
 	if sc {
 		t.highlight.reset()
+		t.fsm.UpdateArea(graphAr)
 	}
 	if ac || sc {
 		if t.zoomX != nil {

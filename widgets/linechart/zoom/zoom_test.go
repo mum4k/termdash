@@ -150,6 +150,48 @@ func TestTracker(t *testing.T) {
 			),
 		},
 		{
+			desc: "highlights single column in a new canvas portion after size increase, regression for #148",
+			xp: &axes.XProperties{
+				Min:       0,
+				Max:       4,
+				ReqYWidth: 2,
+			},
+			cvsAr:   image.Rect(0, 0, 4, 4),
+			graphAr: image.Rect(2, 0, 4, 4),
+			mutate: func(tr *Tracker) error {
+				newX, err := axes.NewXDetails(image.Rect(0, 0, 6, 6), &axes.XProperties{
+					Min:       0,
+					Max:       4,
+					ReqYWidth: 2,
+				})
+				if err != nil {
+					return err
+				}
+
+				if err := tr.Update(
+					newX,
+					image.Rect(0, 0, 6, 6),
+					image.Rect(2, 0, 6, 6),
+				); err != nil {
+					return err
+				}
+				return tr.Mouse(&terminalapi.Mouse{
+					Position: image.Point{2, 5},
+					Button:   mouse.ButtonLeft,
+				})
+			},
+			wantHighlight:      true,
+			wantHighlightRange: &Range{Start: 0, End: 1, last: 0},
+			wantZoom: mustNewXDetails(
+				image.Rect(0, 0, 6, 6),
+				&axes.XProperties{
+					Min:       0,
+					Max:       4,
+					ReqYWidth: 2,
+				},
+			),
+		},
+		{
 			desc: "highlights multiple columns to the right of start",
 			xp: &axes.XProperties{
 				Min:       0,

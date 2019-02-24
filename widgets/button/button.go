@@ -146,14 +146,11 @@ func (b *Button) Draw(cvs *canvas.Canvas) error {
 	if err != nil {
 		return err
 	}
-	if err := draw.Text(cvs, b.text, start,
+	return draw.Text(cvs, b.text, start,
 		draw.TextOverrunMode(draw.OverrunModeThreeDot),
 		draw.TextMaxX(buttonAr.Max.X),
 		draw.TextCellOpts(cell.FgColor(b.opts.textColor)),
-	); err != nil {
-		return err
-	}
-	return nil
+	)
 }
 
 // Keyboard processes keyboard events, acts as a button press on the configured

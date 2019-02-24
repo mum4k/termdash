@@ -69,9 +69,9 @@ go run github.com/mum4k/termdash/termdashdemo/termdashdemo.go
 Please refer to the [Termdash wiki](http://github.com/mum4k/termdash/wiki) for
 all documentation and resources.
 
-## Implemented Widgets
+# Implemented Widgets
 
-### The Button
+## The Button
 
 Allows users to interact with the application, each button press runs a callback function.
 Run the
@@ -83,7 +83,7 @@ go run github.com/mum4k/termdash/widgets/button/buttondemo/buttondemo.go
 
 [<img src="./doc/images/buttondemo.gif" alt="buttondemo" type="image/gif" width="50%">](widgets/button/buttondemo/buttondemo.go)
 
-### The Gauge
+## The Gauge
 
 Displays the progress of an operation. Run the
 [gaugedemo](widgets/gauge/gaugedemo/gaugedemo.go).
@@ -94,7 +94,7 @@ go run github.com/mum4k/termdash/widgets/gauge/gaugedemo/gaugedemo.go
 
 [<img src="./doc/images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
 
-### The Donut
+## The Donut
 
 Visualizes progress of an operation as a partial or a complete donut. Run the
 [donutdemo](widgets/donut/donutdemo/donutdemo.go).
@@ -105,7 +105,7 @@ go run github.com/mum4k/termdash/widgets/donut/donutdemo/donutdemo.go
 
 [<img src="./doc/images/donutdemo.gif" alt="donutdemo" type="image/gif">](widgets/donut/donutdemo/donutdemo.go)
 
-### The Text
+## The Text
 
 Displays text content, supports trimming and scrolling of content. Run the
 [textdemo](widgets/text/textdemo/textdemo.go).
@@ -116,7 +116,7 @@ go run github.com/mum4k/termdash/widgets/text/textdemo/textdemo.go
 
 [<img src="./doc/images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/text/textdemo/textdemo.go)
 
-### The SparkLine
+## The SparkLine
 
 Draws a graph showing a series of values as vertical bars. The bars can have
 sub-cell height. Run the
@@ -128,7 +128,7 @@ go run github.com/mum4k/termdash/widgets/sparkline/sparklinedemo/sparklinedemo.g
 
 [<img src="./doc/images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif" width="50%">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
 
-### The BarChart
+## The BarChart
 
 Displays multiple bars showing relative ratios of values. Run the
 [barchartdemo](widgets/barchart/barchartdemo/barchartdemo.go).
@@ -139,7 +139,7 @@ go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
 
 [<img src="./doc/images/barchartdemo.gif" alt="barchartdemo" type="image/gif" width="50%">](widgets/barchart/barchartdemo/barchartdemo.go)
 
-### The LineChart
+## The LineChart
 
 Displays series of values on a line chart, supports zoom triggered by mouse
 events. Run the
@@ -151,7 +151,7 @@ go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.g
 
 [<img src="./doc/images/linechartdemo.gif" alt="linechartdemo" type="image/gif" width="70%">](widgets/linechart/linechartdemo/linechartdemo.go)
 
-### The SegmentDisplay
+## The SegmentDisplay
 
 Displays text by simulating a 16-segment display. Run the
 [segmentdisplaydemo](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go).
@@ -180,6 +180,6 @@ If you're developing a new widget, please see the [widget
 development](doc/widget_development.md) section.
 
 
-## Disclaimer
+# Disclaimer
 
 This is not an official Google product.

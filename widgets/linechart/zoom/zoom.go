@@ -24,7 +24,7 @@ import (
 	"github.com/mum4k/termdash/internal/mouse/button"
 	"github.com/mum4k/termdash/internal/numbers"
 	"github.com/mum4k/termdash/internal/terminalapi"
-	"github.com/mum4k/termdash/widgets/linechart/axes"
+	"github.com/mum4k/termdash/widgets/linechart/internal/axes"
 )
 
 // Option is used to provide options.

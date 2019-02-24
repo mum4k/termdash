@@ -28,8 +28,8 @@ import (
 	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/numbers"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/widgets/linechart/axes"
 	"github.com/mum4k/termdash/widgets/linechart/zoom"
 )

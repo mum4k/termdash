@@ -22,7 +22,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
 )
 
 // MustNew returns a new canvas or panics.

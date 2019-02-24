@@ -25,7 +25,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/internal/event/testevent"
 	"github.com/mum4k/termdash/internal/keyboard"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/terminalapi"
 )
 
 // receiverMode defines how the receiver behaves.

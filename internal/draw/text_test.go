@@ -21,7 +21,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/cell"
-	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
 )
 
 func TestTrimText(t *testing.T) {

@@ -25,8 +25,8 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // SparkLine draws a graph showing a series of values as vertical bars.

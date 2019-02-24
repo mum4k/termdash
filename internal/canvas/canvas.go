@@ -22,7 +22,7 @@ import (
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/cell/runewidth"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/terminalapi"
 )
 
 // Canvas is where a widget draws its output for display on the terminal.

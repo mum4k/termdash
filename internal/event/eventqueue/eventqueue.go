@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/terminalapi"
 )
 
 // node is a single data item on the queue.

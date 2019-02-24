@@ -24,8 +24,8 @@ import (
 	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 func TestBarChart(t *testing.T) {

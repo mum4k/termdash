@@ -27,7 +27,7 @@ import (
 	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw/segdisp/segment"
 	"github.com/mum4k/termdash/internal/draw/segdisp/segment/testsegment"
-	"github.com/mum4k/termdash/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
 )
 
 func TestDraw(t *testing.T) {

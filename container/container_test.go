@@ -30,9 +30,9 @@ import (
 	"github.com/mum4k/termdash/internal/event/testevent"
 	"github.com/mum4k/termdash/internal/keyboard"
 	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/terminal/faketerm"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/terminal/faketerm"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 

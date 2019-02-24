@@ -19,7 +19,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/terminalapi"
+	"github.com/mum4k/termdash/internal/terminalapi"
 )
 
 // State represents the state of the mouse button.

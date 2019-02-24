@@ -26,8 +26,8 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/keyboard"
 	"github.com/mum4k/termdash/internal/mouse"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // outputLines are the number of lines written by this plugin.

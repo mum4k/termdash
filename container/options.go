@@ -22,7 +22,7 @@ import (
 	"github.com/mum4k/termdash/internal/align"
 	"github.com/mum4k/termdash/internal/cell"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // applyOptions applies the options to the container.

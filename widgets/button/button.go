@@ -22,14 +22,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/mouse/button"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/mouse"
+	"github.com/mum4k/termdash/internal/mouse/button"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // CallbackFn is the function called when the button is pressed.

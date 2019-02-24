@@ -22,16 +22,16 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/mum4k/termdash/area"
-	"github.com/mum4k/termdash/canvas"
-	"github.com/mum4k/termdash/canvas/braille"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/numbers"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
-	"github.com/mum4k/termdash/widgets/linechart/axes"
-	"github.com/mum4k/termdash/widgets/linechart/zoom"
+	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/braille"
+	"github.com/mum4k/termdash/internal/cell"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/numbers"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/widgets/linechart/internal/axes"
+	"github.com/mum4k/termdash/widgets/linechart/internal/zoom"
 )
 
 // seriesValues represent values stored in the series.

@@ -17,8 +17,8 @@ package text
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/internal/keyboard"
+	"github.com/mum4k/termdash/internal/mouse"
 )
 
 // options.go contains configurable options for Text.

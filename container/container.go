@@ -26,12 +26,12 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/area"
-	"github.com/mum4k/termdash/draw"
-	"github.com/mum4k/termdash/event"
-	"github.com/mum4k/termdash/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"github.com/mum4k/termdash/internal/align"
+	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/event"
+	"github.com/mum4k/termdash/internal/terminalapi"
+	"github.com/mum4k/termdash/internal/widgetapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the
@@ -255,6 +255,8 @@ func (c *Container) mouseToWidget(m *terminalapi.Mouse, scope widgetapi.MouseSco
 
 // Subscribe tells the container to subscribe itself and widgets to the
 // provided event distribution system.
+// This method is private to termdash, stability isn't guaranteed and changes
+// won't be backward compatible.
 func (c *Container) Subscribe(eds *event.DistributionSystem) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

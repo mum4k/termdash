@@ -19,8 +19,8 @@ package container
 import (
 	"image"
 
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/mouse/button"
+	"github.com/mum4k/termdash/internal/mouse"
+	"github.com/mum4k/termdash/internal/mouse/button"
 	"github.com/mum4k/termdash/terminalapi"
 )
 

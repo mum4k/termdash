@@ -24,7 +24,7 @@ import (
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/internal/event/testevent"
-	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/internal/keyboard"
 	"github.com/mum4k/termdash/terminalapi"
 )
 

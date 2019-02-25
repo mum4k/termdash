@@ -29,13 +29,13 @@ import (
 	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/event/testevent"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/internal/fakewidget"
 	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
-	"github.com/mum4k/termdash/widgets/fakewidget"
 )
 
 // Example demonstrates how to use the Container API.

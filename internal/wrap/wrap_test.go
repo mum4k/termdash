@@ -93,9 +93,9 @@ func TestNeeded(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := Needed(tc.r, tc.posX, tc.width, tc.mode)
+			got := needed(tc.r, tc.posX, tc.width, tc.mode)
 			if got != tc.want {
-				t.Errorf("Needed => got %v, want %v", got, tc.want)
+				t.Errorf("needed => got %v, want %v", got, tc.want)
 			}
 		})
 	}

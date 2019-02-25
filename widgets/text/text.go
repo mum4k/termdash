@@ -60,7 +60,13 @@ type Text struct {
 	contentChanged bool
 	// lines stores the starting locations in bytes of all the lines in the
 	// buffer. I.e. positions of newline characters and of any calculated line wraps.
+	// The indexes in this slice are the line numbers.
 	lines []int
+	// lineStartToIdx maps the rune positions where line starts are to indexes,
+	// the line numbers.
+	// This is the same data as in lines, but available for quick lookup based
+	// on character index.
+	lineStartToIdx map[int]int
 
 	// mu protects the Text widget.
 	mu sync.Mutex
@@ -98,6 +104,7 @@ func (t *Text) reset() {
 	t.lastWidth = 0
 	t.contentChanged = true
 	t.lines = nil
+	t.lineStartToIdx = map[int]int{}
 }
 
 // Write writes text for the widget to display. Multiple calls append
@@ -173,6 +180,16 @@ func (t *Text) drawScrollDown(cvs *canvas.Canvas, cur image.Point, fromLine int)
 	return false, nil
 }
 
+// isLineStart asserts whether a rune from the text at the specified position
+// should be placed on a new line.
+// Argument fromLine indicates the starting line we are drawing the text from
+// and is needed, because this function must return false for the very first
+// line drawn. The first line is already a new line.
+func (t *Text) isLineStart(pos, fromLine int) bool {
+	idx, ok := t.lineStartToIdx[pos]
+	return ok && idx != fromLine
+}
+
 // draw draws the text context on the canvas starting at the specified line.
 func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 	var cur image.Point // Tracks the current drawing position on the canvas.
@@ -183,6 +200,7 @@ func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 		return err
 	}
 	startPos := t.lines[fromLine]
+	var drawnScrollUp bool // Indicates if a scroll up marker was drawn.
 	for i, r := range text {
 		if i < startPos {
 			continue
@@ -196,11 +214,18 @@ func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 		if scrlUp {
 			cur = image.Point{0, cur.Y + 1} // Move to the next line.
 			startPos = t.lines[fromLine+1]  // Skip one line of text, the marker replaced it.
+			drawnScrollUp = true
 			continue
 		}
 
 		// Line wrapping.
-		if r == '\n' || wrap.Needed(r, cur.X, cvs.Area().Dx(), t.opts.wrapMode) {
+		fr := fromLine
+		if drawnScrollUp {
+			// The scroll marker inserted a line so we are off-by-one when
+			// looking up new lines.
+			fr++
+		}
+		if t.isLineStart(i, fr) {
 			cur = image.Point{0, cur.Y + 1} // Move to the next line.
 		}
 
@@ -255,6 +280,10 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 		// The previous text preprocessing (line wrapping) is invalidated when
 		// new text is added or the width of the canvas changed.
 		t.lines = wrap.Lines(text, width, t.opts.wrapMode)
+		t.lineStartToIdx = map[int]int{}
+		for idx, start := range t.lines {
+			t.lineStartToIdx[start] = idx
+		}
 	}
 	t.lastWidth = width
 

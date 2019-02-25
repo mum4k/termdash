@@ -34,7 +34,11 @@ func (m Mode) String() string {
 }
 
 // modeNames maps Mode values to human readable names.
-var modeNames = map[Mode]string{}
+var modeNames = map[Mode]string{
+	Never:   "WrapModeNever",
+	AtRunes: "WrapModeAtRunes",
+	AtWords: "WrapModeAtWords",
+}
 
 const (
 	// Never is the default wrapping mode, which disables line wrapping.
@@ -49,11 +53,11 @@ const (
 	AtWords
 )
 
-// Needed returns true if wrapping is needed for the rune at the horizontal
+// needed returns true if wrapping is needed for the rune at the horizontal
 // position on the canvas that has the specified width.
 // This will always return false if no options are provided, since the default
 // behavior is to not wrap the text.
-func Needed(r rune, posX, width int, m Mode) bool {
+func needed(r rune, posX, width int, m Mode) bool {
 	if r == '\n' {
 		// Don't wrap for newline characters as they aren't printed on the
 		// canvas, i.e. they take no horizontal space.
@@ -82,7 +86,7 @@ func Lines(text string, width int, m Mode) []int {
 // input text or when the canvas width and configuration requires line
 // wrapping.
 type lineScanner struct {
-	// scanner lexes the input text.
+	// scanner is a lexer of the input text.
 	scanner *scanner.Scanner
 
 	// width is the width of the canvas the text will be drawn on.
@@ -142,7 +146,7 @@ func scanLine(ls *lineScanner) scannerState {
 		case tok == scanner.Ident:
 			return scanLineBreak
 
-		case Needed(tok, ls.posX, ls.width, ls.mode):
+		case needed(tok, ls.posX, ls.width, ls.mode):
 			return scanLineWrap
 
 		default:

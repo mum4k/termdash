@@ -17,6 +17,7 @@ package text
 import (
 	"fmt"
 
+	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 )
@@ -31,7 +32,7 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	wrapAtRunes      bool
+	wrapMode         wrap.Mode
 	rollContent      bool
 	disableScrolling bool
 	mouseUpButton    mouse.Button
@@ -88,7 +89,7 @@ func (o option) set(opts *options) {
 // provided, long lines are trimmed instead.
 func WrapAtRunes() Option {
 	return option(func(opts *options) {
-		opts.wrapAtRunes = true
+		opts.wrapMode = wrap.AtRunes
 	})
 }
 

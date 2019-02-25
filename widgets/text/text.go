@@ -26,6 +26,7 @@ import (
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
@@ -199,7 +200,7 @@ func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 		}
 
 		// Line wrapping.
-		if r == '\n' || wrapNeeded(r, cur.X, cvs.Area().Dx(), t.opts) {
+		if r == '\n' || wrap.Needed(r, cur.X, cvs.Area().Dx(), t.opts.wrapMode) {
 			cur = image.Point{0, cur.Y + 1} // Move to the next line.
 		}
 
@@ -253,7 +254,7 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 	if t.contentChanged || t.lastWidth != width {
 		// The previous text preprocessing (line wrapping) is invalidated when
 		// new text is added or the width of the canvas changed.
-		t.lines = findLines(text, width, t.opts)
+		t.lines = wrap.Lines(text, width, t.opts.wrapMode)
 	}
 	t.lastWidth = width
 

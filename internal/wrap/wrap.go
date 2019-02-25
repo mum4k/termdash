@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package text
-
-// line_scanner.go contains code that finds lines within text.
+// Package wrap implements line wrapping at character or word boundaries.
+package wrap
 
 import (
 	"strings"
@@ -23,26 +22,56 @@ import (
 	"github.com/mum4k/termdash/internal/runewidth"
 )
 
-// wrapNeeded returns true if wrapping is needed for the rune at the horizontal
-// position on the canvas.
-func wrapNeeded(r rune, cvsPosX, cvsWidth int, opts *options) bool {
+// Mode sets the wrapping mode.
+type Mode int
+
+// String implements fmt.Stringer()
+func (m Mode) String() string {
+	if n, ok := modeNames[m]; ok {
+		return n
+	}
+	return "ModeUnknown"
+}
+
+// modeNames maps Mode values to human readable names.
+var modeNames = map[Mode]string{}
+
+const (
+	// Never is the default wrapping mode, which disables line wrapping.
+	Never Mode = iota
+
+	// AtRunes is a wrapping mode where if the width of the text crosses the
+	// width of the canvas, wrapping is performed at rune boundaries.
+	AtRunes
+
+	// AtWords is a wrapping mode where if the width of the text crosses the
+	// width of the canvas, wrapping is performed at rune boundaries.
+	AtWords
+)
+
+// Needed returns true if wrapping is needed for the rune at the horizontal
+// position on the canvas that has the specified width.
+// This will always return false if no options are provided, since the default
+// behavior is to not wrap the text.
+func Needed(r rune, posX, width int, m Mode) bool {
 	if r == '\n' {
 		// Don't wrap for newline characters as they aren't printed on the
 		// canvas, i.e. they take no horizontal space.
 		return false
 	}
 	rw := runewidth.RuneWidth(r)
-	return cvsPosX > cvsWidth-rw && opts.wrapAtRunes
+	return posX > width-rw && m == AtRunes
 }
 
-// findLines finds the starting positions of all lines in the text when the
-// text is drawn on a canvas of the provided width with the specified options.
-func findLines(text string, cvsWidth int, opts *options) []int {
-	if cvsWidth <= 0 || text == "" {
+// Lines finds the starting positions of all lines in the text when the
+// text is drawn on a canvas of the provided width and the specified wrapping
+// mode.
+func Lines(text string, width int, m Mode) []int {
+	if width <= 0 || len(text) == 0 {
 		return nil
 	}
 
-	ls := newLineScanner(text, cvsWidth, opts)
+	ls := newLineScanner(text, width, m)
 	for state := scanStart; state != nil; state = state(ls) {
 	}
 	return ls.lines
@@ -56,22 +85,22 @@ type lineScanner struct {
 	// scanner lexes the input text.
 	scanner *scanner.Scanner
 
-	// cvsWidth is the width of the canvas the text will be drawn on.
-	cvsWidth int
+	// width is the width of the canvas the text will be drawn on.
+	width int
 
-	// cvsPosX tracks the horizontal position of the current character on the
+	// posX tracks the horizontal position of the current character on the
 	// canvas.
-	cvsPosX int
+	posX int
 
-	// opts are the widget options.
-	opts *options
+	// mode is the wrapping mode.
+	mode Mode
 
 	// lines are the starting points of the identified lines.
 	lines []int
 }
 
 // newLineScanner returns a new line scanner of the provided text.
-func newLineScanner(text string, cvsWidth int, opts *options) *lineScanner {
+func newLineScanner(text string, width int, m Mode) *lineScanner {
 	var s scanner.Scanner
 	s.Init(strings.NewReader(text))
 	s.Whitespace = 0 // Don't ignore any whitespace.
@@ -81,9 +110,9 @@ func newLineScanner(text string, cvsWidth int, opts *options) *lineScanner {
 	}
 
 	return &lineScanner{
-		scanner:  &s,
-		cvsWidth: cvsWidth,
-		opts:     opts,
+		scanner: &s,
+		width:   width,
+		mode:    m,
 	}
 }
 
@@ -113,12 +142,12 @@ func scanLine(ls *lineScanner) scannerState {
 		case tok == scanner.Ident:
 			return scanLineBreak
 
-		case wrapNeeded(tok, ls.cvsPosX, ls.cvsWidth, ls.opts):
+		case Needed(tok, ls.posX, ls.width, ls.mode):
 			return scanLineWrap
 
 		default:
 			// Move horizontally within the line for each scanned character.
-			ls.cvsPosX += runewidth.RuneWidth(tok)
+			ls.posX += runewidth.RuneWidth(tok)
 		}
 	}
 }
@@ -127,7 +156,7 @@ func scanLine(ls *lineScanner) scannerState {
 func scanLineBreak(ls *lineScanner) scannerState {
 	// Newline characters aren't printed, the following character starts the line.
 	if ls.scanner.Peek() != scanner.EOF {
-		ls.cvsPosX = 0
+		ls.posX = 0
 		ls.lines = append(ls.lines, ls.scanner.Position.Offset+1)
 	}
 	return scanLine
@@ -137,7 +166,7 @@ func scanLineBreak(ls *lineScanner) scannerState {
 func scanLineWrap(ls *lineScanner) scannerState {
 	// The character on which we wrapped will be printed and is the start of
 	// new line.
-	ls.cvsPosX = runewidth.StringWidth(ls.scanner.TokenText())
+	ls.posX = runewidth.StringWidth(ls.scanner.TokenText())
 	ls.lines = append(ls.lines, ls.scanner.Position.Offset)
 	return scanLine
 }

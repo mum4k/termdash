@@ -23,6 +23,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/internal/wrap"
 )
 
 func TestLineTrim(t *testing.T) {
@@ -43,7 +44,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{0, 0},
 			curRune:  'A',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  false,
@@ -59,7 +60,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{9, 0},
 			curRune:  'A',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  false,
@@ -75,7 +76,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{8, 0},
 			curRune:  '世',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  false,
@@ -91,7 +92,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{10, 0},
 			curRune:  'A',
 			opts: &options{
-				wrapAtRunes: true,
+				wrapMode: wrap.AtRunes,
 			},
 			wantRes: &trimResult{
 				trimmed:  false,
@@ -107,7 +108,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{10, 0},
 			curRune:  'A',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  true,
@@ -127,7 +128,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{9, 0},
 			curRune:  '世',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  true,
@@ -147,7 +148,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{10, 0},
 			curRune:  '世',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  true,
@@ -167,7 +168,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{10, 0},
 			curRune:  '\n',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  false,
@@ -183,7 +184,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{11, 0},
 			curRune:  'A',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  true,
@@ -199,7 +200,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{11, 0},
 			curRune:  '世',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  true,
@@ -215,7 +216,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{11, 0},
 			curRune:  '\n',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  false,
@@ -235,7 +236,7 @@ func TestLineTrim(t *testing.T) {
 			curPoint: image.Point{10, 0},
 			curRune:  '世',
 			opts: &options{
-				wrapAtRunes: false,
+				wrapMode: wrap.Never,
 			},
 			wantRes: &trimResult{
 				trimmed:  true,

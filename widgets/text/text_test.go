@@ -199,7 +199,7 @@ func TestTextDraws(t *testing.T) {
 				if err := widget.Write("red\n", WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 					return err
 				}
-				return widget.Write("blue\n", WriteCellOpts(cell.FgColor(cell.ColorBlue)))
+				return widget.Write("blue", WriteCellOpts(cell.FgColor(cell.ColorBlue)))
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

@@ -15,9 +15,11 @@
 package wrap
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/internal/canvas/buffer"
 )
 
 func TestNeeded(t *testing.T) {
@@ -101,142 +103,230 @@ func TestNeeded(t *testing.T) {
 	}
 }
 
-func TestLines(t *testing.T) {
+func TestCells(t *testing.T) {
 	tests := []struct {
-		desc string
-		text string
+		desc  string
+		cells []*buffer.Cell
 		// width is the width of the canvas.
 		width int
 		mode  Mode
-		want  []int
+		want  [][]*buffer.Cell
 	}{
 		{
 			desc:  "zero text",
-			text:  "",
 			width: 1,
-			want:  nil,
 		},
 		{
 			desc:  "zero canvas width",
-			text:  "hello",
+			cells: buffer.NewCells("hello"),
 			width: 0,
 			want:  nil,
 		},
 		{
 			desc:  "wrapping disabled, no newlines, fits in canvas width",
-			text:  "hello",
+			cells: buffer.NewCells("hello"),
 			width: 5,
-			want:  []int{0},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hello"),
+			},
 		},
 		{
 			desc:  "wrapping disabled, no newlines, doesn't fits in canvas width",
-			text:  "hello",
+			cells: buffer.NewCells("hello"),
 			width: 4,
-			want:  []int{0},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hello"),
+			},
 		},
 		{
 			desc:  "wrapping disabled, newlines, fits in canvas width",
-			text:  "hello\nworld",
+			cells: buffer.NewCells("hello\nworld"),
 			width: 5,
-			want:  []int{0, 6},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hello"),
+				buffer.NewCells("world"),
+			},
 		},
 		{
 			desc:  "wrapping disabled, newlines, doesn't fit in canvas width",
-			text:  "hello\nworld",
+			cells: buffer.NewCells("hello\nworld"),
 			width: 4,
-			want:  []int{0, 6},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hello"),
+				buffer.NewCells("world"),
+			},
 		},
 		{
 			desc:  "wrapping enabled, no newlines, fits in canvas width",
-			text:  "hello",
+			cells: buffer.NewCells("hello"),
 			width: 5,
 			mode:  AtRunes,
-			want:  []int{0},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hello"),
+			},
 		},
 		{
 			desc:  "wrapping enabled, no newlines, doesn't fit in canvas width",
-			text:  "hello",
+			cells: buffer.NewCells("hello"),
 			width: 4,
 			mode:  AtRunes,
-			want:  []int{0, 4},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hell"),
+				buffer.NewCells("o"),
+			},
 		},
 		{
 			desc:  "wrapping enabled, newlines, fits in canvas width",
-			text:  "hello\nworld",
+			cells: buffer.NewCells("hello\nworld"),
 			width: 5,
 			mode:  AtRunes,
-			want:  []int{0, 6},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hello"),
+				buffer.NewCells("world"),
+			},
 		},
 		{
 			desc:  "wrapping enabled, newlines, doesn't fit in canvas width",
-			text:  "hello\nworld",
+			cells: buffer.NewCells("hello\nworld"),
 			width: 4,
 			mode:  AtRunes,
-			want:  []int{0, 4, 6, 10},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hell"),
+				buffer.NewCells("o"),
+				buffer.NewCells("worl"),
+				buffer.NewCells("d"),
+			},
 		},
 		{
 			desc:  "wrapping enabled, newlines, doesn't fit in canvas width, unicode characters",
-			text:  "⇧\n…\n⇩",
+			cells: buffer.NewCells("⇧\n…\n⇩"),
 			width: 1,
 			mode:  AtRunes,
-			want:  []int{0, 4, 8},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("⇧"),
+				buffer.NewCells("…"),
+				buffer.NewCells("⇩"),
+			},
 		},
 		{
 			desc:  "wrapping enabled, newlines, doesn't fit in width, full-width unicode characters",
-			text:  "你好\n世界",
+			cells: buffer.NewCells("你好\n世界"),
 			width: 2,
 			mode:  AtRunes,
-			want:  []int{0, 3, 7, 10},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("你"),
+				buffer.NewCells("好"),
+				buffer.NewCells("世"),
+				buffer.NewCells("界"),
+			},
 		},
 		{
 			desc:  "wraps before a full-width character that starts in and falls out",
-			text:  "a你b",
+			cells: buffer.NewCells("a你b"),
 			width: 2,
 			mode:  AtRunes,
-			want:  []int{0, 1, 4},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("a"),
+				buffer.NewCells("你"),
+				buffer.NewCells("b"),
+			},
 		},
 		{
 			desc:  "wraps before a full-width character that falls out",
-			text:  "ab你b",
+			cells: buffer.NewCells("ab你b"),
 			width: 2,
 			mode:  AtRunes,
-			want:  []int{0, 2, 5},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("ab"),
+				buffer.NewCells("你"),
+				buffer.NewCells("b"),
+			},
 		},
 		{
 			desc:  "handles leading and trailing newlines",
-			text:  "\n\n\nhello\n\n\n",
+			cells: buffer.NewCells("\n\n\nhello\n\n\n"),
 			width: 4,
 			mode:  AtRunes,
-			want:  []int{0, 1, 2, 3, 7, 9, 10},
+			want: [][]*buffer.Cell{
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+				buffer.NewCells("hell"),
+				buffer.NewCells("o"),
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+			},
 		},
 		{
 			desc:  "handles multiple newlines in the middle",
-			text:  "hello\n\n\nworld",
+			cells: buffer.NewCells("hello\n\n\nworld"),
 			width: 5,
 			mode:  AtRunes,
-			want:  []int{0, 6, 7, 8},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("hello"),
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+				buffer.NewCells("world"),
+			},
 		},
 		{
 			desc:  "handles multiple newlines in the middle and wraps",
-			text:  "hello\n\n\nworld",
+			cells: buffer.NewCells("hello\n\n\nworld"),
 			width: 2,
 			mode:  AtRunes,
-			want:  []int{0, 2, 4, 6, 7, 8, 10, 12},
+			want: [][]*buffer.Cell{
+				buffer.NewCells("he"),
+				buffer.NewCells("ll"),
+				buffer.NewCells("o"),
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+				buffer.NewCells("wo"),
+				buffer.NewCells("rl"),
+				buffer.NewCells("d"),
+			},
 		},
 		{
 			desc:  "contains only newlines",
-			text:  "\n\n\n",
+			cells: buffer.NewCells("\n\n\n"),
 			width: 4,
 			mode:  AtRunes,
-			want:  []int{0, 1, 2},
+			want: [][]*buffer.Cell{
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+				buffer.NewCells(""),
+			},
 		},
+		/*
+			{
+				desc:  "wraps at words, all fit individually",
+				text:  "aaa bb cc ddddd",
+				width: 5,
+				mode:  AtRunes,
+				want:  []int{0, 4, 7, 10},
+			},*/
+
+		// wraps at words - handles newline characters
+		// wraps at words - handles leading and trailing newlines
+		// wraps at words - handles continuous newlines
+		// wraps at words, no need to wrap
+		// wraps at words all individually fit within width
+		// wraps at words, no spaces so goes back to AtRunes
+		// wraps at words, one doesn't fit so goes back to AtRunes
+		// wraps at words - full width runes - fit exactly
+		// wraps at words - full width runes - cause a wrap
+		// weird cases with multiple spaces between words
+		// preserves cell options
+		// Inserted cells have the same cell options ?
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := Lines(tc.text, tc.width, tc.mode)
+			t.Logf(fmt.Sprintf("Mode: %v", tc.mode))
+			got := Cells(tc.cells, tc.width, tc.mode)
 			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("Lines => unexpected diff (-want, +got):\n%s", diff)
+				t.Errorf("Cells =>\n got:%v\nwant:%v\nunexpected diff (-want, +got):\n%s", got, tc.want, diff)
 			}
 		})
 	}

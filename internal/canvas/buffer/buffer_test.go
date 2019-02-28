@@ -15,6 +15,7 @@
 package buffer
 
 import (
+	"fmt"
 	"image"
 	"testing"
 
@@ -22,23 +23,68 @@ import (
 	"github.com/mum4k/termdash/cell"
 )
 
+func TestNewCells(t *testing.T) {
+	tests := []struct {
+		desc string
+		text string
+		opts []cell.Option
+		want []*Cell
+	}{
+		{
+			desc: "no cells for empty text",
+		},
+		{
+			desc: "cells created from text with default options",
+			text: "hello",
+			want: []*Cell{
+				NewCell('h'),
+				NewCell('e'),
+				NewCell('l'),
+				NewCell('l'),
+				NewCell('o'),
+			},
+		},
+		{
+			desc: "cells with options",
+			text: "ha",
+			opts: []cell.Option{
+				cell.FgColor(cell.ColorCyan),
+				cell.BgColor(cell.ColorMagenta),
+			},
+			want: []*Cell{
+				NewCell('h', cell.FgColor(cell.ColorCyan), cell.BgColor(cell.ColorMagenta)),
+				NewCell('a', cell.FgColor(cell.ColorCyan), cell.BgColor(cell.ColorMagenta)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := NewCells(tc.text, tc.opts...)
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("NewCells => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestNewCell(t *testing.T) {
 	tests := []struct {
 		desc string
 		r    rune
 		opts []cell.Option
-		want Cell
+		want *Cell
 	}{
 		{
 			desc: "creates empty cell with default options",
-			want: Cell{
+			want: &Cell{
 				Opts: &cell.Options{},
 			},
 		},
 		{
 			desc: "cell with the specified rune",
 			r:    'X',
-			want: Cell{
+			want: &Cell{
 				Rune: 'X',
 				Opts: &cell.Options{},
 			},
@@ -50,7 +96,7 @@ func TestNewCell(t *testing.T) {
 				cell.FgColor(cell.ColorCyan),
 				cell.BgColor(cell.ColorMagenta),
 			},
-			want: Cell{
+			want: &Cell{
 				Rune: 'X',
 				Opts: &cell.Options{
 					FgColor: cell.ColorCyan,
@@ -67,7 +113,7 @@ func TestNewCell(t *testing.T) {
 					BgColor: cell.ColorBlue,
 				},
 			},
-			want: Cell{
+			want: &Cell{
 				Rune: 'X',
 				Opts: &cell.Options{
 					FgColor: cell.ColorBlack,
@@ -80,8 +126,9 @@ func TestNewCell(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			got := NewCell(tc.r, tc.opts...)
+			t.Logf(fmt.Sprintf("%v", got))
 			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("New => unexpected diff (-want, +got):\n%s", diff)
+				t.Errorf("NewCell => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

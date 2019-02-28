@@ -16,15 +16,14 @@
 package text
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"image"
 	"sync"
 	"unicode"
 
-	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/buffer"
 	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -41,12 +40,11 @@ import (
 //
 // Implements widgetapi.Widget. This object is thread-safe.
 type Text struct {
-	// buff contains the text to be displayed in the widget.
-	buff bytes.Buffer
-	// givenWOpts are write options given for the text.
-	givenWOpts []*writeOptions
-	// wOptsTracker tracks the positions in a buff to which the givenWOpts apply.
-	wOptsTracker *attrrange.Tracker
+	// content is the text content that will be displayed in the widget as
+	// provided by the caller (i.e. not wrapped or pre-processed).
+	content []*buffer.Cell
+	// wrapped is the content wrapped to the current width of the canvas.
+	wrapped [][]*buffer.Cell
 
 	// scroll tracks scrolling the position.
 	scroll *scrollTracker
@@ -58,15 +56,6 @@ type Text struct {
 	// the last drawing. Used to determine if the previous line wrapping was
 	// invalidated.
 	contentChanged bool
-	// lines stores the starting locations in bytes of all the lines in the
-	// buffer. I.e. positions of newline characters and of any calculated line wraps.
-	// The indexes in this slice are the line numbers.
-	lines []int
-	// lineStartToIdx maps the rune positions where line starts are to indexes,
-	// the line numbers.
-	// This is the same data as in lines, but available for quick lookup based
-	// on character index.
-	lineStartToIdx map[int]int
 
 	// mu protects the Text widget.
 	mu sync.Mutex
@@ -82,9 +71,8 @@ func New(opts ...Option) (*Text, error) {
 		return nil, err
 	}
 	return &Text{
-		wOptsTracker: attrrange.NewTracker(),
-		scroll:       newScrollTracker(opt),
-		opts:         opt,
+		scroll: newScrollTracker(opt),
+		opts:   opt,
 	}, nil
 }
 
@@ -97,14 +85,11 @@ func (t *Text) Reset() {
 
 // reset implements Reset, caller must hold t.mu.
 func (t *Text) reset() {
-	t.buff.Reset()
-	t.givenWOpts = nil
-	t.wOptsTracker = attrrange.NewTracker()
+	t.content = nil
+	t.wrapped = nil
 	t.scroll = newScrollTracker(t.opts)
 	t.lastWidth = 0
 	t.contentChanged = true
-	t.lines = nil
-	t.lineStartToIdx = map[int]int{}
 }
 
 // Write writes text for the widget to display. Multiple calls append
@@ -125,15 +110,8 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	if opts.replace {
 		t.reset()
 	}
-
-	pos := t.buff.Len()
-	t.givenWOpts = append(t.givenWOpts, opts)
-	wOptsIdx := len(t.givenWOpts) - 1
-	if err := t.wOptsTracker.Add(pos, pos+len(text), wOptsIdx); err != nil {
-		return err
-	}
-	if _, err := t.buff.WriteString(text); err != nil {
-		return err
+	for _, r := range text {
+		t.content = append(t.content, buffer.NewCell(r, opts.cellOpts))
 	}
 	t.contentChanged = true
 	return nil
@@ -166,7 +144,7 @@ func (t *Text) drawScrollUp(cvs *canvas.Canvas, cur image.Point, fromLine int) (
 // the marker was drawn.
 func (t *Text) drawScrollDown(cvs *canvas.Canvas, cur image.Point, fromLine int) (bool, error) {
 	height := cvs.Area().Dy()
-	lines := len(t.lines)
+	lines := len(t.wrapped)
 	if cur.Y == height-1 && height >= minLinesForMarkers && height < lines-fromLine {
 		cells, err := cvs.SetCell(cur, '⇩')
 		if err != nil {
@@ -180,32 +158,13 @@ func (t *Text) drawScrollDown(cvs *canvas.Canvas, cur image.Point, fromLine int)
 	return false, nil
 }
 
-// isLineStart asserts whether a rune from the text at the specified position
-// should be placed on a new line.
-// Argument fromLine indicates the starting line we are drawing the text from
-// and is needed, because this function must return false for the very first
-// line drawn. The first line is already a new line.
-func (t *Text) isLineStart(pos, fromLine int) bool {
-	idx, ok := t.lineStartToIdx[pos]
-	return ok && idx != fromLine
-}
-
 // draw draws the text context on the canvas starting at the specified line.
-func (t *Text) draw(text string, cvs *canvas.Canvas) error {
+func (t *Text) draw(cvs *canvas.Canvas) error {
 	var cur image.Point // Tracks the current drawing position on the canvas.
 	height := cvs.Area().Dy()
-	fromLine := t.scroll.firstLine(len(t.lines), height)
-	optRange, err := t.wOptsTracker.ForPosition(0) // Text options for the current byte.
-	if err != nil {
-		return err
-	}
-	startPos := t.lines[fromLine]
-	var drawnScrollUp bool // Indicates if a scroll up marker was drawn.
-	for i, r := range text {
-		if i < startPos {
-			continue
-		}
+	fromLine := t.scroll.firstLine(len(t.wrapped), height)
 
+	for _, line := range t.wrapped[fromLine:] {
 		// Scroll up marker.
 		scrlUp, err := t.drawScrollUp(cvs, cur, fromLine)
 		if err != nil {
@@ -213,20 +172,8 @@ func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 		}
 		if scrlUp {
 			cur = image.Point{0, cur.Y + 1} // Move to the next line.
-			startPos = t.lines[fromLine+1]  // Skip one line of text, the marker replaced it.
-			drawnScrollUp = true
+			// Skip one line of text, the marker replaced it.
 			continue
-		}
-
-		// Line wrapping.
-		fr := fromLine
-		if drawnScrollUp {
-			// The scroll marker inserted a line so we are off-by-one when
-			// looking up new lines.
-			fr++
-		}
-		if t.isLineStart(i, fr) {
-			cur = image.Point{0, cur.Y + 1} // Move to the next line.
 		}
 
 		// Scroll down marker.
@@ -235,35 +182,26 @@ func (t *Text) draw(text string, cvs *canvas.Canvas) error {
 			return err
 		}
 		if scrlDown || cur.Y >= height {
-			break // Trim all lines falling after the canvas.
+			break // Skip all lines falling after (under) the canvas.
 		}
 
-		tr, err := lineTrim(cvs, cur, r, t.opts)
-		if err != nil {
-			return err
-		}
-		cur = tr.curPoint
-		if tr.trimmed {
-			continue // Skip over any characters trimmed on the current line.
-		}
-
-		if r == '\n' {
-			continue // Don't print the newline runes, just interpret them above.
-		}
-
-		if i >= optRange.High { // Get the next write options.
-			or, err := t.wOptsTracker.ForPosition(i)
+		for _, cell := range line {
+			tr, err := lineTrim(cvs, cur, cell.Rune, t.opts)
 			if err != nil {
 				return err
 			}
-			optRange = or
+			cur = tr.curPoint
+			if tr.trimmed {
+				break // Skip over any characters trimmed on the current line.
+			}
+
+			cells, err := cvs.SetCell(cur, cell.Rune, cell.Opts)
+			if err != nil {
+				return err
+			}
+			cur = image.Point{cur.X + cells, cur.Y} // Move within the same line.
 		}
-		wOpts := t.givenWOpts[optRange.AttrIdx]
-		cells, err := cvs.SetCell(cur, r, wOpts.cellOpts)
-		if err != nil {
-			return err
-		}
-		cur = image.Point{cur.X + cells, cur.Y} // Move within the same line.
+		cur = image.Point{0, cur.Y + 1} // Move to the next line.
 	}
 	return nil
 }
@@ -274,24 +212,19 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	text := t.buff.String()
 	width := cvs.Area().Dx()
 	if t.contentChanged || t.lastWidth != width {
 		// The previous text preprocessing (line wrapping) is invalidated when
 		// new text is added or the width of the canvas changed.
-		t.lines = wrap.Lines(text, width, t.opts.wrapMode)
-		t.lineStartToIdx = map[int]int{}
-		for idx, start := range t.lines {
-			t.lineStartToIdx[start] = idx
-		}
+		t.wrapped = wrap.Cells(t.content, width, t.opts.wrapMode)
 	}
 	t.lastWidth = width
 
-	if len(t.lines) == 0 {
+	if len(t.wrapped) == 0 {
 		return nil // Nothing to draw if there's no text.
 	}
 
-	if err := t.draw(text, cvs); err != nil {
+	if err := t.draw(cvs); err != nil {
 		return err
 	}
 	t.contentChanged = false

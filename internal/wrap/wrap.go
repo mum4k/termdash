@@ -16,6 +16,9 @@
 package wrap
 
 import (
+	"bytes"
+	"unicode"
+
 	"github.com/mum4k/termdash/internal/canvas/buffer"
 	"github.com/mum4k/termdash/internal/runewidth"
 )
@@ -53,13 +56,11 @@ const (
 	AtWords
 )
 
-// needed returns true if wrapping is needed for the rune at the horizontal
+// runeWrapNeeded returns true if wrapping is needed for the rune at the horizontal
 // position on the canvas that has the specified width.
-// This will always return false if no options are provided, since the default
-// behavior is to not wrap the text.
-func needed(r rune, posX, width int, m Mode) bool {
+func runeWrapNeeded(r rune, posX, width int) bool {
 	rw := runewidth.RuneWidth(r)
-	return posX > width-rw && m == AtRunes
+	return posX > width-rw
 }
 
 // Cells returns the cells wrapped into individual lines according to the
@@ -76,7 +77,7 @@ func Cells(cells []*buffer.Cell, width int, m Mode) [][]*buffer.Cell {
 	}
 
 	cs := newCellScanner(cells, width, m)
-	for state := scanCellLine; state != nil; state = state(cs) {
+	for state := scanCellRunes; state != nil; state = state(cs) {
 	}
 	return cs.lines
 }
@@ -94,6 +95,18 @@ type cellScanner struct {
 	// nextIdx is the index of the cell that will be returned by next.
 	nextIdx int
 
+	// wordStartIdx stores the starting index of the current word.
+	// A starting position of a word includes any leading space characters.
+	// E.g.: hello   world
+	//            ^
+	//            lastWordIdx
+	wordStartIdx int
+	// wordEndIdx stores the ending index of the current word.
+	// The word consists of all indexes that are
+	// wordStartIdx <= idx < wordEndIdx.
+	// A word also includes any punctuation after it.
+	wordEndIdx int
+
 	// width is the width of the canvas the text will be drawn on.
 	width int
 
@@ -102,6 +115,8 @@ type cellScanner struct {
 
 	// mode is the wrapping mode.
 	mode Mode
+
+	atRunesInWord bool
 
 	// lines are the identified lines.
 	lines [][]*buffer.Cell
@@ -147,50 +162,208 @@ func (cs *cellScanner) peekPrev() *buffer.Cell {
 	return cs.cells[cs.nextIdx-1]
 }
 
-// scanCellLine scans a line until it finds its end due to a newline character
-// or the specified width.
-func scanCellLine(cs *cellScanner) cellScannerState {
-	for {
+// wordCells returns all the cells that belong to the current word.
+func (cs *cellScanner) wordCells() []*buffer.Cell {
+	return cs.cells[cs.wordStartIdx:cs.wordEndIdx]
+}
 
+// wordWidth returns the width of the current word in cells when printed on the
+// terminal.
+func (cs *cellScanner) wordWidth() int {
+	var b bytes.Buffer
+	for _, wc := range cs.wordCells() {
+		b.WriteRune(wc.Rune)
+	}
+	return runewidth.StringWidth(b.String())
+}
+
+// isWordStart determines if the scanner is at the beginning of a word.
+func (cs *cellScanner) isWordStart() bool {
+	if cs.mode != AtWords {
+		return false
+	}
+
+	current := cs.peekPrev()
+	next := cs.peek()
+	if current == nil || next == nil {
+		return false
+	}
+
+	if cs.posX > 0 && current.Rune != ' ' {
+		return false
+	}
+
+	switch nr := next.Rune; {
+	case nr == '\n':
+	case nr == ' ':
+	case unicode.IsPunct(nr):
+	default:
+		return true
+	}
+	return false
+}
+
+// scanCellRunes scans the cells a rune at a time.
+func scanCellRunes(cs *cellScanner) cellScannerState {
+	for {
 		cell := cs.next()
 		if cell == nil {
-			if len(cs.line) > 0 || cs.peekPrev().Rune == '\n' {
-				cs.lines = append(cs.lines, cs.line)
-			}
-			return nil
+			return scanEOF
 		}
 
-		switch r := cell.Rune; {
-		case r == '\n':
-			return scanCellLineBreak
-
-		case needed(r, cs.posX, cs.width, cs.mode):
-			return scanCellLineWrap
-
-		default:
-			// Move horizontally within the line for each scanned cell.
-			cs.posX += runewidth.RuneWidth(r)
-
-			// Copy the cell into the current line.
-			cs.line = append(cs.line, cell)
+		r := cell.Rune
+		if r == '\n' {
+			return newLineForLineBreak
 		}
+
+		if cs.mode == Never {
+			return runeToCurrentLine
+		}
+
+		if cs.atRunesInWord && !isWordCell(cell) {
+			cs.atRunesInWord = false
+		}
+
+		if !cs.atRunesInWord && cs.isWordStart() {
+			return markWordStart
+		}
+
+		if runeWrapNeeded(r, cs.posX, cs.width) {
+			return newLineForAtRunes
+		}
+
+		return runeToCurrentLine
 	}
 }
 
-// scanCellLineBreak processes a newline character cell.
-func scanCellLineBreak(cs *cellScanner) cellScannerState {
+// runeToCurrentLine scans a single cell rune onto the current line.
+func runeToCurrentLine(cs *cellScanner) cellScannerState {
+	cell := cs.peekPrev()
+	// Move horizontally within the line for each scanned cell.
+	cs.posX += runewidth.RuneWidth(cell.Rune)
+
+	// Copy the cell into the current line.
+	cs.line = append(cs.line, cell)
+	return scanCellRunes
+}
+
+// newLineForLineBreak processes a newline character cell.
+func newLineForLineBreak(cs *cellScanner) cellScannerState {
 	cs.lines = append(cs.lines, cs.line)
 	cs.posX = 0
 	cs.line = nil
-	return scanCellLine
+	return scanCellRunes
 }
 
-// scanCellLineWrap processes a line wrap due to canvas width.
-func scanCellLineWrap(cs *cellScanner) cellScannerState {
+// newLineForAtRunes processes a line wrap at rune boundaries due to canvas width.
+func newLineForAtRunes(cs *cellScanner) cellScannerState {
 	// The character on which we wrapped will be printed and is the start of
 	// new line.
 	cs.lines = append(cs.lines, cs.line)
 	cs.posX = runewidth.RuneWidth(cs.peekPrev().Rune)
 	cs.line = []*buffer.Cell{cs.peekPrev()}
-	return scanCellLine
+	return scanCellRunes
+}
+
+// scanEOF terminates the scanning.
+func scanEOF(cs *cellScanner) cellScannerState {
+	// Need to add the current line if it isn't empty, or if the previous rune
+	// was a newline.
+	// Newlines aren't copied onto the lines so just checking for emptiness
+	// isn't enough. We still want to include trailing empty newlines if
+	// they are in the input text.
+	if len(cs.line) > 0 || cs.peekPrev().Rune == '\n' {
+		cs.lines = append(cs.lines, cs.line)
+	}
+	return nil
+}
+
+// markWordStart stores the starting position of the current word.
+func markWordStart(cs *cellScanner) cellScannerState {
+	cs.wordStartIdx = cs.nextIdx - 1
+	cs.wordEndIdx = cs.nextIdx
+	return scanWord
+}
+
+// scanWord scans the entire word until it finds its end.
+func scanWord(cs *cellScanner) cellScannerState {
+	for {
+		if isWordCell(cs.peek()) {
+			cs.next()
+			cs.wordEndIdx++
+			continue
+		}
+		return wordToCurrentLine
+	}
+}
+
+// wordToCurrentLine decides how to place the word into the output.
+func wordToCurrentLine(cs *cellScanner) cellScannerState {
+	wordCells := cs.wordCells()
+	wordWidth := cs.wordWidth()
+
+	if cs.posX+wordWidth <= cs.width {
+		// Place the word onto the current line.
+		cs.posX += wordWidth
+		cs.line = append(cs.line, wordCells...)
+		return scanCellRunes
+	}
+	return wrapWord
+}
+
+// wrapWord wraps the word onto the next line or lines.
+func wrapWord(cs *cellScanner) cellScannerState {
+	// Edge-case - the word starts the line and immediately doesn't fit.
+	if cs.posX > 0 {
+		cs.lines = append(cs.lines, cs.line)
+		cs.posX = 0
+		cs.line = nil
+	}
+
+	for i, wc := range cs.wordCells() {
+		if i == 0 && wc.Rune == ' ' {
+			// Skip the leading space when word wrapping.
+			continue
+		}
+
+		if !runeWrapNeeded(wc.Rune, cs.posX, cs.width) {
+			cs.posX += runewidth.RuneWidth(wc.Rune)
+			cs.line = append(cs.line, wc)
+			continue
+		}
+
+		// Replace the last placed rune with a dash indicating we wrapped the
+		// word. Only do this for half-width runes.
+		lastIdx := len(cs.line) - 1
+		last := cs.line[lastIdx]
+		lastRW := runewidth.RuneWidth(last.Rune)
+		if cs.width > 1 && lastRW == 1 {
+			cs.line[lastIdx] = buffer.NewCell('-', last.Opts)
+			// Reset the scanner's position back to start scanning at the first
+			// rune of this word that wasn't placed.
+			cs.nextIdx = cs.wordStartIdx + i - 1
+		} else {
+			// Edge-case width is one, no space to put the dash rune.
+			cs.nextIdx = cs.wordStartIdx + i
+		}
+		cs.atRunesInWord = true
+		return scanCellRunes
+	}
+
+	cs.nextIdx = cs.wordEndIdx
+	return scanCellRunes
+}
+
+// isWordCell determines if the cell contains a rune that belongs to a word.
+func isWordCell(c *buffer.Cell) bool {
+	if c == nil {
+		return false
+	}
+	switch r := c.Rune; {
+	case r == '\n':
+	case r == ' ':
+	default:
+		return true
+	}
+	return false
 }

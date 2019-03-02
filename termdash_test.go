@@ -16,7 +16,6 @@ package termdash
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"image"
 	"sync"
@@ -26,6 +25,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/internal/event/eventqueue"
 	"github.com/mum4k/termdash/internal/event/testevent"
 	"github.com/mum4k/termdash/internal/faketerm"
@@ -189,6 +189,9 @@ func TestRun(t *testing.T) {
 		size   image.Point
 		opts   func(*eventHandlers) []Option
 		events []terminalapi.Event
+		// The number of expected processed events, used for synchronization.
+		// Equals len(events) * number of subscribers for the event type.
+		wantProcessed int
 		// function to execute after the test case, can do additional comparison.
 		after   func(*eventHandlers) error
 		want    func(size image.Point) *faketerm.Terminal
@@ -238,6 +241,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 			},
+			wantProcessed: 3,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -263,6 +267,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
+			wantProcessed: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -290,6 +295,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				terminalapi.NewError("input error"),
 			},
+			wantProcessed: 1,
 			after: func(eh *eventHandlers) error {
 				if want := "input error"; eh.handler.get().Error() != want {
 					return fmt.Errorf("errorHandler got %v, want %v", eh.handler.get(), want)
@@ -319,6 +325,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyF1},
 			},
+			wantProcessed: 3,
 			after: func(eh *eventHandlers) error {
 				want := terminalapi.Keyboard{Key: keyboard.KeyF1}
 				if diff := pretty.Compare(want, eh.keySub.get()); diff != "" {
@@ -352,6 +359,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
 			},
+			wantProcessed: 4,
 			after: func(eh *eventHandlers) error {
 				want := terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp}
 				if diff := pretty.Compare(want, eh.mouseSub.get()); diff != "" {
@@ -408,7 +416,11 @@ func TestRun(t *testing.T) {
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			err = Run(ctx, got, cont, tc.opts(handlers)...)
+
+			eds := event.NewDistributionSystem()
+			opts := tc.opts(handlers)
+			opts = append(opts, withEDS(eds))
+			err = Run(ctx, got, cont, opts...)
 			cancel()
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Run => unexpected error: %v, wantErr: %v", err, tc.wantErr)
@@ -418,8 +430,8 @@ func TestRun(t *testing.T) {
 			}
 
 			if err := testevent.WaitFor(5*time.Second, func() error {
-				if !eq.Empty() {
-					return errors.New("event queue not empty")
+				if got, want := eds.Processed(), tc.wantProcessed; got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
 				}
 				return nil
 			}); err != nil {
@@ -443,14 +455,17 @@ func TestController(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		desc      string
-		size      image.Point
-		opts      []Option
-		events    []terminalapi.Event
-		apiEvents func(*fakewidget.Mirror) // Calls to the API of the widget.
-		controls  func(*Controller) error
-		want      func(size image.Point) *faketerm.Terminal
-		wantErr   bool
+		desc   string
+		size   image.Point
+		opts   []Option
+		events []terminalapi.Event
+		// The number of expected processed events, used for synchronization.
+		// Equals len(events) * number of subscribers for the event type.
+		wantProcessed int
+		apiEvents     func(*fakewidget.Mirror) // Calls to the API of the widget.
+		controls      func(*Controller) error
+		want          func(size image.Point) *faketerm.Terminal
+		wantErr       bool
 	}{
 		{
 			desc: "event triggers a redraw",
@@ -458,6 +473,7 @@ func TestController(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
+			wantProcessed: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -553,6 +569,7 @@ func TestController(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Resize{Size: image.Point{70, 10}},
 			},
+			wantProcessed: 1,
 			controls: func(ctrl *Controller) error {
 				return ctrl.Redraw()
 			},
@@ -596,7 +613,10 @@ func TestController(t *testing.T) {
 				t.Fatalf("container.New => unexpected error: %v", err)
 			}
 
-			ctrl, err := NewController(got, cont, tc.opts...)
+			eds := event.NewDistributionSystem()
+			opts := tc.opts
+			opts = append(opts, withEDS(eds))
+			ctrl, err := NewController(got, cont, opts...)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("NewController => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}
@@ -609,13 +629,14 @@ func TestController(t *testing.T) {
 			}
 
 			if err := testevent.WaitFor(5*time.Second, func() error {
-				if !eq.Empty() {
-					return errors.New("event queue not empty")
+				if got, want := eds.Processed(), tc.wantProcessed; got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
 				}
 				return nil
 			}); err != nil {
 				t.Fatalf("testevent.WaitFor => %v", err)
 			}
+
 			if tc.controls != nil {
 				if err := tc.controls(ctrl); err != nil {
 					t.Errorf("controls => unexpected error: %v", err)

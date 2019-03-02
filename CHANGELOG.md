@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactoring packages that contained a mix of public and internal identifiers.
 
+### Fixed
+
+- The termdash_test now correctly waits until all subscribers processed events,
+  not just received them.
+
 #### Breaking API changes
 
 The following packages were refactored, no impact is expected as the removed

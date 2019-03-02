@@ -16,11 +16,9 @@
 package text
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	"sync"
-	"unicode"
 
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/buffer"
@@ -102,7 +100,7 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if err := validText(text); err != nil {
+	if err := wrap.ValidText(text); err != nil {
 		return err
 	}
 
@@ -216,7 +214,11 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 	if t.contentChanged || t.lastWidth != width {
 		// The previous text preprocessing (line wrapping) is invalidated when
 		// new text is added or the width of the canvas changed.
-		t.wrapped = wrap.Cells(t.content, width, t.opts.wrapMode)
+		wr, err := wrap.Cells(t.content, width, t.opts.wrapMode)
+		if err != nil {
+			return err
+		}
+		t.wrapped = wr
 	}
 	t.lastWidth = width
 
@@ -281,24 +283,4 @@ func (t *Text) Options() widgetapi.Options {
 		WantMouse:    ms,
 		WantKeyboard: ks,
 	}
-}
-
-// validText validates the provided text.
-func validText(text string) error {
-	if text == "" {
-		return errors.New("the text cannot be empty")
-	}
-
-	for _, c := range text {
-		if c == ' ' || c == '\n' { // Allowed space and control runes.
-			continue
-		}
-		if unicode.IsControl(c) {
-			return fmt.Errorf("the provided text %q cannot contain control characters, found: %q", text, c)
-		}
-		if unicode.IsSpace(c) {
-			return fmt.Errorf("the provided text %q cannot contain space character %q", text, c)
-		}
-	}
-	return nil
 }

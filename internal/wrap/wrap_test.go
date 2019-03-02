@@ -15,71 +15,111 @@
 package wrap
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
+	"unicode"
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas/buffer"
 )
 
-func TestruneWrapNeeded(t *testing.T) {
+func TestValidTextAndCells(t *testing.T) {
 	tests := []struct {
-		desc  string
-		r     rune
-		posX  int
-		width int
-		want  bool
+		desc    string
+		text    string // All runes checked individually.
+		wantErr bool
 	}{
 		{
-			desc:  "half-width rune, falls within canvas",
-			r:     'a',
-			posX:  2,
-			width: 3,
-			want:  false,
+			desc:    "empty text is not valid",
+			wantErr: true,
 		},
 		{
-			desc:  "full-width rune, falls within canvas",
-			r:     '世',
-			posX:  1,
-			width: 3,
-			want:  false,
+			desc: "digits are allowed",
+			text: "0123456789",
 		},
 		{
-			desc:  "half-width rune, falls outside of canvas, wrapping configured",
-			r:     'a',
-			posX:  3,
-			width: 3,
-			want:  true,
+			desc: "all printable ASCII characters are allowed",
+			text: func() string {
+				var b bytes.Buffer
+				for i := 0; i < unicode.MaxASCII; i++ {
+					r := rune(i)
+					if unicode.IsPrint(r) {
+						b.WriteRune(r)
+					}
+				}
+				return b.String()
+			}(),
 		},
 		{
-			desc:  "full-width rune, starts in and falls outside of canvas, wrapping configured",
-			r:     '世',
-			posX:  3,
-			width: 3,
-			want:  true,
+			desc: "all printable Unicode characters in the Latin-1 space are allowed",
+			text: func() string {
+				var b bytes.Buffer
+				for i := 0; i < unicode.MaxLatin1; i++ {
+					r := rune(i)
+					if unicode.IsPrint(r) {
+						b.WriteRune(r)
+					}
+				}
+				return b.String()
+			}(),
 		},
 		{
-			desc:  "full-width rune, starts outside of canvas, wrapping configured",
-			r:     '世',
-			posX:  3,
-			width: 3,
-			want:  true,
+			desc: "sample of half-width unicode runes that are allowed",
+			text: "ｾｶｲ☆",
 		},
 		{
-			desc:  "doesn't wrap for newline characters",
-			r:     '\n',
-			posX:  3,
-			width: 3,
-			want:  false,
+			desc: "sample of full-width unicode runes that are allowed",
+			text: "世界",
+		},
+		{
+			desc: "spaces are allowed",
+			text: "   ",
+		},
+		{
+			desc:    "no other space characters",
+			text:    fmt.Sprintf("\t\v\f\r%c%c", 0x85, 0xA0),
+			wantErr: true,
+		},
+		{
+			desc:    "no control characters",
+			text:    fmt.Sprintf("%c%c", 0x0000, 0x007f),
+			wantErr: true,
+		},
+
+		{
+			desc: "newlines are allowed",
+			text: "   ",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := runeWrapNeeded(tc.r, tc.posX, tc.width)
-			if got != tc.want {
-				t.Errorf("runeWrapNeeded => got %v, want %v", got, tc.want)
+			{
+				err := ValidText(tc.text)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("ValidText => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+			}
+
+			// All individual runes must give the same result.
+			for _, r := range tc.text {
+				err := ValidText(string(r))
+				if (err != nil) != tc.wantErr {
+					t.Errorf("ValidText => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
+			}
+
+			var cells []*buffer.Cell
+			for _, r := range tc.text {
+				cells = append(cells, buffer.NewCell(r))
+			}
+			{
+				err := ValidCells(cells)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("ValidCells => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
 			}
 		})
 	}
@@ -90,13 +130,28 @@ func TestCells(t *testing.T) {
 		desc  string
 		cells []*buffer.Cell
 		// width is the width of the canvas.
-		width int
-		mode  Mode
-		want  [][]*buffer.Cell
+		width   int
+		mode    Mode
+		want    [][]*buffer.Cell
+		wantErr bool
 	}{
 		{
-			desc:  "zero text",
-			width: 1,
+			desc:    "fails with zero text",
+			width:   1,
+			wantErr: true,
+		},
+		{
+			desc:    "fails with invalid runes (tabs)",
+			cells:   buffer.NewCells("hello\t"),
+			width:   1,
+			wantErr: true,
+		},
+		{
+			desc:    "fails with unsupported wrap mode",
+			cells:   buffer.NewCells("hello"),
+			width:   1,
+			mode:    Mode(-1),
+			wantErr: true,
 		},
 		{
 			desc:  "zero canvas width",
@@ -421,6 +476,17 @@ func TestCells(t *testing.T) {
 			},
 		},
 		{
+			desc:  "wraps at words, quotes are wrapped with words",
+			cells: buffer.NewCells("'aa' 'bb' 'cc'"),
+			width: 4,
+			mode:  AtWords,
+			want: [][]*buffer.Cell{
+				buffer.NewCells("'aa'"),
+				buffer.NewCells("'bb'"),
+				buffer.NewCells("'cc'"),
+			},
+		},
+		{
 			desc:  "wraps at words, begins with a word too long for one line",
 			cells: buffer.NewCells("aabbcc"),
 			width: 3,
@@ -594,18 +660,84 @@ func TestCells(t *testing.T) {
 				buffer.NewCells("bc", cell.FgColor(cell.ColorRed), cell.BgColor(cell.ColorBlue)),
 			},
 		},
-		// Move text validation into this package.
-		// unsupported wrap mode
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Logf(fmt.Sprintf("Mode: %v", tc.mode))
-			got := Cells(tc.cells, tc.width, tc.mode)
+			got, err := Cells(tc.cells, tc.width, tc.mode)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Cells => unexpected error %v, wantErr %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Cells =>\n got:%v\nwant:%v\nunexpected diff (-want, +got):\n%s", got, tc.want, diff)
 			}
 		})
 	}
 
+}
+
+func TestRuneWrapNeeded(t *testing.T) {
+	tests := []struct {
+		desc  string
+		r     rune
+		posX  int
+		width int
+		want  bool
+	}{
+		{
+			desc:  "half-width rune, falls within canvas",
+			r:     'a',
+			posX:  2,
+			width: 3,
+			want:  false,
+		},
+		{
+			desc:  "full-width rune, falls within canvas",
+			r:     '世',
+			posX:  1,
+			width: 3,
+			want:  false,
+		},
+		{
+			desc:  "half-width rune, falls outside of canvas, wrapping configured",
+			r:     'a',
+			posX:  3,
+			width: 3,
+			want:  true,
+		},
+		{
+			desc:  "full-width rune, starts in and falls outside of canvas, wrapping configured",
+			r:     '世',
+			posX:  3,
+			width: 3,
+			want:  true,
+		},
+		{
+			desc:  "full-width rune, starts outside of canvas, wrapping configured",
+			r:     '世',
+			posX:  3,
+			width: 3,
+			want:  true,
+		},
+		{
+			desc:  "doesn't wrap for newline characters",
+			r:     '\n',
+			posX:  3,
+			width: 3,
+			want:  false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := runeWrapNeeded(tc.r, tc.posX, tc.width)
+			if got != tc.want {
+				t.Errorf("runeWrapNeeded => got %v, want %v", got, tc.want)
+			}
+		})
+	}
 }

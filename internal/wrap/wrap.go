@@ -17,6 +17,8 @@ package wrap
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"unicode"
 
 	"github.com/mum4k/termdash/internal/canvas/buffer"
@@ -56,11 +58,36 @@ const (
 	AtWords
 )
 
-// runeWrapNeeded returns true if wrapping is needed for the rune at the horizontal
-// position on the canvas that has the specified width.
-func runeWrapNeeded(r rune, posX, width int) bool {
-	rw := runewidth.RuneWidth(r)
-	return posX > width-rw
+// ValidText validates the provided text for wrapping.
+// The text must not contain any control or space characters other
+// than '\n' and ' '.
+func ValidText(text string) error {
+	if text == "" {
+		return errors.New("the text cannot be empty")
+	}
+
+	for _, c := range text {
+		if c == ' ' || c == '\n' { // Allowed space and control runes.
+			continue
+		}
+		if unicode.IsControl(c) {
+			return fmt.Errorf("the provided text %q cannot contain control characters, found: %q", text, c)
+		}
+		if unicode.IsSpace(c) {
+			return fmt.Errorf("the provided text %q cannot contain space character %q", text, c)
+		}
+	}
+	return nil
+}
+
+// ValidCells validates the provided cells for wrapping.
+// The text in the cells must follow the same rules as described for ValidText.
+func ValidCells(cells []*buffer.Cell) error {
+	var b bytes.Buffer
+	for _, c := range cells {
+		b.WriteRune(c.Rune)
+	}
+	return ValidText(b.String())
 }
 
 // Cells returns the cells wrapped into individual lines according to the
@@ -71,15 +98,25 @@ func runeWrapNeeded(r rune, posX, width int) bool {
 //
 // If the mode is AtWords, this function also drops cells with leading space
 // character before a word at which the wrap occurs.
-func Cells(cells []*buffer.Cell, width int, m Mode) [][]*buffer.Cell {
-	if width <= 0 || len(cells) == 0 {
-		return nil
+func Cells(cells []*buffer.Cell, width int, m Mode) ([][]*buffer.Cell, error) {
+	if err := ValidCells(cells); err != nil {
+		return nil, err
+	}
+	switch m {
+	case Never:
+	case AtRunes:
+	case AtWords:
+	default:
+		return nil, fmt.Errorf("unsupported wrapping mode %v(%d)", m, m)
+	}
+	if width <= 0 {
+		return nil, nil
 	}
 
 	cs := newCellScanner(cells, width, m)
 	for state := scanCellRunes; state != nil; state = state(cs) {
 	}
-	return cs.lines
+	return cs.lines, nil
 }
 
 // cellScannerState is a state in the FSM that scans the input text and identifies
@@ -116,6 +153,7 @@ type cellScanner struct {
 	// mode is the wrapping mode.
 	mode Mode
 
+	// atRunesInWord overrides the mode back to AtRunes.
 	atRunesInWord bool
 
 	// lines are the identified lines.
@@ -189,14 +227,9 @@ func (cs *cellScanner) isWordStart() bool {
 		return false
 	}
 
-	if cs.posX > 0 && current.Rune != ' ' {
-		return false
-	}
-
 	switch nr := next.Rune; {
 	case nr == '\n':
 	case nr == ' ':
-	case unicode.IsPunct(nr):
 	default:
 		return true
 	}
@@ -366,4 +399,11 @@ func isWordCell(c *buffer.Cell) bool {
 		return true
 	}
 	return false
+}
+
+// runeWrapNeeded returns true if wrapping is needed for the rune at the horizontal
+// position on the canvas that has the specified width.
+func runeWrapNeeded(r rune, posX, width int) bool {
+	rw := runewidth.RuneWidth(r)
+	return posX > width-rw
 }

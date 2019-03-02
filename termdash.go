@@ -88,6 +88,15 @@ func MouseSubscriber(f func(*terminalapi.Mouse)) Option {
 	})
 }
 
+// withEDS indicates that termdash should run with the provided event
+// distribution system instead of creating one.
+// Useful for tests.
+func withEDS(eds *event.DistributionSystem) Option {
+	return option(func(td *termdash) {
+		td.eds = eds
+	})
+}
+
 // Run runs the terminal dashboard with the provided container on the terminal.
 // Redraws the terminal periodically. If you prefer a manual redraw, use the
 // Controller instead.

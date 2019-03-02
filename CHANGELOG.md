@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Text widget now supports content wrapping on word boundaries.
 - Refactoring packages that contained a mix of public and internal identifiers.
 
 #### Breaking API changes

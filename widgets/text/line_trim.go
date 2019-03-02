@@ -20,6 +20,7 @@ import (
 
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/runewidth"
+	"github.com/mum4k/termdash/internal/wrap"
 )
 
 // line_trim.go contains code that trims lines that are too long.
@@ -68,7 +69,7 @@ func drawTrimChar(cvs *canvas.Canvas, line int) error {
 // is going to place the curRune at. If line trimming is needed, this function
 // replaces the last character with the horizontal ellipsis '…' character.
 func lineTrim(cvs *canvas.Canvas, curPoint image.Point, curRune rune, opts *options) (*trimResult, error) {
-	if opts.wrapAtRunes {
+	if opts.wrapMode == wrap.AtRunes {
 		// Don't trim if the widget is configured to wrap lines.
 		return &trimResult{
 			trimmed:  false,

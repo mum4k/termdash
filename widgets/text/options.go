@@ -84,6 +84,15 @@ func (o option) set(opts *options) {
 	o(opts)
 }
 
+// WrapAtWords configures the text widget so that it automatically wraps lines
+// that are longer than the width of the widget at word boundaries. If not
+// provided, long lines are trimmed instead.
+func WrapAtWords() Option {
+	return option(func(opts *options) {
+		opts.wrapMode = wrap.AtWords
+	})
+}
+
 // WrapAtRunes configures the text widget so that it automatically wraps lines
 // that are longer than the width of the widget at rune boundaries. If not
 // provided, long lines are trimmed instead.

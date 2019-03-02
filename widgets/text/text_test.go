@@ -488,6 +488,50 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
+			desc:   "wraps lines at word boundaries",
+			canvas: image.Rect(0, 0, 10, 6),
+			opts: []Option{
+				WrapAtWords(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("hello wor你\nhello wor你d\nand long 世")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "hello", image.Point{0, 0})
+				testdraw.MustText(c, "wor你", image.Point{0, 1})
+				testdraw.MustText(c, "hello", image.Point{0, 2})
+				testdraw.MustText(c, "wor你d", image.Point{0, 3})
+				testdraw.MustText(c, "and long", image.Point{0, 4})
+				testdraw.MustText(c, "世", image.Point{0, 5})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "wraps lines at word boundaries, inserts dash for long words",
+			canvas: image.Rect(0, 0, 10, 6),
+			opts: []Option{
+				WrapAtWords(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("hello thisisalongword world")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "hello", image.Point{0, 0})
+				testdraw.MustText(c, "thisisalo-", image.Point{0, 1})
+				testdraw.MustText(c, "ngword", image.Point{0, 2})
+				testdraw.MustText(c, "world", image.Point{0, 3})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "rolls content upwards and trims lines",
 			canvas: image.Rect(0, 0, 10, 2),
 			opts: []Option{

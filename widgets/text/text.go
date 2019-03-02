@@ -211,7 +211,7 @@ func (t *Text) Draw(cvs *canvas.Canvas) error {
 	defer t.mu.Unlock()
 
 	width := cvs.Area().Dx()
-	if t.contentChanged || t.lastWidth != width {
+	if len(t.content) > 0 && (t.contentChanged || t.lastWidth != width) {
 		// The previous text preprocessing (line wrapping) is invalidated when
 		// new text is added or the width of the canvas changed.
 		wr, err := wrap.Cells(t.content, width, t.opts.wrapMode)

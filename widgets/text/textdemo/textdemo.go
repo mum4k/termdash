@@ -112,7 +112,7 @@ func main() {
 		panic(err)
 	}
 
-	rolled, err := text.New(text.RollContent(), text.WrapAtRunes())
+	rolled, err := text.New(text.RollContent(), text.WrapAtWords())
 	if err != nil {
 		panic(err)
 	}
@@ -158,7 +158,7 @@ func main() {
 			),
 			container.Right(
 				container.Border(linestyle.Light),
-				container.BorderTitle("Rolls and scrolls content"),
+				container.BorderTitle("Rolls and scrolls content wrapped at words"),
 				container.PlaceWidget(rolled),
 			),
 		),

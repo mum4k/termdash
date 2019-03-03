@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Text widget now supports content wrapping on word boundaries.
+- The BarChart and SparkLine widgets now have a method that returns the
+  observed value capacity the last time Draw was called.
 - Refactoring packages that contained a mix of public and internal identifiers.
 - Moving widgetapi out of the internal directory to allow external users to
   develop their own widgets.

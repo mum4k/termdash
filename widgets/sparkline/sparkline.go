@@ -39,6 +39,9 @@ type SparkLine struct {
 	// data are the data points the SparkLine displays.
 	data []int
 
+	// lastWidth is the width of the canvas as of the last time when Draw was called.
+	lastWidth int
+
 	// mu protects the SparkLine.
 	mu sync.Mutex
 
@@ -67,6 +70,7 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
 
+	sl.lastWidth = cvs.Area().Dx()
 	needAr, err := area.FromSize(sl.minSize())
 	if err != nil {
 		return err
@@ -123,6 +127,19 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
 		}
 	}
 	return nil
+}
+
+// ValueCapacity returns the number of values that can fit into the canvas.
+// This is essentially the number of available cells on the canvas as observed
+// on the last call to draw. Returns zero if draw wasn't called.
+//
+// Note that this capacity changes each time the terminal resizes, so there is
+// no guarantee this remains the same next time Draw is called.
+// Should be used as a hint only.
+func (sl *SparkLine) ValueCapacity() int {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	return sl.lastWidth
 }
 
 // Add adds data points to the SparkLine.

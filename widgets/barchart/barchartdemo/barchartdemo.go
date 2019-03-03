@@ -33,20 +33,16 @@ import (
 // playBarChart continuously changes the displayed values on the bar chart once every delay.
 // Exits when the context expires.
 func playBarChart(ctx context.Context, bc *barchart.BarChart, delay time.Duration) {
-	const (
-		bars = 6
-		max  = 100
-	)
-
-	values := make([]int, 6)
+	const max = 100
 
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			for i := range values {
-				values[i] = int(rand.Int31n(max + 1))
+			var values []int
+			for i := 0; i < bc.ValueCapacity(); i++ {
+				values = append(values, int(rand.Int31n(max+1)))
 			}
 
 			if err := bc.Values(values, max); err != nil {
@@ -85,6 +81,7 @@ func main() {
 			cell.ColorBlue,
 		}),
 		barchart.ShowValues(),
+		barchart.BarWidth(8),
 		barchart.Labels([]string{
 			"CPU1",
 			"",

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Test coverage for data only packages.
+- Containers now support margin around them and padding of their content.
 
 ### Changed
 

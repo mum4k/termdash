@@ -33,7 +33,11 @@ func drawTree(c *Container) error {
 
 	root := rootCont(c)
 	size := root.term.Size()
-	root.area = image.Rect(0, 0, size.X, size.Y)
+	ar, err := root.opts.margin.apply(image.Rect(0, 0, size.X, size.Y))
+	if err != nil {
+		return err
+	}
+	root.area = ar
 
 	preOrder(root, &errStr, visitFunc(func(c *Container) error {
 		first, second, err := c.split()
@@ -41,11 +45,19 @@ func drawTree(c *Container) error {
 			return err
 		}
 		if c.first != nil {
-			c.first.area = first
+			ar, err := c.first.opts.margin.apply(first)
+			if err != nil {
+				return err
+			}
+			c.first.area = ar
 		}
 
 		if c.second != nil {
-			c.second.area = second
+			ar, err := c.second.opts.margin.apply(second)
+			if err != nil {
+				return err
+			}
+			c.second.area = ar
 		}
 		return drawCont(c)
 	}))

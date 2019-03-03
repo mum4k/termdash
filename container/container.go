@@ -86,12 +86,18 @@ func New(t terminalapi.Terminal, opts ...Option) (*Container, error) {
 	if err := applyOptions(root, opts...); err != nil {
 		return nil, err
 	}
+
+	ar, err := root.opts.margin.apply(root.area)
+	if err != nil {
+		return nil, err
+	}
+	root.area = ar
 	return root, nil
 }
 
 // newChild creates a new child container of the given parent.
-func newChild(parent *Container, area image.Rectangle) *Container {
-	return &Container{
+func newChild(parent *Container, area image.Rectangle, opts []Option) (*Container, error) {
+	child := &Container{
 		parent:       parent,
 		term:         parent.term,
 		focusTracker: parent.focusTracker,
@@ -99,6 +105,16 @@ func newChild(parent *Container, area image.Rectangle) *Container {
 		opts:         newOptions(parent.opts),
 		mu:           parent.mu,
 	}
+	if err := applyOptions(child, opts...); err != nil {
+		return nil, err
+	}
+
+	ar, err := child.opts.margin.apply(child.area)
+	if err != nil {
+		return nil, err
+	}
+	child.area = ar
+	return child, nil
 }
 
 // hasBorder determines if this container has a border.
@@ -129,9 +145,13 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 		return image.ZR, nil
 	}
 
-	adjusted := c.usable()
+	padded, err := c.opts.padding.apply(c.usable())
+	if err != nil {
+		return image.ZR, err
+	}
 	wOpts := c.opts.widget.Options()
 
+	adjusted := padded
 	if maxX := wOpts.MaximumSize.X; maxX > 0 && adjusted.Dx() > maxX {
 		adjusted.Max.X -= adjusted.Dx() - maxX
 	}
@@ -142,17 +162,20 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 	if wOpts.Ratio.X > 0 && wOpts.Ratio.Y > 0 {
 		adjusted = area.WithRatio(adjusted, wOpts.Ratio)
 	}
-	adjusted, err := alignfor.Rectangle(c.usable(), adjusted, c.opts.hAlign, c.opts.vAlign)
+	aligned, err := alignfor.Rectangle(padded, adjusted, c.opts.hAlign, c.opts.vAlign)
 	if err != nil {
 		return image.ZR, err
 	}
-	return adjusted, nil
+	return aligned, nil
 }
 
 // split splits the container's usable area into child areas.
 // Panics if the container isn't configured for a split.
 func (c *Container) split() (image.Rectangle, image.Rectangle, error) {
-	ar := c.usable()
+	ar, err := c.opts.padding.apply(c.usable())
+	if err != nil {
+		return image.ZR, image.ZR, err
+	}
 	if c.opts.split == splitTypeVertical {
 		return area.VSplit(ar, c.opts.splitPercent)
 	}
@@ -160,23 +183,31 @@ func (c *Container) split() (image.Rectangle, image.Rectangle, error) {
 }
 
 // createFirst creates and returns the first sub container of this container.
-func (c *Container) createFirst() (*Container, error) {
+func (c *Container) createFirst(opts []Option) error {
 	ar, _, err := c.split()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	c.first = newChild(c, ar)
-	return c.first, nil
+	first, err := newChild(c, ar, opts)
+	if err != nil {
+		return err
+	}
+	c.first = first
+	return nil
 }
 
 // createSecond creates and returns the second sub container of this container.
-func (c *Container) createSecond() (*Container, error) {
+func (c *Container) createSecond(opts []Option) error {
 	_, ar, err := c.split()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	c.second = newChild(c, ar)
-	return c.second, nil
+	second, err := newChild(c, ar, opts)
+	if err != nil {
+		return err
+	}
+	c.second = second
+	return nil
 }
 
 // Draw draws this container and all of its sub containers.

@@ -37,7 +37,7 @@ project reaches version 1.0.0. Any breaking changes will be published in the
 # Current feature set
 
 - Full support for terminal window resizing throughout the infrastructure.
-- Customizable layout, widget placement, borders, colors, etc.
+- Customizable layout, widget placement, borders, margins, padding, colors, etc.
 - Focusable containers and widgets.
 - Processing of keyboard and mouse events.
 - Periodic and event driven screen redraw.

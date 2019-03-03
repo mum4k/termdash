@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"math"
 	"sync"
 
 	"github.com/mum4k/termdash/align"
@@ -45,6 +46,9 @@ type BarChart struct {
 	// max is the maximum value of a bar. A bar having this value takes all the
 	// vertical space.
 	max int
+
+	// lastWidth is the width of the canvas as of the last time when Draw was called.
+	lastWidth int
 
 	// mu protects the BarChart.
 	mu sync.Mutex
@@ -73,6 +77,7 @@ func (bc *BarChart) Draw(cvs *canvas.Canvas) error {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
 
+	bc.lastWidth = cvs.Area().Dx()
 	needAr, err := area.FromSize(bc.minSize())
 	if err != nil {
 		return err
@@ -233,6 +238,23 @@ func (bc *BarChart) label(i int) (string, cell.Color) {
 	return label, DefaultLabelColor
 }
 
+// ValueCapacity returns the number of values that can fit into the canvas.
+// This is essentially the number of available cells on the canvas as observed
+// on the last call to draw. Returns zero if draw wasn't called.
+//
+// Note that this capacity changes each time the terminal resizes, so there is
+// no guarantee this remains the same next time Draw is called.
+// Should be used as a hint only.
+func (bc *BarChart) ValueCapacity() int {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+
+	barWidth := float64(bc.minBarWidth())
+	gapWidth := float64(bc.opts.barGap)
+	lastWidth := float64(bc.lastWidth)
+	return valueCapacity(barWidth, gapWidth, lastWidth)
+}
+
 // Values sets the values to be displayed by the BarChart.
 // Each value ends up in its own bar. The values must not be negative and must
 // be less or equal the maximum value. A bar displaying the maximum value is a
@@ -268,11 +290,32 @@ func (*BarChart) Mouse(m *terminalapi.Mouse) error {
 func (bc *BarChart) Options() widgetapi.Options {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
+
+	min := bc.minSize()
+	// Request at least one cell of width from the infra, but not more even if
+	// we have more values. Otherwise Draw would never get called and we would
+	// never update bc.lastWidth and the result of ValueCapacity().
+	// Draw will stil refuse to draw if the canvas is too small, but the user
+	// will have an option to send less values.
+	min.X = bc.minBarWidth()
+
 	return widgetapi.Options{
-		MinimumSize:  bc.minSize(),
+		MinimumSize:  min,
 		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    widgetapi.MouseScopeNone,
 	}
+}
+
+// minBarWidth determines the minimum possible width of a bar based on the
+// options.
+func (bc *BarChart) minBarWidth() int {
+	var minBarWidth int
+	if bc.opts.barWidth < 1 {
+		minBarWidth = 1 // At least one char for the bar itself.
+	} else {
+		minBarWidth = bc.opts.barWidth
+	}
+	return minBarWidth
 }
 
 // minSize determines the minimum required size of the canvas.
@@ -287,13 +330,7 @@ func (bc *BarChart) minSize() image.Point {
 		minHeight++ // One line for the labels.
 	}
 
-	var minBarWidth int
-	if bc.opts.barWidth < 1 {
-		minBarWidth = 1 // At least one char for the bar itself.
-	} else {
-		minBarWidth = bc.opts.barWidth
-	}
-	minWidth := bars*minBarWidth + (bars-1)*bc.opts.barGap
+	minWidth := bars*bc.minBarWidth() + (bars-1)*bc.opts.barGap
 	return image.Point{minWidth, minHeight}
 }
 
@@ -309,4 +346,18 @@ func validateValues(values []int, max int) error {
 		}
 	}
 	return nil
+}
+
+// valueCapacity calculates the value capacity given the width of bars, gaps
+// and canvas.
+func valueCapacity(barWidth, gapWidth, cvsWidth float64) int {
+	if cvsWidth == 0 {
+		return 0
+	}
+
+	// values * barWidth + (values - 1) * gapWidth = cvsWidth
+	// values * barWidth + values * gapWidth - gapWidth = cvsWidth
+	// values * (barWidth + gapWidth) = cvsWidth + gapWidth
+	values := (cvsWidth + gapWidth) / (barWidth + gapWidth)
+	return int(math.Floor(values))
 }

@@ -27,9 +27,9 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 func TestLineChartDraws(t *testing.T) {

@@ -29,9 +29,9 @@ import (
 	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/event"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // Container wraps either sub containers or widgets and positions them on the

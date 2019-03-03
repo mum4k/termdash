@@ -84,6 +84,166 @@ func TestNew(t *testing.T) {
 		want             func(size image.Point) *faketerm.Terminal
 	}{
 		{
+			desc:     "fails on MarginTop too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginTop(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginTopPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginTopPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginTopPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginTopPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginTop and MarginTopPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginTop(1), MarginTopPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginTopPercent and MarginTop specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginTopPercent(1), MarginTop(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginRight too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginRight(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginRightPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginRightPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginRightPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginRightPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginRight and MarginRightPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginRight(1), MarginRightPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginRightPercent and MarginRight specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginRightPercent(1), MarginRight(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginBottom too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginBottom(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginBottomPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginBottomPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginBottomPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginBottomPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginBottom and MarginBottomPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginBottom(1), MarginBottomPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginBottomPercent and MarginBottom specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginBottomPercent(1), MarginBottom(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginLeft too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginLeft(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginLeftPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginLeftPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on MarginLeftPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginLeftPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginLeft and MarginLeftPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginLeft(1), MarginLeftPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both MarginLeftPercent and MarginLeft specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, MarginLeftPercent(1), MarginLeft(1))
+			},
+			wantContainerErr: true,
+		},
+		{
 			desc:     "fails on PaddingTop too low",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

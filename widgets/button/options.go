@@ -22,8 +22,8 @@ import (
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/runewidth"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // Option is used to provide options.

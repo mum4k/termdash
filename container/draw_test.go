@@ -25,8 +25,8 @@ import (
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/fakewidget"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 func TestDrawWidget(t *testing.T) {

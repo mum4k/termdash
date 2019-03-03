@@ -22,9 +22,9 @@ import (
 
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/buffer"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // Text displays a block of text.

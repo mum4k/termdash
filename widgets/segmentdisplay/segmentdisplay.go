@@ -27,8 +27,8 @@ import (
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // SegmentDisplay displays ASCII content by simulating a segment display.

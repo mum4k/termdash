@@ -18,9 +18,11 @@ package container
 
 import (
 	"fmt"
+	"image"
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -63,6 +65,33 @@ type options struct {
 	border            linestyle.LineStyle
 	borderTitle       string
 	borderTitleHAlign align.Horizontal
+
+	// padding and margin.
+	padding padding
+}
+
+// padding stores the configured padding for the container.
+// For each padding direction, only one of the percentage or cells is set.
+type padding struct {
+	topCells    int
+	topPerc     int
+	rightCells  int
+	rightPerc   int
+	bottomCells int
+	bottomPerc  int
+	leftCells   int
+	leftPerc    int
+}
+
+// apply applies the configured padding to the area.
+func (p *padding) apply(ar image.Rectangle) (image.Rectangle, error) {
+	switch {
+	case p.topCells != 0 || p.rightCells != 0 || p.bottomCells != 0 || p.leftCells != 0:
+		return area.Shrink(ar, p.topCells, p.rightCells, p.bottomCells, p.leftCells)
+	case p.topPerc != 0 || p.rightPerc != 0 || p.bottomPerc != 0 || p.leftPerc != 0:
+		return area.ShrinkPercent(ar, p.topPerc, p.rightPerc, p.bottomPerc, p.leftPerc)
+	}
+	return ar, nil
 }
 
 // inherited contains options that are inherited by child containers.
@@ -199,6 +228,146 @@ func PlaceWidget(w widgetapi.Widget) Option {
 		c.opts.widget = w
 		c.first = nil
 		c.second = nil
+		return nil
+	})
+}
+
+// PaddingTop sets reserved space between container and the top side of its widget.
+// The widget's area size is decreased to accommodate the padding.
+// The provided number is the absolute padding in cells and must be zero or a
+// positive integer. Only one of PaddingTop or PaddingTopPercent can be specified.
+func PaddingTop(cells int) Option {
+	return option(func(c *Container) error {
+		if min := 0; cells < min {
+			return fmt.Errorf("invalid PaddingTop(%d), must be in range %d <= value", cells, min)
+		}
+		if c.opts.padding.topPerc > 0 {
+			return fmt.Errorf("cannot specify both PaddingTop(%d) and PaddingTopPercent(%d", cells, c.opts.padding.topPerc)
+		}
+		c.opts.padding.topCells = cells
+		return nil
+	})
+}
+
+// PaddingRight sets reserved space between container and the right side of its widget.
+// The widget's area size is decreased to accommodate the padding.
+// The provided number is the absolute padding in cells and must be zero or a
+// positive integer. Only one of PaddingRight or PaddingRightPercent can be specified.
+func PaddingRight(cells int) Option {
+	return option(func(c *Container) error {
+		if min := 0; cells < min {
+			return fmt.Errorf("invalid PaddingRight(%d), must be in range %d <= value", cells, min)
+		}
+		if c.opts.padding.rightPerc > 0 {
+			return fmt.Errorf("cannot specify both PaddingRight(%d) and PaddingRightPercent(%d", cells, c.opts.padding.rightPerc)
+		}
+		c.opts.padding.rightCells = cells
+		return nil
+	})
+}
+
+// PaddingBottom sets reserved space between container and the bottom side of its widget.
+// The widget's area size is decreased to accommodate the padding.
+// The provided number is the absolute padding in cells and must be zero or a
+// positive integer. Only one of PaddingBottom or PaddingBottomPercent can be specified.
+func PaddingBottom(cells int) Option {
+	return option(func(c *Container) error {
+		if min := 0; cells < min {
+			return fmt.Errorf("invalid PaddingBottom(%d), must be in range %d <= value", cells, min)
+		}
+		if c.opts.padding.bottomPerc > 0 {
+			return fmt.Errorf("cannot specify both PaddingBottom(%d) and PaddingBottomPercent(%d", cells, c.opts.padding.bottomPerc)
+		}
+		c.opts.padding.bottomCells = cells
+		return nil
+	})
+}
+
+// PaddingLeft sets reserved space between container and the left side of its widget.
+// The widget's area size is decreased to accommodate the padding.
+// The provided number is the absolute padding in cells and must be zero or a
+// positive integer. Only one of PaddingLeft or PaddingLeftPercent can be specified.
+func PaddingLeft(cells int) Option {
+	return option(func(c *Container) error {
+		if min := 0; cells < min {
+			return fmt.Errorf("invalid PaddingLeft(%d), must be in range %d <= value", cells, min)
+		}
+		if c.opts.padding.leftPerc > 0 {
+			return fmt.Errorf("cannot specify both PaddingLeft(%d) and PaddingLeftPercent(%d", cells, c.opts.padding.leftPerc)
+		}
+		c.opts.padding.leftCells = cells
+		return nil
+	})
+}
+
+// PaddingTopPercent sets reserved space between container and the top side of
+// its widget. The widget's area size is decreased to accommodate the padding.
+// The provided number is a relative padding defined as percentage of the
+// containers height. The value must be in range 0 <= value <= 100.
+// Only one of PaddingTop or PaddingTopPercent can be specified.
+func PaddingTopPercent(perc int) Option {
+	return option(func(c *Container) error {
+		if min, max := 0, 100; perc < min || perc > max {
+			return fmt.Errorf("invalid PaddingTopPercent(%d), must be in range %d <= value <= %d", perc, min, max)
+		}
+		if c.opts.padding.topCells > 0 {
+			return fmt.Errorf("cannot specify both PaddingTopPercent(%d) and PaddingTop(%d", perc, c.opts.padding.topCells)
+		}
+		c.opts.padding.topPerc = perc
+		return nil
+	})
+}
+
+// PaddingRightPercent sets reserved space between container and the right side of
+// its widget. The widget's area size is decreased to accommodate the padding.
+// The provided number is a relative padding defined as percentage of the
+// containers height. The value must be in range 0 <= value <= 100.
+// Only one of PaddingRight or PaddingRightPercent can be specified.
+func PaddingRightPercent(perc int) Option {
+	return option(func(c *Container) error {
+		if min, max := 0, 100; perc < min || perc > max {
+			return fmt.Errorf("invalid PaddingRightPercent(%d), must be in range %d <= value <= %d", perc, min, max)
+		}
+		if c.opts.padding.rightCells > 0 {
+			return fmt.Errorf("cannot specify both PaddingRightPercent(%d) and PaddingRight(%d", perc, c.opts.padding.rightCells)
+		}
+		c.opts.padding.rightPerc = perc
+		return nil
+	})
+}
+
+// PaddingBottomPercent sets reserved space between container and the bottom side of
+// its widget. The widget's area size is decreased to accommodate the padding.
+// The provided number is a relative padding defined as percentage of the
+// containers height. The value must be in range 0 <= value <= 100.
+// Only one of PaddingBottom or PaddingBottomPercent can be specified.
+func PaddingBottomPercent(perc int) Option {
+	return option(func(c *Container) error {
+		if min, max := 0, 100; perc < min || perc > max {
+			return fmt.Errorf("invalid PaddingBottomPercent(%d), must be in range %d <= value <= %d", perc, min, max)
+		}
+		if c.opts.padding.bottomCells > 0 {
+			return fmt.Errorf("cannot specify both PaddingBottomPercent(%d) and PaddingBottom(%d", perc, c.opts.padding.bottomCells)
+		}
+		c.opts.padding.bottomPerc = perc
+		return nil
+	})
+}
+
+// PaddingLeftPercent sets reserved space between container and the left side of
+// its widget. The widget's area size is decreased to accommodate the padding.
+// The provided number is a relative padding defined as percentage of the
+// containers height. The value must be in range 0 <= value <= 100.
+// Only one of PaddingLeft or PaddingLeftPercent can be specified.
+func PaddingLeftPercent(perc int) Option {
+	return option(func(c *Container) error {
+		if min, max := 0, 100; perc < min || perc > max {
+			return fmt.Errorf("invalid PaddingLeftPercent(%d), must be in range %d <= value <= %d", perc, min, max)
+		}
+		if c.opts.padding.leftCells > 0 {
+			return fmt.Errorf("cannot specify both PaddingLeftPercent(%d) and PaddingLeft(%d", perc, c.opts.padding.leftCells)
+		}
+		c.opts.padding.leftPerc = perc
 		return nil
 	})
 }

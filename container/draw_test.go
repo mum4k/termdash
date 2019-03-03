@@ -65,6 +65,72 @@ func TestDrawWidget(t *testing.T) {
 			},
 		},
 		{
+			desc:     "draws padded container, absolute padding",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					PaddingTop(1),
+					PaddingRight(2),
+					PaddingBottom(3),
+					PaddingLeft(4),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				wAr := image.Rect(5, 2, 17, 6)
+				wCvs := testcanvas.MustNew(wAr)
+				// Fake widget border.
+				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				testcanvas.MustCopyTo(wCvs, cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws padded container, relative padding",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					PaddingTopPercent(10),
+					PaddingRightPercent(30),
+					PaddingBottomPercent(20),
+					PaddingLeftPercent(20),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				wAr := image.Rect(4, 2, 14, 16)
+				wCvs := testcanvas.MustNew(wAr)
+				// Fake widget border.
+				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				testcanvas.MustCopyTo(wCvs, cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "draws widget with container border and title aligned on the left",
 			termSize: image.Point{9, 5},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

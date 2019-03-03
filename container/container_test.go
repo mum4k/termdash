@@ -84,6 +84,166 @@ func TestNew(t *testing.T) {
 		want             func(size image.Point) *faketerm.Terminal
 	}{
 		{
+			desc:     "fails on PaddingTop too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingTop(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingTopPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingTopPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingTopPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingTopPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingTop and PaddingTopPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingTop(1), PaddingTopPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingTopPercent and PaddingTop specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingTopPercent(1), PaddingTop(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingRight too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingRight(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingRightPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingRightPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingRightPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingRightPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingRight and PaddingRightPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingRight(1), PaddingRightPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingRightPercent and PaddingRight specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingRightPercent(1), PaddingRight(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingBottom too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingBottom(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingBottomPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingBottomPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingBottomPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingBottomPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingBottom and PaddingBottomPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingBottom(1), PaddingBottomPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingBottomPercent and PaddingBottom specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingBottomPercent(1), PaddingBottom(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingLeft too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingLeft(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingLeftPercent too low",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingLeftPercent(-1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on PaddingLeftPercent too high",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingLeftPercent(101))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingLeft and PaddingLeftPercent specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingLeft(1), PaddingLeftPercent(1))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails when both PaddingLeftPercent and PaddingLeft specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, PaddingLeftPercent(1), PaddingLeft(1))
+			},
+			wantContainerErr: true,
+		},
+		{
 			desc:     "empty container",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
@@ -526,7 +686,17 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Draw => unexpected error: %v", err)
 			}
 
-			if diff := faketerm.Diff(tc.want(tc.termSize), got); diff != "" {
+			var want *faketerm.Terminal
+			if tc.want != nil {
+				want = tc.want(tc.termSize)
+			} else {
+				w, err := faketerm.New(tc.termSize)
+				if err != nil {
+					t.Fatalf("faketerm.New => unexpected error: %v", err)
+				}
+				want = w
+			}
+			if diff := faketerm.Diff(want, got); diff != "" {
 				t.Errorf("Draw => %v", diff)
 			}
 		})

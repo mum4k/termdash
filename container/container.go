@@ -129,9 +129,13 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 		return image.ZR, nil
 	}
 
-	adjusted := c.usable()
+	padded, err := c.opts.padding.apply(c.usable())
+	if err != nil {
+		return image.ZR, err
+	}
 	wOpts := c.opts.widget.Options()
 
+	adjusted := padded
 	if maxX := wOpts.MaximumSize.X; maxX > 0 && adjusted.Dx() > maxX {
 		adjusted.Max.X -= adjusted.Dx() - maxX
 	}
@@ -142,11 +146,11 @@ func (c *Container) widgetArea() (image.Rectangle, error) {
 	if wOpts.Ratio.X > 0 && wOpts.Ratio.Y > 0 {
 		adjusted = area.WithRatio(adjusted, wOpts.Ratio)
 	}
-	adjusted, err := alignfor.Rectangle(c.usable(), adjusted, c.opts.hAlign, c.opts.vAlign)
+	aligned, err := alignfor.Rectangle(padded, adjusted, c.opts.hAlign, c.opts.vAlign)
 	if err != nil {
 		return image.ZR, err
 	}
-	return adjusted, nil
+	return aligned, nil
 }
 
 // split splits the container's usable area into child areas.

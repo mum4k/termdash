@@ -121,3 +121,60 @@ func WithRatio(area image.Rectangle, ratio image.Point) image.Rectangle {
 		ratio.Y*fact+area.Min.Y,
 	)
 }
+
+// Shrink returns a new area whose size is reduced by the specified amount of
+// cells. Can return a zero area if there is no space left in the area.
+// The values must be zero or positive integers.
+func Shrink(area image.Rectangle, topCells, rightCells, bottomCells, leftCells int) (image.Rectangle, error) {
+	for _, v := range []struct {
+		name  string
+		value int
+	}{
+		{"topCells", topCells},
+		{"rightCells", rightCells},
+		{"bottomCells", bottomCells},
+		{"leftCells", leftCells},
+	} {
+		if min := 0; v.value < min {
+			return image.ZR, fmt.Errorf("invalid %s(%d), must be in range %d <= value", v.name, v.value, min)
+		}
+	}
+
+	shrinked := area
+	shrinked.Min.X, _ = numbers.MinMaxInts([]int{shrinked.Min.X + leftCells, shrinked.Max.X})
+	_, shrinked.Max.X = numbers.MinMaxInts([]int{shrinked.Max.X - rightCells, shrinked.Min.X})
+	shrinked.Min.Y, _ = numbers.MinMaxInts([]int{shrinked.Min.Y + topCells, shrinked.Max.Y})
+	_, shrinked.Max.Y = numbers.MinMaxInts([]int{shrinked.Max.Y - bottomCells, shrinked.Min.Y})
+
+	if shrinked.Dx() == 0 || shrinked.Dy() == 0 {
+		return image.ZR, nil
+	}
+	return shrinked, nil
+}
+
+// ShrinkPercent returns a new area whose size is reduced by percentage of its
+// width or height. Can return a zero area if there is no space left in the area.
+// The topPerc and bottomPerc indicate the percentage of area's height.
+// The rightPerc and leftPerc indicate the percentage of area's width.
+// The percentages must be in range 0 <= v <= 100.
+func ShrinkPercent(area image.Rectangle, topPerc, rightPerc, bottomPerc, leftPerc int) (image.Rectangle, error) {
+	for _, v := range []struct {
+		name  string
+		value int
+	}{
+		{"topPerc", topPerc},
+		{"rightPerc", rightPerc},
+		{"bottomPerc", bottomPerc},
+		{"leftPerc", leftPerc},
+	} {
+		if min, max := 0, 100; v.value < min || v.value > max {
+			return image.ZR, fmt.Errorf("invalid %s(%d), must be in range %d <= value <= %d", v.name, v.value, min, max)
+		}
+	}
+
+	top := area.Dy() * topPerc / 100
+	bottom := area.Dy() * bottomPerc / 100
+	right := area.Dx() * rightPerc / 100
+	left := area.Dx() * leftPerc / 100
+	return Shrink(area, top, right, bottom, left)
+}

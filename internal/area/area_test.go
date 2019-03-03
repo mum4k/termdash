@@ -398,3 +398,306 @@ func TestWithRatio(t *testing.T) {
 		})
 	}
 }
+
+func TestShrink(t *testing.T) {
+	tests := []struct {
+		desc                     string
+		area                     image.Rectangle
+		top, right, bottom, left int
+		want                     image.Rectangle
+		wantErr                  bool
+	}{
+		{
+			desc:    "fails for negative top",
+			area:    image.Rect(0, 0, 1, 1),
+			top:     -1,
+			right:   0,
+			bottom:  0,
+			left:    0,
+			wantErr: true,
+		},
+		{
+			desc:    "fails for negative right",
+			area:    image.Rect(0, 0, 1, 1),
+			top:     0,
+			right:   -1,
+			bottom:  0,
+			left:    0,
+			wantErr: true,
+		},
+		{
+			desc:    "fails for negative bottom",
+			area:    image.Rect(0, 0, 1, 1),
+			top:     0,
+			right:   0,
+			bottom:  -1,
+			left:    0,
+			wantErr: true,
+		},
+		{
+			desc:    "fails for negative left",
+			area:    image.Rect(0, 0, 1, 1),
+			top:     0,
+			right:   0,
+			bottom:  0,
+			left:    -1,
+			wantErr: true,
+		},
+		{
+			desc:   "area unchanged when all zero",
+			area:   image.Rect(7, 8, 9, 10),
+			top:    0,
+			right:  0,
+			bottom: 0,
+			left:   0,
+			want:   image.Rect(7, 8, 9, 10),
+		},
+		{
+			desc:   "shrinks top",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    1,
+			right:  0,
+			bottom: 0,
+			left:   0,
+			want:   image.Rect(7, 9, 17, 18),
+		},
+		{
+			desc:   "zero area when top too large",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    10,
+			right:  0,
+			bottom: 0,
+			left:   0,
+			want:   image.ZR,
+		},
+		{
+			desc:   "shrinks bottom",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  0,
+			bottom: 1,
+			left:   0,
+			want:   image.Rect(7, 8, 17, 17),
+		},
+		{
+			desc:   "zero area when bottom too large",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  0,
+			bottom: 10,
+			left:   0,
+			want:   image.ZR,
+		},
+		{
+			desc:   "zero area when top and bottom cross",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    5,
+			right:  0,
+			bottom: 5,
+			left:   0,
+			want:   image.ZR,
+		},
+		{
+			desc:   "zero area when top and bottom overrun",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    50,
+			right:  0,
+			bottom: 50,
+			left:   0,
+			want:   image.ZR,
+		},
+		{
+			desc:   "shrinks right",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  1,
+			bottom: 0,
+			left:   0,
+			want:   image.Rect(7, 8, 16, 18),
+		},
+		{
+			desc:   "zero area when right too large",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  10,
+			bottom: 0,
+			left:   0,
+			want:   image.ZR,
+		},
+		{
+			desc:   "shrinks left",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  0,
+			bottom: 0,
+			left:   1,
+			want:   image.Rect(8, 8, 17, 18),
+		},
+		{
+			desc:   "zero area when left too large",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  0,
+			bottom: 0,
+			left:   10,
+			want:   image.ZR,
+		},
+		{
+			desc:   "zero area when right and left cross",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  5,
+			bottom: 0,
+			left:   5,
+			want:   image.ZR,
+		},
+		{
+			desc:   "zero area when right and left overrun",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    0,
+			right:  50,
+			bottom: 0,
+			left:   50,
+			want:   image.ZR,
+		},
+		{
+			desc:   "shrinks from all sides",
+			area:   image.Rect(7, 8, 17, 18),
+			top:    1,
+			right:  2,
+			bottom: 3,
+			left:   4,
+			want:   image.Rect(11, 9, 15, 15),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := Shrink(tc.area, tc.top, tc.right, tc.bottom, tc.left)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Shrink => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("Shrink => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestShrinkPercent(t *testing.T) {
+	tests := []struct {
+		desc                     string
+		area                     image.Rectangle
+		top, right, bottom, left int
+		want                     image.Rectangle
+		wantErr                  bool
+	}{
+		{
+			desc:    "fails on top too low",
+			top:     -1,
+			wantErr: true,
+		},
+		{
+			desc:    "fails on top too high",
+			top:     101,
+			wantErr: true,
+		},
+		{
+			desc:    "fails on right too low",
+			right:   -1,
+			wantErr: true,
+		},
+		{
+			desc:    "fails on right too high",
+			right:   101,
+			wantErr: true,
+		},
+		{
+			desc:    "fails on bottom too low",
+			bottom:  -1,
+			wantErr: true,
+		},
+		{
+			desc:    "fails on bottom too high",
+			bottom:  101,
+			wantErr: true,
+		},
+		{
+			desc:    "fails on left too low",
+			left:    -1,
+			wantErr: true,
+		},
+		{
+			desc:    "fails on left too high",
+			left:    101,
+			wantErr: true,
+		},
+		{
+			desc: "shrinks to zero area for top too large",
+			area: image.Rect(0, 0, 100, 100),
+			top:  100,
+			want: image.ZR,
+		},
+		{
+			desc:   "shrinks to zero area for bottom too large",
+			area:   image.Rect(0, 0, 100, 100),
+			bottom: 100,
+			want:   image.ZR,
+		},
+		{
+			desc:   "shrinks to zero area top and bottom that meet",
+			area:   image.Rect(0, 0, 100, 100),
+			top:    50,
+			bottom: 50,
+			want:   image.ZR,
+		},
+		{
+			desc:  "shrinks to zero area for right too large",
+			area:  image.Rect(0, 0, 100, 100),
+			right: 100,
+			want:  image.ZR,
+		},
+		{
+			desc: "shrinks to zero area for left too large",
+			area: image.Rect(0, 0, 100, 100),
+			left: 100,
+			want: image.ZR,
+		},
+		{
+			desc:  "shrinks to zero area right and left that meet",
+			area:  image.Rect(0, 0, 100, 100),
+			right: 50,
+			left:  50,
+			want:  image.ZR,
+		},
+		{
+			desc:   "shrinks from all sides",
+			area:   image.Rect(0, 0, 100, 100),
+			top:    10,
+			right:  20,
+			bottom: 30,
+			left:   40,
+			want:   image.Rect(40, 10, 80, 70),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := ShrinkPercent(tc.area, tc.top, tc.right, tc.bottom, tc.left)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("ShrinkPercent => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("ShrinkPercent => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}

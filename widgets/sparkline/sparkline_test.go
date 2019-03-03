@@ -35,6 +35,7 @@ func TestSparkLine(t *testing.T) {
 		update        func(*SparkLine) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
 		want          func(size image.Point) *faketerm.Terminal
+		wantCapacity  int
 		wantErr       bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
 		wantDrawErr   bool
@@ -62,6 +63,7 @@ func TestSparkLine(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "fails on negative data points",
@@ -90,6 +92,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 9,
 		},
 		{
 			desc: "sparkline can be cleared",
@@ -104,6 +107,7 @@ func TestSparkLine(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
+			wantCapacity: 9,
 		},
 		{
 			desc: "sets sparkline color",
@@ -124,6 +128,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 9,
 		},
 		{
 			desc: "sets sparkline color on a call to Add",
@@ -141,8 +146,8 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 9,
 		},
-
 		{
 			desc: "draws data points from the right",
 			update: func(sl *SparkLine) error {
@@ -160,6 +165,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 9,
 		},
 		{
 			desc: "single height sparkline with label",
@@ -182,6 +188,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 9,
 		},
 		{
 			desc: "too long label is trimmed",
@@ -204,6 +211,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 9,
 		},
 		{
 			desc: "stretches up to the height of the container",
@@ -237,6 +245,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "stretches up to the height of the container with label",
@@ -271,6 +280,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "respects fixed height",
@@ -298,6 +308,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "draws resize needed character when canvas is smaller than requested",
@@ -316,6 +327,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "respects fixed height with label",
@@ -344,6 +356,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "sets label color",
@@ -373,6 +386,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 9,
 		},
 		{
 			desc: "displays only data points that fit the width",
@@ -391,6 +405,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "data points not visible don't affect the determined max data point",
@@ -409,6 +424,7 @@ func TestSparkLine(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 	}
 
@@ -454,6 +470,10 @@ func TestSparkLine(t *testing.T) {
 
 			if diff := faketerm.Diff(tc.want(c.Size()), got); diff != "" {
 				t.Errorf("Draw => %v", diff)
+			}
+
+			if gotCapacity := sp.ValueCapacity(); gotCapacity != tc.wantCapacity {
+				t.Errorf("ValueCapacity => %v, want %v", gotCapacity, tc.wantCapacity)
 			}
 		})
 	}

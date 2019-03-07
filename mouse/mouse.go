@@ -15,7 +15,7 @@
 // Package mouse defines known mouse buttons.
 package mouse
 
-// Button represents
+// Button represents a mouse button.
 type Button int
 
 // String implements fmt.Stringer()

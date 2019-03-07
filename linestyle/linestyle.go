@@ -15,7 +15,7 @@
 // Package linestyle defines various line styles.
 package linestyle
 
-// LineStyle defines the supported line styles.Q
+// LineStyle defines the supported line styles.
 type LineStyle int
 
 // String implements fmt.Stringer()

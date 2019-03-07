@@ -6,11 +6,12 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/mum4k/termdash/blob/master/LICENSE)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
-# termdash
+# [<img src="./doc/images/termdash.png" alt="termdashlogo" type="image/png" width="30%">](http://github.com/mum4k/termdash/wiki)
+
+Termdash is a cross-platform customizable terminal based dashboard.
 
 [<img src="./doc/images/termdashdemo_0_7_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
-Termdash is a cross-platform customizable terminal based dashboard.
 The feature set is inspired by the
 [gizak/termui](http://github.com/gizak/termui) project, which in turn was
 inspired by

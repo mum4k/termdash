@@ -1,53 +1,19 @@
 package table
 
-func Example_DisplayDataOnly() {
+func ExampleContent() {
 	rows := []*Row{
-		NewRow(
+		NewHeader(
 			NewCell("hello"),
 			NewCell("world"),
 		),
 		NewRow(
-			NewCell("hello"),
-			NewCell("world"),
+			NewCell("1"),
+			NewCell("2"),
 		),
 	}
 
-	_, err := NewContent(Columns(3), rows)
+	_, err := NewContent(Columns(2), rows)
 	if err != nil {
 		panic(err)
 	}
-
-	data := [][]string{}
-	myRows := []*Row{}
-	for _, dataRow := range data {
-		cells := []*Cell{}
-		for _, dataCol := range dataRow {
-			cells = append(cells, NewCell(dataCol))
-		}
-		myRows = append(myRows, NewRow(cells...))
-	}
-}
-
-func Example_ColorInheritance() {
-
-}
-
-func Example_ColAndRowSpan() {
-
-}
-
-func Example_TextTrimmingAndWrapping() {
-
-}
-
-func Example_AddRow() {
-
-}
-
-func Example_DeleteRow() {
-
-}
-
-func Example_Callback() {
-
 }

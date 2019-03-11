@@ -92,3 +92,9 @@ func (ft *focusTracker) mouse(target *Container, m *terminalapi.Mouse) {
 		}
 	}
 }
+
+// updateArea updates the area that the focus tracker considers active for
+// mouse clicks.
+func (ft *focusTracker) updateArea(ar image.Rectangle) {
+	ft.buttonFSM.UpdateArea(ar)
+}

@@ -214,6 +214,14 @@ func (c *Container) createSecond(opts []Option) error {
 func (c *Container) Draw() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// Update the area we are tracking for focus in case the terminal size
+	// changed.
+	ar, err := area.FromSize(c.term.Size())
+	if err != nil {
+		return err
+	}
+	c.focusTracker.updateArea(ar)
 	return drawTree(c)
 }
 

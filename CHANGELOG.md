@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The termdash_test now correctly waits until all subscribers processed events,
   not just received them.
+- Container focus tracker now correctly tracks focus changes in enlarged areas,
+  i.e. when the terminal size increased.
 
 #### Breaking API changes
 

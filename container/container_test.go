@@ -1240,7 +1240,7 @@ func TestMouse(t *testing.T) {
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
-				// Widgets that aren't focused don't get the mouse clicks.
+				// Widgets that aren't targeted don't get the mouse clicks.
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 25, 20)),
@@ -1253,13 +1253,94 @@ func TestMouse(t *testing.T) {
 					&terminalapi.Keyboard{},
 				)
 
-				// The focused widget receives the key.
+				// The target widget receives the mouse event.
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(25, 0, 50, 10)),
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{24, 9}, Button: mouse.ButtonLeft},
 					&terminalapi.Mouse{Position: image.Point{24, 9}, Button: mouse.ButtonRelease},
+				)
+				return ft
+			},
+			wantProcessed: 8,
+		},
+		{
+			desc:     "event focuses the target container after terminal resize (falls onto the new area), regression for #169",
+			termSize: image.Point{50, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				// Decrease the terminal size, so when container is created, it
+				// only sees width of 30.
+				if err := ft.Resize(image.Point{30, 20}); err != nil {
+					return nil, err
+				}
+				c, err := New(
+					ft,
+					SplitVertical(
+						Left(
+							PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
+						),
+						Right(
+							SplitHorizontal(
+								Top(
+									Border(linestyle.Light),
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
+								),
+								Bottom(
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
+								),
+							),
+						),
+					),
+				)
+				if err != nil {
+					return nil, err
+				}
+				// Increase the width back to 50 so the mouse clicks land on the "new" area.
+				if err := ft.Resize(image.Point{50, 20}); err != nil {
+					return nil, err
+				}
+				// Draw once so the container has a chance to update the tracked area.
+				if err := c.Draw(); err != nil {
+					return nil, err
+				}
+				return c, nil
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{48, 8}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{48, 8}, Button: mouse.ButtonRelease},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				// The yellow border signifies that the container was focused.
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(25, 0, 50, 10),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+				testcanvas.MustApply(cvs, ft)
+
+				// Widgets that aren't targeted don't get the mouse clicks.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 0, 25, 20)),
+					widgetapi.Options{},
+				)
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(25, 10, 50, 20)),
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Keyboard{},
+				)
+
+				// The target widget receives the mouse event.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(26, 1, 49, 9)),
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Mouse{Position: image.Point{22, 7}, Button: mouse.ButtonLeft},
+					&terminalapi.Mouse{Position: image.Point{22, 7}, Button: mouse.ButtonRelease},
 				)
 				return ft
 			},

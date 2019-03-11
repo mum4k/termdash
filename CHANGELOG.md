@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New API for building layouts, a grid.Builder. Allows defining the layout
+  iteratively as repetitive Elements, Rows and Columns.
 - Test coverage for data only packages.
 - Containers now support margin around them and padding of their content.
 

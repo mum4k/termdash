@@ -232,7 +232,9 @@ func (w *widget) String() string {
 func (widget) isElement() {}
 
 // RowHeightPerc creates a row of the specified height.
-// The height is supplied as height percentage of the outer container.
+// The height is supplied as height percentage of the parent element.
+// The sum of all heights at the same level cannot be larger than 100%. If it
+// is less that 100%, the last element stretches to the edge of the screen.
 // The subElements can be either a single Widget or any combination of Rows and
 // Columns.
 func RowHeightPerc(heightPerc int, subElements ...Element) Element {
@@ -243,7 +245,9 @@ func RowHeightPerc(heightPerc int, subElements ...Element) Element {
 }
 
 // ColWidthPerc creates a column of the specified width.
-// The width is supplied as width percentage of the outer container.
+// The width is supplied as width percentage of the parent element.
+// The sum of all widths at the same level cannot be larger than 100%. If it
+// is less that 100%, the last element stretches to the edge of the screen.
 // The subElements can be either a single Widget or any combination of Rows and
 // Columns.
 func ColWidthPerc(widthPerc int, subElements ...Element) Element {

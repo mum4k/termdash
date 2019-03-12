@@ -17,6 +17,8 @@ package table
 // content_data.go defines a type that represents data within a table cell.
 
 import (
+	"bytes"
+
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas/buffer"
 )
@@ -49,7 +51,17 @@ func DataCellOpts(cellOpts ...cell.Option) DataOption {
 
 // Data is part of (or the full) the data that is displayed inside one Cell.
 type Data struct {
+	// cells contain the text and its cell options.
 	cells []*buffer.Cell
+}
+
+// String implements fmt.Stringer.
+func (d *Data) String() string {
+	var b bytes.Buffer
+	for _, c := range d.cells {
+		b.WriteRune(c.Rune)
+	}
+	return b.String()
 }
 
 // NewData creates new Data with the provided text and applies the options.

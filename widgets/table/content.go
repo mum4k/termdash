@@ -18,7 +18,7 @@ package table
 // content.
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
@@ -34,14 +34,27 @@ type ContentOption interface {
 
 // contentOptions stores options that apply to the content level.
 type contentOptions struct {
-	border              linestyle.LineStyle
-	borderCellOpts      []cell.Option
-	columnWidthsPercent []int
-
+	border                linestyle.LineStyle
+	borderCellOpts        []cell.Option
+	columnWidthsPercent   []int
 	horizontalCellSpacing int
 	verticalCellSpacing   int
 
+	// hierarchical are the specified hierarchical options at the content
+	// level.
 	hierarchical *hierarchicalOptions
+}
+
+// newContentOptions returns a new contentOptions instance with the options
+// applied.
+func newContentOptions(opts ...ContentOption) *contentOptions {
+	co := &contentOptions{
+		hierarchical: &hierarchicalOptions{},
+	}
+	for _, opt := range opts {
+		opt.set(co)
+	}
+	return co
 }
 
 // hierarchicalOptions stores options that can be applied at multiple levels or
@@ -203,10 +216,14 @@ type Columns int
 //
 // This object is thread-safe.
 type Content struct {
-	colNum Columns
+	// cols is the number of columns in the content.
+	cols Columns
+	// header is the header row, or nil if one wasn't provided.
 	header *Row
-	rows   []*Row
+	// rows are the rows in the table.
+	rows []*Row
 
+	// opts are the options provided to NewContent.
 	opts *contentOptions
 }
 
@@ -216,16 +233,50 @@ type Content struct {
 // All rows must contain the same number of columns (the same number of cells)
 // allowing for the CellColSpan option.
 func NewContent(cols Columns, rows []*Row, opts ...ContentOption) (*Content, error) {
-	return nil, errors.New("unimplemented")
+	c := &Content{
+		cols: cols,
+		opts: newContentOptions(opts...),
+	}
+	for _, r := range rows {
+		if err := c.addRow(r); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := c.validate(); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// validate validates the content.
+func (c *Content) validate() error {
+	return validateContent(c)
 }
 
 // AddRow adds a row to the content.
 // If you need to apply options at the Row level, use AddRowWithOpts.
 func (c *Content) AddRow(cells ...*Cell) error {
-	return errors.New("unimplemented")
+	return c.AddRowWithOpts(cells)
+}
+
+// addRow adds the row to the content.
+func (c *Content) addRow(r *Row) error {
+	if r.isHeader {
+		if c.header != nil {
+			return fmt.Errorf("the content can only have one header row, already have: %v", c.header)
+		}
+		c.header = r
+	} else {
+		c.rows = append(c.rows, r)
+	}
+	return nil
 }
 
 // AddRowWithOpts adds a row to the content and applies the options.
 func (c *Content) AddRowWithOpts(cells []*Cell, opts ...RowOption) error {
-	return errors.New("unimplemented")
+	if err := c.addRow(NewRowWithOpts(cells, opts...)); err != nil {
+		return err
+	}
+	return c.validate()
 }

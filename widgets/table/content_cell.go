@@ -17,6 +17,9 @@ package table
 // content_cell.go defines a type that represents a single cell in the table.
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/wrap"
@@ -133,11 +136,24 @@ func CellWrapContent() CellOption {
 
 // Cell is one cell in a Row.
 type Cell struct {
+	// data are the text data in the cell.
 	data []*Data
 
-	colSpan      int
-	rowSpan      int
+	// colSpan specified how many columns does this cell span.
+	colSpan int
+	// rowSpan specified how many rows does this cell span.
+	rowSpan int
+	// hierarchical are the specified hierarchical options at the cell level.
 	hierarchical *hierarchicalOptions
+}
+
+// String implements fmt.Stringer.
+func (c *Cell) String() string {
+	var b bytes.Buffer
+	for _, d := range c.data {
+		b.WriteString(d.String())
+	}
+	return fmt.Sprintf("| %v ", b.String())
 }
 
 // NewCell returns a new Cell with the provided text.
@@ -148,10 +164,19 @@ type Cell struct {
 // Any newline ('\n') characters are interpreted as newlines when displaying
 // the text.
 func NewCell(text string) *Cell {
-	return nil
+	return NewCellWithOpts([]*Data{NewData(text)})
 }
 
 // NewCellWithOpts returns a new Cell with the provided data and options.
 func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
-	return nil
+	c := &Cell{
+		data:         data,
+		colSpan:      1,
+		rowSpan:      1,
+		hierarchical: &hierarchicalOptions{},
+	}
+	for _, opt := range opts {
+		opt.set(c)
+	}
+	return c
 }

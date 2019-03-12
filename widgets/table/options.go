@@ -119,7 +119,7 @@ func HighlightDelay(d time.Duration) Option {
 // HighlightCellOpts sets the cell options on cells that are part of a
 // highlighted row.
 // Defaults to DefaultHighlightColor.
-func HighlightColor(cellOpts ...cell.Option) Option {
+func HighlightCellOpts(cellOpts ...cell.Option) Option {
 	return option(func(opts *options) {
 		opts.highlightCellOpts = cellOpts
 	})

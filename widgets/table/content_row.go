@@ -17,6 +17,9 @@ package table
 // content_row.go defines a type that represents a single row in the table.
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -54,14 +57,6 @@ type rowOption func(*Row)
 // set implements Option.set.
 func (ro rowOption) set(r *Row) {
 	ro(r)
-}
-
-// RowHighlighted sets the row as highlighted, the user can then change which
-// row is highlighted using keyboard or mouse input.
-func RowHighlighted() RowOption {
-	return rowOption(func(r *Row) {
-		r.highlighted = true
-	})
 }
 
 // RowCallback allows this row to be activated and provides a function that
@@ -139,11 +134,30 @@ func RowAlignVertical(v align.Vertical) RowOption {
 
 // Row is one row in the table.
 type Row struct {
+	// cells are the cells in this row.
 	cells []*Cell
 
-	rowCallback  RowCallbackFn
-	highlighted  bool
+	// isHeader asserts if this row is the header of the table.
+	isHeader bool
+
+	// rowCallback is the function to call when this row is activated.
+	// Can be nil if the row cannot be activated and is always nil on the
+	// header row.
+	rowCallback RowCallbackFn
+	// hierarchical are the specified hierarchical options at the row level.
 	hierarchical *hierarchicalOptions
+}
+
+// String implements fmt.Stringer.
+func (r *Row) String() string {
+	if len(r.cells) == 0 {
+		return "Row{}"
+	}
+	var b bytes.Buffer
+	for _, c := range r.cells {
+		b.WriteString(c.String())
+	}
+	return fmt.Sprintf("Row{%v|}", b.String())
 }
 
 // NewHeader returns a new Row that will be the header of the table.
@@ -152,7 +166,7 @@ type Row struct {
 // Content can only have one header Row.
 // If you need to apply options at the Row level, use NewHeaderWithOpts.
 func NewHeader(cells ...*Cell) *Row {
-	return nil
+	return NewHeaderWithOpts(cells)
 }
 
 // NewHeaderWithOpts returns a new Row that will be the header of the table and
@@ -161,18 +175,37 @@ func NewHeader(cells ...*Cell) *Row {
 // based on its values. Header row cannot be highlighted.
 // Content can only have one header Row.
 func NewHeaderWithOpts(cells []*Cell, opts ...RowOption) *Row {
-	return nil
+	r := NewRowWithOpts(cells, opts...)
+	r.isHeader = true
+	return r
 }
 
 // NewRow returns a new Row instance with the provided cells.
 // If you need to apply options at the Row level, use NewRowWithOpts.
 // If you need to add a table header Row, use NewHeader.
 func NewRow(cells ...*Cell) *Row {
-	return nil
+	return NewRowWithOpts(cells)
 }
 
 // NewRowWithOpts returns a new Row instance with the provided cells and applies
 // the row options.
 func NewRowWithOpts(cells []*Cell, opts ...RowOption) *Row {
-	return nil
+	r := &Row{
+		cells:        cells,
+		hierarchical: &hierarchicalOptions{},
+	}
+	for _, opt := range opts {
+		opt.set(r)
+	}
+	return r
+}
+
+// effectiveColumns returns the number of columns this row effectively occupies.
+// This accounts for cells that specify colSpan > 1.
+func (r *Row) effectiveColumns() int {
+	var cols int
+	for _, c := range r.cells {
+		cols += c.colSpan
+	}
+	return cols
 }

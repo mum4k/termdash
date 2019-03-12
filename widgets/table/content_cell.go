@@ -1,3 +1,17 @@
+// Copyright 2019 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package table
 
 // content_cell.go defines a type that represents a single cell in the table.
@@ -5,6 +19,7 @@ package table
 import (
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/wrap"
 )
 
 // CellOption is used to provide options to NewCellWithOpts.
@@ -56,7 +71,7 @@ func CellOpts(cellOpts ...cell.Option) CellOption {
 // Row level.
 func CellHeight(height int) CellOption {
 	return cellOption(func(c *Cell) {
-		c.hierarchical.height = height
+		c.hierarchical.height = &height
 	})
 }
 
@@ -104,6 +119,18 @@ func CellAlignVertical(v align.Vertical) CellOption {
 	})
 }
 
+// CellWrapContent sets the content of individual cells to be wrapped if it
+// cannot fit fully.
+// Defaults is to not wrap, text that is too long will be trimmed instead.
+// This is a hierarchical option, it overrides the one provided at Content or
+// Row level.
+func CellWrapContent() CellOption {
+	return cellOption(func(c *Cell) {
+		wm := wrap.AtWords
+		c.hierarchical.wrapMode = &wm
+	})
+}
+
 // Cell is one cell in a Row.
 type Cell struct {
 	data []*Data
@@ -115,6 +142,11 @@ type Cell struct {
 
 // NewCell returns a new Cell with the provided text.
 // If you need to apply options at the Cell or Data level use NewCellWithOpts.
+// The text contain cannot control characters (unicode.IsControl) or space
+// character (unicode.IsSpace) other than:
+//   ' ', '\n'
+// Any newline ('\n') characters are interpreted as newlines when displaying
+// the text.
 func NewCell(text string) *Cell {
 	return nil
 }

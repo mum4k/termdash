@@ -1,3 +1,17 @@
+// Copyright 2019 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package table
 
 // content.go defines a type that allow callers to populate the table with
@@ -8,6 +22,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/linestyle"
 )
 
@@ -37,7 +52,8 @@ type hierarchicalOptions struct {
 	verticalCellPadding   *int
 	alignHorizontal       *align.Horizontal
 	alignVertical         *align.Vertical
-	height                int
+	height                *int
+	wrapMode              *wrap.Mode
 }
 
 // contentOption implements ContentOption.
@@ -67,7 +83,9 @@ func BorderCellOpts(cellOpts ...cell.Option) ContentOption {
 // The number of values must match the number of Columns specified on the call
 // to NewContent. All the values must be in the range 0 < v <= 100 and the sum
 // of the values must be 100.
-// Defaults to column width automatically adjusted to the content.
+// If content wrapping isn't enabled (see WrapContent), defaults to column
+// width automatically adjusted to the content. When wrapping is enabled, all
+// columns will have equal width.
 func ColumnWidthsPercent(widths ...int) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
 		cOpts.columnWidthsPercent = widths
@@ -111,7 +129,7 @@ func ContentCellOpts(cellOpts ...cell.Option) ContentOption {
 // level.
 func ContentRowHeight(height int) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
-		cOpts.hierarchical.height = height
+		cOpts.hierarchical.height = &height
 	})
 }
 
@@ -156,6 +174,18 @@ func AlignHorizontal(h align.Horizontal) ContentOption {
 func AlignVertical(v align.Vertical) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
 		cOpts.hierarchical.alignVertical = &v
+	})
+}
+
+// WrapContent sets the content of individual cells to be wrapped if it
+// cannot fit fully.
+// Defaults is to not wrap, text that is too long will be trimmed instead.
+// This is a hierarchical option and can be overridden when provided at Row
+// or Cell level.
+func WrapContent() ContentOption {
+	return contentOption(func(cOpts *contentOptions) {
+		wm := wrap.AtWords
+		cOpts.hierarchical.wrapMode = &wm
 	})
 }
 

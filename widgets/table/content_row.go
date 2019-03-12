@@ -1,3 +1,17 @@
+// Copyright 2019 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package table
 
 // content_row.go defines a type that represents a single row in the table.
@@ -75,7 +89,7 @@ func RowCellOpts(cellOpts ...cell.Option) RowOption {
 // level and can be overridden when provided at the Cell level.
 func RowHeight(height int) RowOption {
 	return rowOption(func(r *Row) {
-		r.hierarchical.height = height
+		r.hierarchical.height = &height
 	})
 }
 
@@ -136,7 +150,17 @@ type Row struct {
 // The header remains visible while scrolling and allows for sorting of content
 // based on its values. Header row cannot be highlighted.
 // Content can only have one header Row.
-func NewHeader(cells []*Cell, opts ...RowOption) *Row {
+// If you need to apply options at the Row level, use NewHeaderWithOpts.
+func NewHeader(cells ...*Cell) *Row {
+	return nil
+}
+
+// NewHeaderWithOpts returns a new Row that will be the header of the table and
+// applies the provided options.
+// The header remains visible while scrolling and allows for sorting of content
+// based on its values. Header row cannot be highlighted.
+// Content can only have one header Row.
+func NewHeaderWithOpts(cells []*Cell, opts ...RowOption) *Row {
 	return nil
 }
 

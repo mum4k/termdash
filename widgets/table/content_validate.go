@@ -16,17 +16,40 @@ package table
 
 // contant_validate.go contains code that validates the user provided Content.
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/mum4k/termdash/internal/numbers"
+)
 
 // validateContent validates the content instance.
-func validateContent(c *Content) error {
-	if min := 1; int(c.cols) < min {
-		return fmt.Errorf("invalid number of columns %d, must be a value in range %d <= v", c.cols, min)
+func validateContent(content *Content) error {
+	if got, min := int(content.cols), 1; got < min {
+		return fmt.Errorf("invalid number of columns %d, must be a value in range %d <= v", got, min)
 	}
 
-	for _, r := range c.rows {
-		if got, want := r.effectiveColumns(), int(c.cols); got != want {
-			return fmt.Errorf("content has %d columns, but row %v has %d, all rows must occupy the same amount of columns", want, r, got)
+	if got := len(content.opts.columnWidthsPercent); got > 0 {
+		if want := int(content.cols); got != want {
+			return fmt.Errorf("invalid number of widths in ColumnWidthsPercent %d, must be equal to the number of columns %d", got, want)
+		}
+		if sum, want := numbers.SumInts(content.opts.columnWidthsPercent), 100; sum != want {
+			return fmt.Errorf("invalid sum of widths in ColumnWidthsPercent %d, must be %d", sum, want)
+		}
+
+	}
+
+	for _, row := range content.rows {
+		for _, c := range row.cells {
+			if got, min := c.colSpan, 1; got < min {
+				return fmt.Errorf("invalid CellColSpan %d, must be a value in range %d <= v", got, min)
+			}
+			if got, min := c.rowSpan, 1; got < min {
+				return fmt.Errorf("invalid CellRowSpan %d, must be a value in range %d <= v", got, min)
+			}
+		}
+
+		if got, want := row.effectiveColumns(), int(content.cols); got != want {
+			return fmt.Errorf("content has %d columns, but row %v has %d, all rows must occupy the same amount of columns", want, row, got)
 		}
 	}
 	return nil

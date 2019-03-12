@@ -219,3 +219,12 @@ func SplitByRatio(n int, ratio image.Point) image.Point {
 		int(Round(fact * float64(sr.Y))),
 	}
 }
+
+// SumInts returns the sum of the ints.
+func SumInts(values []int) int {
+	var res int
+	for _, v := range values {
+		res += v
+	}
+	return res
+}

@@ -75,8 +75,32 @@ func TestContent(t *testing.T) {
 				),
 			},
 		},
-		// fails on colspan <1
-		// fails on rowspan <1
+		{
+			desc:    "fails on a cell that has zero colSpan",
+			columns: Columns(1),
+			rows: []*Row{
+				NewRow(
+					NewCellWithOpts(
+						[]*Data{NewData("0")},
+						CellColSpan(0),
+					),
+				),
+			},
+			wantSubstr: "invalid CellColSpan",
+		},
+		{
+			desc:    "fails on a cell that has zero rowSpan",
+			columns: Columns(1),
+			rows: []*Row{
+				NewRow(
+					NewCellWithOpts(
+						[]*Data{NewData("0")},
+						CellRowSpan(0),
+					),
+				),
+			},
+			wantSubstr: "invalid CellRowSpan",
+		},
 		{
 			desc:    "succeeds when row has a column with a colSpan",
 			columns: Columns(2),
@@ -89,17 +113,36 @@ func TestContent(t *testing.T) {
 				),
 			},
 		},
+		{
+			desc:    "fails when the number of column widths doesn't match number of columns",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCell("1"),
+				),
+			},
+			opts: []ContentOption{
+				ColumnWidthsPercent(20, 20, 60),
+			},
+			wantSubstr: "invalid number of widths in ColumnWidthsPercent",
+		},
+		{
+			desc:    "fails when the sum of column widths doesn't equal 100",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCell("1"),
+				),
+			},
+			opts: []ContentOption{
+				ColumnWidthsPercent(20, 20),
+			},
+			wantSubstr: "invalid sum of widths in ColumnWidthsPercent",
+		},
 
 		// Content:
-		// rows with zero columns
-		// rows with varying number of columns
-		// rows with columns that have valid colspan
-		// rows with columns that have valid rowspan
-		// rows with columns that have valid colspan and rowspan
-		// too many column widths
-		// not enough column widths
-		// zero column width
-		// negative column width
 		// zero row height
 		// negative row height
 		// zero and negative padding

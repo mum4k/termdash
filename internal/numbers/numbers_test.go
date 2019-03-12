@@ -487,3 +487,43 @@ func TestSplitByRatio(t *testing.T) {
 		})
 	}
 }
+
+func TestSumInts(t *testing.T) {
+	tests := []struct {
+		desc   string
+		values []int
+		want   int
+	}{
+		{
+			desc: "empty list",
+		},
+		{
+			desc:   "all values are zero",
+			values: []int{0, 0, 0},
+		},
+		{
+			desc:   "positive values",
+			values: []int{1, 2, 3},
+			want:   6,
+		},
+		{
+			desc:   "negative values",
+			values: []int{-1, -2, -3},
+			want:   -6,
+		},
+		{
+			desc:   "positive and negative values",
+			values: []int{1, -2, 3},
+			want:   2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := SumInts(tc.values)
+			if got != tc.want {
+				t.Errorf("SumInts(%v) => %v, want %v", tc.values, got, tc.want)
+			}
+		})
+	}
+}

@@ -34,11 +34,11 @@ type ContentOption interface {
 
 // contentOptions stores options that apply to the content level.
 type contentOptions struct {
-	border                linestyle.LineStyle
-	borderCellOpts        []cell.Option
-	columnWidthsPercent   []int
-	horizontalCellSpacing int
-	verticalCellSpacing   int
+	border              linestyle.LineStyle
+	borderCellOpts      []cell.Option
+	columnWidthsPercent []int
+	horizontalSpacing   *int
+	verticalSpacing     *int
 
 	// hierarchical are the specified hierarchical options at the content
 	// level.
@@ -57,16 +57,22 @@ func newContentOptions(opts ...ContentOption) *contentOptions {
 	return co
 }
 
-// hierarchicalOptions stores options that can be applied at multiple levels or
-// hierarchy, i.e. the Content (top level), the Row or the Cell.
-type hierarchicalOptions struct {
-	cellOpts              []cell.Option
-	horizontalCellPadding *int
-	verticalCellPadding   *int
-	alignHorizontal       *align.Horizontal
-	alignVertical         *align.Vertical
-	height                *int
-	wrapMode              *wrap.Mode
+// getHorizontalSpacing returns the user provided horizontal spacing value or
+// zero if unset.
+func (co *contentOptions) getHorizontalSpacing() int {
+	if co.horizontalSpacing != nil {
+		return *co.horizontalSpacing
+	}
+	return 0
+}
+
+// getVerticalSpacing returns the user provided vertical spacing value or
+// zero if unset.
+func (co *contentOptions) getVerticalSpacing() int {
+	if co.verticalSpacing != nil {
+		return *co.verticalSpacing
+	}
+	return 0
 }
 
 // contentOption implements ContentOption.
@@ -105,23 +111,23 @@ func ColumnWidthsPercent(widths ...int) ContentOption {
 	})
 }
 
-// HorizontalCellSpacing sets the horizontal space between cells as the number
+// HorizontalSpacing sets the horizontal space between cells as the number
 // of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
-func HorizontalCellSpacing(cells int) ContentOption {
+func HorizontalSpacing(cells int) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
-		cOpts.horizontalCellSpacing = cells
+		cOpts.horizontalSpacing = &cells
 	})
 }
 
-// VerticalCellSpacing sets the vertical space between cells as the number
+// VerticalSpacing sets the vertical space between cells as the number
 // of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
-func VerticalCellSpacing(cells int) ContentOption {
+func VerticalSpacing(cells int) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
-		cOpts.verticalCellSpacing = cells
+		cOpts.verticalSpacing = &cells
 	})
 }
 
@@ -146,27 +152,27 @@ func ContentRowHeight(height int) ContentOption {
 	})
 }
 
-// HorizontalCellPadding sets the horizontal space between cell wall and its
+// HorizontalPadding sets the horizontal space between cell wall and its
 // content as the number of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
 // This is a hierarchical option and can be overridden when provided at Row
 // or Cell level.
-func HorizontalCellPadding(cells int) ContentOption {
+func HorizontalPadding(cells int) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
-		cOpts.hierarchical.horizontalCellPadding = &cells
+		cOpts.hierarchical.horizontalPadding = &cells
 	})
 }
 
-// VerticalCellPadding sets the vertical space between cell wall and its
+// VerticalPadding sets the vertical space between cell wall and its
 // content as the number of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
 // This is a hierarchical option and can be overridden when provided at Row
 // or Cell level.
-func VerticalCellPadding(cells int) ContentOption {
+func VerticalPadding(cells int) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
-		cOpts.hierarchical.verticalCellPadding = &cells
+		cOpts.hierarchical.verticalPadding = &cells
 	})
 }
 
@@ -190,12 +196,12 @@ func AlignVertical(v align.Vertical) ContentOption {
 	})
 }
 
-// WrapContent sets the content of individual cells to be wrapped if it
+// WrapAtWords sets the content of individual cells to be wrapped if it
 // cannot fit fully.
 // Defaults is to not wrap, text that is too long will be trimmed instead.
 // This is a hierarchical option and can be overridden when provided at Row
 // or Cell level.
-func WrapContent() ContentOption {
+func WrapAtWords() ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
 		wm := wrap.AtWords
 		cOpts.hierarchical.wrapMode = &wm
@@ -261,14 +267,29 @@ func (c *Content) AddRow(cells ...*Cell) error {
 }
 
 // addRow adds the row to the content.
-func (c *Content) addRow(r *Row) error {
-	if r.isHeader {
+// Maps hierarchical options to parents and applies inherited cell options to
+// data cells.
+func (c *Content) addRow(row *Row) error {
+	row.hierarchical.parent = c.opts.hierarchical
+	for _, tableCell := range row.cells {
+		tableCell.hierarchical.parent = row.hierarchical
+		for _, tableData := range tableCell.data {
+			for _, dataCell := range tableData.cells {
+				if !dataCell.Opts.IsDefault() {
+					continue
+				}
+				tableCell.hierarchical.getCellOpts().Set(dataCell.Opts)
+			}
+		}
+	}
+
+	if row.isHeader {
 		if c.header != nil {
 			return fmt.Errorf("the content can only have one header row, already have: %v", c.header)
 		}
-		c.header = r
+		c.header = row
 	} else {
-		c.rows = append(c.rows, r)
+		c.rows = append(c.rows, row)
 	}
 	return nil
 }

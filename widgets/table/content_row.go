@@ -22,6 +22,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
@@ -61,6 +62,7 @@ func (ro rowOption) set(r *Row) {
 
 // RowCallback allows this row to be activated and provides a function that
 // should be called upon each row activation by the user.
+// This option cannot be used on the header row.
 func RowCallback(fn RowCallbackFn) RowOption {
 	return rowOption(func(r *Row) {
 		r.rowCallback = fn
@@ -88,27 +90,27 @@ func RowHeight(height int) RowOption {
 	})
 }
 
-// RowHorizontalCellPadding sets the horizontal space between cell wall and its
+// RowHorizontalPadding sets the horizontal space between cell wall and its
 // content as the number of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
 // This is a hierarchical option, it overrides the one provided at Content
 // level and can be overridden when provided at the Cell level.
-func RowHorizontalCellPadding(cells int) RowOption {
+func RowHorizontalPadding(cells int) RowOption {
 	return rowOption(func(r *Row) {
-		r.hierarchical.horizontalCellPadding = &cells
+		r.hierarchical.horizontalPadding = &cells
 	})
 }
 
-// RowVerticalCellPadding sets the vertical space between cell wall and its
+// RowVerticalPadding sets the vertical space between cell wall and its
 // content as the number of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
 // This is a hierarchical option, it overrides the one provided at Content
 // level and can be overridden when provided at the Cell level.
-func RowVerticalCellPadding(cells int) RowOption {
+func RowVerticalPadding(cells int) RowOption {
 	return rowOption(func(r *Row) {
-		r.hierarchical.verticalCellPadding = &cells
+		r.hierarchical.verticalPadding = &cells
 	})
 }
 
@@ -129,6 +131,18 @@ func RowAlignHorizontal(h align.Horizontal) RowOption {
 func RowAlignVertical(v align.Vertical) RowOption {
 	return rowOption(func(r *Row) {
 		r.hierarchical.alignVertical = &v
+	})
+}
+
+// RowWrapAtWords sets the content of cells in the row to be wrapped if it
+// cannot fit fully.
+// Defaults is to not wrap, text that is too long will be trimmed instead.
+// This is a hierarchical option, it overrides the one provided at Content
+// level and can be overridden when provided at the Cell level.
+func RowWrapAtWords() RowOption {
+	return rowOption(func(r *Row) {
+		wm := wrap.AtWords
+		r.hierarchical.wrapMode = &wm
 	})
 }
 

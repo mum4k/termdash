@@ -17,6 +17,8 @@ package table
 import (
 	"strings"
 	"testing"
+
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 func ExampleContent() {
@@ -141,28 +143,191 @@ func TestContent(t *testing.T) {
 			},
 			wantSubstr: "invalid sum of widths in ColumnWidthsPercent",
 		},
-
-		// Content:
-		// zero row height
-		// negative row height
-		// zero and negative padding
-		// zero and negative spacing
-
-		// Row:
-		// too many header rows
-		// nil row callback
-		// zero and negative row height
-		// zero and negative padding
-
-		// cell:
-		// zero and negative colspan
-		// zero and negative rowspan
-		// zero and negative cell height
-		// zero and negative padding
-
-		// data:
-		// invalid space characters in data
-
+		{
+			desc:    "fails when zero height set on cell",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCellWithOpts([]*Data{NewData("1")}, CellHeight(0)),
+				),
+			},
+			wantSubstr: "invalid height",
+		},
+		{
+			desc:    "fails when zero height set on row",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRowWithOpts(
+					[]*Cell{
+						NewCell("0"),
+						NewCell("1"),
+					},
+					RowHeight(0),
+				),
+			},
+			wantSubstr: "invalid height",
+		},
+		{
+			desc:    "fails when zero height set on content",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCell("1"),
+				),
+			},
+			opts: []ContentOption{
+				ContentRowHeight(0),
+			},
+			wantSubstr: "invalid height",
+		},
+		{
+			desc:    "fails when zero horizontal padding set on cell",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCellWithOpts([]*Data{NewData("1")}, CellHorizontalPadding(0)),
+				),
+			},
+			wantSubstr: "invalid horizontal padding",
+		},
+		{
+			desc:    "fails when zero horizontal padding set on row",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRowWithOpts(
+					[]*Cell{
+						NewCell("0"),
+						NewCell("1"),
+					},
+					RowHorizontalPadding(0),
+				),
+			},
+			wantSubstr: "invalid horizontal padding",
+		},
+		{
+			desc:    "fails when zero horizontal padding set on content",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCell("1"),
+				),
+			},
+			opts: []ContentOption{
+				HorizontalPadding(0),
+			},
+			wantSubstr: "invalid horizontal padding",
+		},
+		{
+			desc:    "fails when zero vertical padding set on cell",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCellWithOpts([]*Data{NewData("1")}, CellVerticalPadding(0)),
+				),
+			},
+			wantSubstr: "invalid vertical padding",
+		},
+		{
+			desc:    "fails when zero vertical padding set on row",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRowWithOpts(
+					[]*Cell{
+						NewCell("0"),
+						NewCell("1"),
+					},
+					RowVerticalPadding(0),
+				),
+			},
+			wantSubstr: "invalid vertical padding",
+		},
+		{
+			desc:    "fails when zero vertical padding set on content",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCell("1"),
+				),
+			},
+			opts: []ContentOption{
+				VerticalPadding(0),
+			},
+			wantSubstr: "invalid vertical padding",
+		},
+		{
+			desc:    "fails when zero vertical spacing",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCell("1"),
+				),
+			},
+			opts: []ContentOption{
+				VerticalSpacing(0),
+			},
+			wantSubstr: "invalid vertical spacing",
+		},
+		{
+			desc:    "fails when zero horizontal spacing",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+					NewCell("1"),
+				),
+			},
+			opts: []ContentOption{
+				HorizontalSpacing(0),
+			},
+			wantSubstr: "invalid horizontal spacing",
+		},
+		{
+			desc:    "fails when multiple header rows provided",
+			columns: Columns(1),
+			rows: []*Row{
+				NewHeader(
+					NewCell("0"),
+				),
+				NewHeader(
+					NewCell("0"),
+				),
+			},
+			wantSubstr: "one header",
+		},
+		{
+			desc:    "fails on row callback for header row",
+			columns: Columns(1),
+			rows: []*Row{
+				NewHeaderWithOpts(
+					[]*Cell{
+						NewCell("0"),
+					},
+					RowCallback(func(terminalapi.Event) error {
+						return nil
+					}),
+				),
+			},
+			wantSubstr: "header row cannot have a callback",
+		},
+		{
+			desc:    "fails when data contain invalid runes",
+			columns: Columns(1),
+			rows: []*Row{
+				NewRow(
+					NewCell("\t"),
+				),
+			},
+			wantSubstr: "invalid data",
+		},
+		// Test inheritance of all hierarchical options.
+		// Test inheritance of cell options to data when they have and don't have their own.
 	}
 
 	for _, tc := range tests {
@@ -173,6 +338,54 @@ func TestContent(t *testing.T) {
 			}
 			if err != nil && !strings.Contains(err.Error(), tc.wantSubstr) {
 				t.Errorf("NewContent => unexpected error: %v, wantSubstr: %q", err, tc.wantSubstr)
+			}
+		})
+	}
+}
+
+func TestAddRow(t *testing.T) {
+	tests := []struct {
+		desc    string
+		columns Columns
+		rows    []*Row
+		add     []*Cell
+		wantErr bool
+	}{
+		{
+			desc:    "adds a row",
+			columns: Columns(1),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+				),
+			},
+			add: []*Cell{
+				NewCell("1"),
+			},
+		},
+		{
+			desc:    "fails when new row doesn't have the expected number of columns",
+			columns: Columns(1),
+			rows: []*Row{
+				NewRow(
+					NewCell("0"),
+				),
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			c, err := NewContent(tc.columns, tc.rows)
+			if err != nil {
+				t.Fatalf("NewContent => unexpected error: %v", err)
+			}
+			{
+				err := c.AddRow(tc.add...)
+				if (err != nil) != tc.wantErr {
+					t.Errorf("AddRow => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				}
 			}
 		})
 	}

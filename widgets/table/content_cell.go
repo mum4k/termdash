@@ -78,27 +78,27 @@ func CellHeight(height int) CellOption {
 	})
 }
 
-// CellHorizontalCellPadding sets the horizontal space between cell wall and its
+// CellHorizontalPadding sets the horizontal space between cell wall and its
 // content as the number of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
 // This is a hierarchical option, it overrides the one provided at Content or
 // Row level.
-func CellHorizontalCellPadding(cells int) CellOption {
+func CellHorizontalPadding(cells int) CellOption {
 	return cellOption(func(c *Cell) {
-		c.hierarchical.horizontalCellPadding = &cells
+		c.hierarchical.horizontalPadding = &cells
 	})
 }
 
-// CellVerticalCellPadding sets the vertical space between cell wall and its
+// CellVerticalPadding sets the vertical space between cell wall and its
 // content as the number of cells on the terminal that are left empty.
 // The value must be a non-zero positive integer.
 // Defaults to zero cells.
 // This is a hierarchical option, it overrides the one provided at Content or
 // Row level.
-func CellVerticalCellPadding(cells int) CellOption {
+func CellVerticalPadding(cells int) CellOption {
 	return cellOption(func(c *Cell) {
-		c.hierarchical.verticalCellPadding = &cells
+		c.hierarchical.verticalPadding = &cells
 	})
 }
 
@@ -122,12 +122,12 @@ func CellAlignVertical(v align.Vertical) CellOption {
 	})
 }
 
-// CellWrapContent sets the content of individual cells to be wrapped if it
+// CellWrapAtWords sets the content of the cell to be wrapped if it
 // cannot fit fully.
 // Defaults is to not wrap, text that is too long will be trimmed instead.
 // This is a hierarchical option, it overrides the one provided at Content or
 // Row level.
-func CellWrapContent() CellOption {
+func CellWrapAtWords() CellOption {
 	return cellOption(func(c *Cell) {
 		wm := wrap.AtWords
 		c.hierarchical.wrapMode = &wm

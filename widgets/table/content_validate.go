@@ -61,6 +61,9 @@ func validateContent(content *Content) error {
 				return err
 			}
 			for _, d := range c.data {
+				if len(d.cells) == 0 {
+					continue
+				}
 				if err := wrap.ValidCells(d.cells); err != nil {
 					return fmt.Errorf("invalid data: %v", err)
 				}

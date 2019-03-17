@@ -22,6 +22,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/canvas/buffer"
 	"github.com/mum4k/termdash/internal/wrap"
 )
 
@@ -69,6 +70,8 @@ func CellOpts(cellOpts ...cell.Option) CellOption {
 
 // CellHeight sets the height of cells to the provided number of cells.
 // The number must be a non-zero positive integer.
+// Rows still use larger than provided height if wrapping is enabled and the
+// content doesn't fit.
 // Defaults to cell height automatically adjusted to the content.
 // This is a hierarchical option, it overrides the one provided at Content or
 // Row level.
@@ -154,6 +157,16 @@ func (c *Cell) String() string {
 		b.WriteString(d.String())
 	}
 	return fmt.Sprintf("| %v ", b.String())
+}
+
+// width returns the width of all the runes in this cell when they are printed
+// on the terminal.
+func (c *Cell) width() int {
+	res := 0
+	for _, d := range c.data {
+		res += buffer.CellsWidth(d.cells)
+	}
+	return res
 }
 
 // NewCell returns a new Cell with the provided text.

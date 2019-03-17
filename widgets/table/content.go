@@ -19,6 +19,7 @@ package table
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
@@ -143,6 +144,8 @@ func ContentCellOpts(cellOpts ...cell.Option) ContentOption {
 
 // ContentRowHeight sets the height of rows to the provided number of cells.
 // The number must be a non-zero positive integer.
+// Rows still use larger than provided height if wrapping is enabled and the
+// content doesn't fit.
 // Defaults to row height automatically adjusted to the content.
 // This is a hierarchical option and can be overridden when provided at Row
 // level.
@@ -229,8 +232,14 @@ type Content struct {
 	// rows are the rows in the table.
 	rows []*Row
 
+	// layout describes the layout of this table on a canvas.
+	layout *contentLayout
+
 	// opts are the options provided to NewContent.
 	opts *contentOptions
+
+	// mu protects the Content
+	mu sync.Mutex
 }
 
 // NewContent returns a new Content instance.
@@ -240,8 +249,9 @@ type Content struct {
 // allowing for the CellColSpan option.
 func NewContent(cols Columns, rows []*Row, opts ...ContentOption) (*Content, error) {
 	c := &Content{
-		cols: cols,
-		opts: newContentOptions(opts...),
+		cols:   cols,
+		layout: &contentLayout{},
+		opts:   newContentOptions(opts...),
 	}
 	for _, r := range rows {
 		if err := c.addRow(r); err != nil {
@@ -296,6 +306,9 @@ func (c *Content) addRow(row *Row) error {
 
 // AddRowWithOpts adds a row to the content and applies the options.
 func (c *Content) AddRowWithOpts(cells []*Cell, opts ...RowOption) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if err := c.addRow(NewRowWithOpts(cells, opts...)); err != nil {
 		return err
 	}

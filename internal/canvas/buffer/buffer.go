@@ -33,6 +33,16 @@ func NewCells(text string, opts ...cell.Option) []*Cell {
 	return res
 }
 
+// CellsWidth returns the width the cells will use on a terminal if printed out.
+// This takes into account if some of the runes are full-width runes.
+func CellsWidth(cells []*Cell) int {
+	width := 0
+	for _, c := range cells {
+		width += runewidth.RuneWidth(c.Rune)
+	}
+	return width
+}
+
 // Cell represents a single cell on the terminal.
 type Cell struct {
 	// Rune is the rune stored in the cell.

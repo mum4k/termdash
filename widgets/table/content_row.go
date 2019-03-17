@@ -81,6 +81,8 @@ func RowCellOpts(cellOpts ...cell.Option) RowOption {
 
 // RowHeight sets the height of rows to the provided number of cells.
 // The number must be a non-zero positive integer.
+// Rows still use larger than provided height if wrapping is enabled and the
+// content doesn't fit.
 // Defaults to row height automatically adjusted to the content.
 // This is a hierarchical option, it overrides the one provided at Content
 // level and can be overridden when provided at the Cell level.

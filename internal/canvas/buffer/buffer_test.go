@@ -625,3 +625,35 @@ func TestRemWidth(t *testing.T) {
 		})
 	}
 }
+
+func TestCellsWidth(t *testing.T) {
+	tests := []struct {
+		desc  string
+		cells []*Cell
+		want  int
+	}{
+		{
+			desc:  "ascii characters",
+			cells: NewCells("hello"),
+			want:  5,
+		},
+		{
+			desc:  "string from mattn/runewidth/runewidth_test",
+			cells: NewCells("■㈱の世界①"),
+			want:  10,
+		},
+		{
+			desc:  "string using termdash characters",
+			cells: NewCells("⇄…⇧⇩"),
+			want:  4,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			if got := CellsWidth(tc.cells); got != tc.want {
+				t.Errorf("CellsWidth => %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

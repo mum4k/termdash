@@ -141,6 +141,11 @@ func CellWrapAtWords() CellOption {
 type Cell struct {
 	// data are the text data in the cell.
 	data []*Data
+	// width is the width of the data when draws on canvas.
+	width int
+	// trimmed indicates if the content of this cell is trimmed if it doesn't
+	// fit the columns width.
+	trimmed bool
 
 	// colSpan specified how many columns does this cell span.
 	colSpan int
@@ -159,16 +164,6 @@ func (c *Cell) String() string {
 	return fmt.Sprintf("| %v ", b.String())
 }
 
-// width returns the width of all the runes in this cell when they are printed
-// on the terminal.
-func (c *Cell) width() int {
-	res := 0
-	for _, d := range c.data {
-		res += buffer.CellsWidth(d.cells)
-	}
-	return res
-}
-
 // NewCell returns a new Cell with the provided text.
 // If you need to apply options at the Cell or Data level use NewCellWithOpts.
 // The text contain cannot control characters (unicode.IsControl) or space
@@ -184,6 +179,7 @@ func NewCell(text string) *Cell {
 func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 	c := &Cell{
 		data:         data,
+		width:        dataWidth(data),
 		colSpan:      1,
 		rowSpan:      1,
 		hierarchical: &hierarchicalOptions{},
@@ -191,5 +187,18 @@ func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 	for _, opt := range opts {
 		opt.set(c)
 	}
+
+	// We trim when we don't wrap.
+	c.trimmed = c.hierarchical.getWrapMode() == wrap.Never
 	return c
+}
+
+// dataWidth returns the width of all the runes in this cell when they are printed
+// on the terminal.
+func dataWidth(data []*Data) int {
+	res := 0
+	for _, d := range data {
+		res += buffer.CellsWidth(d.cells)
+	}
+	return res
 }

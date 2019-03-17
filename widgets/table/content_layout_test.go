@@ -179,3 +179,49 @@ func TestColumnWidths(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkColumnWidths(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		content, err := NewContent(Columns(10), nil)
+		if err != nil {
+			b.Fatalf("NewContent => unexpected error: %v", err)
+		}
+		content.AddRow(
+			NewCell("00"),
+			NewCell("11"),
+			NewCell("2222"),
+			NewCell("33"),
+			NewCell("44"),
+			NewCell("555"),
+			NewCell("6666"),
+			NewCell("7"),
+			NewCell("88888"),
+			NewCell("999999"),
+		)
+		content.AddRow(
+			NewCell("00000"),
+			NewCell("11"),
+			NewCell("2222"),
+			NewCell("33"),
+			NewCell("444"),
+			NewCell("555"),
+			NewCell("66"),
+			NewCell("7"),
+			NewCell("888"),
+			NewCell("999"),
+		)
+		content.AddRow(
+			NewCell("000000"),
+			NewCell("11"),
+			NewCell("2222"),
+			NewCell("3333333"),
+			NewCell("44"),
+			NewCell("555555555555555"),
+			NewCell("6"),
+			NewCell("7"),
+			NewCell("8"),
+			NewCell("999999"),
+		)
+		columnWidths(content, 30)
+	}
+}

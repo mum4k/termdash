@@ -1,17 +1,3 @@
-// Copyright 2019 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package table
 
 // content_layout.go stores layout calculated for a canvas size.
@@ -19,7 +5,6 @@ package table
 import (
 	"errors"
 	"image"
-	"log"
 	"math"
 
 	"github.com/mum4k/termdash/internal/wrap"
@@ -58,14 +43,24 @@ func columnWidths(content *Content, cvsWidth int) []columnWidth {
 	// content trimmed.
 
 	idxColumnCosts := columnCosts(content, cvsWidth)
-	log.Printf("idxColumnCosts: %v", idxColumnCosts)
-	minCost, minCuts := cutCanvas(idxColumnCosts, cvsWidth, cvsWidth, int(content.cols), 0, nil)
-	log.Printf("minCost: %v", minCost)
-	log.Printf("minCuts: %v", minCuts)
+	inputs := &cutCanvasInputs{
+		idxColumnCosts: idxColumnCosts,
+		cvsWidth:       cvsWidth,
+		columns:        int(content.cols),
+		best:           map[cutState]int{},
+	}
+	state := cutState{
+		colIdx:   0,
+		remWidth: cvsWidth,
+	}
+	//log.Printf("idxColumnCosts: %v", idxColumnCosts)
+
+	best := cutCanvas(inputs, state, nil)
+	//log.Printf("minCost: %+v", best)
 
 	var res []columnWidth
 	last := 0
-	for _, cut := range minCuts {
+	for _, cut := range best.cuts {
 		res = append(res, columnWidth(cut-last))
 		last = cut
 	}
@@ -73,46 +68,93 @@ func columnWidths(content *Content, cvsWidth int) []columnWidth {
 	return res
 }
 
-func cutCanvas(idxColumnCosts map[int]widthCost, cvsWidth, remWidth, columns, colIdx int, cuts []int) (int, []int) {
-	log.Printf("cutCanvas remWidth:%d, columns:%d, colIdx:%d, cuts:%v", remWidth, columns, colIdx, cuts)
-	if remWidth <= 0 {
-		log.Printf("  -> 0")
-		return 0, cuts
-	}
+// cutState uniqiuely identifies a state in the cutting process.
+type cutState struct {
+	// colIdx is the index of the column whose width is being determined in
+	// this execution of cutCanvas.
+	colIdx int
+	// remWidth is the total remaining width of the canvas for the current
+	// column and all the following columns.
+	remWidth int
+}
+
+// bestCuts is the best result for a particular cutState.
+type bestCuts struct {
+	// cost is the smallest achievable cost for the cut state.
+	// This is the number of rows that will have to be trimmed.
+	cost int
+	// cuts are the cuts done so far to get to this state.
+	cuts []int
+}
+
+// cutCanvasInputs are the inputs to the cutCanvas function.
+// These are shared by all the functions in the call stack.
+type cutCanvasInputs struct {
+	// idxColumnCosts are the pre-calculated costs of individual cuts for each column.
+	// Map the column index to the costs.
+	idxColumnCosts map[int]widthCost
+
+	// cvsWidth is the width of the canvas that is available for the data.
+	cvsWidth int
+
+	// columns indicates the total number of columns in the table.
+	columns int
+
+	// best is a memoization on top of cutCanvas.
+	// It maps cutState to the minimal cost for that state.
+	best map[cutState]int
+}
+
+func cutCanvas(inputs *cutCanvasInputs, state cutState, cuts []int) *bestCuts {
+	//log.Printf("cutCanvas state:%+v, cuts:%v", state, cuts)
 
 	minCost := math.MaxInt32
 	var minCuts []int
 
-	widthCosts := idxColumnCosts[colIdx]
-	nextColIdx := colIdx + 1
-	if nextColIdx > columns-1 {
-		log.Printf("  -> no more cuts remWidth:%d cost:%d", remWidth, widthCosts[remWidth])
-		return widthCosts[remWidth], cuts
-	}
-
-	for colWidth := 1; colWidth < remWidth; colWidth++ {
-		diff := cvsWidth - remWidth
-		idxThisCut := diff + colWidth
-		costThisCut := widthCosts[colWidth]
-		nextCost, nextCuts := cutCanvas(
-			idxColumnCosts,
-			cvsWidth,
-			remWidth-colWidth,
-			columns,
-			nextColIdx,
-			//append(cuts, colWidth+colIdx),
-			append(cuts, idxThisCut),
-		)
-
-		if newMinCost := costThisCut + nextCost; newMinCost < minCost {
-			log.Printf("at cuts %v, costThisCut from widthCosts:%v, at width %d:%d, nextCost:%d, minCost:%d", cuts, widthCosts, colWidth, costThisCut, nextCost, minCost)
-			minCost = newMinCost
-			minCuts = nextCuts
-			log.Printf("new minCost:%d minCuts:%v", minCost, minCuts)
+	widthCosts := inputs.idxColumnCosts[state.colIdx]
+	nextColIdx := state.colIdx + 1
+	if nextColIdx > inputs.columns-1 {
+		//log.Printf("cutCanvas state:%+v -> no more cuts cost:%d cuts:%v", state, widthCosts[state.remWidth], cuts)
+		return &bestCuts{
+			cost: widthCosts[state.remWidth],
+			cuts: cuts,
 		}
 	}
-	log.Printf("cutCanvas remWidth:%d, columns:%d, colIdx:%d, cuts:%v -> minCost:%d, minCuts:%d", remWidth, columns, colIdx, cuts, minCost, minCuts)
-	return minCost, minCuts
+
+	for colWidth := 1; colWidth < state.remWidth; colWidth++ {
+		diff := inputs.cvsWidth - state.remWidth
+		idxThisCut := diff + colWidth
+		costThisCut := widthCosts[colWidth]
+		nextState := cutState{
+			colIdx:   nextColIdx,
+			remWidth: state.remWidth - colWidth,
+		}
+		nextCuts := append(cuts, idxThisCut)
+
+		// Memoized?
+		var nextBest *bestCuts
+		if nextCost, ok := inputs.best[nextState]; !ok {
+			nextBest = cutCanvas(inputs, nextState, nextCuts)
+			inputs.best[nextState] = nextBest.cost
+		} else {
+			nextBest = &bestCuts{
+				cost: nextCost,
+				cuts: nextCuts,
+			}
+		}
+
+		if newMinCost := costThisCut + nextBest.cost; newMinCost < minCost {
+			//log.Printf("cutCanvas state:%+v, at cuts %v, costThisCut from widthCosts:%v, at width %d:%d, nextBest:%+v, minCost:%d", state, cuts, widthCosts, colWidth, costThisCut, nextBest, minCost)
+			minCost = newMinCost
+			minCuts = nextBest.cuts
+			//log.Printf("cutCanvas state:%+v, new minCost:%d minCuts:%v", state, minCost, minCuts)
+		}
+	}
+	//log.Printf("cutCanvas state:%+v, cuts:%v -> minCost:%d, minCuts:%d", state, cuts, minCost, minCuts)
+	return &bestCuts{
+		cost: minCost,
+		cuts: minCuts,
+	}
 }
 
 // widthCost maps column widths to the number of rows that would be trimmed on

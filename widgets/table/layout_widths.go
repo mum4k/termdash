@@ -14,12 +14,11 @@
 
 package table
 
-// content_layout.go stores layout calculated for a canvas size.
+// layout_width.go calculates widths of table columns.
 
 import (
 	"errors"
 	"fmt"
-	"image"
 	"math"
 )
 
@@ -27,24 +26,6 @@ import (
 // This excludes any border, padding or spacing, i.e. this is the data portion
 // only.
 type columnWidth int
-
-// contentLayout determines how the content gets placed onto the canvas.
-type contentLayout struct {
-	// lastCvsAr is the are of the last canvas the content was drawn on.
-	// This is image.ZR if the content hasn't been drawn yet.
-	lastCvsAr image.Rectangle
-
-	// columnWidths are the widths of individual columns in the table.
-	columnWidths []columnWidth
-
-	// Details about HV lines that are the borders.
-}
-
-// newContentLayout calculates new layout for the content when drawn on a
-// canvas represented with the provided area.
-func newContentLayout(content *Content, cvsAr image.Rectangle) (*contentLayout, error) {
-	return nil, errors.New("unimplemented")
-}
 
 // columnWidths given the content and the available canvas width returns the
 // widths of individual columns.

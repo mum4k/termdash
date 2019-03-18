@@ -143,9 +143,9 @@ type Cell struct {
 	data []*Data
 	// width is the width of the data when draws on canvas.
 	width int
-	// trimmed indicates if the content of this cell is trimmed if it doesn't
-	// fit the columns width.
-	trimmed bool
+	// trimmable indicates if the content of this cell would be trimmed if it
+	// doesn't fit the columns width.
+	trimmable bool
 
 	// colSpan specified how many columns does this cell span.
 	colSpan int
@@ -189,7 +189,7 @@ func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 	}
 
 	// We trim when we don't wrap.
-	c.trimmed = c.hierarchical.getWrapMode() == wrap.Never
+	c.trimmable = c.hierarchical.getWrapMode() == wrap.Never
 	return c
 }
 

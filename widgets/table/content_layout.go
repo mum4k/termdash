@@ -18,6 +18,7 @@ package table
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"math"
 )
@@ -49,20 +50,41 @@ func newContentLayout(content *Content, cvsAr image.Rectangle) (*contentLayout, 
 // widths of individual columns.
 // The argument cvsWidth is assumed to exclude space required for any border,
 // padding or spacing.
-func columnWidths(content *Content, cvsWidth int) []columnWidth {
+func columnWidths(content *Content, cvsWidth int) ([]columnWidth, error) {
+	if wp := content.opts.columnWidthsPercent; len(wp) > 0 {
+		// If the user provided widths for the columns, use those.
+		widths, err := splitToPercent(cvsWidth, wp)
+		if err != nil {
+			return nil, err
+		}
+		return widths, nil
+	}
+
+	columns := int(content.cols)
+	// Attempt equal column widths and see if there are any trimmed rows.
+	if columns > cvsWidth {
+		return nil, fmt.Errorf("the canvas width %d must be at least equal to the number of columns %d, so that each column gets at least one cell", cvsWidth, columns)
+	}
+	widths := splitEqually(cvsWidth, columns)
+	if !widthsTrimCell(content, widths) {
+		return widths, nil
+	}
+
+	// No widths specified and some rows need to be trimmed.
+	// Choose columns widths that optimize for the smallest number of trimmed rows.
 	// This is similar to the rod-cutting problem, except instead of maximizing
 	// the price, we're minimizing the number of rows that would have their
 	// content trimmed.
 
 	inputs := &cutCanvasInputs{
 		content:  content,
-		cvsWidth: cvsWidth,
+		cvsWidth: columnWidth(cvsWidth),
 		columns:  int(content.cols),
 		best:     map[cutState]int{},
 	}
 	state := &cutState{
 		colIdx:   0,
-		remWidth: cvsWidth,
+		remWidth: inputs.cvsWidth,
 	}
 
 	best := cutCanvas(inputs, state, nil)
@@ -74,7 +96,7 @@ func columnWidths(content *Content, cvsWidth int) []columnWidth {
 		last = cut
 	}
 	res = append(res, columnWidth(cvsWidth-last))
-	return res
+	return res, nil
 }
 
 // cutState uniquely identifies a state in the cutting process.
@@ -85,7 +107,7 @@ type cutState struct {
 
 	// remWidth is the total remaining width of the canvas for the current
 	// column and all the following columns.
-	remWidth int
+	remWidth columnWidth
 }
 
 // bestCuts is the best result for a particular cutState.
@@ -105,7 +127,7 @@ type cutCanvasInputs struct {
 	content *Content
 
 	// cvsWidth is the width of the canvas that is available for the data.
-	cvsWidth int
+	cvsWidth columnWidth
 
 	// columns indicates the total number of columns in the table.
 	columns int
@@ -115,6 +137,8 @@ type cutCanvasInputs struct {
 	best map[cutState]int
 }
 
+// cutCanvas cuts the canvas width to a number of rows optimizing for the
+// smallest possible number of trimmed rows.
 func cutCanvas(inputs *cutCanvasInputs, state *cutState, cuts []int) *bestCuts {
 	minCost := math.MaxInt32
 	var minCuts []int
@@ -127,7 +151,7 @@ func cutCanvas(inputs *cutCanvasInputs, state *cutState, cuts []int) *bestCuts {
 		}
 	}
 
-	for colWidth := 1; colWidth < state.remWidth; colWidth++ {
+	for colWidth := columnWidth(1); colWidth < state.remWidth; colWidth++ {
 		diff := inputs.cvsWidth - state.remWidth
 		idxThisCut := diff + colWidth
 		costThisCut := trimmedRows(inputs.content, state.colIdx, colWidth)
@@ -135,7 +159,7 @@ func cutCanvas(inputs *cutCanvasInputs, state *cutState, cuts []int) *bestCuts {
 			colIdx:   nextColIdx,
 			remWidth: state.remWidth - colWidth,
 		}
-		nextCuts := append(cuts, idxThisCut)
+		nextCuts := append(cuts, int(idxThisCut))
 
 		// Use the memoized result if available.
 		var nextBest *bestCuts
@@ -160,21 +184,90 @@ func cutCanvas(inputs *cutCanvasInputs, state *cutState, cuts []int) *bestCuts {
 	}
 }
 
+// widthsTrimCell asserts whether there is at least one cell in the content
+// whose data gets trimmed when using the specified column widths.
+func widthsTrimCell(content *Content, widths []columnWidth) bool {
+	for colIdx := 0; colIdx < int(content.cols); colIdx++ {
+		if trimmed := trimmedRows(content, colIdx, widths[colIdx]); trimmed > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // trimmedRows returns the number of rows that will have data cells with
 // trimmed content in column of the specified index if the assigned width of
 // the column is colWidth.
-func trimmedRows(content *Content, colIdx int, colWidth int) int {
+func trimmedRows(content *Content, colIdx int, colWidth columnWidth) int {
 	trimmed := 0
 	for _, row := range content.rows {
 		tgtCell := row.cells[colIdx]
-		if !tgtCell.trimmed {
+		if !tgtCell.trimmable {
 			// Cells that have wrapping enabled are never trimmed and so have
 			// no influence on the calculated column widths.
 			continue
 		}
-		if tgtCell.width > colWidth {
+		if tgtCell.width > int(colWidth) {
 			trimmed++
 		}
 	}
 	return trimmed
+}
+
+// splitToPercent splits the canvas widths to columns each having the assigned
+// percentage of the width.
+func splitToPercent(cvsWidth int, widthsPercent []int) ([]columnWidth, error) {
+	if cvsWidth == 0 {
+		return nil, errors.New("unable to split canvas of zero width to columns")
+	}
+	if len(widthsPercent) == 0 {
+		return nil, errors.New("at least one width percentage must be provided")
+	}
+	if got := len(widthsPercent); got > cvsWidth {
+		return nil, fmt.Errorf("the canvas width %d must be at least equal to the number of columns %d, so that each column gets at least one cell", cvsWidth, got)
+	}
+
+	var res []columnWidth
+	remaining := cvsWidth
+	for i := 0; i < len(widthsPercent)-1; i++ {
+		perc := widthsPercent[i]
+		var adjPerc float64
+		if remaining < cvsWidth {
+			ofOrig := float64(cvsWidth) / 100 * float64(perc)
+			adjPerc = ofOrig / float64(remaining) * 100
+		} else {
+			adjPerc = float64(perc)
+		}
+		cur := int(math.Floor(float64(remaining) / 100 * adjPerc))
+
+		colsAfter := len(widthsPercent) - i - 1
+		if remAfter := remaining - cur; remAfter < colsAfter {
+			diff := colsAfter - remAfter
+			// Leave at least one cell for each remaining column.
+			cur -= diff
+		}
+
+		if cur < 1 {
+			// At least one cell per column.
+			cur = 1
+		}
+		res = append(res, columnWidth(cur))
+		remaining -= cur
+	}
+
+	res = append(res, columnWidth(remaining))
+	return res, nil
+}
+
+// splitEqually splits the canvas to equal columns.
+func splitEqually(cvsWidth, columns int) []columnWidth {
+	each := cvsWidth / columns
+	var res []columnWidth
+	sum := 0
+	for i := 0; i < columns-1; i++ {
+		res = append(res, columnWidth(each))
+		sum += each
+	}
+	res = append(res, columnWidth(cvsWidth-sum))
+	return res
 }

@@ -14,7 +14,7 @@
 
 package table
 
-// layout_width.go calculates widths of table columns.
+// layout_widths.go calculates widths of table columns.
 
 import (
 	"errors"

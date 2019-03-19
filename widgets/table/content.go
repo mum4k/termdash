@@ -283,6 +283,7 @@ func (c *Content) addRow(row *Row) error {
 	row.hierarchical.parent = c.opts.hierarchical
 	for _, tableCell := range row.cells {
 		tableCell.hierarchical.parent = row.hierarchical
+		tableCell.trimmable = tableCell.hierarchical.getWrapMode() == wrap.Never
 		for _, tableData := range tableCell.data {
 			for _, dataCell := range tableData.cells {
 				if !dataCell.Opts.IsDefault() {

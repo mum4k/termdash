@@ -169,7 +169,7 @@ func TestColumnWidths(t *testing.T) {
 			want:     []columnWidth{1, 3},
 		},
 		{
-			desc:    "cells that wrap aren't accounted for",
+			desc:    "cells that wrap aren't accounted for, wrap configured at cell level",
 			columns: Columns(2),
 			rows: []*Row{
 				NewRow(
@@ -199,6 +199,29 @@ func TestColumnWidths(t *testing.T) {
 						CellWrapAtWords(),
 					),
 				),
+			},
+			cvsWidth: 4,
+			want:     []columnWidth{2, 2},
+		},
+		{
+			desc:    "cells that wrap aren't accounted for, wrap configured at content level",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("ab"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell("a"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell(""),
+					NewCell("cde"),
+				),
+			},
+			opts: []ContentOption{
+				WrapAtWords(),
 			},
 			cvsWidth: 4,
 			want:     []columnWidth{2, 2},

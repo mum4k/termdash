@@ -187,9 +187,6 @@ func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 	for _, opt := range opts {
 		opt.set(c)
 	}
-
-	// We trim when we don't wrap.
-	c.trimmable = c.hierarchical.getWrapMode() == wrap.Never
 	return c
 }
 

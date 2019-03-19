@@ -51,7 +51,7 @@ project reaches version 1.0.0. Any breaking changes will be published in the
 
 To install this library, run the following:
 
-```
+```go
 go get -u github.com/mum4k/termdash
 ```
 
@@ -61,7 +61,7 @@ The usage of most of these elements is demonstrated in
 [termdashdemo.go](termdashdemo/termdashdemo.go). To execute the demo:
 
 
-```
+```go
 go run github.com/mum4k/termdash/termdashdemo/termdashdemo.go
 ```
 

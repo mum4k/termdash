@@ -84,3 +84,13 @@ func NewData(text string, opts ...DataOption) *Data {
 		cells: cells,
 	}
 }
+
+// newCombinedData returns a Data instance that combines cells from all the
+// data instances passed in.
+func newCombinedData(data []*Data) *Data {
+	res := &Data{}
+	for _, d := range data {
+		res.cells = append(res.cells, d.cells...)
+	}
+	return res
+}

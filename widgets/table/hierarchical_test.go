@@ -327,10 +327,8 @@ func TestDataCellOpts(t *testing.T) {
 			var got []*cell.Options
 			for _, row := range c.rows {
 				for _, tableCell := range row.cells {
-					for _, tableData := range tableCell.data {
-						for _, dataCell := range tableData.cells {
-							got = append(got, dataCell.Opts)
-						}
+					for _, dataCell := range tableCell.data.cells {
+						got = append(got, dataCell.Opts)
 					}
 				}
 			}

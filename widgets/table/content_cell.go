@@ -17,7 +17,6 @@ package table
 // content_cell.go defines a type that represents a single cell in the table.
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/mum4k/termdash/align"
@@ -140,12 +139,16 @@ func CellWrapAtWords() CellOption {
 // Cell is one cell in a Row.
 type Cell struct {
 	// data are the text data in the cell.
-	data []*Data
+	data *Data
 	// width is the width of the data when draws on canvas.
 	width int
 	// trimmable indicates if the content of this cell would be trimmed if it
 	// doesn't fit the columns width.
 	trimmable bool
+
+	// wrapped contains the cell data wrapped to lines according to the last
+	// known column width.
+	wrapped [][]*buffer.Cell
 
 	// colSpan specified how many columns does this cell span.
 	colSpan int
@@ -157,11 +160,7 @@ type Cell struct {
 
 // String implements fmt.Stringer.
 func (c *Cell) String() string {
-	var b bytes.Buffer
-	for _, d := range c.data {
-		b.WriteString(d.String())
-	}
-	return fmt.Sprintf("| %v ", b.String())
+	return fmt.Sprintf("| %v ", c.data.String())
 }
 
 // NewCell returns a new Cell with the provided text.
@@ -178,7 +177,7 @@ func NewCell(text string) *Cell {
 // NewCellWithOpts returns a new Cell with the provided data and options.
 func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 	c := &Cell{
-		data:         data,
+		data:         newCombinedData(data),
 		width:        dataWidth(data),
 		colSpan:      1,
 		rowSpan:      1,
@@ -188,6 +187,15 @@ func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 		opt.set(c)
 	}
 	return c
+}
+
+// wrapToWidth wraps the cell's content to the specified column width.
+// This populates c.wrapped.
+func (c *Cell) wrapToWidth(cvsWidth int) error {
+	if c.hierarchical.getWrapMode() == wrap.Never {
+		return nil
+	}
+	return nil
 }
 
 // dataWidth returns the width of all the runes in this cell when they are printed

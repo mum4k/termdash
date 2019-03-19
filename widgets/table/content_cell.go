@@ -148,7 +148,7 @@ type Cell struct {
 
 	// wrapped contains the cell data wrapped to lines according to the last
 	// known column width.
-	wrapped [][]*buffer.Cell
+	wrapped []*Data
 
 	// colSpan specified how many columns does this cell span.
 	colSpan int
@@ -191,9 +191,29 @@ func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 
 // wrapToWidth wraps the cell's content to the specified column width.
 // This populates c.wrapped.
-func (c *Cell) wrapToWidth(cvsWidth int) error {
-	if c.hierarchical.getWrapMode() == wrap.Never {
+func (c *Cell) wrapToWidth(cw columnWidth) error {
+	c.wrapped = nil
+	if buffer.CellsWidth(c.data.cells) == 0 {
+		// No content so nothing to wrap.
 		return nil
+	}
+
+	mode := c.hierarchical.getWrapMode()
+	if mode == wrap.Never {
+		// No wrapping enabled, all data will be in a single line.
+		c.wrapped = []*Data{
+			newDataCells(c.data.cells),
+		}
+		return nil
+	}
+
+	w, err := wrap.Cells(c.data.cells, int(cw), mode)
+	if err != nil {
+		return err
+	}
+
+	for _, line := range w {
+		c.wrapped = append(c.wrapped, newDataCells(line))
 	}
 	return nil
 }

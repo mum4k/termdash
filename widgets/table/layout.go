@@ -17,7 +17,6 @@ package table
 // layout.go stores layout calculated for a canvas size.
 
 import (
-	"errors"
 	"image"
 )
 
@@ -30,11 +29,32 @@ type contentLayout struct {
 	// columnWidths are the widths of individual columns in the table.
 	columnWidths []columnWidth
 
-	// Details about HV lines that are the borders.
+	// TODO: Details about HV lines that are the borders.
 }
 
 // newContentLayout calculates new layout for the content when drawn on a
 // canvas represented with the provided area.
 func newContentLayout(content *Content, cvsAr image.Rectangle) (*contentLayout, error) {
-	return nil, errors.New("unimplemented")
+	// TODO: Space for border and horizontal padding / spacing.
+	cvsWidth := cvsAr.Dx()
+	colWidths, err := columnWidths(content, cvsWidth)
+	if err != nil {
+		return nil, err
+	}
+
+	// Wrap content in all cells that have wrapping configured.
+	for _, tRow := range content.rows {
+		for colIdx, tCell := range tRow.cells {
+			// TODO: Account for colSpan.
+			cw := colWidths[colIdx]
+			if err := tCell.wrapToWidth(cw); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return &contentLayout{
+		lastCvsAr:    cvsAr,
+		columnWidths: colWidths,
+	}, nil
 }

@@ -85,6 +85,13 @@ func NewData(text string, opts ...DataOption) *Data {
 	}
 }
 
+// newDataCells returns a new Data instance with the provided cells.
+func newDataCells(cells []*buffer.Cell) *Data {
+	return &Data{
+		cells: cells,
+	}
+}
+
 // newCombinedData returns a Data instance that combines cells from all the
 // data instances passed in.
 func newCombinedData(data []*Data) *Data {

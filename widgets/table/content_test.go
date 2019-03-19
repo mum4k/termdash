@@ -326,8 +326,15 @@ func TestContent(t *testing.T) {
 			},
 			wantSubstr: "invalid data",
 		},
-		// Test inheritance of all hierarchical options.
-		// Test inheritance of cell options to data when they have and don't have their own.
+		{
+			desc:    "succeeds when data contain empty string",
+			columns: Columns(1),
+			rows: []*Row{
+				NewRow(
+					NewCell(""),
+				),
+			},
+		},
 	}
 
 	for _, tc := range tests {

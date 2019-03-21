@@ -735,6 +735,40 @@ func TestSegmentDisplay(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc: "regression for #174, protects against external data mutation",
+			opts: []Option{
+				GapPercent(0),
+			},
+			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows),
+			update: func(sd *SegmentDisplay) error {
+				chunks := []*TextChunk{NewChunk("123")}
+				if err := sd.Write(chunks); err != nil {
+					return err
+				}
+				// Mutates and adds unsupported characters.
+				chunks[0] = NewChunk("\r\t")
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				for _, tc := range []struct {
+					char rune
+					area image.Rectangle
+				}{
+					{'1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows)},
+					{'2', image.Rect(sixteen.MinCols, 0, sixteen.MinCols*2, sixteen.MinRows)},
+					{'3', image.Rect(sixteen.MinCols*2, 0, sixteen.MinCols*3, sixteen.MinRows)},
+				} {
+					mustDrawChar(cvs, tc.char, tc.area)
+				}
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

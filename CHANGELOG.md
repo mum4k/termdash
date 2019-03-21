@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not just received them.
 - Container focus tracker now correctly tracks focus changes in enlarged areas,
   i.e. when the terminal size increased.
+- The BarChart, LineChart and SegmentDisplay widgets now protect against
+  external mutation of the values passed into them by copying the data they
+  receive.
 
 #### Breaking API changes
 

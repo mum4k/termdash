@@ -68,6 +68,11 @@ type YScale struct {
 	brailleHeight int
 }
 
+// String implements fmt.Stringer.
+func (ys *YScale) String() string {
+	return fmt.Sprintf("YScale{Min:%v, Max:%v, Step:%v, GraphHeight:%v}", ys.Min, ys.Max, ys.Step, ys.GraphHeight)
+}
+
 // NewYScale calculates the scale of the Y axis, given the boundary values and
 // the height of the graph. The nonZeroDecimals dictates rounding of the
 // calculated scale, see NewValue for details.

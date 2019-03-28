@@ -38,8 +38,6 @@ type contentOptions struct {
 	border              linestyle.LineStyle
 	borderCellOpts      []cell.Option
 	columnWidthsPercent []int
-	horizontalSpacing   *int
-	verticalSpacing     *int
 
 	// hierarchical are the specified hierarchical options at the content
 	// level.
@@ -56,24 +54,6 @@ func newContentOptions(opts ...ContentOption) *contentOptions {
 		opt.set(co)
 	}
 	return co
-}
-
-// getHorizontalSpacing returns the user provided horizontal spacing value or
-// zero if unset.
-func (co *contentOptions) getHorizontalSpacing() int {
-	if co.horizontalSpacing != nil {
-		return *co.horizontalSpacing
-	}
-	return 0
-}
-
-// getVerticalSpacing returns the user provided vertical spacing value or
-// zero if unset.
-func (co *contentOptions) getVerticalSpacing() int {
-	if co.verticalSpacing != nil {
-		return *co.verticalSpacing
-	}
-	return 0
 }
 
 // contentOption implements ContentOption.
@@ -109,26 +89,6 @@ func BorderCellOpts(cellOpts ...cell.Option) ContentOption {
 func ColumnWidthsPercent(widths ...int) ContentOption {
 	return contentOption(func(cOpts *contentOptions) {
 		cOpts.columnWidthsPercent = widths
-	})
-}
-
-// HorizontalSpacing sets the horizontal space between cells as the number
-// of cells on the terminal that are left empty.
-// The value must be a non-zero positive integer.
-// Defaults to zero cells.
-func HorizontalSpacing(cells int) ContentOption {
-	return contentOption(func(cOpts *contentOptions) {
-		cOpts.horizontalSpacing = &cells
-	})
-}
-
-// VerticalSpacing sets the vertical space between cells as the number
-// of cells on the terminal that are left empty.
-// The value must be a non-zero positive integer.
-// Defaults to zero cells.
-func VerticalSpacing(cells int) ContentOption {
-	return contentOption(func(cOpts *contentOptions) {
-		cOpts.verticalSpacing = &cells
 	})
 }
 
@@ -270,10 +230,17 @@ func (c *Content) validate() error {
 	return validateContent(c)
 }
 
-// AddRow adds a row to the content.
-// If you need to apply options at the Row level, use AddRowWithOpts.
-func (c *Content) AddRow(cells ...*Cell) error {
-	return c.AddRowWithOpts(cells)
+// AddRows adds the rows to the content.
+func (c *Content) AddRows(rows []*Row) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for _, row := range rows {
+		if err := c.addRow(row); err != nil {
+			return err
+		}
+	}
+	return c.validate()
 }
 
 // addRow adds the row to the content.
@@ -301,15 +268,4 @@ func (c *Content) addRow(row *Row) error {
 		c.rows = append(c.rows, row)
 	}
 	return nil
-}
-
-// AddRowWithOpts adds a row to the content and applies the options.
-func (c *Content) AddRowWithOpts(cells []*Cell, opts ...RowOption) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if err := c.addRow(NewRowWithOpts(cells, opts...)); err != nil {
-		return err
-	}
-	return c.validate()
 }

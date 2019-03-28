@@ -58,3 +58,18 @@ func newContentLayout(content *Content, cvsAr image.Rectangle) (*contentLayout, 
 		columnWidths: colWidths,
 	}, nil
 }
+
+/*
+TODO:
+- given cvsWidth, determine space available to cells (minus border and padding).
+- columnWidths to account for padding
+- calculate column widths
+
+- each row should report its required height - accounting for content of cells + padding
+- process to draw row by row - top down and bottom up, account for when doesn't fit.
+
+- func: given a cell - give me its area
+- each cell - draw itself on a canvas, best effort on size.
+
+- ensure content copies data given by the user to prevent races.
+*/

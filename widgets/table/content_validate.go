@@ -29,12 +29,6 @@ func validateContent(content *Content) error {
 	if got, min := int(content.cols), 1; got < min {
 		return fmt.Errorf("invalid number of columns %d, must be a value in range %d <= v", got, min)
 	}
-	if got, min := content.opts.horizontalSpacing, 1; got != nil && *got < min {
-		return fmt.Errorf("invalid horizontal spacing %d, must be a value in range %d <= v", *got, min)
-	}
-	if got, min := content.opts.verticalSpacing, 1; got != nil && *got < min {
-		return fmt.Errorf("invalid vertical spacing %d, must be a value in range %d <= v", *got, min)
-	}
 
 	if got := len(content.opts.columnWidthsPercent); got > 0 {
 		if want := int(content.cols); got != want {
@@ -53,9 +47,6 @@ func validateContent(content *Content) error {
 		for _, c := range row.cells {
 			if got, min := c.colSpan, 1; got < min {
 				return fmt.Errorf("invalid CellColSpan %d, must be a value in range %d <= v", got, min)
-			}
-			if got, min := c.rowSpan, 1; got < min {
-				return fmt.Errorf("invalid CellRowSpan %d, must be a value in range %d <= v", got, min)
 			}
 			if err := validateHierarchical(c.hierarchical); err != nil {
 				return err

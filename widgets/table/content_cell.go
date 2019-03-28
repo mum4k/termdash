@@ -48,15 +48,6 @@ func CellColSpan(cols int) CellOption {
 	})
 }
 
-// CellRowSpan configures the number of rows this cell spans.
-// The number must be a non-zero positive integer.
-// Defaults to a cell spanning just one row.
-func CellRowSpan(rows int) CellOption {
-	return cellOption(func(c *Cell) {
-		c.rowSpan = rows
-	})
-}
-
 // CellOpts sets cell options for the cells that contain the table cells and
 // cells.
 // This is a hierarchical option, it overrides the one provided at Content or
@@ -152,8 +143,9 @@ type Cell struct {
 
 	// colSpan specified how many columns does this cell span.
 	colSpan int
-	// rowSpan specified how many rows does this cell span.
-	rowSpan int
+
+	// TODO: rowspan support.
+
 	// hierarchical are the specified hierarchical options at the cell level.
 	hierarchical *hierarchicalOptions
 }
@@ -180,7 +172,6 @@ func NewCellWithOpts(data []*Data, opts ...CellOption) *Cell {
 		data:         newCombinedData(data),
 		width:        dataWidth(data),
 		colSpan:      1,
-		rowSpan:      1,
 		hierarchical: &hierarchicalOptions{},
 	}
 	for _, opt := range opts {

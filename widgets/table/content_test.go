@@ -91,19 +91,6 @@ func TestContent(t *testing.T) {
 			wantSubstr: "invalid CellColSpan",
 		},
 		{
-			desc:    "fails on a cell that has zero rowSpan",
-			columns: Columns(1),
-			rows: []*Row{
-				NewRow(
-					NewCellWithOpts(
-						[]*Data{NewData("0")},
-						CellRowSpan(0),
-					),
-				),
-			},
-			wantSubstr: "invalid CellRowSpan",
-		},
-		{
 			desc:    "succeeds when row has a column with a colSpan",
 			columns: Columns(2),
 			rows: []*Row{
@@ -261,34 +248,6 @@ func TestContent(t *testing.T) {
 			wantSubstr: "invalid vertical padding",
 		},
 		{
-			desc:    "fails when zero vertical spacing",
-			columns: Columns(2),
-			rows: []*Row{
-				NewRow(
-					NewCell("0"),
-					NewCell("1"),
-				),
-			},
-			opts: []ContentOption{
-				VerticalSpacing(0),
-			},
-			wantSubstr: "invalid vertical spacing",
-		},
-		{
-			desc:    "fails when zero horizontal spacing",
-			columns: Columns(2),
-			rows: []*Row{
-				NewRow(
-					NewCell("0"),
-					NewCell("1"),
-				),
-			},
-			opts: []ContentOption{
-				HorizontalSpacing(0),
-			},
-			wantSubstr: "invalid horizontal spacing",
-		},
-		{
 			desc:    "fails when multiple header rows provided",
 			columns: Columns(1),
 			rows: []*Row{
@@ -350,12 +309,12 @@ func TestContent(t *testing.T) {
 	}
 }
 
-func TestAddRow(t *testing.T) {
+func TestAddRows(t *testing.T) {
 	tests := []struct {
 		desc    string
 		columns Columns
 		rows    []*Row
-		add     []*Cell
+		add     []*Row
 		wantErr bool
 	}{
 		{
@@ -366,8 +325,10 @@ func TestAddRow(t *testing.T) {
 					NewCell("0"),
 				),
 			},
-			add: []*Cell{
-				NewCell("1"),
+			add: []*Row{
+				NewRow(
+					NewCell("1"),
+				),
 			},
 		},
 		{
@@ -378,7 +339,6 @@ func TestAddRow(t *testing.T) {
 					NewCell("0"),
 				),
 			},
-			wantErr: true,
 		},
 	}
 
@@ -389,9 +349,9 @@ func TestAddRow(t *testing.T) {
 				t.Fatalf("NewContent => unexpected error: %v", err)
 			}
 			{
-				err := c.AddRow(tc.add...)
+				err := c.AddRows(tc.add)
 				if (err != nil) != tc.wantErr {
-					t.Errorf("AddRow => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+					t.Errorf("AddRows => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 				}
 			}
 		})

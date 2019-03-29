@@ -84,12 +84,6 @@ func New(t terminalapi.Terminal, opts ...Option) (*Container, error) {
 	if err := applyOptions(root, opts...); err != nil {
 		return nil, err
 	}
-
-	ar, err := root.opts.margin.apply(root.area)
-	if err != nil {
-		return nil, err
-	}
-	root.area = ar
 	return root, nil
 }
 
@@ -105,12 +99,6 @@ func newChild(parent *Container, opts []Option) (*Container, error) {
 	if err := applyOptions(child, opts...); err != nil {
 		return nil, err
 	}
-
-	ar, err := child.opts.margin.apply(child.area)
-	if err != nil {
-		return nil, err
-	}
-	child.area = ar
 	return child, nil
 }
 

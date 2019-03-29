@@ -271,6 +271,18 @@ func ID(id string) Option {
 	})
 }
 
+// Clear clears this container.
+// If the container contains a widget, the widget is removed.
+// If the container had any sub containers or splits, they are removed.
+func Clear() Option {
+	return option(func(c *Container) error {
+		c.opts.widget = nil
+		c.first = nil
+		c.second = nil
+		return nil
+	})
+}
+
 // PlaceWidget places the provided widget into the container.
 // The use of this option removes any sub containers. Containers with sub
 // containers cannot have widgets.

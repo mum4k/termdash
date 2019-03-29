@@ -59,6 +59,12 @@ type Container struct {
 	// opts are the options provided to the container.
 	opts *options
 
+	// clearNeeded indicates if the terminal needs to be cleared next time we
+	// are clearNeeded the container.
+	// This is required if the container was updated and thus the layout might
+	// have changed.
+	clearNeeded bool
+
 	// mu protects the container tree.
 	// All containers in the tree share the same lock.
 	mu *sync.Mutex
@@ -195,6 +201,13 @@ func (c *Container) Draw() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if c.clearNeeded {
+		if err := c.term.Clear(); err != nil {
+			return fmt.Errorf("term.Clear => error: %v", err)
+		}
+		c.clearNeeded = false
+	}
+
 	// Update the area we are tracking for focus in case the terminal size
 	// changed.
 	ar, err := area.FromSize(c.term.Size())
@@ -203,6 +216,37 @@ func (c *Container) Draw() error {
 	}
 	c.focusTracker.updateArea(ar)
 	return drawTree(c)
+}
+
+// Update updates container with the specified id by setting the provided
+// options. This can be used to perform dynamic layout changes, i.e. anything
+// between replacing the widget in the container and completely changing the
+// layout and splits.
+// The argument id must match exactly one container with that was created with
+// matching ID() option. The argument id must not be an empty string.
+func (c *Container) Update(id string, opts ...Option) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	target, err := findID(c, id)
+	if err != nil {
+		return err
+	}
+	c.clearNeeded = true
+
+	if err := applyOptions(target, opts...); err != nil {
+		return err
+	}
+	if err := validateOptions(c); err != nil {
+		return err
+	}
+
+	// The currently focused container might not be reachable anymore, because
+	// it was under the target. If that is so, move the focus up to the target.
+	if !c.focusTracker.reachableFrom(c) {
+		c.focusTracker.setActive(target)
+	}
+	return nil
 }
 
 // updateFocus processes the mouse event and determines if it changes the

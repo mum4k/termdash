@@ -7,21 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.2] - 25-Feb-2019
-
 ### Added
 
 - New API for building layouts, a grid.Builder. Allows defining the layout
   iteratively as repetitive Elements, Rows and Columns.
-- Test coverage for data only packages.
 - Containers now support margin around them and padding of their content.
+- Container now supports dynamic layout changes via the new Update method.
 
 ### Changed
 
 - The Text widget now supports content wrapping on word boundaries.
 - The BarChart and SparkLine widgets now have a method that returns the
   observed value capacity the last time Draw was called.
-- Refactoring packages that contained a mix of public and internal identifiers.
 - Moving widgetapi out of the internal directory to allow external users to
   develop their own widgets.
 
@@ -34,6 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The BarChart, LineChart and SegmentDisplay widgets now protect against
   external mutation of the values passed into them by copying the data they
   receive.
+
+## [0.7.2] - 25-Feb-2019
+
+### Added
+
+- Test coverage for data only packages.
+
+### Changed
+
+- Refactoring packages that contained a mix of public and internal identifiers.
 
 #### Breaking API changes
 

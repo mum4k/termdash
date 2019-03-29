@@ -53,6 +53,7 @@ type Container struct {
 	focusTracker *focusTracker
 
 	// area is the area of the terminal this container has access to.
+	// Initialized the first time Draw is called.
 	area image.Rectangle
 
 	// opts are the options provided to the container.
@@ -72,11 +73,8 @@ func (c *Container) String() string {
 // New returns a new root container that will use the provided terminal and
 // applies the provided options.
 func New(t terminalapi.Terminal, opts ...Option) (*Container, error) {
-	size := t.Size()
 	root := &Container{
 		term: t,
-		// The root container has access to the entire terminal.
-		area: image.Rect(0, 0, size.X, size.Y),
 		opts: newOptions( /* parent = */ nil),
 		mu:   &sync.Mutex{},
 	}
@@ -96,12 +94,11 @@ func New(t terminalapi.Terminal, opts ...Option) (*Container, error) {
 }
 
 // newChild creates a new child container of the given parent.
-func newChild(parent *Container, area image.Rectangle, opts []Option) (*Container, error) {
+func newChild(parent *Container, opts []Option) (*Container, error) {
 	child := &Container{
 		parent:       parent,
 		term:         parent.term,
 		focusTracker: parent.focusTracker,
-		area:         area,
 		opts:         newOptions(parent.opts),
 		mu:           parent.mu,
 	}
@@ -184,11 +181,7 @@ func (c *Container) split() (image.Rectangle, image.Rectangle, error) {
 
 // createFirst creates and returns the first sub container of this container.
 func (c *Container) createFirst(opts []Option) error {
-	ar, _, err := c.split()
-	if err != nil {
-		return err
-	}
-	first, err := newChild(c, ar, opts)
+	first, err := newChild(c, opts)
 	if err != nil {
 		return err
 	}
@@ -198,11 +191,7 @@ func (c *Container) createFirst(opts []Option) error {
 
 // createSecond creates and returns the second sub container of this container.
 func (c *Container) createSecond(opts []Option) error {
-	_, ar, err := c.split()
-	if err != nil {
-		return err
-	}
-	second, err := newChild(c, ar, opts)
+	second, err := newChild(c, opts)
 	if err != nil {
 		return err
 	}

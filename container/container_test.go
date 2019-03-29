@@ -1132,6 +1132,10 @@ func TestKeyboard(t *testing.T) {
 			})
 
 			c.Subscribe(eds)
+			// Initial draw to determine sizes of containers.
+			if err := c.Draw(); err != nil {
+				t.Fatalf("Draw => unexpected error: %v", err)
+			}
 			for _, eg := range tc.eventGroups {
 				for _, ev := range eg.events {
 					eds.Event(ev)
@@ -1791,6 +1795,10 @@ func TestMouse(t *testing.T) {
 				eh.handle(ev.(*terminalapi.Error).Error())
 			})
 			c.Subscribe(eds)
+			// Initial draw to determine sizes of containers.
+			if err := c.Draw(); err != nil {
+				t.Fatalf("Draw => unexpected error: %v", err)
+			}
 			for _, ev := range tc.events {
 				eds.Event(ev)
 			}

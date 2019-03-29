@@ -35,7 +35,11 @@ func applyOptions(c *Container, opts ...Option) error {
 			return err
 		}
 	}
+	return nil
+}
 
+// validateOptions validates options set in the container tree.
+func validateOptions(c *Container) error {
 	// ensure all the container identifiers are either empty or unique.
 	var errStr string
 	seenID := map[string]bool{}

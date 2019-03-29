@@ -84,6 +84,9 @@ func New(t terminalapi.Terminal, opts ...Option) (*Container, error) {
 	if err := applyOptions(root, opts...); err != nil {
 		return nil, err
 	}
+	if err := validateOptions(root); err != nil {
+		return nil, err
+	}
 	return root, nil
 }
 

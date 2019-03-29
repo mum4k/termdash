@@ -404,6 +404,29 @@ func TestNew(t *testing.T) {
 			wantContainerErr: true,
 		},
 		{
+			desc:     "fails on empty ID specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, ID(""))
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on empty duplicate ID specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					ID("0"),
+					SplitHorizontal(
+						Top(ID("1")),
+						Bottom(ID("1")),
+					),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
 			desc:     "empty container",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

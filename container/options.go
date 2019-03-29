@@ -17,6 +17,7 @@ package container
 // options.go defines container options.
 
 import (
+	"errors"
 	"fmt"
 	"image"
 
@@ -27,12 +28,30 @@ import (
 	"github.com/mum4k/termdash/widgetapi"
 )
 
-// applyOptions applies the options to the container.
+// applyOptions applies the options to the container and validates them.
 func applyOptions(c *Container, opts ...Option) error {
 	for _, opt := range opts {
 		if err := opt.set(c); err != nil {
 			return err
 		}
+	}
+
+	// ensure all the container identifiers are either empty or unique.
+	var errStr string
+	seenID := map[string]bool{}
+	preOrder(c, &errStr, func(c *Container) error {
+		if c.opts.id == "" {
+			return nil
+		}
+
+		if seenID[c.opts.id] {
+			return fmt.Errorf("duplicate container ID %q", c.opts.id)
+		}
+		seenID[c.opts.id] = true
+		return nil
+	})
+	if errStr != "" {
+		return errors.New(errStr)
 	}
 	return nil
 }
@@ -45,6 +64,9 @@ type Option interface {
 
 // options stores the options provided to the container.
 type options struct {
+	// id is the identifier provided by the user.
+	id string
+
 	// inherited are options that are inherited by child containers.
 	inherited inherited
 
@@ -228,6 +250,20 @@ func SplitHorizontal(t TopOption, b BottomOption, opts ...SplitOption) Option {
 		}
 
 		return c.createSecond(b.bOpts())
+	})
+}
+
+// ID sets an identifier for this container.
+// This ID can be later used to perform dynamic layout changes by passing new
+// options to this container. When provided, it must be a non-empty string that
+// is unique among all the containers.
+func ID(id string) Option {
+	return option(func(c *Container) error {
+		if id == "" {
+			return errors.New("the ID cannot be an empty string")
+		}
+		c.opts.id = id
+		return nil
 	})
 }
 

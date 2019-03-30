@@ -241,7 +241,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 			},
-			wantProcessed: 3,
+			wantProcessed: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -359,7 +359,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
 			},
-			wantProcessed: 4,
+			wantProcessed: 3,
 			after: func(eh *eventHandlers) error {
 				want := terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp}
 				if diff := pretty.Compare(want, eh.mouseSub.get()); diff != "" {

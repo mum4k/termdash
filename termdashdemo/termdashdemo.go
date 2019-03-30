@@ -463,8 +463,7 @@ func main() {
 	}
 	w.buttons = lb
 
-	//gridOpts, err := gridLayout(w, layoutAll) // equivalent to contLayout(w)
-	gridOpts, err := contLayout(w) // equivalent to contLayout(w)
+	gridOpts, err := gridLayout(w, layoutAll) // equivalent to contLayout(w)
 	if err != nil {
 		panic(err)
 	}

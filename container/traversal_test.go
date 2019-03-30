@@ -165,3 +165,63 @@ func TestTraversal(t *testing.T) {
 		})
 	}
 }
+
+func TestFindID(t *testing.T) {
+	tests := []struct {
+		desc      string
+		container func(ft *faketerm.Terminal) (*Container, error)
+		id        string
+		wantFound bool
+		wantErr   bool
+	}{
+		{
+			desc: "fails when searching with empty ID",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft)
+			},
+			wantErr: true,
+		},
+		{
+			desc: "no container with the specified ID",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft)
+			},
+			id:      "mycont",
+			wantErr: true,
+		},
+		{
+			desc: "finds the container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(ft, ID("mycont"))
+			},
+			id:        "mycont",
+			wantFound: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			ft, err := faketerm.New(image.Point{10, 10})
+			if err != nil {
+				t.Fatalf("faketerm.New => unexpected error: %v", err)
+			}
+
+			cont, err := tc.container(ft)
+			if err != nil {
+				t.Fatalf("tc.container => unexpected error: %v", err)
+			}
+
+			got, err := findID(cont, tc.id)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("findID => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if (got != nil) != tc.wantFound {
+				t.Errorf("findID returned %v, wantFound: %v", got, tc.wantFound)
+			}
+		})
+	}
+}

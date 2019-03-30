@@ -953,14 +953,6 @@ func TestNew(t *testing.T) {
 
 }
 
-// eventGroup is a group of events to be delivered with synchronization.
-// I.e. the test execution waits until the specified number is processed before
-// proceeding with test execution.
-type eventGroup struct {
-	events        []terminalapi.Event
-	wantProcessed int
-}
-
 // errorHandler just stores the last error received.
 type errorHandler struct {
 	err error
@@ -981,12 +973,15 @@ func (eh *errorHandler) handle(err error) {
 
 func TestKeyboard(t *testing.T) {
 	tests := []struct {
-		desc        string
-		termSize    image.Point
-		container   func(ft *faketerm.Terminal) (*Container, error)
-		eventGroups []*eventGroup
-		want        func(size image.Point) *faketerm.Terminal
-		wantErr     bool
+		desc      string
+		termSize  image.Point
+		container func(ft *faketerm.Terminal) (*Container, error)
+		events    []terminalapi.Event
+		// If specified, waits for this number of events.
+		// Otherwise waits for len(events).
+		wantProcessed int
+		want          func(size image.Point) *faketerm.Terminal
+		wantErr       bool
 	}{
 		{
 			desc:     "event not forwarded if container has no widget",
@@ -994,13 +989,8 @@ func TestKeyboard(t *testing.T) {
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(ft)
 			},
-			eventGroups: []*eventGroup{
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Keyboard{Key: keyboard.KeyEnter},
-					},
-					wantProcessed: 0,
-				},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
@@ -1029,24 +1019,13 @@ func TestKeyboard(t *testing.T) {
 					),
 				)
 			},
-			eventGroups: []*eventGroup{
+			events: []terminalapi.Event{
 				// Move focus to the target container.
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonLeft},
-						&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonRelease},
-					},
-					wantProcessed: 2,
-				},
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonRelease},
 				// Send the keyboard event.
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Keyboard{Key: keyboard.KeyEnter},
-					},
-					wantProcessed: 5,
-				},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
-
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -1095,24 +1074,13 @@ func TestKeyboard(t *testing.T) {
 					),
 				)
 			},
-			eventGroups: []*eventGroup{
+			events: []terminalapi.Event{
 				// Move focus to the target container.
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonLeft},
-						&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonRelease},
-					},
-					wantProcessed: 2,
-				},
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonRelease},
 				// Send the keyboard event.
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Keyboard{Key: keyboard.KeyEnter},
-					},
-					wantProcessed: 5,
-				},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
-
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -1151,13 +1119,8 @@ func TestKeyboard(t *testing.T) {
 					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeNone})),
 				)
 			},
-			eventGroups: []*eventGroup{
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Keyboard{Key: keyboard.KeyEnter},
-					},
-					wantProcessed: 0,
-				},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1179,14 +1142,10 @@ func TestKeyboard(t *testing.T) {
 					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
 				)
 			},
-			eventGroups: []*eventGroup{
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Keyboard{Key: keyboard.KeyEsc},
-					},
-					wantProcessed: 2,
-				},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyEsc},
 			},
+			wantProcessed: 2, // The error is also an event.
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -1225,18 +1184,23 @@ func TestKeyboard(t *testing.T) {
 			if err := c.Draw(); err != nil {
 				t.Fatalf("Draw => unexpected error: %v", err)
 			}
-			for _, eg := range tc.eventGroups {
-				for _, ev := range eg.events {
-					eds.Event(ev)
+			for _, ev := range tc.events {
+				eds.Event(ev)
+			}
+			var wantEv int
+			if tc.wantProcessed != 0 {
+				wantEv = tc.wantProcessed
+			} else {
+				wantEv = len(tc.events)
+			}
+
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if got, want := eds.Processed(), wantEv; got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
 				}
-				if err := testevent.WaitFor(5*time.Second, func() error {
-					if got, want := eds.Processed(), eg.wantProcessed; got != want {
-						return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
-					}
-					return nil
-				}); err != nil {
-					t.Fatalf("testevent.WaitFor => %v", err)
-				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 
 			if err := c.Draw(); err != nil {
@@ -1256,12 +1220,14 @@ func TestKeyboard(t *testing.T) {
 
 func TestMouse(t *testing.T) {
 	tests := []struct {
-		desc          string
-		termSize      image.Point
-		container     func(ft *faketerm.Terminal) (*Container, error)
-		events        []terminalapi.Event
-		want          func(size image.Point) *faketerm.Terminal
+		desc      string
+		termSize  image.Point
+		container func(ft *faketerm.Terminal) (*Container, error)
+		events    []terminalapi.Event
+		// If specified, waits for this number of events.
+		// Otherwise waits for len(events).
 		wantProcessed int
+		want          func(size image.Point) *faketerm.Terminal
 		wantErr       bool
 	}{
 		{
@@ -1287,7 +1253,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 4,
 		},
 		{
 			desc:     "event not forwarded if container has no widget",
@@ -1302,7 +1267,6 @@ func TestMouse(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "event forwarded to container at that point",
@@ -1356,7 +1320,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 8,
 		},
 		{
 			desc:     "event focuses the target container after terminal resize (falls onto the new area), regression for #169",
@@ -1437,7 +1400,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 8,
 		},
 		{
 			desc:     "event not forwarded if the widget didn't request it",
@@ -1461,7 +1423,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 1,
 		},
 		{
 			desc:     "MouseScopeWidget, event not forwarded if it falls on the container's border",
@@ -1496,7 +1457,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeContainer, event forwarded if it falls on the container's border",
@@ -1532,7 +1492,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeGlobal, event forwarded if it falls on the container's border",
@@ -1568,7 +1527,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeWidget event not forwarded if it falls outside of widget's canvas",
@@ -1599,7 +1557,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeContainer event forwarded if it falls outside of widget's canvas",
@@ -1631,7 +1588,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeGlobal event forwarded if it falls outside of widget's canvas",
@@ -1663,7 +1619,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeWidget event not forwarded if it falls to another container",
@@ -1699,7 +1654,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeContainer event not forwarded if it falls to another container",
@@ -1735,7 +1689,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "MouseScopeGlobal event forwarded if it falls to another container",
@@ -1772,7 +1725,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "mouse position adjusted relative to widget's canvas, vertical offset",
@@ -1804,10 +1756,9 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
-			desc:     "mouse poisition adjusted relative to widget's canvas, horizontal offset",
+			desc:     "mouse position adjusted relative to widget's canvas, horizontal offset",
 			termSize: image.Point{30, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
@@ -1836,7 +1787,6 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 2,
 		},
 		{
 			desc:     "widget returns an error when processing the event",
@@ -1850,6 +1800,7 @@ func TestMouse(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRight},
 			},
+			wantProcessed: 2, // The error is also an event.
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
@@ -1860,8 +1811,7 @@ func TestMouse(t *testing.T) {
 				)
 				return ft
 			},
-			wantProcessed: 3,
-			wantErr:       true,
+			wantErr: true,
 		},
 	}
 
@@ -1891,8 +1841,15 @@ func TestMouse(t *testing.T) {
 			for _, ev := range tc.events {
 				eds.Event(ev)
 			}
+			var wantEv int
+			if tc.wantProcessed != 0 {
+				wantEv = tc.wantProcessed
+			} else {
+				wantEv = len(tc.events)
+			}
+
 			if err := testevent.WaitFor(5*time.Second, func() error {
-				if got, want := eds.Processed(), tc.wantProcessed; got != want {
+				if got, want := eds.Processed(), wantEv; got != want {
 					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
 				}
 				return nil
@@ -1922,8 +1879,10 @@ func TestUpdate(t *testing.T) {
 		container  func(ft *faketerm.Terminal) (*Container, error)
 		updateID   string
 		updateOpts []Option
-		// eventGroups are events delivered before the update.
-		eventGroups   []*eventGroup
+		// events are events delivered before the update.
+		beforeEvents []terminalapi.Event
+		// events are events delivered after the update.
+		afterEvents   []terminalapi.Event
 		wantUpdateErr bool
 		want          func(size image.Point) *faketerm.Terminal
 	}{
@@ -2157,16 +2116,11 @@ func TestUpdate(t *testing.T) {
 					),
 				)
 			},
-			eventGroups: []*eventGroup{
+			beforeEvents: []terminalapi.Event{
 				// Move focus to container with ID "right".
 				// It will continue to exist after the update.
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Mouse{Position: image.Point{5, 0}, Button: mouse.ButtonLeft},
-						&terminalapi.Mouse{Position: image.Point{5, 0}, Button: mouse.ButtonRelease},
-					},
-					wantProcessed: 2,
-				},
+				&terminalapi.Mouse{Position: image.Point{5, 0}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{5, 0}, Button: mouse.ButtonRelease},
 			},
 			updateID: "right",
 			updateOpts: []Option{
@@ -2210,16 +2164,11 @@ func TestUpdate(t *testing.T) {
 					),
 				)
 			},
-			eventGroups: []*eventGroup{
+			beforeEvents: []terminalapi.Event{
 				// Move focus to container with ID "rightTop".
 				// It will be destroyed by calling update.
-				{
-					events: []terminalapi.Event{
-						&terminalapi.Mouse{Position: image.Point{6, 1}, Button: mouse.ButtonLeft},
-						&terminalapi.Mouse{Position: image.Point{6, 1}, Button: mouse.ButtonRelease},
-					},
-					wantProcessed: 2,
-				},
+				&terminalapi.Mouse{Position: image.Point{6, 1}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{6, 1}, Button: mouse.ButtonRelease},
 			},
 			updateID: "right",
 			updateOpts: []Option{
@@ -2230,6 +2179,73 @@ func TestUpdate(t *testing.T) {
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, image.Rect(0, 0, 5, 10))
 				testdraw.MustBorder(cvs, image.Rect(5, 0, 10, 10), draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "newly placed widget gets keyboard events",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					ID("myRoot"),
+					PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
+				)
+			},
+			beforeEvents: []terminalapi.Event{
+				// Move focus to the target container.
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+			},
+			afterEvents: []terminalapi.Event{
+				// Send the keyboard event.
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			updateID: "myRoot",
+			updateOpts: []Option{
+				PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				fakewidget.MustDraw(
+					ft,
+					cvs,
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
+					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "newly placed widget gets mouse events",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					ID("myRoot"),
+					PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
+				)
+			},
+			afterEvents: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+			},
+			updateID: "myRoot",
+			updateOpts: []Option{
+				PlaceWidget(fakewidget.New(widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget})),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				fakewidget.MustDraw(
+					ft,
+					cvs,
+					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
+					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+				)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -2260,19 +2276,17 @@ func TestUpdate(t *testing.T) {
 				t.Fatalf("Draw => unexpected error: %v", err)
 			}
 
-			// Deliver the events.
-			for _, eg := range tc.eventGroups {
-				for _, ev := range eg.events {
-					eds.Event(ev)
+			// Deliver the before events.
+			for _, ev := range tc.beforeEvents {
+				eds.Event(ev)
+			}
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if got, want := eds.Processed(), len(tc.beforeEvents); got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
 				}
-				if err := testevent.WaitFor(5*time.Second, func() error {
-					if got, want := eds.Processed(), eg.wantProcessed; got != want {
-						return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
-					}
-					return nil
-				}); err != nil {
-					t.Fatalf("testevent.WaitFor => %v", err)
-				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 
 			{
@@ -2283,6 +2297,20 @@ func TestUpdate(t *testing.T) {
 				if err != nil {
 					return
 				}
+			}
+
+			// Deliver the after events.
+			for _, ev := range tc.afterEvents {
+				eds.Event(ev)
+			}
+			wantEv := len(tc.beforeEvents) + len(tc.afterEvents)
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if got, want := eds.Processed(), wantEv; got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
 			}
 
 			if err := cont.Draw(); err != nil {

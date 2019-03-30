@@ -45,12 +45,25 @@ import (
 // redrawInterval is how often termdash redraws the screen.
 const redrawInterval = 250 * time.Millisecond
 
-// gridLayout prepares the screen layout by creating the container and placing
-// widgets.
-// This function demonstrates the use of the grid builder.
-// gridLayout() and contLayout() demonstrate the two available layout APIs and
-// both produce equivalent layouts.
-func gridLayout(ctx context.Context, t terminalapi.Terminal) (*container.Container, error) {
+// widgets holds the widgets used by this demo.
+type widgets struct {
+	segDist  *segmentdisplay.SegmentDisplay
+	rollT    *text.Text
+	spGreen  *sparkline.SparkLine
+	spRed    *sparkline.SparkLine
+	gauge    *gauge.Gauge
+	heartLC  *linechart.LineChart
+	barChart *barchart.BarChart
+	donut    *donut.Donut
+	leftB    *button.Button
+	rightB   *button.Button
+	sineLC   *linechart.LineChart
+
+	buttons *layoutButtons
+}
+
+// newWidgets creates all widgets used by this demo.
+func newWidgets(ctx context.Context, c *container.Container) (*widgets, error) {
 	sd, err := newSegmentDisplay(ctx)
 	if err != nil {
 		return nil, err
@@ -72,6 +85,7 @@ func gridLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 	if err != nil {
 		return nil, err
 	}
+
 	bc, err := newBarChart(ctx)
 	if err != nil {
 		return nil, err
@@ -86,69 +100,159 @@ func gridLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 	if err != nil {
 		return nil, err
 	}
+	return &widgets{
+		segDist:  sd,
+		rollT:    rollT,
+		spGreen:  spGreen,
+		spRed:    spRed,
+		gauge:    g,
+		heartLC:  heartLC,
+		barChart: bc,
+		donut:    don,
+		leftB:    leftB,
+		rightB:   rightB,
+		sineLC:   sineLC,
+	}, nil
+}
 
-	builder := grid.New()
-	builder.Add(
-		grid.ColWidthPerc(70,
-			grid.RowHeightPerc(25,
-				grid.Widget(sd,
-					container.Border(linestyle.Light),
-					container.BorderTitle("Press Q to quit"),
-				),
+// layoutType represents the possible layouts the buttons switch between.
+type layoutType int
+
+const (
+	// layoutAll displays all the widgets.
+	layoutAll layoutType = iota
+	// layoutText focuses onto the text widget.
+	layoutText
+	// layoutSparkLines focuses onto the sparklines.
+	layoutSparkLines
+	// layoutLineChart focuses onto the linechart.
+	layoutLineChart
+)
+
+// gridLayout prepares container options that represent the desired screen layout.
+// This function demonstrates the use of the grid builder.
+// gridLayout() and contLayout() demonstrate the two available layout APIs and
+// both produce equivalent layouts for layoutType layoutAll.
+func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
+	leftRows := []grid.Element{
+		grid.RowHeightPerc(25,
+			grid.Widget(w.segDist,
+				container.Border(linestyle.Light),
+				container.BorderTitle("Press Q to quit"),
 			),
-			grid.RowHeightPerc(26,
+		),
+		grid.RowHeightPerc(5,
+			grid.ColWidthPerc(25,
+				grid.Widget(w.buttons.allB),
+			),
+			grid.ColWidthPerc(25,
+				grid.Widget(w.buttons.textB),
+			),
+			grid.ColWidthPerc(25,
+				grid.Widget(w.buttons.spB),
+			),
+			grid.ColWidthPerc(25,
+				grid.Widget(w.buttons.lcB),
+			),
+		),
+	}
+	switch lt {
+	case layoutAll:
+		leftRows = append(leftRows,
+			grid.RowHeightPerc(23,
 				grid.ColWidthPerc(50,
-					grid.Widget(rollT,
+					grid.Widget(w.rollT,
 						container.Border(linestyle.Light),
 						container.BorderTitle("A rolling text"),
 					),
 				),
 				grid.RowHeightPerc(50,
-					grid.Widget(spGreen,
+					grid.Widget(w.spGreen,
 						container.Border(linestyle.Light),
 						container.BorderTitle("Green SparkLine"),
 					),
 				),
 				grid.RowHeightPerc(50,
-					grid.Widget(spRed,
+					grid.Widget(w.spRed,
 						container.Border(linestyle.Light),
 						container.BorderTitle("Red SparkLine"),
 					),
 				),
 			),
-			grid.RowHeightPerc(10,
-				grid.Widget(g,
+			grid.RowHeightPerc(7,
+				grid.Widget(w.gauge,
 					container.Border(linestyle.Light),
 					container.BorderTitle("A Gauge"),
 					container.BorderColor(cell.ColorNumber(39)),
 				),
 			),
-			grid.RowHeightPerc(39,
-				grid.Widget(heartLC,
+			grid.RowHeightPerc(35,
+				grid.Widget(w.heartLC,
 					container.Border(linestyle.Light),
 					container.BorderTitle("A LineChart"),
 				),
 			),
-		),
+		)
+	case layoutText:
+		leftRows = append(leftRows,
+			grid.RowHeightPerc(65,
+				grid.Widget(w.rollT,
+					container.Border(linestyle.Light),
+					container.BorderTitle("A rolling text"),
+				),
+			),
+		)
+
+	case layoutSparkLines:
+		leftRows = append(leftRows,
+			grid.RowHeightPerc(32,
+				grid.Widget(w.spGreen,
+					container.Border(linestyle.Light),
+					container.BorderTitle("Green SparkLine"),
+				),
+			),
+			grid.RowHeightPerc(33,
+				grid.Widget(w.spRed,
+					container.Border(linestyle.Light),
+					container.BorderTitle("Red SparkLine"),
+				),
+			),
+		)
+
+	case layoutLineChart:
+		leftRows = append(leftRows,
+			grid.RowHeightPerc(65,
+				grid.Widget(w.heartLC,
+					container.Border(linestyle.Light),
+					container.BorderTitle("A LineChart"),
+				),
+			),
+		)
+	}
+
+	builder := grid.New()
+	builder.Add(
+		grid.ColWidthPerc(70, leftRows...),
 	)
+
 	builder.Add(
 		grid.ColWidthPerc(30,
 			grid.RowHeightPerc(30,
-				grid.Widget(bc,
+				grid.Widget(w.barChart,
 					container.Border(linestyle.Light),
 					container.BorderTitle("BarChart"),
 					container.BorderTitleAlignRight(),
 				),
 			),
 			grid.RowHeightPerc(21,
-				grid.Widget(don,
+				grid.Widget(w.donut,
 					container.Border(linestyle.Light),
 					container.BorderTitle("A Donut"),
 					container.BorderTitleAlignRight(),
 				),
 			),
 			grid.RowHeightPerc(40,
-				grid.Widget(sineLC,
+				grid.Widget(w.sineLC,
 					container.Border(linestyle.Light),
 					container.BorderTitle("Multiple series"),
 					container.BorderTitleAlignRight(),
@@ -156,13 +260,13 @@ func gridLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 			),
 			grid.RowHeightPerc(9,
 				grid.ColWidthPerc(50,
-					grid.Widget(leftB,
+					grid.Widget(w.leftB,
 						container.AlignHorizontal(align.HorizontalRight),
 						container.PaddingRight(1),
 					),
 				),
 				grid.ColWidthPerc(50,
-					grid.Widget(rightB,
+					grid.Widget(w.rightB,
 						container.AlignHorizontal(align.HorizontalLeft),
 						container.PaddingLeft(1),
 					),
@@ -175,53 +279,38 @@ func gridLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 	if err != nil {
 		return nil, err
 	}
-	c, err := container.New(t, gridOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+	return gridOpts, nil
 }
 
-// contLayout prepares the screen layout by creating the container and placing
-// widgets.
+// contLayout prepares container options that represent the desired screen layout.
 // This function demonstrates the direct use of the container API.
 // gridLayout() and contLayout() demonstrate the two available layout APIs and
-// both produce equivalent layouts.
-func contLayout(ctx context.Context, t terminalapi.Terminal) (*container.Container, error) {
-	sd, err := newSegmentDisplay(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rollT, err := newRollText(ctx)
-	if err != nil {
-		return nil, err
-	}
-	spGreen, spRed, err := newSparkLines(ctx)
-	if err != nil {
-		return nil, err
-	}
-	g, err := newGauge(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	heartLC, err := newHeartbeat(ctx)
-	if err != nil {
-		return nil, err
-	}
-	bc, err := newBarChart(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	don, err := newDonut(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	leftB, rightB, sineLC, err := newSines(ctx)
-	if err != nil {
-		return nil, err
+// both produce equivalent layouts for layoutType layoutAll.
+// contLayout only produces layoutAll.
+func contLayout(w *widgets) ([]container.Option, error) {
+	buttonRow := []container.Option{
+		container.SplitVertical(
+			container.Left(
+				container.SplitVertical(
+					container.Left(
+						container.PlaceWidget(w.buttons.allB),
+					),
+					container.Right(
+						container.PlaceWidget(w.buttons.textB),
+					),
+				),
+			),
+			container.Right(
+				container.SplitVertical(
+					container.Left(
+						container.PlaceWidget(w.buttons.spB),
+					),
+					container.Right(
+						container.PlaceWidget(w.buttons.lcB),
+					),
+				),
+			),
+		),
 	}
 
 	segmentTextSpark := []container.Option{
@@ -229,29 +318,35 @@ func contLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 			container.Top(
 				container.Border(linestyle.Light),
 				container.BorderTitle("Press Q to quit"),
-				container.PlaceWidget(sd),
+				container.PlaceWidget(w.segDist),
 			),
 			container.Bottom(
-				container.SplitVertical(
-					container.Left(
-						container.Border(linestyle.Light),
-						container.BorderTitle("A rolling text"),
-						container.PlaceWidget(rollT),
-					),
-					container.Right(
-						container.SplitHorizontal(
-							container.Top(
+				container.SplitHorizontal(
+					container.Top(buttonRow...),
+					container.Bottom(
+						container.SplitVertical(
+							container.Left(
 								container.Border(linestyle.Light),
-								container.BorderTitle("Green SparkLine"),
-								container.PlaceWidget(spGreen),
+								container.BorderTitle("A rolling text"),
+								container.PlaceWidget(w.rollT),
 							),
-							container.Bottom(
-								container.Border(linestyle.Light),
-								container.BorderTitle("Red SparkLine"),
-								container.PlaceWidget(spRed),
+							container.Right(
+								container.SplitHorizontal(
+									container.Top(
+										container.Border(linestyle.Light),
+										container.BorderTitle("Green SparkLine"),
+										container.PlaceWidget(w.spGreen),
+									),
+									container.Bottom(
+										container.Border(linestyle.Light),
+										container.BorderTitle("Red SparkLine"),
+										container.PlaceWidget(w.spRed),
+									),
+								),
 							),
 						),
 					),
+					container.SplitPercent(20),
 				),
 			),
 			container.SplitPercent(50),
@@ -264,12 +359,12 @@ func contLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 				container.Border(linestyle.Light),
 				container.BorderTitle("A Gauge"),
 				container.BorderColor(cell.ColorNumber(39)),
-				container.PlaceWidget(g),
+				container.PlaceWidget(w.gauge),
 			),
 			container.Bottom(
 				container.Border(linestyle.Light),
 				container.BorderTitle("A LineChart"),
-				container.PlaceWidget(heartLC),
+				container.PlaceWidget(w.heartLC),
 			),
 			container.SplitPercent(20),
 		),
@@ -289,17 +384,17 @@ func contLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 				container.Border(linestyle.Light),
 				container.BorderTitle("Multiple series"),
 				container.BorderTitleAlignRight(),
-				container.PlaceWidget(sineLC),
+				container.PlaceWidget(w.sineLC),
 			),
 			container.Bottom(
 				container.SplitVertical(
 					container.Left(
-						container.PlaceWidget(leftB),
+						container.PlaceWidget(w.leftB),
 						container.AlignHorizontal(align.HorizontalRight),
 						container.PaddingRight(1),
 					),
 					container.Right(
-						container.PlaceWidget(rightB),
+						container.PlaceWidget(w.rightB),
 						container.AlignHorizontal(align.HorizontalLeft),
 						container.PaddingLeft(1),
 					),
@@ -314,7 +409,7 @@ func contLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 			container.Top(
 				container.Border(linestyle.Light),
 				container.BorderTitle("BarChart"),
-				container.PlaceWidget(bc),
+				container.PlaceWidget(w.barChart),
 				container.BorderTitleAlignRight(),
 			),
 			container.Bottom(
@@ -323,7 +418,7 @@ func contLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 						container.Border(linestyle.Light),
 						container.BorderTitle("A Donut"),
 						container.BorderTitleAlignRight(),
-						container.PlaceWidget(don),
+						container.PlaceWidget(w.donut),
 					),
 					container.Bottom(lcAndButtons...),
 					container.SplitPercent(30),
@@ -333,19 +428,17 @@ func contLayout(ctx context.Context, t terminalapi.Terminal) (*container.Contain
 		),
 	}
 
-	c, err := container.New(
-		t,
+	return []container.Option{
 		container.SplitVertical(
 			container.Left(leftSide...),
 			container.Right(rightSide...),
 			container.SplitPercent(70),
 		),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+	}, nil
 }
+
+// rootID is the ID assigned to the root container.
+const rootID = "root"
 
 func main() {
 	t, err := termbox.New(termbox.ColorMode(terminalapi.ColorMode256))
@@ -354,10 +447,29 @@ func main() {
 	}
 	defer t.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	c, err := gridLayout(ctx, t) // equivalent to contLayout(ctx, t)
+	c, err := container.New(t, container.ID(rootID))
 	if err != nil {
+		panic(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	w, err := newWidgets(ctx, c)
+	if err != nil {
+		panic(err)
+	}
+	lb, err := newLayoutButtons(c, w)
+	if err != nil {
+		panic(err)
+	}
+	w.buttons = lb
+
+	//gridOpts, err := gridLayout(w, layoutAll) // equivalent to contLayout(w)
+	gridOpts, err := contLayout(w) // equivalent to contLayout(w)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := c.Update(rootID, gridOpts...); err != nil {
 		panic(err)
 	}
 
@@ -672,6 +784,67 @@ func newSines(ctx context.Context) (left, right *button.Button, lc *linechart.Li
 		return nil, nil, nil, err
 	}
 	return leftB, rightB, sineLc, nil
+}
+
+// setLayout sets the specified layout.
+func setLayout(c *container.Container, w *widgets, lt layoutType) error {
+	gridOpts, err := gridLayout(w, lt)
+	if err != nil {
+		return err
+	}
+	return c.Update(rootID, gridOpts...)
+}
+
+// layoutButtons are buttons that change the layout.
+type layoutButtons struct {
+	allB  *button.Button
+	textB *button.Button
+	spB   *button.Button
+	lcB   *button.Button
+}
+
+// newLayoutButtons returns buttons that dynamically switch the layouts.
+func newLayoutButtons(c *container.Container, w *widgets) (*layoutButtons, error) {
+	opts := []button.Option{
+		button.WidthFor("sparklines"),
+		button.FillColor(cell.ColorNumber(220)),
+		button.Height(1),
+	}
+
+	allB, err := button.New("all", func() error {
+		return setLayout(c, w, layoutAll)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	textB, err := button.New("text", func() error {
+		return setLayout(c, w, layoutText)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	spB, err := button.New("sparklines", func() error {
+		return setLayout(c, w, layoutSparkLines)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	lcB, err := button.New("linechart", func() error {
+		return setLayout(c, w, layoutLineChart)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &layoutButtons{
+		allB:  allB,
+		textB: textB,
+		spB:   spB,
+		lcB:   lcB,
+	}, nil
 }
 
 // rotateFloats returns a new slice with inputs rotated by step.

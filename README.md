@@ -39,6 +39,7 @@ project reaches version 1.0.0. Any breaking changes will be published in the
 
 - Full support for terminal window resizing throughout the infrastructure.
 - Customizable layout, widget placement, borders, margins, padding, colors, etc.
+- Dynamic layout changes at runtime.
 - Binary tree and Grid forms of setting up the layout.
 - Focusable containers and widgets.
 - Processing of keyboard and mouse events.

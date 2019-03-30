@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 30-Mar-2019
+
 ### Added
 
 - New API for building layouts, a grid.Builder. Allows defining the layout
@@ -21,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   observed value capacity the last time Draw was called.
 - Moving widgetapi out of the internal directory to allow external users to
   develop their own widgets.
+- Event delivery to widgets now has a stable defined order and happens when the
+  container is unlocked so that widgets can trigger dynamic layout changes.
 
 ### Fixed
 
@@ -232,7 +236,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.2...devel
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.8.0...devel
+[0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/mum4k/termdash/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/mum4k/termdash/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/mum4k/termdash/compare/v0.6.1...v0.7.0

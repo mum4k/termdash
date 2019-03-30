@@ -143,7 +143,9 @@ func LabelColors(colors []cell.Color) Option {
 // label.
 func Labels(labels []string) Option {
 	return option(func(opts *options) {
-		opts.labels = labels
+		// Copy to avoid external modifications. See #174.
+		opts.labels = make([]string, len(labels))
+		copy(opts.labels, labels)
 	})
 }
 

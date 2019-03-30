@@ -10,7 +10,7 @@
 
 Termdash is a cross-platform customizable terminal based dashboard.
 
-[<img src="./doc/images/termdashdemo_0_7_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
+[<img src="./doc/images/termdashdemo_0_8_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
 The feature set is inspired by the
 [gizak/termui](http://github.com/gizak/termui) project, which in turn was
@@ -38,7 +38,9 @@ project reaches version 1.0.0. Any breaking changes will be published in the
 # Current feature set
 
 - Full support for terminal window resizing throughout the infrastructure.
-- Customizable layout, widget placement, borders, colors, etc.
+- Customizable layout, widget placement, borders, margins, padding, colors, etc.
+- Dynamic layout changes at runtime.
+- Binary tree and Grid forms of setting up the layout.
 - Focusable containers and widgets.
 - Processing of keyboard and mouse events.
 - Periodic and event driven screen redraw.

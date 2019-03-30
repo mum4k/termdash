@@ -89,6 +89,15 @@ func MouseSubscriber(f func(*terminalapi.Mouse)) Option {
 	})
 }
 
+// withEDS indicates that termdash should run with the provided event
+// distribution system instead of creating one.
+// Useful for tests.
+func withEDS(eds *event.DistributionSystem) Option {
+	return option(func(td *termdash) {
+		td.eds = eds
+	})
+}
+
 // Run runs the terminal dashboard with the provided container on the terminal.
 // Redraws the terminal periodically. If you prefer a manual redraw, use the
 // Controller instead.
@@ -314,6 +323,12 @@ func (td *termdash) processEvents(ctx context.Context) {
 // start starts the terminal dashboard. Blocks until the context expires or
 // until stop() is called.
 func (td *termdash) start(ctx context.Context) error {
+	// Redraw once to initialize the container sizes.
+	if err := td.periodicRedraw(); err != nil {
+		close(td.exitCh)
+		return err
+	}
+
 	redrawTimer := time.NewTicker(td.redrawInterval)
 	defer redrawTimer.Stop()
 

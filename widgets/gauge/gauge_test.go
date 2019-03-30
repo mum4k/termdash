@@ -26,8 +26,8 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // percentCall contains arguments for a call to GaugePercent().

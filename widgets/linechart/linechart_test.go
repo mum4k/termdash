@@ -27,9 +27,9 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 func TestLineChartDraws(t *testing.T) {
@@ -1475,6 +1475,53 @@ func TestLineChartDraws(t *testing.T) {
 				testdraw.MustBrailleLine(bc, image.Point{0, 5}, image.Point{8, 1})
 
 				testbraille.MustCopyTo(bc, c)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "regression for #174, protects against external data mutation",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				values := []float64{0, 100}
+				labels := map[int]string{
+					0: "start",
+					1: "end",
+				}
+				if err := lc.Series("first", values, SeriesXLabels(labels)); err != nil {
+					return err
+				}
+
+				// Modify the values after they were passed in.
+				// Increase above the previous maximum to run out of the Y axis.
+				// The linechart should not use the original values.
+				values[1] = 1000
+				labels[0] = "bad"
+				return nil
+			},
+			wantCapacity: 28,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "51.68", image.Point{0, 3})
+				testdraw.MustText(c, "start", image.Point{6, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
+				testbraille.MustCopyTo(bc, c)
+
 				testcanvas.MustApply(c, ft)
 				return ft
 			},

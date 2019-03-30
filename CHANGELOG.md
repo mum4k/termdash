@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 30-Mar-2019
+
+### Added
+
+- New API for building layouts, a grid.Builder. Allows defining the layout
+  iteratively as repetitive Elements, Rows and Columns.
+- Containers now support margin around them and padding of their content.
+- Container now supports dynamic layout changes via the new Update method.
+
+### Changed
+
+- The Text widget now supports content wrapping on word boundaries.
+- The BarChart and SparkLine widgets now have a method that returns the
+  observed value capacity the last time Draw was called.
+- Moving widgetapi out of the internal directory to allow external users to
+  develop their own widgets.
+- Event delivery to widgets now has a stable defined order and happens when the
+  container is unlocked so that widgets can trigger dynamic layout changes.
+
+### Fixed
+
+- The termdash_test now correctly waits until all subscribers processed events,
+  not just received them.
+- Container focus tracker now correctly tracks focus changes in enlarged areas,
+  i.e. when the terminal size increased.
+- The BarChart, LineChart and SegmentDisplay widgets now protect against
+  external mutation of the values passed into them by copying the data they
+  receive.
+
 ## [0.7.2] - 25-Feb-2019
 
 ### Added
@@ -207,7 +236,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.7.2...devel
+[Unreleased]: https://github.com/mum4k/termdash/compare/v0.8.0...devel
+[0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/mum4k/termdash/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/mum4k/termdash/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/mum4k/termdash/compare/v0.6.1...v0.7.0

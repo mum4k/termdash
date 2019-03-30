@@ -25,10 +25,10 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 func TestTextDraws(t *testing.T) {
@@ -199,7 +199,7 @@ func TestTextDraws(t *testing.T) {
 				if err := widget.Write("red\n", WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 					return err
 				}
-				return widget.Write("blue\n", WriteCellOpts(cell.FgColor(cell.ColorBlue)))
+				return widget.Write("blue", WriteCellOpts(cell.FgColor(cell.ColorBlue)))
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -483,6 +483,50 @@ func TestTextDraws(t *testing.T) {
 				testdraw.MustText(c, "你d", image.Point{0, 3})
 				testdraw.MustText(c, "and long ", image.Point{0, 4})
 				testdraw.MustText(c, "世", image.Point{0, 5})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "wraps lines at word boundaries",
+			canvas: image.Rect(0, 0, 10, 6),
+			opts: []Option{
+				WrapAtWords(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("hello wor你\nhello wor你d\nand long 世")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "hello", image.Point{0, 0})
+				testdraw.MustText(c, "wor你", image.Point{0, 1})
+				testdraw.MustText(c, "hello", image.Point{0, 2})
+				testdraw.MustText(c, "wor你d", image.Point{0, 3})
+				testdraw.MustText(c, "and long", image.Point{0, 4})
+				testdraw.MustText(c, "世", image.Point{0, 5})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "wraps lines at word boundaries, inserts dash for long words",
+			canvas: image.Rect(0, 0, 10, 6),
+			opts: []Option{
+				WrapAtWords(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("hello thisisalongword world")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "hello", image.Point{0, 0})
+				testdraw.MustText(c, "thisisalo-", image.Point{0, 1})
+				testdraw.MustText(c, "ngword", image.Point{0, 2})
+				testdraw.MustText(c, "world", image.Point{0, 3})
 				testcanvas.MustApply(c, ft)
 				return ft
 			},

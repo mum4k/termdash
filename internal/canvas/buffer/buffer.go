@@ -24,6 +24,15 @@ import (
 	"github.com/mum4k/termdash/internal/runewidth"
 )
 
+// NewCells breaks the provided text into cells and applies the options.
+func NewCells(text string, opts ...cell.Option) []*Cell {
+	var res []*Cell
+	for _, r := range text {
+		res = append(res, NewCell(r, opts...))
+	}
+	return res
+}
+
 // Cell represents a single cell on the terminal.
 type Cell struct {
 	// Rune is the rune stored in the cell.
@@ -31,6 +40,11 @@ type Cell struct {
 
 	// Opts are the cell options.
 	Opts *cell.Options
+}
+
+// String implements fmt.Stringer.
+func (c *Cell) String() string {
+	return fmt.Sprintf("{%q}", c.Rune)
 }
 
 // NewCell returns a new cell.

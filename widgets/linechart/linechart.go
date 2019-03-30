@@ -28,8 +28,8 @@ import (
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/numbers"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/linechart/internal/axes"
 	"github.com/mum4k/termdash/widgets/linechart/internal/zoom"
 )
@@ -52,9 +52,13 @@ type seriesValues struct {
 
 // newSeriesValues returns a new seriesValues instance.
 func newSeriesValues(values []float64) *seriesValues {
-	min, max := numbers.MinMax(values)
+	// Copy to avoid external modifications. See #174.
+	v := make([]float64, len(values))
+	copy(v, values)
+
+	min, max := numbers.MinMax(v)
 	return &seriesValues{
-		values: values,
+		values: v,
 		min:    min,
 		max:    max,
 	}
@@ -146,7 +150,12 @@ func SeriesCellOpts(co ...cell.Option) SeriesOption {
 func SeriesXLabels(labels map[int]string) SeriesOption {
 	return seriesOption(func(opts *seriesValues) {
 		opts.xLabelsSet = true
-		opts.xLabels = labels
+
+		// Copy to avoid external modifications. See #174.
+		opts.xLabels = make(map[int]string, len(labels))
+		for pos, label := range labels {
+			opts.xLabels[pos] = label
+		}
 	})
 }
 
@@ -409,21 +418,21 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 
 			startX, err := xdZoomed.Scale.ValueToPixel(i - 1)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], xdZoomed.Scale.ValueToPixel => %v", name, i-1, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, i-1, xdZoomed.Scale, i-1, err)
 			}
 			endX, err := xdZoomed.Scale.ValueToPixel(i)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], xdZoomed.Scale.ValueToPixel => %v", name, i, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, i, xdZoomed.Scale, i, err)
 			}
 
 			startY, err := yd.Scale.ValueToPixel(prev)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], yd.Scale.ValueToPixel => %v", name, i-1, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, i-1, yd.Scale, prev, err)
 			}
 			v := sv.values[i]
 			endY, err := yd.Scale.ValueToPixel(v)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], yd.Scale.ValueToPixel => %v", name, i, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, i, yd.Scale, v, err)
 			}
 
 			if err := draw.BrailleLine(bc,

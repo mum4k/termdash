@@ -14,4 +14,4 @@ script:
         - diff -u <(echo -n) <(./internal/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
 after_success:
-        - ./scripts/coverage.sh
+        - ./internal/scripts/coverage.sh

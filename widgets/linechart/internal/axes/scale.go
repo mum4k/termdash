@@ -68,6 +68,11 @@ type YScale struct {
 	brailleHeight int
 }
 
+// String implements fmt.Stringer.
+func (ys *YScale) String() string {
+	return fmt.Sprintf("YScale{Min:%v, Max:%v, Step:%v, GraphHeight:%v}", ys.Min, ys.Max, ys.Step, ys.GraphHeight)
+}
+
 // NewYScale calculates the scale of the Y axis, given the boundary values and
 // the height of the graph. The nonZeroDecimals dictates rounding of the
 // calculated scale, see NewValue for details.
@@ -206,7 +211,7 @@ type XScale struct {
 // the width on the canvas that is available to the X axis.
 // The nonZeroDecimals dictates rounding of the calculated scale, see
 // NewValue for details.
-// The boundry values must be positive or zero and must be min <= max.
+// The boundary values must be positive or zero and must be min <= max.
 // The graphWidth must be a positive number.
 func NewXScale(min, max int, graphWidth, nonZeroDecimals int) (*XScale, error) {
 	if min < 0 || max < 0 {

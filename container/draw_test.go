@@ -24,9 +24,9 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/internal/fakewidget"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/widgets/fakewidget"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 func TestDrawWidget(t *testing.T) {
@@ -60,6 +60,305 @@ func TestDrawWidget(t *testing.T) {
 				// Fake widget border.
 				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
 				testdraw.MustText(cvs, "(7,3)", image.Point{2, 2})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "absolute margin on root container",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					MarginTop(1),
+					MarginRight(2),
+					MarginBottom(3),
+					MarginLeft(4),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(image.Rect(4, 1, 18, 7))
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "relative margin on root container",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					MarginTopPercent(10),
+					MarginRightPercent(20),
+					MarginBottomPercent(50),
+					MarginLeftPercent(40),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(image.Rect(8, 2, 16, 10))
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws vertical sub-containers with margin",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					SplitVertical(
+						Left(
+							Border(linestyle.Double),
+							MarginTop(1),
+							MarginRight(2),
+							MarginBottom(3),
+							MarginLeft(4),
+						),
+						Right(
+							Border(linestyle.Double),
+							MarginTop(3),
+							MarginRight(4),
+							MarginBottom(1),
+							MarginLeft(2),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Outer container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				// Borders around the sub-containers.
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(5, 2, 8, 6),
+					draw.BorderLineStyle(linestyle.Double),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(12, 4, 15, 8),
+					draw.BorderLineStyle(linestyle.Double),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws horizontal sub-containers with margin",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					SplitHorizontal(
+						Top(
+							Border(linestyle.Double),
+							MarginTop(1),
+							MarginRight(2),
+							MarginBottom(3),
+							MarginLeft(4),
+						),
+						Bottom(
+							Border(linestyle.Double),
+							MarginTop(3),
+							MarginRight(4),
+							MarginBottom(1),
+							MarginLeft(2),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Outer container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				// Borders around the sub-containers.
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(5, 2, 17, 7),
+					draw.BorderLineStyle(linestyle.Double),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(3, 13, 15, 18),
+					draw.BorderLineStyle(linestyle.Double),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws padded widget, absolute padding",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					PaddingTop(1),
+					PaddingRight(2),
+					PaddingBottom(3),
+					PaddingLeft(4),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				wAr := image.Rect(5, 2, 17, 6)
+				wCvs := testcanvas.MustNew(wAr)
+				// Fake widget border.
+				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				testcanvas.MustCopyTo(wCvs, cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws padded widget, relative padding",
+			termSize: image.Point{20, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					PaddingTopPercent(10),
+					PaddingRightPercent(30),
+					PaddingBottomPercent(20),
+					PaddingLeftPercent(20),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				wAr := image.Rect(4, 2, 14, 16)
+				wCvs := testcanvas.MustNew(wAr)
+				// Fake widget border.
+				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				testcanvas.MustCopyTo(wCvs, cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws padded sub-containers",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					PaddingTop(1),
+					PaddingRight(2),
+					PaddingBottom(3),
+					PaddingLeft(4),
+					Border(linestyle.Light),
+					SplitVertical(
+						Left(Border(linestyle.Double)),
+						Right(Border(linestyle.Double)),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Outer container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				// Borders around the sub-containers.
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(5, 2, 11, 6),
+					draw.BorderLineStyle(linestyle.Double),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(11, 2, 17, 6),
+					draw.BorderLineStyle(linestyle.Double),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "draws with both padding and margin enabled",
+			termSize: image.Point{30, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+					PaddingTop(1),
+					PaddingRight(2),
+					PaddingBottom(3),
+					PaddingLeft(4),
+					MarginTop(1),
+					MarginRight(2),
+					MarginBottom(3),
+					MarginLeft(4),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(4, 1, 28, 17),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+				)
+
+				wAr := image.Rect(9, 3, 25, 13)
+				wCvs := testcanvas.MustNew(wAr)
+				// Fake widget border.
+				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},

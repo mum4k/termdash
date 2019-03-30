@@ -25,7 +25,7 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/widgetapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 func TestBarChart(t *testing.T) {
@@ -35,6 +35,7 @@ func TestBarChart(t *testing.T) {
 		update        func(*BarChart) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
 		want          func(size image.Point) *faketerm.Terminal
+		wantCapacity  int
 		wantErr       bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
 		wantDrawErr   bool
@@ -79,6 +80,7 @@ func TestBarChart(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				return faketerm.MustNew(size)
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "fails for zero max",
@@ -153,6 +155,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "displays bars",
@@ -182,6 +185,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "displays bars with labels",
@@ -231,6 +235,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "trims too long labels",
@@ -280,6 +285,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "displays bars with labels and values",
@@ -346,6 +352,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 4,
 		},
 		{
 			desc: "bars take as much width as available",
@@ -371,6 +378,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "respects set bar width",
@@ -397,6 +405,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "options can be set on a call to Values",
@@ -419,6 +428,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "respects set bar gap",
@@ -445,6 +455,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "respects both width and gap",
@@ -472,6 +483,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "respects bar and label colors",
@@ -521,6 +533,7 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "respects value colors",
@@ -564,6 +577,62 @@ func TestBarChart(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+			wantCapacity: 3,
+		},
+		{
+			desc: "regression for #174, protects against external data mutation",
+			opts: []Option{
+				Char('o'),
+				Labels([]string{
+					"1",
+					"2",
+					"3",
+				}),
+			},
+			update: func(bc *BarChart) error {
+				values := []int{1, 2, 5, 10}
+				if err := bc.Values(values, 10); err != nil {
+					return err
+				}
+				values[0] = 100
+				return nil
+			},
+			canvas: image.Rect(0, 0, 7, 11),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 9, 1, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+				testdraw.MustRectangle(c, image.Rect(2, 8, 3, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+				testdraw.MustRectangle(c, image.Rect(4, 5, 5, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+				testdraw.MustRectangle(c, image.Rect(6, 0, 7, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+
+				// Labels.
+				testdraw.MustText(c, "1", image.Point{0, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "2", image.Point{2, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "3", image.Point{4, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+			wantCapacity: 4,
 		},
 	}
 
@@ -610,6 +679,10 @@ func TestBarChart(t *testing.T) {
 
 			if diff := faketerm.Diff(tc.want(c.Size()), got); diff != "" {
 				t.Errorf("Draw => %v", diff)
+			}
+
+			if gotCapacity := bc.ValueCapacity(); gotCapacity != tc.wantCapacity {
+				t.Errorf("ValueCapacity => %d, want %d", gotCapacity, tc.wantCapacity)
 			}
 		})
 	}
@@ -664,7 +737,7 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
-			desc: "minimum size for two bars, default width, gap and no labels",
+			desc: "minimum width doesn't depend on the number of values",
 			create: func() (*BarChart, error) {
 				bc, err := New()
 				if err != nil {
@@ -676,17 +749,16 @@ func TestOptions(t *testing.T) {
 				return bc, nil
 			},
 			want: widgetapi.Options{
-				MinimumSize:  image.Point{3, 1},
+				MinimumSize:  image.Point{1, 1},
 				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    widgetapi.MouseScopeNone,
 			},
 		},
 		{
-			desc: "minimum size for two bars, custom width, gap and no labels",
+			desc: "minimum size accounts for custom bar width",
 			create: func() (*BarChart, error) {
 				bc, err := New(
 					BarWidth(3),
-					BarGap(2),
 				)
 				if err != nil {
 					return nil, err
@@ -697,28 +769,7 @@ func TestOptions(t *testing.T) {
 				return bc, nil
 			},
 			want: widgetapi.Options{
-				MinimumSize:  image.Point{8, 1},
-				WantKeyboard: widgetapi.KeyScopeNone,
-				WantMouse:    widgetapi.MouseScopeNone,
-			},
-		},
-		{
-			desc: "minimum size for two bars, custom width, gap and labels",
-			create: func() (*BarChart, error) {
-				bc, err := New(
-					BarWidth(3),
-					BarGap(2),
-				)
-				if err != nil {
-					return nil, err
-				}
-				if err := bc.Values([]int{1, 2}, 3, Labels([]string{"foo", "bar"})); err != nil {
-					return nil, err
-				}
-				return bc, nil
-			},
-			want: widgetapi.Options{
-				MinimumSize:  image.Point{8, 2},
+				MinimumSize:  image.Point{3, 1},
 				WantKeyboard: widgetapi.KeyScopeNone,
 				WantMouse:    widgetapi.MouseScopeNone,
 			},
@@ -737,6 +788,66 @@ func TestOptions(t *testing.T) {
 				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)
 			}
 
+		})
+	}
+}
+
+func TestValueCapacity(t *testing.T) {
+	tests := []struct {
+		desc                         string
+		barWidth, gapWidth, cvsWidth float64
+		want                         int
+	}{
+		{
+			desc: "zero canvas width",
+		},
+		{
+			desc:     "no gaps, fits exactly",
+			barWidth: 1,
+			cvsWidth: 10,
+			want:     10,
+		},
+		{
+			desc:     "gaps, fits exactly",
+			barWidth: 1,
+			gapWidth: 1,
+			cvsWidth: 9,
+			want:     5,
+		},
+		{
+			desc:     "gaps, one cell left at the end",
+			barWidth: 1,
+			gapWidth: 1,
+			cvsWidth: 10,
+			want:     5,
+		},
+		{
+			desc:     "wider bars, no gaps",
+			barWidth: 3,
+			cvsWidth: 90,
+			want:     30,
+		},
+		{
+			desc:     "wider bars and gaps",
+			barWidth: 3,
+			gapWidth: 2,
+			cvsWidth: 12,
+			want:     2,
+		},
+		{
+			desc:     "wider bars and gaps",
+			barWidth: 3,
+			gapWidth: 2,
+			cvsWidth: 13,
+			want:     3,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			if got := valueCapacity(tc.barWidth, tc.gapWidth, tc.cvsWidth); got != tc.want {
+				t.Errorf("valueCapacity(%v, %v, %v) => %d, want %d", tc.barWidth, tc.gapWidth, tc.cvsWidth, got, tc.want)
+			}
 		})
 	}
 }

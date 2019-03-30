@@ -28,9 +28,9 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/runewidth"
-	"github.com/mum4k/termdash/internal/widgetapi"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // progressType indicates how was the current progress provided by the caller.

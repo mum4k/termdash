@@ -50,6 +50,7 @@ func TestGauge(t *testing.T) {
 		percent       *percentCall  // if set, the test case calls Gauge.Percent().
 		absolute      *absoluteCall // if set the test case calls Gauge.Absolute().
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantErr       bool
 		wantUpdateErr bool // whether to expect an error on a call to Gauge.Percent() or Gauge.Absolute().
@@ -779,7 +780,7 @@ func TestGauge(t *testing.T) {
 
 			}
 
-			err = g.Draw(c)
+			err = g.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

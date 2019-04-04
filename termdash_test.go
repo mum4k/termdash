@@ -211,6 +211,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -248,6 +249,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantMouse: widgetapi.MouseScopeWidget,
 					},
@@ -274,6 +276,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    widgetapi.MouseScopeWidget,
@@ -308,6 +311,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -339,6 +343,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
 					},
@@ -373,6 +378,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantMouse: widgetapi.MouseScopeWidget,
 					},
@@ -480,6 +486,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    widgetapi.MouseScopeWidget,
@@ -508,6 +515,7 @@ func TestController(t *testing.T) {
 					mirror,
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 				)
 				return ft
 			},
@@ -530,6 +538,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -550,6 +559,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -579,6 +589,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft

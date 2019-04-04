@@ -139,6 +139,12 @@ type Options struct {
 	WantMouse MouseScope
 }
 
+// Meta provide additional metadata to widgets.
+type Meta struct {
+	// Focused asserts whether the widget's container is focused.
+	Focused bool
+}
+
 // Widget is a single widget on the dashboard.
 // Implementations must be thread safe.
 type Widget interface {
@@ -149,7 +155,9 @@ type Widget interface {
 	//
 	// The widget must not assume that the size of the canvas or its content
 	// remains the same between calls.
-	Draw(cvs *canvas.Canvas) error
+	//
+	// The argument meta is guaranteed to be valid (i.e. non-nil).
+	Draw(cvs *canvas.Canvas, meta *Meta) error
 
 	// Keyboard is called when the widget is focused on the dashboard and a key
 	// shortcut the widget registered for was pressed. Only called if the widget

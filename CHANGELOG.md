@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Widgets now get information whether their container is focused when Draw is
+  executed.
+
+#### Breaking API changes
+
+- The widgetapi.Widget.Draw method now accepts a second argument which provides
+  widgets with additional metadata. This affects all implemented widgets.
+
 ## [0.8.0] - 30-Mar-2019
 
 ### Added

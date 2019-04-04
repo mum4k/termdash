@@ -36,6 +36,7 @@ func TestLineChartDraws(t *testing.T) {
 	tests := []struct {
 		desc         string
 		canvas       image.Rectangle
+		meta         *widgetapi.Meta
 		opts         []Option
 		writes       func(*LineChart) error
 		want         func(size image.Point) *faketerm.Terminal
@@ -1163,7 +1164,7 @@ func TestLineChartDraws(t *testing.T) {
 				}
 				// Draw once so zoom tracker is initialized.
 				cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
-				if err := lc.Draw(cvs); err != nil {
+				if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
 					return err
 				}
 				return lc.Mouse(&terminalapi.Mouse{
@@ -1214,7 +1215,7 @@ func TestLineChartDraws(t *testing.T) {
 				}
 				// Draw once so zoom tracker is initialized.
 				cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
-				if err := lc.Draw(cvs); err != nil {
+				if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
 					return err
 				}
 				return lc.Mouse(&terminalapi.Mouse{
@@ -1265,7 +1266,7 @@ func TestLineChartDraws(t *testing.T) {
 				}
 				// Draw once so zoom tracker is initialized.
 				cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
-				if err := lc.Draw(cvs); err != nil {
+				if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
 					return err
 				}
 				return lc.Mouse(&terminalapi.Mouse{
@@ -1316,13 +1317,13 @@ func TestLineChartDraws(t *testing.T) {
 				// Draw twice with different canvas size to simulate resize.
 				{
 					cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 7))
-					if err := lc.Draw(cvs); err != nil {
+					if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
 						return err
 					}
 				}
 				{
 					cvs := testcanvas.MustNew(image.Rect(0, 0, 20, 10))
-					if err := lc.Draw(cvs); err != nil {
+					if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
 						return err
 					}
 				}
@@ -1380,7 +1381,7 @@ func TestLineChartDraws(t *testing.T) {
 
 				// Draw once so zoom tracker is initialized.
 				cvs := testcanvas.MustNew(image.Rect(0, 0, 11, 10))
-				if err := lc.Draw(cvs); err != nil {
+				if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
 					return err
 				}
 				return lc.Mouse(&terminalapi.Mouse{
@@ -1435,7 +1436,7 @@ func TestLineChartDraws(t *testing.T) {
 
 				// Draw once so zoom tracker is initialized.
 				cvs := testcanvas.MustNew(image.Rect(0, 0, 11, 10))
-				if err := lc.Draw(cvs); err != nil {
+				if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
 					return err
 				}
 				if err := lc.Mouse(&terminalapi.Mouse{
@@ -1554,7 +1555,7 @@ func TestLineChartDraws(t *testing.T) {
 			}
 
 			{
-				err := widget.Draw(c)
+				err := widget.Draw(c, tc.meta)
 				if (err != nil) != tc.wantDrawErr {
 					t.Fatalf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 				}

@@ -186,7 +186,7 @@ func (d *Donut) drawText(cvs *canvas.Canvas, mid image.Point, holeR int) error {
 
 // Draw draws the Donut widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (d *Donut) Draw(cvs *canvas.Canvas) error {
+func (d *Donut) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 

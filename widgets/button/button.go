@@ -112,7 +112,7 @@ var (
 
 // Draw draws the Button widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (b *Button) Draw(cvs *canvas.Canvas) error {
+func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 

@@ -31,12 +31,13 @@ import (
 )
 
 // outputLines are the number of lines written by this plugin.
-const outputLines = 3
+const outputLines = 4
 
 const (
 	sizeLine = iota
 	keyboardLine
 	mouseLine
+	focusLine
 )
 
 // MinimumSize is the minimum size required to draw this widget.
@@ -47,16 +48,17 @@ var MinimumSize = image.Point{24, 5}
 // canvas. It writes the last received keyboard event onto the second line. It
 // writes the last received mouse event onto the third line. If a non-empty
 // string is provided via the Text() method, that text will be written right
-// after the canvas size on the first line.
+// after the canvas size on the first line. If the widget's container is
+// focused it writes "focus" onto the fourth line.
 //
 // The widget requests the same options that are provided to the constructor.
-// If the options or canvas size don't allow for the three lines mentioned
-// above, the widget skips the ones it has no space for.
+// If the options or canvas size don't allow for the lines mentioned above, the
+// widget skips the ones it has no space for.
 //
 // This is thread-safe and must not be copied.
 // Implements widgetapi.Widget.
 type Mirror struct {
-	// lines are the three lines that will be drawn on the canvas.
+	// lines are the lines that will be drawn on the canvas.
 	lines []string
 
 	// text is the text provided by the last call to Text().
@@ -83,9 +85,13 @@ func New(opts widgetapi.Options) *Mirror {
 // 2x2 border on it, or of any of the text lines end up being longer than the
 // width of the canvas.
 // Draw implements widgetapi.Widget.Draw.
-func (mi *Mirror) Draw(cvs *canvas.Canvas) error {
+func (mi *Mirror) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	mi.mu.Lock()
 	defer mi.mu.Unlock()
+	if meta.Focused {
+		mi.lines[focusLine] = "focus"
+	}
+
 	if err := cvs.Clear(); err != nil {
 		return err
 	}
@@ -156,20 +162,20 @@ func (mi *Mirror) Options() widgetapi.Options {
 
 // Draw draws the content that would be expected after placing the Mirror
 // widget onto the provided canvas and forwarding the given events.
-func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) error {
+func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, opts widgetapi.Options, events ...terminalapi.Event) error {
 	mirror := New(opts)
-	return DrawWithMirror(mirror, t, cvs, events...)
+	return DrawWithMirror(mirror, t, cvs, meta, events...)
 }
 
 // MustDraw is like Draw, but panics on all errors.
-func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, opts widgetapi.Options, events ...terminalapi.Event) {
-	if err := Draw(t, cvs, opts, events...); err != nil {
+func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, opts widgetapi.Options, events ...terminalapi.Event) {
+	if err := Draw(t, cvs, meta, opts, events...); err != nil {
 		panic(fmt.Sprintf("Draw => %v", err))
 	}
 }
 
 // DrawWithMirror is like Draw, but uses the provided Mirror instead of creating one.
-func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, events ...terminalapi.Event) error {
+func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, events ...terminalapi.Event) error {
 	for _, ev := range events {
 		switch e := ev.(type) {
 		case *terminalapi.Mouse:
@@ -191,15 +197,15 @@ func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, 
 		}
 	}
 
-	if err := mirror.Draw(cvs); err != nil {
+	if err := mirror.Draw(cvs, meta); err != nil {
 		return err
 	}
 	return cvs.Apply(t)
 }
 
 // MustDrawWithMirror is like DrawWithMirror, but panics on all errors.
-func MustDrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, events ...terminalapi.Event) {
-	if err := DrawWithMirror(mirror, t, cvs, events...); err != nil {
+func MustDrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, events ...terminalapi.Event) {
+	if err := DrawWithMirror(mirror, t, cvs, meta, events...); err != nil {
 		panic(fmt.Sprintf("DrawWithMirror => %v", err))
 	}
 }

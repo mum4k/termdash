@@ -250,7 +250,7 @@ func (g *Gauge) drawText(cvs *canvas.Canvas, progress image.Rectangle) error {
 
 // Draw draws the Gauge widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (g *Gauge) Draw(cvs *canvas.Canvas) error {
+func (g *Gauge) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 

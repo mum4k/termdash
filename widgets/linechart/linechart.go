@@ -292,7 +292,7 @@ func (lc *LineChart) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDet
 
 // Draw draws the values as line charts.
 // Implements widgetapi.Widget.Draw.
-func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
+func (lc *LineChart) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
 

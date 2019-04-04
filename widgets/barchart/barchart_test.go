@@ -34,6 +34,7 @@ func TestBarChart(t *testing.T) {
 		opts          []Option
 		update        func(*BarChart) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantCapacity  int
 		wantErr       bool
@@ -660,7 +661,7 @@ func TestBarChart(t *testing.T) {
 				return
 			}
 
-			err = bc.Draw(c)
+			err = bc.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

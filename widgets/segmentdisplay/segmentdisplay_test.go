@@ -45,6 +45,7 @@ func TestSegmentDisplay(t *testing.T) {
 		opts          []Option
 		update        func(*SegmentDisplay) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantNewErr    bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
@@ -796,7 +797,7 @@ func TestSegmentDisplay(t *testing.T) {
 				}
 			}
 
-			err = sd.Draw(c)
+			err = sd.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

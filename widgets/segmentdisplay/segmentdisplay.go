@@ -174,7 +174,7 @@ func (sd *SegmentDisplay) preprocess(cvsAr image.Rectangle) (*segArea, error) {
 
 // Draw draws the SegmentDisplay widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas) error {
+func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	sd.mu.Lock()
 	defer sd.mu.Unlock()
 

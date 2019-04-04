@@ -206,7 +206,7 @@ func (t *Text) draw(cvs *canvas.Canvas) error {
 
 // Draw draws the text onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (t *Text) Draw(cvs *canvas.Canvas) error {
+func (t *Text) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 

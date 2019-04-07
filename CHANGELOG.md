@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   executed.
 - The SegmentDisplay widget now has a method that returns the observed character
   capacity the last time Draw was called.
+- The grid.Builder API now allows users to specify options for intermediate
+  containers, i.e. containers that don't have widgets, but represent rows and
+  columns.
 
 #### Breaking API changes
 

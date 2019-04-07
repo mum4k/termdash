@@ -50,6 +50,10 @@ type SegmentDisplay struct {
 	// wOptsTracker tracks the positions in a buff to which the givenWOpts apply.
 	wOptsTracker *attrrange.Tracker
 
+	// lastCanFit is the number of segments that could fit the area the last
+	// time Draw was called.
+	lastCanFit int
+
 	// mu protects the widget.
 	mu sync.Mutex
 
@@ -134,6 +138,20 @@ func (sd *SegmentDisplay) Write(chunks []*TextChunk, opts ...Option) error {
 	return nil
 }
 
+// Capacity returns the number of characters that can fit into the canvas.
+// This is essentially the number of individual segments that can fit on the
+// canvas at the time the last call to draw. Returns zero if draw wasn't
+// called.
+//
+// Note that this capacity changes each time the terminal resizes, so there is
+// no guarantee this remains the same next time Draw is called.
+// Should be used as a hint only.
+func (sd *SegmentDisplay) Capacity() int {
+	sd.mu.Lock()
+	defer sd.mu.Unlock()
+	return sd.lastCanFit
+}
+
 // Reset resets the widget back to empty content.
 func (sd *SegmentDisplay) Reset() {
 	sd.mu.Lock()
@@ -161,7 +179,7 @@ func (sd *SegmentDisplay) preprocess(cvsAr image.Rectangle) (*segArea, error) {
 	}
 
 	need := sd.buff.Len()
-	if need <= segAr.canFit || sd.opts.maximizeSegSize {
+	if (need > 0 && need <= segAr.canFit) || sd.opts.maximizeSegSize {
 		return segAr, nil
 	}
 
@@ -178,13 +196,14 @@ func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	sd.mu.Lock()
 	defer sd.mu.Unlock()
 
-	if sd.buff.Len() == 0 {
-		return nil
-	}
-
 	segAr, err := sd.preprocess(cvs.Area())
 	if err != nil {
 		return err
+	}
+
+	sd.lastCanFit = segAr.canFit
+	if sd.buff.Len() == 0 {
+		return nil
 	}
 
 	text := sd.buff.String()

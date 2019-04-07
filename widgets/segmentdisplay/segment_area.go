@@ -61,7 +61,7 @@ func newSegArea(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, error
 		canFit int
 		taken  int
 	)
-	for i := 0; i < textLen; i++ {
+	for i := 0; ; {
 		taken += segAr.Dx()
 
 		if taken > cvsAr.Dx() {
@@ -85,6 +85,7 @@ func newSegArea(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, error
 			// So insert neither.
 			break
 		}
+		i++
 	}
 	return &segArea{
 		segment:   segAr,
@@ -106,7 +107,7 @@ func maximizeFit(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, erro
 			return nil, err
 		}
 
-		if segAr.canFit >= textLen {
+		if textLen > 0 && segAr.canFit >= textLen {
 			return segAr, nil
 		}
 		bestSegAr = segAr

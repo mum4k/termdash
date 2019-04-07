@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Widgets now get information whether their container is focused when Draw is
   executed.
+- The SegmentDisplay widget now has a method that returns the observed character
+  capacity the last time Draw was called.
 
 #### Breaking API changes
 

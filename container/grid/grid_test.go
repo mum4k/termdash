@@ -390,6 +390,45 @@ func TestBuilder(t *testing.T) {
 			},
 		},
 		{
+			desc:     "two equal rows with options",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(RowHeightPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				b.Add(RowHeightPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				top, bot := mustHSplit(ft.Area(), 50)
+				topCvs := testcanvas.MustNew(top)
+				botCvs := testcanvas.MustNew(bot)
+				testdraw.MustBorder(topCvs, topCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testdraw.MustBorder(botCvs, botCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testcanvas.MustApply(topCvs, ft)
+				testcanvas.MustApply(botCvs, ft)
+
+				topWidget := testcanvas.MustNew(area.ExcludeBorder(top))
+				botWidget := testcanvas.MustNew(area.ExcludeBorder(bot))
+				fakewidget.MustDraw(ft, topWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, botWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
 			desc:     "two unequal rows",
 			termSize: image.Point{10, 10},
 			builder: func() *Builder {
@@ -403,6 +442,45 @@ func TestBuilder(t *testing.T) {
 				top, bot := mustHSplit(ft.Area(), 20)
 				fakewidget.MustDraw(ft, testcanvas.MustNew(top), &widgetapi.Meta{}, widgetapi.Options{})
 				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "two equal columns with options",
+			termSize: image.Point{20, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(ColWidthPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				b.Add(ColWidthPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				left, right := mustVSplit(ft.Area(), 50)
+				leftCvs := testcanvas.MustNew(left)
+				rightCvs := testcanvas.MustNew(right)
+				testdraw.MustBorder(leftCvs, leftCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testdraw.MustBorder(rightCvs, rightCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testcanvas.MustApply(leftCvs, ft)
+				testcanvas.MustApply(rightCvs, ft)
+
+				leftWidget := testcanvas.MustNew(area.ExcludeBorder(left))
+				rightWidget := testcanvas.MustNew(area.ExcludeBorder(right))
+				fakewidget.MustDraw(ft, leftWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, rightWidget, &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},

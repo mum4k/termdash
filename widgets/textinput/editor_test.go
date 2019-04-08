@@ -94,3 +94,69 @@ func TestData(t *testing.T) {
 		})
 	}
 }
+
+func TestFieldEditor(t *testing.T) {
+	tests := []struct {
+		desc       string
+		width      int
+		ops        func(*fieldEditor)
+		want       string
+		wantCurIdx int
+		wantErr    bool
+	}{
+		{
+			desc:    "fails for width too small",
+			width:   2,
+			wantErr: true,
+		},
+		{
+			desc:       "no data",
+			width:      3,
+			want:       "",
+			wantCurIdx: 0,
+		},
+		{
+			desc:  "data and cursor fit exactly",
+			width: 3,
+			ops: func(fe *fieldEditor) {
+				fe.insert('a')
+				fe.insert('b')
+			},
+			want:       "ab",
+			wantCurIdx: 2,
+		},
+		{
+			desc:  "longer data than the width, cursor at the end",
+			width: 3,
+			ops: func(fe *fieldEditor) {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+			},
+			want:       "⇦c",
+			wantCurIdx: 2,
+		},
+		// Tests with full-width runes.
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			fe := newFieldEditor()
+			if tc.ops != nil {
+				tc.ops(fe)
+			}
+
+			got, gotCurIdx, err := fe.viewFor(tc.width)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("viewFor => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if got != tc.want || gotCurIdx != tc.wantCurIdx {
+				t.Errorf("viewFor => (%q, %d), want (%q, %d)", got, gotCurIdx, tc.want, tc.wantCurIdx)
+			}
+		})
+	}
+}

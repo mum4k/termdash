@@ -19,6 +19,8 @@ package textinput
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/mum4k/termdash/internal/runewidth"
 )
 
 // fieldData are the data currently present inside the text input field.
@@ -46,24 +48,36 @@ func (fd *fieldData) deleteAt(idx int) {
 	*fd = append((*fd)[:idx], (*fd)[idx+1:]...)
 }
 
+// rangeWidth returns the rune width of all the runes in range:
+//   startIdx <= idx < endIdx
+func (fd *fieldData) rangeWidth(startIdx, endIdx int) int {
+	var width int
+	for _, r := range (*fd)[startIdx:endIdx] {
+		width += runewidth.RuneWidth(r)
+	}
+	return width
+}
+
+// visibleRange represents a range of currently visible runes.
+// Visible runes are all such runes whose index falls within:
+//   startIdx <= idx < endIdx
+type visibleRange struct {
+	startIdx int
+	endIdx   int
+}
+
 // fieldEditor maintains the cursor position and allows editing of the data in
 // the text input field.
 // This object isn't thread-safe.
 type fieldEditor struct {
-	// curPos is the current position of the cursor.
-	curPos int
-
-	// dataPos is the first visible rune. This is non-zero when there are more
-	// runes than the width of the text input field and the data scroll to the
-	// left.
-	dataPos int
-
-	// lastWidth is the width of the text input field when viewFor was called
-	// last.
-	lastWidth int
-
 	// data are the data currently present in the text input field.
 	data fieldData
+
+	// curPos is the current position of the cursor within the data.
+	curPos int
+
+	// visible is the currently visible range.
+	visible visibleRange
 }
 
 // newFieldEditor returns a new fieldEditor instance.
@@ -78,36 +92,20 @@ func (fe *fieldEditor) viewFor(width int) (string, int, error) {
 		return "", -1, fmt.Errorf("width %d is too small, the minimum is %d", width, min)
 	}
 
-	maxPos := width - 1
-	if width < fe.lastWidth && fe.curPos > maxPos {
-		// Indicates a terminal resize, normalize the cursor back into the text
-		// input field.
-		fe.curPos = maxPos
-	}
-	fe.lastWidth = width
+	/*
+		case1: range is zero - initialize to width
+		case2: range is set, cursor is in
+		case3: range is set, cursor is to the right - shift range right, calculate left based on rune width.
+		case4: range is set, cursor is to the left - shift range left, calculate right based on rune width.
 
-	if fe.curPos > maxPos {
-		fe.dataPos += fe.curPos - maxPos
-		fe.curPos = maxPos
-	}
+		available:
+		case1: data < width => width - 1 // one for the cursor
+		case2: data >= width && left edge visible => width - 1 // one for the arrow
+		case3: data >= width && right edge visible => width - 2 // one for the left arrow and one for the cursor on the right
+		case4: data >= width && no edge visible => width -2 // two for the two arrows
+	*/
 
-	if len(fe.data) < width { // One reserved for the cursor.
-		return string(fe.data[fe.dataPos:]), fe.curPos, nil
-	}
-
-	var b bytes.Buffer
-	for i, r := range fe.data[fe.dataPos:] {
-		if i == 0 {
-			b.WriteRune('⇦')
-			continue
-		}
-
-		if i >= maxPos {
-			break
-		}
-		b.WriteRune(r)
-	}
-	return b.String(), fe.curPos, nil
+	return "", fe.curPos, nil
 }
 
 // insert inserts the rune at the current position of the cursor.
@@ -123,10 +121,12 @@ func (fe *fieldEditor) delete(r rune) {}
 func (fe *fieldEditor) deleteBefore(r rune) {}
 
 // cursorRight moves the cursor one position to the right.
-func (fe *fieldEditor) cursorRight() {}
+func (fe *fieldEditor) cursorRight() {
+}
 
-// cursoriLeft moves the cursor one position to the left.
-func (fe *fieldEditor) cursorLeft() {}
+// cursorLeft moves the cursor one position to the left.
+func (fe *fieldEditor) cursorLeft() {
+}
 
 // cursorHome moves the cursor to the beginning of the data.
 func (fe *fieldEditor) cursorHome() {}

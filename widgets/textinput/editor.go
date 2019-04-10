@@ -19,6 +19,7 @@ package textinput
 import (
 	"bytes"
 	"fmt"
+	"log"
 
 	"github.com/mum4k/termdash/internal/runewidth"
 )
@@ -58,12 +59,66 @@ func (fd *fieldData) rangeWidth(startIdx, endIdx int) int {
 	return width
 }
 
+// cellsBefore given an endIdx calculates startIdx that results in range that
+// will take at most the provided number of cells to print on the screen.
+func (fd *fieldData) cellsBefore(cells, endIdx int) int {
+	if endIdx == 0 {
+		return 0
+	}
+
+	usedCells := 0
+	for i := endIdx; i > 0; i-- {
+		prev := (*fd)[i-1]
+		width := runewidth.RuneWidth(prev)
+		if usedCells+width > cells {
+			return i
+		}
+		usedCells += width
+	}
+	return 0
+}
+
+// width is the rune width of all the runes in the data.
+func (fd *fieldData) width() int {
+	return fd.rangeWidth(0, len(*fd))
+}
+
+// runesIn returns runes that are in the visible range.
+func (fd *fieldData) runesIn(vr *visibleRange) string {
+	var b bytes.Buffer
+	for i, r := range (*fd)[vr.startIdx:] {
+		if i+vr.startIdx >= vr.endIdx {
+			break
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
 // visibleRange represents a range of currently visible runes.
 // Visible runes are all such runes whose index falls within:
 //   startIdx <= idx < endIdx
 type visibleRange struct {
 	startIdx int
 	endIdx   int
+}
+
+// runeCount returns the number of visible runes.
+func (vr *visibleRange) runeCount() int {
+	return vr.endIdx - vr.startIdx
+}
+
+// setFromStart sets the visible range from the start of the data until the
+// provided width.
+func (vr *visibleRange) setFromStart(forRunes int) {
+	vr.startIdx = 0
+	vr.endIdx = forRunes
+}
+
+// set sets the visible range from the start to the end index.
+func (vr *visibleRange) set(startIdx, endIdx int) {
+	vr.startIdx = startIdx
+	vr.endIdx = endIdx
 }
 
 // fieldEditor maintains the cursor position and allows editing of the data in
@@ -77,19 +132,45 @@ type fieldEditor struct {
 	curPos int
 
 	// visible is the currently visible range.
-	visible visibleRange
+	visible *visibleRange
 }
 
 // newFieldEditor returns a new fieldEditor instance.
 func newFieldEditor() *fieldEditor {
-	return &fieldEditor{}
+	return &fieldEditor{
+		visible: &visibleRange{},
+	}
 }
 
 // viewFor returns the currently visible data inside a text field with the
 // specified width and the cursor position within the field.
 func (fe *fieldEditor) viewFor(width int) (string, int, error) {
-	if min := 3; width < min {
+	if min := 4; width < min { // One for left arrow, two for one full-width rune and one for the cursor.
 		return "", -1, fmt.Errorf("width %d is too small, the minimum is %d", width, min)
+	}
+	forRunes := width - 1 // One reserved for the cursor.
+
+	if fe.data.width() <= forRunes {
+		// Base case, all runes fit into the width.
+		fe.visible.setFromStart(forRunes)
+		return fe.data.runesIn(fe.visible), fe.curPos, nil
+	}
+
+	if fe.curPos > fe.visible.endIdx {
+		endIdx := fe.curPos
+		startIdx := fe.data.cellsBefore(forRunes, endIdx)
+		fe.visible.set(startIdx, endIdx)
+		width := fe.data.rangeWidth(startIdx, endIdx)
+
+		log.Printf("XXX visible: %#v", fe.visible)
+		curPos := 0
+		if width == forRunes {
+			curPos = fe.visible.endIdx - fe.visible.startIdx
+		} else {
+			diff := forRunes - width
+			curPos = fe.visible.endIdx - fe.visible.startIdx - diff
+		}
+		return fe.data.runesIn(fe.visible), curPos, nil
 	}
 
 	/*

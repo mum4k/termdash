@@ -97,46 +97,192 @@ func TestData(t *testing.T) {
 
 func TestRangeWidth(t *testing.T) {
 	tests := []struct {
-		desc     string
-		data     fieldData
-		startIdx int
-		endIdx   int
-		want     int
+		desc           string
+		data           fieldData
+		startIdx       int
+		endIdx         int
+		wantRangeWidth int
+		wantWidth      int
 	}{
 		{
-			desc:     "empty range",
-			startIdx: 0,
-			endIdx:   0,
-			want:     0,
+			desc:           "empty range",
+			startIdx:       0,
+			endIdx:         0,
+			wantRangeWidth: 0,
 		},
 		{
-			desc:     "single half-width rune",
-			data:     fieldData{'a', 'b', '世', 'd'},
-			startIdx: 1,
-			endIdx:   2,
-			want:     1,
+			desc:           "single half-width rune",
+			data:           fieldData{'a', 'b'},
+			startIdx:       1,
+			endIdx:         2,
+			wantRangeWidth: 1,
+			wantWidth:      2,
 		},
 		{
-			desc:     "single full-width rune",
-			data:     fieldData{'a', 'b', '世', 'd'},
-			startIdx: 2,
-			endIdx:   3,
-			want:     2,
+			desc:           "single full-width rune",
+			data:           fieldData{'a', 'b', '世', 'd'},
+			startIdx:       2,
+			endIdx:         3,
+			wantRangeWidth: 2,
+			wantWidth:      5,
 		},
 		{
-			desc:     "mix of multiple runes",
-			data:     fieldData{'a', 'b', '世', 'd'},
-			startIdx: 1,
-			endIdx:   4,
-			want:     4,
+			desc:           "mix of multiple runes",
+			data:           fieldData{'a', 'b', '世', 'd'},
+			startIdx:       1,
+			endIdx:         4,
+			wantRangeWidth: 4,
+			wantWidth:      5,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.data.rangeWidth(tc.startIdx, tc.endIdx)
+			gotRangeWidth := tc.data.rangeWidth(tc.startIdx, tc.endIdx)
+			if gotRangeWidth != tc.wantRangeWidth {
+				t.Errorf("rangeWidth => %d, wantRangeWidth %d", gotRangeWidth, tc.wantRangeWidth)
+			}
+
+			gotWidth := tc.data.width()
+			if gotWidth != tc.wantWidth {
+				t.Errorf("width => %d, wantWidth %d", gotWidth, tc.wantWidth)
+			}
+		})
+	}
+}
+
+func TestRunesIn(t *testing.T) {
+	t.Skip()
+	tests := []struct {
+		desc string
+		data fieldData
+		vr   *visibleRange
+		want string
+	}{
+		{
+			desc: "zero range, zero data",
+			vr:   &visibleRange{},
+			want: "",
+		},
+		{
+			desc: "zero range, non-zero data",
+			data: fieldData{'a', 'b', '世', 'd'},
+			vr:   &visibleRange{},
+			want: "",
+		},
+		{
+			desc: "range from zero, start and end visible",
+			data: fieldData{'a', 'b', '世', 'd'},
+			vr: &visibleRange{
+				startIdx: 0,
+				endIdx:   4,
+			},
+			want: "ab世d",
+		},
+		{
+			desc: "range from zero, end not visible",
+			data: fieldData{'a', 'b', '世', 'd'},
+			vr: &visibleRange{
+				startIdx: 0,
+				endIdx:   3,
+			},
+			want: "ab⇨",
+		},
+		{
+			desc: "range from non-zero, start not visible, end visible",
+			data: fieldData{'a', 'b', '世', 'd'},
+			vr: &visibleRange{
+				startIdx: 1,
+				endIdx:   4,
+			},
+			want: "⇦世d",
+		},
+		{
+			desc: "range from non-zero, neither start nor end visible",
+			data: fieldData{'a', 'b', '世', 'd', 'e'},
+			vr: &visibleRange{
+				startIdx: 1,
+				endIdx:   4,
+			},
+			want: "⇦世⇨",
+		},
+		{
+			desc: "range longer than data",
+			data: fieldData{'a', 'b', '世', 'd'},
+			vr: &visibleRange{
+				startIdx: 2,
+				endIdx:   5,
+			},
+			want: "⇦d",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := tc.data.runesIn(tc.vr)
 			if got != tc.want {
-				t.Errorf("rangeWidth => %d, want %d", got, tc.want)
+				t.Errorf("runesIn => %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestCellsBefore(t *testing.T) {
+	tests := []struct {
+		desc   string
+		data   fieldData
+		cells  int
+		endIdx int
+		want   int
+	}{
+		{
+			desc:   "empty data and range",
+			cells:  1,
+			endIdx: 0,
+			want:   0,
+		},
+		{
+			desc:   "non-empty data and empty range",
+			data:   fieldData{'a', 'b', '世', 'd'},
+			cells:  1,
+			endIdx: 0,
+			want:   0,
+		},
+		{
+			desc:   "more cells than runes from endIdx",
+			data:   fieldData{'a', 'b', '世', 'd'},
+			cells:  10,
+			endIdx: 1,
+			want:   0,
+		},
+		{
+			desc:   "less cells than runes from endIdx, stops on half-width rune",
+			data:   fieldData{'a', 'b', '世', 'd'},
+			cells:  1,
+			endIdx: 2,
+			want:   1,
+		},
+		{
+			desc:   "less cells than runes from endIdx, stops on full-width rune",
+			data:   fieldData{'a', 'b', '世', 'd'},
+			cells:  2,
+			endIdx: 3,
+			want:   2,
+		},
+		{
+			desc:   "less cells than runes from endIdx, full-width rune doesn't fit",
+			data:   fieldData{'a', 'b', '世', 'd'},
+			cells:  2,
+			endIdx: 4,
+			want:   3,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := tc.data.cellsBefore(tc.cells, tc.endIdx)
+			if got != tc.want {
+				t.Errorf("cellsBefore => %d, want %d", got, tc.want)
 			}
 		})
 	}
@@ -154,18 +300,18 @@ func TestFieldEditor(t *testing.T) {
 	}{
 		{
 			desc:    "fails for width too small",
-			width:   2,
+			width:   3,
 			wantErr: true,
 		},
 		{
 			desc:       "no data",
-			width:      3,
+			width:      4,
 			want:       "",
 			wantCurIdx: 0,
 		},
 		{
 			desc:  "data and cursor fit exactly",
-			width: 3,
+			width: 4,
 			ops: func(fe *fieldEditor) error {
 				fe.insert('a')
 				fe.insert('b')
@@ -176,26 +322,28 @@ func TestFieldEditor(t *testing.T) {
 		},
 		{
 			desc:  "longer data than the width, cursor at the end",
-			width: 3,
+			width: 4,
 			ops: func(fe *fieldEditor) error {
 				fe.insert('a')
 				fe.insert('b')
 				fe.insert('c')
+				fe.insert('d')
 				return nil
 			},
-			want:       "⇦c",
-			wantCurIdx: 2,
+			want:       "⇦cd",
+			wantCurIdx: 3,
 		},
 		{
 			desc:  "width decreases, adjusts cursor and shifts data",
-			width: 3,
+			width: 4,
 			ops: func(fe *fieldEditor) error {
-				if _, _, err := fe.viewFor(4); err != nil {
+				if _, _, err := fe.viewFor(5); err != nil {
 					return err
 				}
 				fe.insert('a')
 				fe.insert('b')
 				fe.insert('c')
+				fe.insert('d')
 				return nil
 			},
 			want:       "⇦c",

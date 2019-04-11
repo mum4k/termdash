@@ -152,7 +152,6 @@ func TestRangeWidth(t *testing.T) {
 }
 
 func TestRunesIn(t *testing.T) {
-	t.Skip()
 	tests := []struct {
 		desc string
 		data fieldData
@@ -207,13 +206,22 @@ func TestRunesIn(t *testing.T) {
 			want: "⇦世⇨",
 		},
 		{
+			desc: "range from non-zero, neither start nor end visible, range too short for arrows",
+			data: fieldData{'a', 'b', '世', 'd', 'e'},
+			vr: &visibleRange{
+				startIdx: 1,
+				endIdx:   3,
+			},
+			want: "b世",
+		},
+		{
 			desc: "range longer than data",
 			data: fieldData{'a', 'b', '世', 'd'},
 			vr: &visibleRange{
-				startIdx: 2,
+				startIdx: 0,
 				endIdx:   5,
 			},
-			want: "⇦d",
+			want: "ab世d",
 		},
 	}
 
@@ -239,6 +247,20 @@ func TestCellsBefore(t *testing.T) {
 			desc:   "empty data and range",
 			cells:  1,
 			endIdx: 0,
+			want:   0,
+		},
+		{
+			desc:   "requesting zero cells",
+			data:   fieldData{'a', 'b', '世', 'd'},
+			cells:  0,
+			endIdx: 1,
+			want:   1,
+		},
+		{
+			desc:   "data only has one rune",
+			data:   fieldData{'a'},
+			cells:  1,
+			endIdx: 1,
 			want:   0,
 		},
 		{
@@ -288,8 +310,81 @@ func TestCellsBefore(t *testing.T) {
 	}
 }
 
+func TestCellsAfter(t *testing.T) {
+	tests := []struct {
+		desc     string
+		data     fieldData
+		cells    int
+		startIdx int
+		want     int
+	}{
+		{
+			desc:     "empty data and range",
+			cells:    1,
+			startIdx: 0,
+			want:     0,
+		},
+		{
+			desc:     "empty data and range, non-zero start",
+			cells:    1,
+			startIdx: 1,
+			want:     1,
+		},
+		{
+			desc:     "data only has one rune",
+			data:     fieldData{'a'},
+			cells:    1,
+			startIdx: 0,
+			want:     1,
+		},
+		{
+			desc:     "non-empty data and empty range",
+			data:     fieldData{'a', 'b', '世', 'd'},
+			cells:    0,
+			startIdx: 1,
+			want:     1,
+		},
+		{
+			desc:     "more cells than runes from startIdx",
+			data:     fieldData{'a', 'b', '世', 'd'},
+			cells:    10,
+			startIdx: 1,
+			want:     4,
+		},
+		{
+			desc:     "less cells than runes from startIdx, stops on half-width rune",
+			data:     fieldData{'a', 'b', '世', 'd', 'e', 'f'},
+			cells:    2,
+			startIdx: 3,
+			want:     5,
+		},
+		{
+			desc:     "less cells than runes from startIdx, stops on full-width rune",
+			data:     fieldData{'a', 'b', '世', 'd'},
+			cells:    3,
+			startIdx: 1,
+			want:     3,
+		},
+		{
+			desc:     "less cells than runes from startIdx, full-width rune doesn't fit",
+			data:     fieldData{'a', 'b', '世', 'd'},
+			cells:    3,
+			startIdx: 0,
+			want:     2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := tc.data.cellsAfter(tc.cells, tc.startIdx)
+			if got != tc.want {
+				t.Errorf("cellsAfter => %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestFieldEditor(t *testing.T) {
-	t.Skip()
 	tests := []struct {
 		desc       string
 		width      int
@@ -315,10 +410,11 @@ func TestFieldEditor(t *testing.T) {
 			ops: func(fe *fieldEditor) error {
 				fe.insert('a')
 				fe.insert('b')
+				fe.insert('c')
 				return nil
 			},
-			want:       "ab",
-			wantCurIdx: 2,
+			want:       "abc",
+			wantCurIdx: 3,
 		},
 		{
 			desc:  "longer data than the width, cursor at the end",
@@ -334,7 +430,7 @@ func TestFieldEditor(t *testing.T) {
 			wantCurIdx: 3,
 		},
 		{
-			desc:  "width decreases, adjusts cursor and shifts data",
+			desc:  "width decreased, adjusts cursor and shifts data",
 			width: 4,
 			ops: func(fe *fieldEditor) error {
 				if _, _, err := fe.viewFor(5); err != nil {
@@ -346,11 +442,11 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('d')
 				return nil
 			},
-			want:       "⇦c",
-			wantCurIdx: 2,
+			want:       "⇦cd",
+			wantCurIdx: 3,
 		},
 		{
-			desc:  "cursor won't go right beyond the end of the field",
+			desc:  "cursor won't go right beyond the end of the data",
 			width: 4,
 			ops: func(fe *fieldEditor) error {
 				fe.insert('a')
@@ -373,27 +469,35 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('b')
 				fe.insert('c')
 				fe.insert('d')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
 				fe.cursorLeft()
 				return nil
 			},
 			want:       "⇦cd",
 			wantCurIdx: 2,
 		},
-		{
-			desc:  "scrolls content to the left, both ends invisible",
-			width: 4,
-			ops: func(fe *fieldEditor) error {
-				fe.insert('a')
-				fe.insert('b')
-				fe.insert('c')
-				fe.insert('d')
-				fe.cursorLeft()
-				fe.cursorLeft()
-				return nil
-			},
-			want:       "⇦b⇨",
-			wantCurIdx: 1,
-		},
+		/*
+			{
+				desc:  "scrolls content to the left, both ends hidden",
+				width: 4,
+				ops: func(fe *fieldEditor) error {
+					fe.insert('a')
+					fe.insert('b')
+					fe.insert('c')
+					fe.insert('d')
+					if _, _, err := fe.viewFor(4); err != nil {
+						return err
+					}
+					fe.cursorLeft()
+					fe.cursorLeft()
+					//fe.cursorLeft()
+					return nil
+				},
+				want:       "⇦cd⇨",
+				wantCurIdx: 1,
+			},*/
 
 		// Less text than width.
 		// Tests with full-width runes.

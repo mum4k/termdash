@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/mum4k/termdash/internal/numbers"
 	"github.com/mum4k/termdash/internal/runewidth"
 )
 
@@ -78,6 +79,26 @@ func (fd *fieldData) cellsBefore(cells, endIdx int) int {
 	return 0
 }
 
+// cellsAfter given a startIdx calculates endIdx that results in range that
+// will take at most the provided number of cells to print on the screen.
+func (fd *fieldData) cellsAfter(cells, startIdx int) int {
+	if startIdx >= len(*fd) || cells == 0 {
+		return startIdx
+	}
+
+	first := (*fd)[startIdx]
+	usedCells := runewidth.RuneWidth(first)
+	for i := startIdx + 1; i < len(*fd); i++ {
+		r := (*fd)[i]
+		width := runewidth.RuneWidth(r)
+		if usedCells+width > cells {
+			return i
+		}
+		usedCells += width
+	}
+	return len(*fd)
+}
+
 // width is the rune width of all the runes in the data.
 func (fd *fieldData) width() int {
 	return fd.rangeWidth(0, len(*fd))
@@ -85,12 +106,30 @@ func (fd *fieldData) width() int {
 
 // runesIn returns runes that are in the visible range.
 func (fd *fieldData) runesIn(vr *visibleRange) string {
-	var b bytes.Buffer
+	var runes []rune
 	for i, r := range (*fd)[vr.startIdx:] {
 		if i+vr.startIdx >= vr.endIdx {
 			break
 		}
-		b.WriteRune(r)
+		runes = append(runes, r)
+	}
+
+	startVisible := vr.startIdx == 0
+	endVisible := vr.endIdx >= len(*fd)
+	useArrows := len(runes) > 2
+
+	var b bytes.Buffer
+	for i, r := range runes {
+		switch {
+		case useArrows && i == 0 && !startVisible:
+			b.WriteRune('⇦')
+
+		case useArrows && i == len(runes)-1 && !endVisible:
+			b.WriteRune('⇨')
+
+		default:
+			b.WriteRune(r)
+		}
 	}
 	return b.String()
 }
@@ -151,18 +190,25 @@ func (fe *fieldEditor) viewFor(width int) (string, int, error) {
 	forRunes := width - 1 // One reserved for the cursor.
 
 	if fe.data.width() <= forRunes {
+		log.Printf("Case1(all visible)")
 		// Base case, all runes fit into the width.
 		fe.visible.setFromStart(forRunes)
 		return fe.data.runesIn(fe.visible), fe.curPos, nil
 	}
 
+	if fe.visible.runeCount() > forRunes {
+		log.Printf("Case2(shrinking visible)")
+		fe.visible.endIdx = fe.visible.startIdx + forRunes
+	}
+
+	log.Printf("fe.curPos:%d fe.visible:%#v", fe.curPos, fe.visible)
 	if fe.curPos > fe.visible.endIdx {
+		log.Printf("Case3(shifting right)")
 		endIdx := fe.curPos
 		startIdx := fe.data.cellsBefore(forRunes, endIdx)
 		fe.visible.set(startIdx, endIdx)
 		width := fe.data.rangeWidth(startIdx, endIdx)
 
-		log.Printf("XXX visible: %#v", fe.visible)
 		curPos := 0
 		if width == forRunes {
 			curPos = fe.visible.endIdx - fe.visible.startIdx
@@ -173,20 +219,20 @@ func (fe *fieldEditor) viewFor(width int) (string, int, error) {
 		return fe.data.runesIn(fe.visible), curPos, nil
 	}
 
-	/*
-		case1: range is zero - initialize to width
-		case2: range is set, cursor is in
-		case3: range is set, cursor is to the right - shift range right, calculate left based on rune width.
-		case4: range is set, cursor is to the left - shift range left, calculate right based on rune width.
+	if fe.curPos < fe.visible.startIdx {
+		log.Printf("Case3(shifting left)")
+		startIdx := fe.curPos
+		endIdx := fe.data.cellsAfter(forRunes, startIdx)
+		fe.visible.set(startIdx, endIdx)
 
-		available:
-		case1: data < width => width - 1 // one for the cursor
-		case2: data >= width && left edge visible => width - 1 // one for the arrow
-		case3: data >= width && right edge visible => width - 2 // one for the left arrow and one for the cursor on the right
-		case4: data >= width && no edge visible => width -2 // two for the two arrows
-	*/
+		curPos := 0
+		return fe.data.runesIn(fe.visible), curPos, nil
+	}
 
-	return "", fe.curPos, nil
+	// Case - the cursor is in.
+	log.Printf("Case3(cursor is in)")
+	curPos := fe.curPos - fe.visible.startIdx
+	return fe.data.runesIn(fe.visible), curPos, nil
 }
 
 // insert inserts the rune at the current position of the cursor.
@@ -203,10 +249,12 @@ func (fe *fieldEditor) deleteBefore(r rune) {}
 
 // cursorRight moves the cursor one position to the right.
 func (fe *fieldEditor) cursorRight() {
+	fe.curPos, _ = numbers.MinMaxInts([]int{fe.curPos + 1, len(fe.data)})
 }
 
 // cursorLeft moves the cursor one position to the left.
 func (fe *fieldEditor) cursorLeft() {
+	_, fe.curPos = numbers.MinMaxInts([]int{fe.curPos - 1, 0})
 }
 
 // cursorHome moves the cursor to the beginning of the data.

@@ -215,6 +215,12 @@ func TestMinMax(t *testing.T) {
 			wantMin: -11.3,
 			wantMax: 22.5,
 		},
+		{
+			desc:    "min and max among negative, positive, zero and NaN values",
+			values:  []float64{1.1, 0, 1.3, math.NaN(), -11.3, 22.5},
+			wantMin: -11.3,
+			wantMax: 22.5,
+		},
 	}
 
 	for _, tc := range tests {

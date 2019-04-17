@@ -57,7 +57,7 @@ func newSeriesValues(values []float64) *seriesValues {
 	v := make([]float64, len(values))
 	copy(v, values)
 
-	min, max := numbers.MinMax(v)
+	min, max := minMax(v)
 	return &seriesValues{
 		values: v,
 		min:    min,
@@ -176,8 +176,9 @@ func (lc *LineChart) yMinMax() (float64, float64) {
 		maximums = append(maximums, lc.opts.yAxisCustomScale.max)
 	}
 
-	min, _ := numbers.MinMax(minimums)
-	_, max := numbers.MinMax(maximums)
+	min, _ := minMax(minimums)
+	_, max := minMax(maximums)
+
 	return min, max
 }
 
@@ -529,4 +530,23 @@ func (lc *LineChart) maxXValue() int {
 		return 0
 	}
 	return maxLen - 1
+}
+
+const (
+	defMin = 0
+	defMax = 0
+)
+
+// minMax is a wrapper around numbers.MinMax that controls
+// the output if the values are NaN and sets defaults if it's
+// the case.
+func minMax(values []float64) (x, y float64) {
+	min, max := numbers.MinMax(values)
+	if math.IsNaN(min) {
+		min = defMin
+	}
+	if math.IsNaN(max) {
+		max = defMax
+	}
+	return min, max
 }

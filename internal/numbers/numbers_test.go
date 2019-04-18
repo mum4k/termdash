@@ -215,13 +215,28 @@ func TestMinMax(t *testing.T) {
 			wantMin: -11.3,
 			wantMax: 22.5,
 		},
+		{
+			desc:    "min and max among negative, positive, zero and NaN values",
+			values:  []float64{1.1, 0, 1.3, math.NaN(), -11.3, 22.5},
+			wantMin: -11.3,
+			wantMax: 22.5,
+		},
+		{
+			desc:    "all NaN values",
+			values:  []float64{math.NaN(), math.NaN(), math.NaN(), math.NaN()},
+			wantMin: math.NaN(),
+			wantMax: math.NaN(),
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			gotMin, gotMax := MinMax(tc.values)
-			if gotMin != tc.wantMin || gotMax != tc.wantMax {
-				t.Errorf("MinMax => (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
+			if diff := pretty.Compare(tc.wantMin, gotMin); diff != "" {
+				t.Errorf("MinMax => unexpected min, diff (-want, +got):\n %s", diff)
+			}
+			if diff := pretty.Compare(tc.wantMax, gotMax); diff != "" {
+				t.Errorf("MinMax => unexpected max, diff (-want, +got):\n %s", diff)
 			}
 		})
 	}

@@ -109,7 +109,7 @@ func Round(x float64) float64 {
 
 // MinMax returns the smallest and the largest value among the provided values.
 // Returns (0, 0) if there are no values.
-// Ignores NaN values. Allowing NaN values could led in a corner case where all
+// Ignores NaN values. Allowing NaN values could lead to a corner case where all
 // values can be NaN, in this case the function will return NaN as min and max.
 func MinMax(values []float64) (min, max float64) {
 	if len(values) == 0 {

@@ -232,13 +232,11 @@ func TestMinMax(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			gotMin, gotMax := MinMax(tc.values)
-			// Different assertion for NaN cases.
-			if (math.IsNaN(tc.wantMin) && !math.IsNaN(gotMin)) ||
-				(math.IsNaN(tc.wantMax) && !math.IsNaN(gotMax)) {
-				t.Errorf("MinMax => (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
-			} else if !math.IsNaN(tc.wantMin) && gotMin != tc.wantMin ||
-				!math.IsNaN(tc.wantMax) && gotMax != tc.wantMax {
-				t.Errorf("MinMax => (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
+			if diff := pretty.Compare(tc.wantMin, gotMin); diff != "" {
+				t.Errorf("MinMax => unexpected min, diff (-want, +got):\n %s", diff)
+			}
+			if diff := pretty.Compare(tc.wantMax, gotMax); diff != "" {
+				t.Errorf("MinMax => unexpected max, diff (-want, +got):\n %s", diff)
 			}
 		})
 	}

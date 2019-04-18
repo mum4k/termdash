@@ -532,21 +532,16 @@ func (lc *LineChart) maxXValue() int {
 	return maxLen - 1
 }
 
-const (
-	defMin = 0
-	defMax = 0
-)
-
 // minMax is a wrapper around numbers.MinMax that controls
 // the output if the values are NaN and sets defaults if it's
 // the case.
 func minMax(values []float64) (x, y float64) {
 	min, max := numbers.MinMax(values)
 	if math.IsNaN(min) {
-		min = defMin
+		min = 0
 	}
 	if math.IsNaN(max) {
-		max = defMax
+		max = 0
 	}
 	return min, max
 }

@@ -16,9 +16,9 @@
 package wrap
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 	"unicode"
 
 	"github.com/mum4k/termdash/internal/canvas/buffer"
@@ -83,7 +83,7 @@ func ValidText(text string) error {
 // ValidCells validates the provided cells for wrapping.
 // The text in the cells must follow the same rules as described for ValidText.
 func ValidCells(cells []*buffer.Cell) error {
-	var b bytes.Buffer
+	var b strings.Builder
 	for _, c := range cells {
 		b.WriteRune(c.Rune)
 	}
@@ -208,7 +208,7 @@ func (cs *cellScanner) wordCells() []*buffer.Cell {
 // wordWidth returns the width of the current word in cells when printed on the
 // terminal.
 func (cs *cellScanner) wordWidth() int {
-	var b bytes.Buffer
+	var b strings.Builder
 	for _, wc := range cs.wordCells() {
 		b.WriteRune(wc.Rune)
 	}

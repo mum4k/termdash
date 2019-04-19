@@ -96,17 +96,6 @@ func zeroBeforeDecimal(f float64) float64 {
 	return (f - floor) * sign
 }
 
-// Round returns the nearest integer, rounding half away from zero.
-// Copied from the math package of Go 1.10 for backwards compatibility with Go
-// 1.8 where the math.Round function doesn't exist yet.
-func Round(x float64) float64 {
-	t := math.Trunc(x)
-	if math.Abs(x-t) >= 0.5 {
-		return t + math.Copysign(1, x)
-	}
-	return t
-}
-
 // MinMax returns the smallest and the largest value among the provided values.
 // Returns (0, 0) if there are no values.
 // Ignores NaN values. Allowing NaN values could lead to a corner case where all
@@ -169,7 +158,7 @@ func DegreesToRadians(degrees int) float64 {
 
 // RadiansToDegrees converts radians to the equivalent in degrees.
 func RadiansToDegrees(radians float64) int {
-	d := int(Round(radians * 180 / math.Pi))
+	d := int(math.Round(radians * 180 / math.Pi))
 	if d < 0 {
 		d += 360
 	}
@@ -227,7 +216,7 @@ func SplitByRatio(n int, ratio image.Point) image.Point {
 	sum := float64(sr.X + sr.Y)
 	fact := fn / sum
 	return image.Point{
-		int(Round(fact * float64(sr.X))),
-		int(Round(fact * float64(sr.Y))),
+		int(math.Round(fact * float64(sr.X))),
+		int(math.Round(fact * float64(sr.Y))),
 	}
 }

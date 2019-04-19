@@ -18,9 +18,9 @@ package axes
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/internal/numbers"
 )
 
 // YScaleMode determines whether the Y scale is anchored to the zero value.
@@ -166,7 +166,7 @@ func (ys *YScale) ValueToPixel(v float64) (int, error) {
 		diff := -1 * ys.Min.Value
 		v += diff
 	}
-	pos := int(numbers.Round(v / ys.Step.Rounded))
+	pos := int(math.Round(v / ys.Step.Rounded))
 	return positionToY(pos, ys.brailleHeight)
 }
 
@@ -282,7 +282,7 @@ func (xs *XScale) ValueToPixel(v int) (int, error) {
 	if xs.Min.Value > 0 {
 		fv -= xs.Min.Value
 	}
-	return int(numbers.Round(fv / xs.Step.Rounded)), nil
+	return int(math.Round(fv / xs.Step.Rounded)), nil
 }
 
 // ValueToCell given a value, determines the X coordinate of the cell that
@@ -306,7 +306,7 @@ func (xs *XScale) CellLabel(x int) (*Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewValue(numbers.Round(v), xs.Min.NonZeroDecimals), nil
+	return NewValue(math.Round(v), xs.Min.NonZeroDecimals), nil
 }
 
 // positionToY, given a position within the height, returns the Y coordinate of

@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The widgetapi.Widget.Draw method now accepts a second argument which provides
   widgets with additional metadata. This affects all implemented widgets.
+- Termdash now requires at least Go version 1.10, which allows us to utilize
+  `math.Round` instead of our own implementation and `strings.Builder` instead
+  of `bytes.Buffer`.
 
 ## [0.8.0] - 30-Mar-2019
 

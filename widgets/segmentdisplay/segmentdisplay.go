@@ -17,10 +17,10 @@
 package segmentdisplay
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"image"
+	"strings"
 	"sync"
 
 	"github.com/mum4k/termdash/internal/alignfor"
@@ -43,7 +43,7 @@ import (
 // Implements widgetapi.Widget. This object is thread-safe.
 type SegmentDisplay struct {
 	// buff contains the text to be displayed.
-	buff bytes.Buffer
+	buff strings.Builder
 
 	// givenWOpts are write options given for the text in buff.
 	givenWOpts []*writeOptions

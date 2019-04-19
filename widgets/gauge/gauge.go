@@ -16,10 +16,10 @@
 package gauge
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"image"
+	"strings"
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
@@ -176,7 +176,7 @@ func (g *Gauge) progressText() string {
 // gaugeText returns full text to be displayed within the gauge, i.e. the
 // progress text and the optional label.
 func (g *Gauge) gaugeText() string {
-	var b bytes.Buffer
+	var b strings.Builder
 	b.WriteString(g.progressText())
 	if g.opts.textLabel != "" {
 		if b.Len() > 0 {

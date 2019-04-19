@@ -56,7 +56,7 @@ var diaSegType = map[Segment]segment.DiagonalType{
 func segmentSize(ar image.Rectangle) int {
 	// widthPerc is the relative width of a segment to the width of the canvas.
 	const widthPerc = 9
-	s := int(numbers.Round(float64(ar.Dx()) * widthPerc / 100))
+	s := int(math.Round(float64(ar.Dx()) * widthPerc / 100))
 	if s > 3 && s%2 == 0 {
 		// Segments with odd number of pixels in their width/height look
 		// better, since the spike at the top of their slopes has only one
@@ -146,16 +146,16 @@ func newAttributes(bcAr image.Rectangle) *attributes {
 	twoSegLeg := twoSegHypo / math.Sqrt2
 	edgeSegGap := twoSegLeg - segPeakDist
 
-	spaces := int(numbers.Round(2*edgeSegGap + peakToPeak))
+	spaces := int(math.Round(2*edgeSegGap + peakToPeak))
 	shortLen := (bcAr.Dx()-spaces)/2 - 1
 	longLen := (bcAr.Dy()-spaces)/2 - 1
 
-	ptp := int(numbers.Round(peakToPeak))
-	horizLeftX := int(numbers.Round(edgeSegGap))
+	ptp := int(math.Round(peakToPeak))
+	horizLeftX := int(math.Round(edgeSegGap))
 
 	// Refer to doc/segment_placement.svg.
 	// Diagram labeled "A mid point".
-	offset := int(numbers.Round(diaLeg - segPeakDist))
+	offset := int(math.Round(diaLeg - segPeakDist))
 	horizMidX := horizLeftX + shortLen + offset
 	horizRightX := horizLeftX + shortLen + ptp + shortLen + offset
 
@@ -292,9 +292,9 @@ func (a *attributes) diaBetween(top, left, right, bottom Segment) image.Rectangl
 	const hvToDiaGapPerc = 30
 	hvToDiaGap := a.diaGap * hvToDiaGapPerc / 100
 
-	startX := int(numbers.Round(float64(topAr.Min.X) + a.segPeakDist - a.diaLeg + hvToDiaGap))
-	startY := int(numbers.Round(float64(leftAr.Min.Y) + a.segPeakDist - a.diaLeg + hvToDiaGap))
-	endX := int(numbers.Round(float64(bottomAr.Max.X) - a.segPeakDist + a.diaLeg - hvToDiaGap))
-	endY := int(numbers.Round(float64(rightAr.Max.Y) - a.segPeakDist + a.diaLeg - hvToDiaGap))
+	startX := int(math.Round(float64(topAr.Min.X) + a.segPeakDist - a.diaLeg + hvToDiaGap))
+	startY := int(math.Round(float64(leftAr.Min.Y) + a.segPeakDist - a.diaLeg + hvToDiaGap))
+	endX := int(math.Round(float64(bottomAr.Max.X) - a.segPeakDist + a.diaLeg - hvToDiaGap))
+	endY := int(math.Round(float64(rightAr.Max.Y) - a.segPeakDist + a.diaLeg - hvToDiaGap))
 	return image.Rect(startX, startY, endX, endY)
 }

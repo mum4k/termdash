@@ -30,9 +30,9 @@ import (
 func CirclePointAtAngle(degrees int, mid image.Point, radius int) image.Point {
 	angle := numbers.DegreesToRadians(degrees)
 	r := float64(radius)
-	x := mid.X + int(numbers.Round(r*math.Cos(angle)))
+	x := mid.X + int(math.Round(r*math.Cos(angle)))
 	// Y coordinates grow down on the canvas.
-	y := mid.Y - int(numbers.Round(r*math.Sin(angle)))
+	y := mid.Y - int(math.Round(r*math.Sin(angle)))
 	return image.Point{x, y}
 }
 

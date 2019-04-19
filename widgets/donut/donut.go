@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"math"
 	"sync"
 
 	"github.com/mum4k/termdash/align"
@@ -27,7 +28,6 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/numbers"
 	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -155,7 +155,7 @@ func (d *Donut) progressText() string {
 // holeRadius calculates the radius of the "hole" in the donut.
 // Returns zero if no hole should be drawn.
 func (d *Donut) holeRadius(donutRadius int) int {
-	r := int(numbers.Round(float64(donutRadius) / 100 * float64(d.opts.donutHolePercent)))
+	r := int(math.Round(float64(donutRadius) / 100 * float64(d.opts.donutHolePercent)))
 	if r < 2 { // Smallest possible circle radius.
 		return 0
 	}

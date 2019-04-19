@@ -16,11 +16,11 @@
 package faketerm
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"image"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
@@ -118,7 +118,7 @@ func (t *Terminal) BackBuffer() buffer.Buffer {
 // Implements fmt.Stringer.
 func (t *Terminal) String() string {
 	size := t.Size()
-	var b bytes.Buffer
+	var b strings.Builder
 	for row := 0; row < size.Y; row++ {
 		for col := 0; col < size.X; col++ {
 			r := t.buffer[col][row].Rune

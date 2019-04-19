@@ -40,10 +40,10 @@ The following outlines segments in the display and their names.
 package sixteen
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"math"
+	"strings"
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
@@ -250,7 +250,7 @@ func SupportsChars(s string) (bool, []rune) {
 // Sanitize returns a copy of the string, replacing all unsupported characters
 // with a space character.
 func Sanitize(s string) string {
-	var b bytes.Buffer
+	var b strings.Builder
 	for _, r := range s {
 		if _, ok := characterSegments[r]; !ok {
 			b.WriteRune(' ')

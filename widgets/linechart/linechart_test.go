@@ -1527,6 +1527,119 @@ func TestLineChartDraws(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "all NaN values",
+			canvas: image.Rect(0, 0, 20, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{math.NaN(), math.NaN(), math.NaN(), math.NaN(), math.NaN()})
+			},
+			wantCapacity: 36,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{1, 0}, End: image.Point{1, 8}},
+					{Start: image.Point{1, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{0, 7})
+				testdraw.MustText(c, "0", image.Point{2, 9})
+				testdraw.MustText(c, "1", image.Point{6, 9})
+				testdraw.MustText(c, "2", image.Point{10, 9})
+				testdraw.MustText(c, "3", image.Point{14, 9})
+				testdraw.MustText(c, "4", image.Point{18, 9})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "first and last NaN values",
+			canvas: image.Rect(0, 0, 28, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{math.NaN(), math.NaN(), 100, 150, math.NaN()})
+			},
+			wantCapacity: 44,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{27, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{4, 7})
+				testdraw.MustText(c, "77.44", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{11, 9})
+				testdraw.MustText(c, "2", image.Point{16, 9})
+				testdraw.MustText(c, "3", image.Point{22, 9})
+				testdraw.MustText(c, "4", image.Point{27, 9})
+
+				graphAr := image.Rect(6, 0, 25, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{21, 10}, image.Point{32, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "more values than capacity, X rescales with NaN values ignored",
+			canvas: image.Rect(0, 0, 11, 10),
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 1, 2, 3, 4, 5, 6, 7, math.NaN(), math.NaN(), math.NaN(), math.NaN(), 12, 13, 14, 15, 16, 17, 18, 19})
+			},
+			wantCapacity: 12,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{4, 0}, End: image.Point{4, 8}},
+					{Start: image.Point{4, 8}, End: image.Point{10, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{3, 7})
+				testdraw.MustText(c, "9.92", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{5, 9})
+				testdraw.MustText(c, "14", image.Point{9, 9})
+
+				// Braille line.
+				graphAr := image.Rect(5, 0, 11, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{1, 29})
+				testdraw.MustBrailleLine(bc, image.Point{1, 29}, image.Point{1, 28})
+				testdraw.MustBrailleLine(bc, image.Point{1, 28}, image.Point{2, 26})
+				testdraw.MustBrailleLine(bc, image.Point{2, 26}, image.Point{2, 25})
+				testdraw.MustBrailleLine(bc, image.Point{2, 25}, image.Point{3, 23})
+				testdraw.MustBrailleLine(bc, image.Point{3, 23}, image.Point{3, 21})
+				testdraw.MustBrailleLine(bc, image.Point{3, 21}, image.Point{4, 20})
+				testdraw.MustBrailleLine(bc, image.Point{7, 12}, image.Point{8, 10})
+				testdraw.MustBrailleLine(bc, image.Point{8, 10}, image.Point{8, 8})
+				testdraw.MustBrailleLine(bc, image.Point{8, 8}, image.Point{9, 7})
+				testdraw.MustBrailleLine(bc, image.Point{9, 7}, image.Point{9, 5})
+				testdraw.MustBrailleLine(bc, image.Point{9, 5}, image.Point{10, 4})
+				testdraw.MustBrailleLine(bc, image.Point{10, 4}, image.Point{10, 2})
+				testdraw.MustBrailleLine(bc, image.Point{10, 2}, image.Point{11, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

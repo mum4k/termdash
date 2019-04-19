@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   executed.
 - The SegmentDisplay widget now has a method that returns the observed character
   capacity the last time Draw was called.
+- The grid.Builder API now allows users to specify options for intermediate
+  containers, i.e. containers that don't have widgets, but represent rows and
+  columns.
+- Line chart widget now allows `math.NaN` values to represent "no value" (values
+  that will not be rendered) in the values slice.
 
 #### Breaking API changes
 
@@ -82,10 +87,10 @@ identifiers shouldn't be used externally.
 - The draw.LineStyle enum was refactored into its own package
   linestyle.LineStyle. Users will have to replace:
 
-  -  draw.LineStyleNone -> linestyle.None
-  -  draw.LineStyleLight -> linestyle.Light
-  -  draw.LineStyleDouble -> linestyle.Double
-  -  draw.LineStyleRound -> linestyle.Round
+  - draw.LineStyleNone -> linestyle.None
+  - draw.LineStyleLight -> linestyle.Light
+  - draw.LineStyleDouble -> linestyle.Double
+  - draw.LineStyleRound -> linestyle.Round
 
 ## [0.7.0] - 24-Feb-2019
 
@@ -118,7 +123,6 @@ identifiers shouldn't be used externally.
 
 - The Text widget now has a Write option that atomically replaces the entire
   text content.
-
 
 #### Improvements to the infrastructure
 
@@ -248,7 +252,7 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.8.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.8.0...devel
 [0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/mum4k/termdash/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/mum4k/termdash/compare/v0.7.0...v0.7.1

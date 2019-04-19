@@ -549,52 +549,52 @@ func TestNormalizeToWidth(t *testing.T) {
 
 func TestNormalizeToData(t *testing.T) {
 	tests := []struct {
-		desc    string
-		vr      *visibleRange
-		dataLen int
-		want    *visibleRange
+		desc string
+		vr   *visibleRange
+		data fieldData
+		want string
 	}{
 		{
-			desc:    "zero values",
-			vr:      &visibleRange{},
-			dataLen: 0,
-			want:    &visibleRange{},
+			desc: "zero values",
+			vr:   &visibleRange{},
+			data: fieldData{},
+			want: "",
 		},
 		{
-			desc: "dataLen smaller than visible range, range already at the start",
+			desc: "data smaller than visible range, range already at the start",
 			vr: &visibleRange{
 				startIdx: 0,
 				endIdx:   3,
 			},
-			dataLen: 1,
-			want: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
+			data: fieldData{'a'},
+			want: "a",
 		},
 		{
-			desc: "dataLen smaller than visible range by exactly one rune - space for the cursor",
+			desc: "data smaller than visible range by exactly one rune - space for the cursor",
 			vr: &visibleRange{
 				startIdx: 4,
 				endIdx:   6,
 			},
-			dataLen: 5,
-			want: &visibleRange{
-				startIdx: 4,
-				endIdx:   6,
-			},
+			data: fieldData{'a', 'b', 'c', 'd', 'e'},
+			want: "e",
 		},
 		{
-			desc: "dataLen smaller than visible range, range is shifted back, not reaching zero",
+			desc: "data smaller than visible range, range is shifted back, not reaching zero",
 			vr: &visibleRange{
 				startIdx: 4,
-				endIdx:   6,
+				endIdx:   7,
 			},
-			dataLen: 4,
-			want: &visibleRange{
-				startIdx: 3,
-				endIdx:   5,
+			data: fieldData{'a', 'b', 'c', 'd'},
+			want: "⇦d",
+		},
+		{
+			desc: "range decreases due to full-width rune",
+			vr: &visibleRange{
+				startIdx: 4,
+				endIdx:   7,
 			},
+			data: fieldData{'a', 'b', 'c', '世'},
+			want: "世",
 		},
 		{
 			desc: "dataLen smaller than visible range, range is shifted back, reaches zero",
@@ -602,20 +602,17 @@ func TestNormalizeToData(t *testing.T) {
 				startIdx: 4,
 				endIdx:   6,
 			},
-			dataLen: 1,
-			want: &visibleRange{
-				startIdx: 0,
-				endIdx:   2,
-			},
+			data: fieldData{'a'},
+			want: "a",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.vr
-			got.normalizeToData(tc.dataLen)
-			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("normalizeToData => unexpected diff (-want, +got):\n%s", diff)
+			tc.vr.normalizeToData(tc.data)
+			got := tc.data.runesIn(tc.vr)
+			if got != tc.want {
+				t.Errorf("normalizeToData => %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -1008,6 +1005,19 @@ func TestFieldEditor(t *testing.T) {
 			wantCurIdx: 3,
 		},
 		{
+			desc:  "longer data than the width, cursor at the end, has full-width runes",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('世')
+				return nil
+			},
+			want:       "⇦世",
+			wantCurIdx: 2,
+		},
+		{
 			desc:  "width decreased, adjusts cursor and shifts data",
 			width: 4,
 			ops: func(fe *fieldEditor) error {
@@ -1227,7 +1237,7 @@ func TestFieldEditor(t *testing.T) {
 			wantCurIdx: 3,
 		},
 		{
-			desc:  "deletes the last rune",
+			desc:  "deletesBefore when cursor after the data",
 			width: 4,
 			ops: func(fe *fieldEditor) error {
 				fe.insert('a')
@@ -1244,9 +1254,95 @@ func TestFieldEditor(t *testing.T) {
 			want:       "⇦cd",
 			wantCurIdx: 3,
 		},
+		{
+			desc:  "deletesBefore when cursor after the data, text has full-width rune",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('世')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.deleteBefore()
+				return nil
+			},
+			want:       "⇦世",
+			wantCurIdx: 2,
+		},
+		{
+			desc:  "deletesBefore when cursor in the middle",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.deleteBefore()
+				return nil
+			},
+			want:       "acd⇨",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "deletesBefore when cursor in the middle, full-width runes",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('世')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.deleteBefore()
+				return nil
+			},
+			want:       "世c⇨",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "deletesBefore does nothing when cursor at the start",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.deleteBefore()
+				return nil
+			},
+			want:       "abc⇨",
+			wantCurIdx: 0,
+		},
 		// deletes the last rune, contains full-width runes
-		// deleteBefore when in the middle
-		// deleteBefore when at the start
 		// delete when at the empty space at the end
 		// delete when in the middle, last rune visible
 		// delete when in the middle, last rune hidden

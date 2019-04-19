@@ -227,25 +227,17 @@ func (vr *visibleRange) normalizeToWidth(width int) {
 
 // normalizeToiData normalizes the visible range, handles cases where the
 // length of the data decreased due to deletion of some runes.
-func (vr *visibleRange) normalizeToData(dataLen int) {
-	if dataLen >= vr.endIdx || vr.startIdx == 0 {
-		// Nothing to do when data is longer than the range or the range
-		// already starts all the way left.
+func (vr *visibleRange) normalizeToData(fd fieldData) {
+	if vr.endIdx <= len(fd) || vr.startIdx == 0 {
+		// Nothing to do when data fills the range or the range already starts
+		// all the way left.
 		return
 	}
 
-	diff := vr.endIdx - dataLen
-	if diff == 1 {
-		// The data can be one character shorter than the visible range, since
-		// this is space for the cursor when appending.
-		return
-	}
-	diff--
-
-	_, newStartIdx := numbers.MinMaxInts([]int{vr.startIdx - diff, 0})
-	shift := vr.startIdx - newStartIdx
-	vr.endIdx -= shift
-	vr.startIdx = newStartIdx
+	endIdx := len(fd)
+	startIdx := fd.cellsBefore(vr.forRunes(), endIdx)
+	endIdx++ // Space for the cursor within the visible range.
+	vr.set(startIdx, endIdx)
 }
 
 // curRelative returns the relative position of the cursor within the visible
@@ -345,7 +337,7 @@ func (fe *fieldEditor) viewFor(width int) (string, int, error) {
 		return "", -1, fmt.Errorf("width %d is too small, the minimum is %d", width, min)
 	}
 	fe.visible.normalizeToWidth(width)
-	fe.visible.normalizeToData(len(fe.data))
+	fe.visible.normalizeToData(fe.data)
 	fe.toCursor()
 
 	cur, err := fe.visible.curRelative(fe.curDataPos)
@@ -374,6 +366,7 @@ func (fe *fieldEditor) delete() {
 func (fe *fieldEditor) deleteBefore() {
 	if fe.curDataPos == 0 {
 		// Cursor at the beginning, nothing to do.
+		return
 	}
 	fe.cursorLeft()
 	fe.delete()

@@ -17,6 +17,8 @@ package textinput
 // options.go contains configurable options for TextInput.
 
 import (
+	"fmt"
+
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/linestyle"
@@ -45,7 +47,8 @@ type options struct {
 	border           linestyle.LineStyle
 	borderColor      cell.Color
 
-	textWidthPerc *int
+	widthPerc     *int
+	maxWidthCells *int
 	label         string
 	labelCellOpts []cell.Option
 	labelAlign    align.Horizontal
@@ -59,6 +62,12 @@ type options struct {
 
 // validate validates the provided options.
 func (o *options) validate() error {
+	if min, max, perc := 0, 100, o.widthPerc; perc != nil && (*perc <= min || *perc > max) {
+		return fmt.Errorf("invalid WidthPerc(%d), must be value in range %d < value <= %d", *perc, min, max)
+	}
+	if min, cells := 4, o.maxWidthCells; cells != nil && *cells < min {
+		return fmt.Errorf("invalid MaxWidthCells(%d), must be value in range %d <= value", *cells, min)
+	}
 	return nil
 }
 
@@ -104,7 +113,7 @@ func HighlightedColor(c cell.Color) Option {
 
 // DefaultCursorColorNumber is the default color number for the CursorColor
 // option.
-const DefaultCursorColorNumber = 235
+const DefaultCursorColorNumber = 250
 
 // CursorColor sets the color of the cursor.
 // Defaults to DefaultCursorColorNumber.
@@ -129,12 +138,23 @@ func BorderColor(c cell.Color) Option {
 	})
 }
 
-// TextWidthPerc sets the width for the text input field as a percentage of the
-// container width. Must be a value in the range 0 < perc < 100.
+// WidthPerc sets the width for the text input field as a percentage of the
+// container width. Must be a value in the range 0 < perc <= 100.
 // Defaults to the width adjusted automatically base on the label length.
-func TextWidthPerc(perc int) Option {
+func WidthPerc(perc int) Option {
 	return option(func(opts *options) {
-		opts.textWidthPerc = &perc
+		opts.widthPerc = &perc
+	})
+}
+
+// MaxWidthCells sets the maximum width of the text input field as an absolute value
+// in cells. Must be a value in the range 4 <= cells.
+// This doesn't limit the text that the user can input, if the text overflows
+// the width of the input field, it scrolls to the left.
+// Defaults to using all available width in the container.
+func MaxWidthCells(cells int) Option {
+	return option(func(opts *options) {
+		opts.maxWidthCells = &cells
 	})
 }
 

@@ -60,7 +60,6 @@ func (ct *callbackTracker) submit(text string) error {
 func TestTextInput(t *testing.T) {
 	tests := []struct {
 		desc         string
-		text         string
 		callback     *callbackTracker
 		opts         []Option
 		events       []terminalapi.Event
@@ -71,9 +70,32 @@ func TestTextInput(t *testing.T) {
 		wantNewErr   bool
 		wantDrawErr  bool
 		wantEventErr bool
-	}{}
+	}{
+		{
+			desc: "fails on WidthPerc too low",
+			opts: []Option{
+				WidthPerc(0),
+			},
+			wantNewErr: true,
+		},
+		{
+			desc: "fails on WidthPerc too high",
+			opts: []Option{
+				WidthPerc(101),
+			},
+			wantNewErr: true,
+		},
+		{
+			desc: "fails on MaxWidthCells too low",
+			opts: []Option{
+				MaxWidthCells(3),
+			},
+			wantNewErr: true,
+		},
+	}
 
-	textFieldRune = 'x'
+	textFieldRune = '_'
+	cursorRune = '█'
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			gotCallback := tc.callback
@@ -172,6 +194,18 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
+			desc: "no label and no border, max width specified",
+			opts: []Option{
+				MaxWidthCells(5),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{4, 1},
+				MaximumSize:  image.Point{5, 1},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
 			desc: "no label, has border",
 			opts: []Option{
 				Border(linestyle.Light),
@@ -184,6 +218,19 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
+			desc: "no label, has border, max width specified",
+			opts: []Option{
+				Border(linestyle.Light),
+				MaxWidthCells(5),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{6, 3},
+				MaximumSize:  image.Point{7, 3},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
 			desc: "has label and no border",
 			opts: []Option{
 				Label("hello"),
@@ -191,6 +238,19 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{9, 1},
 				MaximumSize:  image.Point{0, 1},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
+			desc: "has label and no border, max width specified",
+			opts: []Option{
+				Label("hello"),
+				MaxWidthCells(5),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{9, 1},
+				MaximumSize:  image.Point{10, 1},
 				WantKeyboard: widgetapi.KeyScopeFocused,
 				WantMouse:    widgetapi.MouseScopeWidget,
 			},
@@ -220,6 +280,20 @@ func TestOptions(t *testing.T) {
 				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
+		{
+			desc: "has label and border, max width specified",
+			opts: []Option{
+				Label("hello"),
+				Border(linestyle.Light),
+				MaxWidthCells(5),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{11, 3},
+				MaximumSize:  image.Point{12, 3},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -239,33 +313,33 @@ func TestOptions(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	tests := []struct {
-		desc          string
-		cvsAr         image.Rectangle
-		label         string
-		textWidthPerc *int
-		wantLabelAr   image.Rectangle
-		wantTextAr    image.Rectangle
-		wantErr       bool
+		desc        string
+		cvsAr       image.Rectangle
+		label       string
+		widthPerc   *int
+		wantLabelAr image.Rectangle
+		wantTextAr  image.Rectangle
+		wantErr     bool
 	}{
 		{
-			desc:  "fails on invalid textWidthPerc",
+			desc:  "fails on invalid widthPerc",
 			cvsAr: image.Rect(0, 0, 10, 1),
-			textWidthPerc: func() *int {
+			widthPerc: func() *int {
 				i := -1
 				return &i
 			}(),
 			wantErr: true,
 		},
 		{
-			desc:        "no label and no textWidthPerc, full area for text input field",
+			desc:        "no label and no widthPerc, full area for text input field",
 			cvsAr:       image.Rect(0, 0, 5, 1),
 			wantLabelAr: image.ZR,
 			wantTextAr:  image.Rect(0, 0, 5, 1),
 		},
 		{
-			desc:  "textWidthPerc set, splits canvas area",
+			desc:  "widthPerc set, splits canvas area",
 			cvsAr: image.Rect(0, 0, 10, 1),
-			textWidthPerc: func() *int {
+			widthPerc: func() *int {
 				i := 30
 				return &i
 			}(),
@@ -273,9 +347,9 @@ func TestSplit(t *testing.T) {
 			wantTextAr:  image.Rect(7, 0, 10, 1),
 		},
 		{
-			desc:  "textWidthPerc and label set",
+			desc:  "widthPerc and label set",
 			cvsAr: image.Rect(0, 0, 10, 1),
-			textWidthPerc: func() *int {
+			widthPerc: func() *int {
 				i := 30
 				return &i
 			}(),
@@ -285,9 +359,9 @@ func TestSplit(t *testing.T) {
 		},
 
 		{
-			desc:  "textWidthPerc set to 100, splits canvas area",
+			desc:  "widthPerc set to 100, splits canvas area",
 			cvsAr: image.Rect(0, 0, 10, 1),
-			textWidthPerc: func() *int {
+			widthPerc: func() *int {
 				i := 100
 				return &i
 			}(),
@@ -295,9 +369,9 @@ func TestSplit(t *testing.T) {
 			wantTextAr:  image.Rect(0, 0, 10, 1),
 		},
 		{
-			desc:  "textWidthPerc set to 1, splits canvas area",
+			desc:  "widthPerc set to 1, splits canvas area",
 			cvsAr: image.Rect(0, 0, 10, 1),
-			textWidthPerc: func() *int {
+			widthPerc: func() *int {
 				i := 1
 				return &i
 			}(),
@@ -329,7 +403,7 @@ func TestSplit(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			gotLabelAr, gotTextAr, err := split(tc.cvsAr, tc.label, tc.textWidthPerc)
+			gotLabelAr, gotTextAr, err := split(tc.cvsAr, tc.label, tc.widthPerc)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("split => unexpected error: %v, wantErr: %v", err, tc.wantErr)
 			}

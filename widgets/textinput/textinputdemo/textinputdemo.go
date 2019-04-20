@@ -23,10 +23,10 @@ import (
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/container/grid"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/segmentdisplay"
 	"github.com/mum4k/termdash/widgets/textinput"
@@ -126,72 +126,95 @@ func main() {
 	updateText := make(chan string)
 	go rollText(ctx, rollingSD, updateText)
 
+	input, err := textinput.New(
+		textinput.Label("New text:", cell.FgColor(cell.ColorBlue)),
+		textinput.MaxWidthCells(20),
+		textinput.Border(linestyle.Light),
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	submitB, err := button.New("Submit", func() error {
-		updateText <- "Hello World"
+		updateText <- input.ReadAndClear()
 		return nil
 	},
 		button.GlobalKey(keyboard.KeyEnter),
 		button.FillColor(cell.ColorNumber(220)),
 	)
 	clearB, err := button.New("Clear", func() error {
+		input.ReadAndClear()
 		updateText <- ""
+		return nil
+	},
+		button.WidthFor("Submit"),
+		button.FillColor(cell.ColorNumber(220)),
+	)
+	quitB, err := button.New("Quit", func() error {
+		cancel()
 		return nil
 	},
 		button.WidthFor("Submit"),
 		button.FillColor(cell.ColorNumber(196)),
 	)
 
-	input, err := textinput.New()
-	if err != nil {
-		panic(err)
-	}
-
-	c, err := container.New(
-		t,
-		container.Border(linestyle.Light),
-		container.BorderTitle("PRESS Q TO QUIT"),
-		container.SplitHorizontal(
-			container.Top(
-				container.PlaceWidget(rollingSD),
+	builder := grid.New()
+	builder.Add(
+		grid.RowHeightPerc(40,
+			grid.Widget(
+				rollingSD,
 			),
-			container.Bottom(
-				container.SplitHorizontal(
-					container.Top(
-						container.PlaceWidget(input),
-					),
-					container.Bottom(
-						container.SplitVertical(
-							container.Left(
-								container.AlignVertical(align.VerticalTop),
-								container.AlignHorizontal(align.HorizontalRight),
-								container.PaddingRight(1),
-								container.PlaceWidget(submitB),
-							),
-							container.Right(
-								container.AlignVertical(align.VerticalTop),
-								container.AlignHorizontal(align.HorizontalLeft),
-								container.PaddingLeft(1),
-								container.PlaceWidget(clearB),
-							),
-						),
-					),
-					container.SplitPercent(30),
-				),
-			),
-			container.SplitPercent(40),
 		),
 	)
+	builder.Add(
+		grid.RowHeightPerc(20,
+			grid.Widget(
+				input,
+				container.AlignHorizontal(align.HorizontalCenter),
+				container.AlignVertical(align.VerticalBottom),
+				container.MarginBottom(1),
+			),
+		),
+	)
+
+	builder.Add(
+		grid.RowHeightPerc(40,
+			grid.ColWidthPerc(20),
+			grid.ColWidthPerc(20,
+				grid.Widget(
+					submitB,
+					container.AlignVertical(align.VerticalTop),
+					container.AlignHorizontal(align.HorizontalRight),
+				),
+			),
+			grid.ColWidthPerc(20,
+				grid.Widget(
+					clearB,
+					container.AlignVertical(align.VerticalTop),
+					container.AlignHorizontal(align.HorizontalCenter),
+				),
+			),
+			grid.ColWidthPerc(20,
+				grid.Widget(
+					quitB,
+					container.AlignVertical(align.VerticalTop),
+					container.AlignHorizontal(align.HorizontalLeft),
+				),
+			),
+			grid.ColWidthPerc(20),
+		),
+	)
+
+	gridOpts, err := builder.Build()
+	if err != nil {
+		panic(err)
+	}
+	c, err := container.New(t, gridOpts...)
 	if err != nil {
 		panic(err)
 	}
 
-	quitter := func(k *terminalapi.Keyboard) {
-		if k.Key == 'q' || k.Key == 'Q' {
-			cancel()
-		}
-	}
-
-	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(500*time.Millisecond)); err != nil {
+	if err := termdash.Run(ctx, t, c, termdash.RedrawInterval(500*time.Millisecond)); err != nil {
 		panic(err)
 	}
 }

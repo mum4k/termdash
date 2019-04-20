@@ -350,8 +350,21 @@ func (fe *fieldEditor) viewFor(width int) (string, int, error) {
 	return fe.data.runesIn(fe.visible), cur, nil
 }
 
+// content returns the string content in the field editor.
+func (fe *fieldEditor) content() string {
+	return string(fe.data)
+}
+
+// reset resets the content back to zero.
+func (fe *fieldEditor) reset() {
+	*fe = *newFieldEditor()
+}
+
 // insert inserts the rune at the current position of the cursor.
 func (fe *fieldEditor) insert(r rune) {
+	if runewidth.RuneWidth(r) == 0 {
+		return
+	}
 	fe.data.insertAt(fe.curDataPos, r)
 	fe.curDataPos++
 }

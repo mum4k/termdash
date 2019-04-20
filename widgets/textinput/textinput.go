@@ -18,10 +18,17 @@ package textinput
 import (
 	"image"
 	"sync"
+	"unicode"
 
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/runewidth"
+	"github.com/mum4k/termdash/internal/wrap"
+	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -52,6 +59,9 @@ type TextInput struct {
 	// mu protects the widget.
 	mu sync.Mutex
 
+	// editor tracks the edits and the state of the text input field.
+	editor *fieldEditor
+
 	// opts are the provided options.
 	opts *options
 }
@@ -66,7 +76,8 @@ func New(opts ...Option) (*TextInput, error) {
 		return nil, err
 	}
 	return &TextInput{
-		opts: opt,
+		editor: newFieldEditor(),
+		opts:   opt,
 	}, nil
 }
 
@@ -81,13 +92,97 @@ var (
 	cursorRune rune = 0
 )
 
+// Read reads the content of the text input field.
+func (ti *TextInput) Read() string {
+	ti.mu.Lock()
+	defer ti.mu.Unlock()
+
+	return ti.editor.content()
+}
+
+// ReadAndClear reads the content of the text input field and clears it.
+func (ti *TextInput) ReadAndClear() string {
+	ti.mu.Lock()
+	defer ti.mu.Unlock()
+
+	c := ti.editor.content()
+	ti.editor.reset()
+	return c
+}
+
 // Draw draws the TextInput widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
 func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 
-	// Ensure 4 available for text field.
+	labelAr, textAr, err := split(cvs.Area(), ti.opts.label, ti.opts.widthPerc)
+	if err != nil {
+		return err
+	}
+
+	var forField image.Rectangle
+	if ti.opts.border != linestyle.None {
+		forField = area.ExcludeBorder(textAr)
+	} else {
+		forField = textAr
+	}
+
+	if forField.Dx() < minFieldWidth {
+		return draw.ResizeNeeded(cvs)
+	}
+
+	if !labelAr.Eq(image.ZR) {
+		start, err := alignfor.Text(labelAr, ti.opts.label, ti.opts.labelAlign, align.VerticalMiddle)
+		if err != nil {
+			return err
+		}
+		if err := draw.Text(
+			cvs, ti.opts.label, start,
+			draw.TextOverrunMode(draw.OverrunModeThreeDot),
+			draw.TextMaxX(labelAr.Max.X),
+			draw.TextCellOpts(ti.opts.labelCellOpts...),
+		); err != nil {
+			return err
+		}
+	}
+
+	if ti.opts.border != linestyle.None {
+		if err := draw.Border(cvs, textAr, draw.BorderCellOpts(cell.FgColor(ti.opts.borderColor))); err != nil {
+			return err
+		}
+	}
+
+	if err := cvs.SetAreaCellOpts(forField, cell.BgColor(ti.opts.fillColor)); err != nil {
+		return err
+	}
+
+	text, curPos, err := ti.editor.viewFor(forField.Dx())
+	if err != nil {
+		return err
+	}
+	if err := draw.Text(
+		cvs, text, forField.Min,
+		draw.TextMaxX(forField.Max.X),
+		draw.TextCellOpts(cell.FgColor(ti.opts.textColor)),
+	); err != nil {
+		return err
+	}
+
+	if meta.Focused {
+		p := image.Point{
+			curPos + forField.Min.X,
+			forField.Min.Y,
+		}
+		if err := cvs.SetCellOpts(
+			p,
+			cell.FgColor(ti.opts.highlightedColor),
+			cell.BgColor(ti.opts.cursorColor),
+		); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -96,6 +191,36 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
+
+	switch k.Key {
+	case keyboard.KeyBackspace, keyboard.KeyBackspace2:
+		ti.editor.deleteBefore()
+
+	case keyboard.KeyDelete:
+		ti.editor.delete()
+
+	case keyboard.KeyArrowLeft:
+		ti.editor.cursorLeft()
+
+	case keyboard.KeyArrowRight:
+		ti.editor.cursorRight()
+
+	case keyboard.KeyHome, keyboard.KeyCtrlA:
+		ti.editor.cursorStart()
+
+	case keyboard.KeyEnd, keyboard.KeyCtrlE:
+		ti.editor.cursorEnd()
+
+	default:
+		if err := wrap.ValidText(string(k.Key)); err != nil {
+			// Ignore unsupported runes.
+			return nil
+		}
+		if !unicode.IsPrint(rune(k.Key)) {
+			return nil
+		}
+		ti.editor.insert(rune(k.Key))
+	}
 
 	return nil
 }
@@ -124,13 +249,20 @@ func (ti *TextInput) Options() widgetapi.Options {
 		needWidth += 2
 		needHeight += 2
 	}
+
+	maxWidth := 0
+	if ti.opts.maxWidthCells != nil {
+		additional := *ti.opts.maxWidthCells - minFieldWidth
+		maxWidth = needWidth + additional
+	}
+
 	return widgetapi.Options{
 		MinimumSize: image.Point{
 			needWidth,
 			needHeight,
 		},
 		MaximumSize: image.Point{
-			0, // Any width.
+			maxWidth,
 			needHeight,
 		},
 		WantKeyboard: widgetapi.KeyScopeFocused,
@@ -141,10 +273,10 @@ func (ti *TextInput) Options() widgetapi.Options {
 // split splits the available area into label and text input areas according to
 // configuration. The returned labelAr might be image.ZR if no label was
 // configured.
-func split(cvsAr image.Rectangle, label string, textWidthPerc *int) (labelAr, textAr image.Rectangle, err error) {
+func split(cvsAr image.Rectangle, label string, widthPerc *int) (labelAr, textAr image.Rectangle, err error) {
 	switch {
-	case textWidthPerc != nil:
-		splitP := 100 - *textWidthPerc
+	case widthPerc != nil:
+		splitP := 100 - *widthPerc
 		labelAr, textAr, err := area.VSplit(cvsAr, splitP)
 		if err != nil {
 			return image.ZR, image.ZR, err

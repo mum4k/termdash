@@ -362,11 +362,13 @@ func (fe *fieldEditor) reset() {
 
 // insert inserts the rune at the current position of the cursor.
 func (fe *fieldEditor) insert(r rune) {
-	if runewidth.RuneWidth(r) == 0 {
+	rw := runewidth.RuneWidth(r)
+	if rw == 0 {
+		// Don't insert invisible runes.
 		return
 	}
 	fe.data.insertAt(fe.curDataPos, r)
-	fe.curDataPos++
+	fe.curDataPos += rw
 }
 
 // delete deletes the rune at the current position of the cursor.

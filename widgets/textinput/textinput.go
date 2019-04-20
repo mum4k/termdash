@@ -86,10 +86,10 @@ var (
 	// textFieldRune is the rune used in cells reserved for the text input
 	// field if no text is present.
 	// Changed from tests to provide readable test failures.
-	textFieldRune rune = 0
+	textFieldRune rune
 
 	// cursorRune is rune that represents the cursor position.
-	cursorRune rune = 0
+	cursorRune rune
 )
 
 // Read reads the content of the text input field.

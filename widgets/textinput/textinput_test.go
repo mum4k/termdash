@@ -23,6 +23,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -158,10 +159,68 @@ func TestTextInput(t *testing.T) {
 func TestOptions(t *testing.T) {
 	tests := []struct {
 		desc string
-		text string
 		opts []Option
 		want widgetapi.Options
-	}{}
+	}{
+		{
+			desc: "no label and no border",
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{4, 1},
+				MaximumSize:  image.Point{0, 1},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
+			desc: "no label, has border",
+			opts: []Option{
+				Border(linestyle.Light),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{6, 3},
+				MaximumSize:  image.Point{0, 3},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
+			desc: "has label and no border",
+			opts: []Option{
+				Label("hello"),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{9, 1},
+				MaximumSize:  image.Point{0, 1},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
+			desc: "has label with full-width runes and no border",
+			opts: []Option{
+				Label("hello世"),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{11, 1},
+				MaximumSize:  image.Point{0, 1},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
+			desc: "has label and border",
+			opts: []Option{
+				Label("hello"),
+				Border(linestyle.Light),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{11, 3},
+				MaximumSize:  image.Point{0, 3},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -173,6 +232,116 @@ func TestOptions(t *testing.T) {
 			got := ti.Options()
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestSplit(t *testing.T) {
+	tests := []struct {
+		desc          string
+		cvsAr         image.Rectangle
+		label         string
+		textWidthPerc *int
+		wantLabelAr   image.Rectangle
+		wantTextAr    image.Rectangle
+		wantErr       bool
+	}{
+		{
+			desc:  "fails on invalid textWidthPerc",
+			cvsAr: image.Rect(0, 0, 10, 1),
+			textWidthPerc: func() *int {
+				i := -1
+				return &i
+			}(),
+			wantErr: true,
+		},
+		{
+			desc:        "no label and no textWidthPerc, full area for text input field",
+			cvsAr:       image.Rect(0, 0, 5, 1),
+			wantLabelAr: image.ZR,
+			wantTextAr:  image.Rect(0, 0, 5, 1),
+		},
+		{
+			desc:  "textWidthPerc set, splits canvas area",
+			cvsAr: image.Rect(0, 0, 10, 1),
+			textWidthPerc: func() *int {
+				i := 30
+				return &i
+			}(),
+			wantLabelAr: image.ZR,
+			wantTextAr:  image.Rect(7, 0, 10, 1),
+		},
+		{
+			desc:  "textWidthPerc and label set",
+			cvsAr: image.Rect(0, 0, 10, 1),
+			textWidthPerc: func() *int {
+				i := 30
+				return &i
+			}(),
+			label:       "hello",
+			wantLabelAr: image.Rect(0, 0, 7, 1),
+			wantTextAr:  image.Rect(7, 0, 10, 1),
+		},
+
+		{
+			desc:  "textWidthPerc set to 100, splits canvas area",
+			cvsAr: image.Rect(0, 0, 10, 1),
+			textWidthPerc: func() *int {
+				i := 100
+				return &i
+			}(),
+			wantLabelAr: image.ZR,
+			wantTextAr:  image.Rect(0, 0, 10, 1),
+		},
+		{
+			desc:  "textWidthPerc set to 1, splits canvas area",
+			cvsAr: image.Rect(0, 0, 10, 1),
+			textWidthPerc: func() *int {
+				i := 1
+				return &i
+			}(),
+			wantLabelAr: image.ZR,
+			wantTextAr:  image.Rect(9, 0, 10, 1),
+		},
+		{
+			desc:        "label set, half-width runes only",
+			cvsAr:       image.Rect(0, 0, 10, 1),
+			label:       "hello",
+			wantLabelAr: image.Rect(0, 0, 5, 1),
+			wantTextAr:  image.Rect(5, 0, 10, 1),
+		},
+		{
+			desc:        "label set, full-width runes",
+			cvsAr:       image.Rect(0, 0, 10, 1),
+			label:       "hello世",
+			wantLabelAr: image.Rect(0, 0, 7, 1),
+			wantTextAr:  image.Rect(7, 0, 10, 1),
+		},
+		{
+			desc:        "label longer than canvas width",
+			cvsAr:       image.Rect(0, 0, 10, 1),
+			label:       "helloworld1",
+			wantLabelAr: image.Rect(0, 0, 10, 1),
+			wantTextAr:  image.ZR,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			gotLabelAr, gotTextAr, err := split(tc.cvsAr, tc.label, tc.textWidthPerc)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("split => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.wantLabelAr, gotLabelAr); diff != "" {
+				t.Errorf("split => unexpected labelAr, diff (-want, +got):\n%s", diff)
+			}
+			if diff := pretty.Compare(tc.wantTextAr, gotTextAr); diff != "" {
+				t.Errorf("split => unexpected labelAr, diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

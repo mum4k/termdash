@@ -16,9 +16,13 @@
 package textinput
 
 import (
+	"image"
 	"sync"
 
+	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/runewidth"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -68,10 +72,13 @@ func New(opts ...Option) (*TextInput, error) {
 
 // Vars to be replaced from tests.
 var (
-	// Runes to use in cells that contain are reserved for the text input
+	// textFieldRune is the rune used in cells reserved for the text input
 	// field if no text is present.
 	// Changed from tests to provide readable test failures.
-	textFieldRune = ' '
+	textFieldRune rune = 0
+
+	// cursorRune is rune that represents the cursor position.
+	cursorRune rune = 0
 )
 
 // Draw draws the TextInput widget onto the canvas.
@@ -80,6 +87,7 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 
+	// Ensure 4 available for text field.
 	return nil
 }
 
@@ -103,5 +111,59 @@ func (ti *TextInput) Mouse(m *terminalapi.Mouse) error {
 
 // Options implements widgetapi.Widget.Options.
 func (ti *TextInput) Options() widgetapi.Options {
-	return widgetapi.Options{}
+	ti.mu.Lock()
+	defer ti.mu.Unlock()
+
+	needWidth := minFieldWidth
+	if lw := runewidth.StringWidth(ti.opts.label); lw > 0 {
+		needWidth += lw
+	}
+
+	needHeight := 1
+	if ti.opts.border != linestyle.None {
+		needWidth += 2
+		needHeight += 2
+	}
+	return widgetapi.Options{
+		MinimumSize: image.Point{
+			needWidth,
+			needHeight,
+		},
+		MaximumSize: image.Point{
+			0, // Any width.
+			needHeight,
+		},
+		WantKeyboard: widgetapi.KeyScopeFocused,
+		WantMouse:    widgetapi.MouseScopeWidget,
+	}
+}
+
+// split splits the available area into label and text input areas according to
+// configuration. The returned labelAr might be image.ZR if no label was
+// configured.
+func split(cvsAr image.Rectangle, label string, textWidthPerc *int) (labelAr, textAr image.Rectangle, err error) {
+	switch {
+	case textWidthPerc != nil:
+		splitP := 100 - *textWidthPerc
+		labelAr, textAr, err := area.VSplit(cvsAr, splitP)
+		if err != nil {
+			return image.ZR, image.ZR, err
+		}
+		if len(label) == 0 {
+			labelAr = image.ZR
+		}
+		return labelAr, textAr, nil
+
+	case len(label) > 0:
+		cells := runewidth.StringWidth(label)
+		labelAr, textAr, err := area.VSplitCells(cvsAr, cells)
+		if err != nil {
+			return image.ZR, image.ZR, err
+		}
+		return labelAr, textAr, nil
+
+	default:
+		// Neither a label nor width percentage specified.
+		return image.ZR, cvsAr, nil
+	}
 }

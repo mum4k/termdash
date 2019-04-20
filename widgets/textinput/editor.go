@@ -330,10 +330,13 @@ func (fe *fieldEditor) toCursor() {
 	}
 }
 
+// minFieldWidth is the minimum supported width of the text input field.
+const minFieldWidth = 4
+
 // viewFor returns the currently visible data inside a text field with the
 // specified width and the cursor position within the field.
 func (fe *fieldEditor) viewFor(width int) (string, int, error) {
-	if min := 4; width < min { // One for left arrow, two for one full-width rune and one for the cursor.
+	if min := minFieldWidth; width < min { // One for left arrow, two for one full-width rune and one for the cursor.
 		return "", -1, fmt.Errorf("width %d is too small, the minimum is %d", width, min)
 	}
 	fe.visible.normalizeToWidth(width)

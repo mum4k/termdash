@@ -38,10 +38,12 @@ func (o option) set(opts *options) {
 
 // options holds the provided options.
 type options struct {
-	fillColor   cell.Color
-	textColor   cell.Color
-	cursorColor cell.Color
-	border      linestyle.LineStyle
+	fillColor        cell.Color
+	textColor        cell.Color
+	highlightedColor cell.Color
+	cursorColor      cell.Color
+	border           linestyle.LineStyle
+	borderColor      cell.Color
 
 	textWidthPerc *int
 	label         string
@@ -88,6 +90,18 @@ func TextColor(c cell.Color) Option {
 	})
 }
 
+// DefaultHighlightedColorNumber is the default color number for the
+// HighlightedColor option.
+const DefaultHighlightedColorNumber = 0
+
+// HighlightedColor sets the color of the text rune directly under the cursor.
+// Defaults to the default terminal color.
+func HighlightedColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.highlightedColor = c
+	})
+}
+
 // DefaultCursorColorNumber is the default color number for the CursorColor
 // option.
 const DefaultCursorColorNumber = 235
@@ -104,6 +118,14 @@ func CursorColor(c cell.Color) Option {
 func Border(ls linestyle.LineStyle) Option {
 	return option(func(opts *options) {
 		opts.border = ls
+	})
+}
+
+// BorderColor sets the color of the border.
+// Defaults to the default terminal color.
+func BorderColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.borderColor = c
 	})
 }
 

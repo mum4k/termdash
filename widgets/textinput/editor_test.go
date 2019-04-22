@@ -151,11 +151,18 @@ func TestCellsBefore(t *testing.T) {
 			want:   2,
 		},
 		{
-			desc:   "less cells than runes from endIdx, full-width rune doesn't fit",
+			desc:   "less cells than runes from endIdx, full-width rune doesn't fit, no space for arrows",
 			data:   fieldData{'a', 'b', '世', 'd'},
 			cells:  2,
 			endIdx: 4,
 			want:   3,
+		},
+		{
+			desc:   "full-width runes only",
+			data:   fieldData{'你', '好', '世', '界'},
+			cells:  7,
+			endIdx: 4,
+			want:   1,
 		},
 	}
 
@@ -231,6 +238,13 @@ func TestCellsAfter(t *testing.T) {
 			startIdx: 0,
 			want:     2,
 		},
+		{
+			desc:     "full-width runes only",
+			data:     fieldData{'你', '好', '世', '界'},
+			cells:    7,
+			startIdx: 0,
+			want:     3,
+		},
 	}
 
 	for _, tc := range tests {
@@ -243,702 +257,53 @@ func TestCellsAfter(t *testing.T) {
 	}
 }
 
-func TestRunesIn(t *testing.T) {
-	tests := []struct {
-		desc string
-		data fieldData
-		vr   *visibleRange
-		want string
-	}{
-		{
-			desc: "zero range, zero data",
-			vr:   &visibleRange{},
-			want: "",
-		},
-		{
-			desc: "zero range, non-zero data",
-			data: fieldData{'a', 'b', '世', 'd'},
-			vr:   &visibleRange{},
-			want: "",
-		},
-		{
-			desc: "range from zero, start and end visible",
-			data: fieldData{'a', 'b', '世', 'd'},
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   5,
-			},
-			want: "ab世d",
-		},
-		{
-			desc: "range from zero, start visible end hidden",
-			data: fieldData{'a', 'b', '世', 'd'},
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   4,
-			},
-			want: "ab世⇨",
-		},
-		{
-			desc: "range from zero, end not visible",
-			data: fieldData{'a', 'b', '世', 'd'},
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "ab⇨",
-		},
-		{
-			desc: "range from non-zero, end not visible",
-			data: fieldData{'a', 'b', '世', 'd'},
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   4,
-			},
-			want: "⇦世⇨",
-		},
-		{
-			desc: "range from non-zero, start not visible, end visible",
-			data: fieldData{'a', 'b', '世', 'd'},
-			vr: &visibleRange{
-				startIdx: 2,
-				endIdx:   5,
-			},
-			want: "⇦d",
-		},
-		{
-			desc: "range from non-zero, neither start nor end visible",
-			data: fieldData{'a', 'b', '世', 'd', 'e'},
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   4,
-			},
-			want: "⇦世⇨",
-		},
-		{
-			desc: "range from non-zero, neither start nor end visible, range too short for arrows",
-			data: fieldData{'a', 'b', '世', 'd', 'e'},
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   3,
-			},
-			want: "b",
-		},
-		{
-			desc: "range longer than data",
-			data: fieldData{'a', 'b', '世', 'd'},
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   5,
-			},
-			want: "ab世d",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.data.runesIn(tc.vr)
-			if got != tc.want {
-				t.Errorf("runesIn => %q, want %q", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestForRunes(t *testing.T) {
-	tests := []struct {
-		desc string
-		vr   *visibleRange
-		want int
-	}{
-		{
-			desc: "empty range",
-			vr:   &visibleRange{},
-			want: 0,
-		},
-		{
-			desc: "reserves one for the cursor at the end",
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   3,
-			},
-			want: 1,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.vr.forRunes()
-			if got != tc.want {
-				t.Fatalf("forRunes => %d, want %d", got, tc.want)
-			}
-
-		})
-	}
-}
-
-func TestCurMinIdx(t *testing.T) {
-	tests := []struct {
-		desc string
-		vr   *visibleRange
-		want int
-	}{
-		{
-			desc: "zero values",
-			vr:   &visibleRange{},
-			want: 0,
-		},
-		{
-			desc: "first rune visible",
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   5,
-			},
-			want: 0,
-		},
-		{
-			desc: "first rune hidden, wide enough for arrows",
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   6,
-			},
-			want: 2,
-		},
-		{
-			desc: "first rune hidden, no space for arrows",
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   2,
-			},
-			want: 1,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.vr.curMinIdx()
-			if got != tc.want {
-				t.Errorf("curMinIdx => %d, want %d", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestCurMaxIdx(t *testing.T) {
-	tests := []struct {
-		desc      string
-		vr        *visibleRange
-		runeCount int
-		want      int
-	}{
-		{
-			desc:      "zero values",
-			vr:        &visibleRange{},
-			runeCount: 0,
-			want:      0,
-		},
-		{
-			desc: "last rune visible and space for appending",
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   4,
-			},
-			runeCount: 3,
-			want:      3,
-		},
-		{
-			desc: "last rune visible, space for appending not visible",
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			runeCount: 3,
-			want:      2,
-		},
-		{
-			desc: "last rune hidden, enough runes for arrows",
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   4,
-			},
-			runeCount: 5,
-			want:      2,
-		},
-		{
-			desc: "last rune hidden, not enough runes for arrows",
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   2,
-			},
-			runeCount: 3,
-			want:      1,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.vr.curMaxIdx(tc.runeCount)
-			if got != tc.want {
-				t.Errorf("curMaxIdx => %d, want %d", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestNormalizeToWidth(t *testing.T) {
-	tests := []struct {
-		desc  string
-		vr    *visibleRange
-		width int
-		want  *visibleRange
-	}{
-		{
-			desc:  "zero values",
-			vr:    &visibleRange{},
-			width: 0,
-			want:  &visibleRange{},
-		},
-		{
-			desc: "width decreased to zero",
-			vr: &visibleRange{
-				startIdx: 10,
-				endIdx:   15,
-			},
-			width: 0,
-			want: &visibleRange{
-				startIdx: 15,
-				endIdx:   15,
-			},
-		},
-		{
-			desc: "width increased from zero",
-			vr: &visibleRange{
-				startIdx: 15,
-				endIdx:   15,
-			},
-			width: 5,
-			want: &visibleRange{
-				startIdx: 10,
-				endIdx:   15,
-			},
-		},
-		{
-			desc: "width increased by more than the width of the data",
-			vr: &visibleRange{
-				startIdx: 10,
-				endIdx:   15,
-			},
-			width: 20,
-			want: &visibleRange{
-				startIdx: 0,
-				endIdx:   20,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got := tc.vr
-			got.normalizeToWidth(tc.width)
-			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("normalizeToWidth => unexpected diff (-want, +got):\n%s", diff)
-			}
-		})
-	}
-}
-
-func TestNormalizeToData(t *testing.T) {
-	tests := []struct {
-		desc string
-		vr   *visibleRange
-		data fieldData
-		want string
-	}{
-		{
-			desc: "zero values",
-			vr:   &visibleRange{},
-			data: fieldData{},
-			want: "",
-		},
-		{
-			desc: "data smaller than visible range, range already at the start",
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			data: fieldData{'a'},
-			want: "a",
-		},
-		{
-			desc: "data smaller than visible range by exactly one rune - space for the cursor",
-			vr: &visibleRange{
-				startIdx: 4,
-				endIdx:   6,
-			},
-			data: fieldData{'a', 'b', 'c', 'd', 'e'},
-			want: "e",
-		},
-		{
-			desc: "data smaller than visible range, range is shifted back, not reaching zero",
-			vr: &visibleRange{
-				startIdx: 4,
-				endIdx:   7,
-			},
-			data: fieldData{'a', 'b', 'c', 'd'},
-			want: "⇦d",
-		},
-		{
-			desc: "range decreases due to full-width rune",
-			vr: &visibleRange{
-				startIdx: 4,
-				endIdx:   7,
-			},
-			data: fieldData{'a', 'b', 'c', '世'},
-			want: "世",
-		},
-		{
-			desc: "dataLen smaller than visible range, range is shifted back, reaches zero",
-			vr: &visibleRange{
-				startIdx: 4,
-				endIdx:   6,
-			},
-			data: fieldData{'a'},
-			want: "a",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			tc.vr.normalizeToData(tc.data)
-			got := tc.data.runesIn(tc.vr)
-			if got != tc.want {
-				t.Errorf("normalizeToData => %q, want %q", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestCurRelative(t *testing.T) {
+func TestCurCell(t *testing.T) {
 	tests := []struct {
 		desc       string
-		vr         *visibleRange
+		data       fieldData
+		firstRune  int
 		curDataPos int
+		width      int
 		want       int
 		wantErr    bool
 	}{
 		{
-			desc: "fails when cursor isn't in the range",
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   5,
-			},
-			curDataPos: 5,
-			wantErr:    true,
-		},
-		{
-			desc: "cursor falls at the beginning of the range",
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   6,
-			},
-			curDataPos: 3,
+			desc:       "empty data",
+			data:       fieldData{},
+			curDataPos: 0,
 			want:       0,
 		},
 		{
-			desc: "cursor falls at the end of the range",
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   6,
-			},
-			curDataPos: 5,
+			desc:       "cursor within the first page of data",
+			data:       fieldData{'a', 'b', 'c', 'd'},
+			firstRune:  1,
+			curDataPos: 2,
+			width:      3,
+			want:       1,
+		},
+		{
+			desc:       "cursor within the first page of data, after full-width rune",
+			data:       fieldData{'a', '世', 'c', 'd'},
+			firstRune:  1,
+			curDataPos: 2,
+			width:      3,
 			want:       2,
 		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got, err := tc.vr.curRelative(tc.curDataPos)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("curRelative => unexpected error: %v, wantErr: %v", err, tc.wantErr)
-			}
-			if err != nil {
-				return
-			}
-
-			if got != tc.want {
-				t.Errorf("curRelative => %d, want %d", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestToCursor(t *testing.T) {
-	tests := []struct {
-		desc       string
-		data       fieldData
-		curDataPos int
-		vr         *visibleRange
-		want       string
-	}{
 		{
-			desc:       "no-op without data",
-			data:       fieldData{},
-			curDataPos: 0,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   0,
-			},
-			want: "",
-		},
-		{
-			desc:       "no-op when cursor is in",
-			data:       fieldData{'a', 'b', 'c'},
-			curDataPos: 1,
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   3,
-			},
-			want: "b",
-		},
-		{
-			desc:       "shifts left, first rune visible",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e'},
-			curDataPos: 0,
-			vr: &visibleRange{
-				startIdx: 1,
-				endIdx:   4,
-			},
-			want: "ab⇨",
-		},
-		{
-			desc:       "shifts left, first rune hidden",
+			desc:       "cursor within the second page of data",
 			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 2,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   6,
-			},
-			want: "⇦c⇨",
-		},
-		{
-			desc:       "shifts left, first rune hidden, cursor on the left arrow",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 3,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   6,
-			},
-			want: "⇦d⇨",
-		},
-		{
-			desc:       "shifts left, first rune hidden, multiple visible runes",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 2,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   7,
-			},
-			want: "⇦cd⇨",
-		},
-		{
-			desc:       "shifts left, too narrow for arrows",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 1,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   5,
-			},
-			want: "b",
-		},
-		{
-			desc:       "shifts left, range longer than data",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 3,
-			vr: &visibleRange{
-				startIdx: 4,
-				endIdx:   10,
-			},
-			want: "⇦def",
-		},
-		{
-			desc:       "shifts left, starts on full-width rune, loses space for arrows",
-			data:       fieldData{'a', 'b', '世', 'd', 'e', 'f'},
-			curDataPos: 2,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   6,
-			},
-			want: "世",
-		},
-		{
-			desc:       "shifts left, starts on full-width rune, last rune fits exactly",
-			data:       fieldData{'a', 'b', '世', 'd', 'e', 'f', 'g'},
-			curDataPos: 2,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   7,
-			},
-			want: "⇦世⇨",
-		},
-		{
-			desc:       "shifts left, starts on full-width rune, last rune doesn't fit",
-			data:       fieldData{'a', 'b', '世', '世', 'e', 'f', 'g'},
-			curDataPos: 2,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   6,
-			},
-			want: "世",
-		},
-		{
-			desc:       "shifts left, starts on full-width rune, last rune doesn't fit but arrows do",
-			data:       fieldData{'a', 'b', '世', 'd', '世', 'f', 'g', 'h'},
-			curDataPos: 2,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   8,
-			},
-			want: "⇦世d⇨",
-		},
-		{
-			desc:       "shifts left, starts on full-width rune, last rune doesn't fit but arrows do",
-			data:       fieldData{'a', '世', 'c', 'd', 'e', 'f', 'g', 'h'},
-			curDataPos: 2,
-			vr: &visibleRange{
-				startIdx: 3,
-				endIdx:   7,
-			},
-			want: "⇦c⇨",
-		},
-		{
-			desc:       "shifts right, last rune visible, cursor on the last rune",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e'},
+			firstRune:  3,
 			curDataPos: 4,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "⇦e",
+			width:      3,
+			want:       1,
 		},
 		{
-			desc:       "shifts right, last rune visible, cursor after the last rune",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e'},
-			curDataPos: 5,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "⇦e",
-		},
-		{
-			desc:       "shifts right, last rune hidden",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
+			desc:       "cursor within the second page of data, after full-width rune",
+			data:       fieldData{'a', 'b', 'c', '世', 'e', 'f'},
+			firstRune:  3,
 			curDataPos: 4,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "⇦e⇨",
-		},
-		{
-			desc:       "shifts right, last rune hidden, cursor on the arrow",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 3,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "⇦d⇨",
-		},
-		{
-			desc:       "shifts right, too narrow for arrows",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 4,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   2,
-			},
-			want: "e",
-		},
-		{
-			desc:       "shifts right, too narrow for arrows, cursor on the last rune",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 5,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   2,
-			},
-			want: "f",
-		},
-		{
-			desc:       "shifts right, too narrow for arrows, cursor after the last rune",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 6,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   2,
-			},
-			want: "f",
-		},
-		{
-			desc:       "shifts right, cursor on the penultimate rune",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', 'f'},
-			curDataPos: 4,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "⇦e⇨",
-		},
-		{
-			desc:       "shifts right, ends on full-width rune, loses space for arrows",
-			data:       fieldData{'a', 'b', 'c', 'd', '世', 'f'},
-			curDataPos: 4,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "世",
-		},
-		{
-			desc:       "shifts right, ends on full-width rune, first rune fits exactly",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', '世', 'g'},
-			curDataPos: 5,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   5,
-			},
-			want: "⇦e世⇨",
-		},
-		{
-			desc:       "shifts right, ends on full-width rune, first rune doesn't fit",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', '世', 'g'},
-			curDataPos: 5,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   4,
-			},
-			want: "⇦世⇨",
-		},
-		{
-			desc:       "shifts right, ends on full-width rune, first rune doesn't fit, no arrows",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', '世', 'g'},
-			curDataPos: 5,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "世",
-		},
-		{
-			desc:       "shifts right, arrow at the end hides full-width rune",
-			data:       fieldData{'a', 'b', 'c', 'd', 'e', '世', 'g'},
-			curDataPos: 4,
-			vr: &visibleRange{
-				startIdx: 0,
-				endIdx:   3,
-			},
-			want: "⇦e⇨",
+			width:      3,
+			want:       2,
 		},
 	}
 
@@ -946,14 +311,11 @@ func TestToCursor(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			fe := newFieldEditor()
 			fe.data = tc.data
+			fe.firstRune = tc.firstRune
 			fe.curDataPos = tc.curDataPos
-			fe.visible = tc.vr
-
-			fe.toCursor()
-			got := fe.data.runesIn(fe.visible)
-			t.Logf("got %#v", *fe.visible)
+			got := fe.curCell(tc.width)
 			if got != tc.want {
-				t.Errorf("toCursor => %q, want %q", got, tc.want)
+				t.Errorf("curCell => %d, want %d", got, tc.want)
 			}
 		})
 	}
@@ -1015,7 +377,7 @@ func TestFieldEditor(t *testing.T) {
 				return nil
 			},
 			want:       "⇦世",
-			wantCurIdx: 2,
+			wantCurIdx: 3,
 		},
 		{
 			desc:  "width decreased, adjusts cursor and shifts data",
@@ -1270,7 +632,7 @@ func TestFieldEditor(t *testing.T) {
 				return nil
 			},
 			want:       "⇦世",
-			wantCurIdx: 2,
+			wantCurIdx: 3,
 		},
 		{
 			desc:  "deletesBefore when cursor in the middle",
@@ -1318,7 +680,7 @@ func TestFieldEditor(t *testing.T) {
 				return nil
 			},
 			want:       "世c⇨",
-			wantCurIdx: 1,
+			wantCurIdx: 2,
 		},
 		{
 			desc:  "deletesBefore does nothing when cursor at the start",
@@ -1342,11 +704,402 @@ func TestFieldEditor(t *testing.T) {
 			want:       "abc⇨",
 			wantCurIdx: 0,
 		},
-		// deletes the last rune, contains full-width runes
-		// delete when at the empty space at the end
-		// delete when in the middle, last rune visible
-		// delete when in the middle, last rune hidden
-		// delete at the beginning
+		{
+			desc:  "delete does nothing when cursor at the end",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.delete()
+				return nil
+			},
+			want:       "⇦de",
+			wantCurIdx: 3,
+		},
+		{
+			desc:  "delete in the middle, last rune remains hidden",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.delete()
+				return nil
+			},
+			want:       "acd⇨",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "delete in the middle, last rune becomes visible",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.delete()
+				fe.delete()
+				return nil
+			},
+			want:       "ade",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "delete in the middle, last full-width rune would be invisible, shifts to keep cursor in window",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('世')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.cursorRight()
+				fe.delete()
+				fe.delete()
+				return nil
+			},
+			want:       "⇦世",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "delete in the middle, last rune was and is visible",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.delete()
+				return nil
+			},
+			want:       "ac",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "delete in the middle, last full-width rune was and is visible",
+			width: 5,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('世')
+				if _, _, err := fe.viewFor(5); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				if _, _, err := fe.viewFor(5); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.delete()
+				return nil
+			},
+			want:       "a世",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "delete last rune, contains full-width runes",
+			width: 5,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('世')
+				if _, _, err := fe.viewFor(5); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				if _, _, err := fe.viewFor(5); err != nil {
+					return err
+				}
+				fe.delete()
+				fe.delete()
+				fe.delete()
+				return nil
+			},
+			want:       "",
+			wantCurIdx: 0,
+		},
+		{
+			desc:  "half-width runes only, exact fit",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				return nil
+			},
+			want:       "abc",
+			wantCurIdx: 3,
+		},
+		{
+			desc:  "full-width runes only, exact fit",
+			width: 7,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('你')
+				fe.insert('好')
+				fe.insert('世')
+				if _, _, err := fe.viewFor(7); err != nil {
+					return err
+				}
+				return nil
+			},
+			want:       "你好世",
+			wantCurIdx: 6,
+		},
+		{
+			desc:  "half-width runes only, both ends hidden",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				return nil
+			},
+			want:       "⇦cd⇨",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "half-width runes only, both ends invisible, scrolls to make start visible",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				return nil
+			},
+			want:       "abc⇨",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "half-width runes only, both ends invisible, deletes to make start visible",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.deleteBefore()
+				return nil
+			},
+			want:       "acd⇨",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "half-width runes only, deletion on second page refills the field",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				fe.insert('f')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.delete()
+				return nil
+			},
+			want:       "⇦df",
+			wantCurIdx: 2,
+		},
+		{
+			desc:  "half-width runes only, both ends invisible, scrolls to make end visible",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.cursorRight()
+				return nil
+			},
+			want:       "⇦de",
+			wantCurIdx: 2,
+		},
+		{
+			desc:  "half-width runes only, both ends invisible, deletes to make end visible",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.delete()
+				return nil
+			},
+			want:       "⇦de",
+			wantCurIdx: 1,
+		},
+		{
+			desc:  "full-width runes only, both ends invisible",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('你')
+				fe.insert('好')
+				fe.insert('世')
+				fe.insert('界')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				return nil
+			},
+			want:       "⇦⇦世⇨",
+			wantCurIdx: 2,
+		},
+		{
+			desc:  "full-width runes only, both ends invisible, scrolls to make start visible",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('你')
+				fe.insert('好')
+				fe.insert('世')
+				fe.insert('界')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				return nil
+			},
+			want:       "你好⇨",
+			wantCurIdx: 2,
+		},
+		{
+			desc:  "full-width runes only, both ends invisible, deletes to make start visible",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('你')
+				fe.insert('好')
+				fe.insert('世')
+				fe.insert('界')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.deleteBefore()
+				return nil
+			},
+			want:       "你世⇨",
+			wantCurIdx: 2,
+		},
+
+		// full-width runes only, both ends invisible, scrolls to make end visible
+		// full-width runes only, both ends invisible, deletes to make end visible
+		// scrolls to make full-width rune appear at the beginning
+		// scrolls to make full-width rune appear at the end
+		// inserts after last full width rune, first is half-width
+		// inserts after last full width rune, first is full-width
+		// scrolls right, first is full-width, last are half-width
+		// scrolls right, first is half-width, last is full-width
+		// scrolls right, first and last are full-width
+		// scrolls right, first and last are half-width
+		// scrolls left, first is full-width, last are half-width
+		// scrolls left, first is half-width, last is full-width
+		// scrolls left, first and last are full-width
+		// scrolls left, first and last are half-width
+		// test content
+		// test reset
+		// test insertion of invisible runes
 	}
 
 	for _, tc := range tests {

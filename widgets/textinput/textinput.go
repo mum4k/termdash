@@ -18,7 +18,6 @@ package textinput
 import (
 	"image"
 	"sync"
-	"unicode"
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
@@ -214,9 +213,6 @@ func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
 	default:
 		if err := wrap.ValidText(string(k.Key)); err != nil {
 			// Ignore unsupported runes.
-			return nil
-		}
-		if !unicode.IsPrint(rune(k.Key)) {
 			return nil
 		}
 		ti.editor.insert(rune(k.Key))

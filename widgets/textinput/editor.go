@@ -124,7 +124,9 @@ func curMaxIdx(start, end, cells, runeCount int) int {
 
 // shiftLeft shifts the visible range left so that it again contains the
 // cursor.
-func (fd *fieldData) shiftLeft(start, end, cells, curDataPos int) (int, int) {
+// The visible range includes all fieldData indexes
+// in range start <= idx < end.
+func (fd *fieldData) shiftLeft(start, cells, curDataPos int) (int, int) {
 	var startIdx int
 	switch {
 	case curDataPos == 0 || cells < minForArrows:
@@ -142,7 +144,9 @@ func (fd *fieldData) shiftLeft(start, end, cells, curDataPos int) (int, int) {
 
 // shiftRight shifts the visible range right so that it again contains the
 // cursor.
-func (fd *fieldData) shiftRight(start, end, cells, curDataPos int) (int, int) {
+// The visible range includes all fieldData indexes
+// in range start <= idx < end.
+func (fd *fieldData) shiftRight(start, cells, curDataPos int) (int, int) {
 	var endIdx int
 	switch dataLen := len(*fd); {
 	case curDataPos == dataLen:
@@ -158,50 +162,82 @@ func (fd *fieldData) shiftRight(start, end, cells, curDataPos int) (int, int) {
 
 	forRunes := cells - 1
 	startIdx := fd.cellsBefore(forRunes, endIdx)
+
+	// Invariant, if counting form the back ends in the middle of a full-width
+	// rune, cellsAfter doesn't include the full-width rune. This means that we
+	// might have recovered space for one half-with rune at the end if there is
+	// one.
 	endIdx = fd.cellsAfter(forRunes, startIdx)
 	endIdx++ // Space for the cursor.
 
 	return startIdx, endIdx
 }
 
-// runesIn returns runes that are in the visible range.
+// lastVisible given an end index of visible range asserts whether the last
+// rune in the data is visible.
+// The visible range includes all fieldData indexes
+// in range start <= idx < end.
+func (fd *fieldData) lastVisible(end int) bool {
+	return end-1 >= len(*fd)
+}
+
+// runesIn returns all the runes in the visible range.
+// The visible range includes all fieldData indexes
+// in range start <= idx < end.
+func (fd *fieldData) runesIn(start, end int) []rune {
+	var runes []rune
+	for i, r := range (*fd)[start:] {
+		if i+start > end-2 { // One last space is for the cursor after the text.
+			break
+		}
+		runes = append(runes, r)
+	}
+	return runes
+}
+
+// fitRunes starting from the firstRune index returns runes that take at most
+// the specified number of cells. The last cell is reserved for a cursor
+// position used for appending new runes.
 // This might return smaller number of runes than the size of the range,
 // depending on the width of the individual runes.
-func (fd *fieldData) runesIn(firstRune, curPos, cells int) (string, int) {
+func (fd *fieldData) fitRunes(firstRune, curPos, cells int) (string, int) {
 	forRunes := cells - 1 // One cell reserved for the cursor when appending.
 
+	// Determine how many runes fit from the start.
 	start := firstRune
 	end := fd.cellsAfter(forRunes, start)
 	end++
 
-	if start > 0 && end-1 >= len(*fd) {
+	if start > 0 && fd.lastVisible(end) {
+		// Start is in the middle, end is visible.
+		// Fit runes from the end.
 		end = len(*fd)
 		start = fd.cellsBefore(forRunes, end)
 		end++ // Space for the cursor within the visible range.
 	}
 
+	// The fitting of runes might have resulted in a visible range that no
+	// longer contains the cursor (it became shorter) or the cursor was outside
+	// to begin with (due to cursorLeft() or cursorRight() calls).
+	// Shift the range so the cursor is again inside.
 	if curPos < curMinIdx(start, cells) {
-		start, end = fd.shiftLeft(start, end, cells, curPos)
+		start, end = fd.shiftLeft(start, cells, curPos)
 	} else if curPos > curMaxIdx(start, end, cells, len(*fd)) {
-		start, end = fd.shiftRight(start, end, cells, curPos)
+		start, end = fd.shiftRight(start, cells, curPos)
 	}
 
-	var runes []rune
-	for i, r := range (*fd)[start:] {
-		if i+start > end-2 {
-			break
-		}
-		runes = append(runes, r)
-	}
-	//log.Printf("runes: %v", string(runes))
-
+	runes := fd.runesIn(start, end)
 	useArrows := cells >= minForArrows
 	var b strings.Builder
 	for i, r := range runes {
 		switch {
 		case useArrows && i == 0 && start > 0:
+			// Indicate that start is hidden by replacing the first visible
+			// rune with an arrow.
 			b.WriteRune('⇦')
 			if rw := runewidth.RuneWidth(r); rw == 2 {
+				// If the replaced rune was a full-width rune, place two arrows
+				// to keep the same space allocation as pre-calculated.
 				b.WriteRune('⇦')
 			}
 
@@ -210,7 +246,10 @@ func (fd *fieldData) runesIn(firstRune, curPos, cells int) (string, int) {
 		}
 	}
 
-	if useArrows && end-1 < len(*fd) {
+	if useArrows && !fd.lastVisible(end) {
+		// Indicate that end is hidden by placing an arrow at the end.
+		// THis has no impact on space allocation, since the last cell is
+		// always reserved for the cursor or the arrow.
 		b.WriteRune('⇨')
 	}
 	return b.String(), start
@@ -270,7 +309,7 @@ func (fe *fieldEditor) viewFor(width int) (string, int, error) {
 	if min := minFieldWidth; width < min { // One for left arrow, two for one full-width rune and one for the cursor.
 		return "", -1, fmt.Errorf("width %d is too small, the minimum is %d", width, min)
 	}
-	runes, start := fe.data.runesIn(fe.firstRune, fe.curDataPos, width)
+	runes, start := fe.data.fitRunes(fe.firstRune, fe.curDataPos, width)
 	fe.firstRune = start
 	return runes, fe.curCell(width), nil
 }

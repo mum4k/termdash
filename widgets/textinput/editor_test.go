@@ -1500,14 +1500,14 @@ func TestFieldEditor(t *testing.T) {
 
 			gotView, gotCurIdx, err := fe.viewFor(tc.width)
 			if (err != nil) != tc.wantErr {
-				t.Errorf("viewFor => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+				t.Errorf("viewFor(%d) => unexpected error: %v, wantErr: %v", tc.width, err, tc.wantErr)
 			}
 			if err != nil {
 				return
 			}
 
 			if gotView != tc.wantView || gotCurIdx != tc.wantCurIdx {
-				t.Errorf("viewFor => (%q, %d), want (%q, %d)", gotView, gotCurIdx, tc.wantView, tc.wantCurIdx)
+				t.Errorf("viewFor(%d) => (%q, %d), want (%q, %d)", tc.width, gotView, gotCurIdx, tc.wantView, tc.wantCurIdx)
 			}
 
 			gotContent := fe.content()

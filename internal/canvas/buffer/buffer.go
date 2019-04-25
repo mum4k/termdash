@@ -115,6 +115,11 @@ func (b Buffer) SetCell(p image.Point, r rune, opts ...cell.Option) (int, error)
 		return -1, err
 	}
 	rw := runewidth.RuneWidth(r)
+	if rw == 0 {
+		// Even if the rune is invisible, like the zero-value rune, it still
+		// occupies at least the target cell.
+		rw = 1
+	}
 	if rw > remW {
 		return -1, fmt.Errorf("cannot set rune %q of width %d at point %v, only have %d remaining cells at this line", r, rw, p, remW)
 	}

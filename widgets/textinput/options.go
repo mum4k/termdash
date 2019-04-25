@@ -42,6 +42,7 @@ func (o option) set(opts *options) {
 type options struct {
 	fillColor        cell.Color
 	textColor        cell.Color
+	placeHolderColor cell.Color
 	highlightedColor cell.Color
 	cursorColor      cell.Color
 	border           linestyle.LineStyle
@@ -74,9 +75,10 @@ func (o *options) validate() error {
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
-		fillColor:   cell.ColorNumber(DefaultFillColorNumber),
-		cursorColor: cell.ColorNumber(DefaultCursorColorNumber),
-		labelAlign:  DefaultLabelAlign,
+		fillColor:        cell.ColorNumber(DefaultFillColorNumber),
+		placeHolderColor: cell.ColorNumber(DefaultPlaceHolderColorNumber),
+		cursorColor:      cell.ColorNumber(DefaultCursorColorNumber),
+		labelAlign:       DefaultLabelAlign,
 	}
 }
 
@@ -184,6 +186,18 @@ func LabelAlign(la align.Horizontal) Option {
 func PlaceHolder(text string) Option {
 	return option(func(opts *options) {
 		opts.placeHolder = text
+	})
+}
+
+// DefaultPlaceHolderColorNumber is the default color number for the
+// PlaceHolderColor option.
+const DefaultPlaceHolderColorNumber = 190
+
+// PlaceHolderColor sets the color of the placeholder text.
+// Defaults to DefaultPlaceHolderColorNumber.
+func PlaceHolderColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.placeHolderColor = c
 	})
 }
 

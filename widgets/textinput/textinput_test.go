@@ -21,7 +21,12 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/testcanvas"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -58,6 +63,10 @@ func (ct *callbackTracker) submit(text string) error {
 }
 
 func TestTextInput(t *testing.T) {
+	// Makes the empty text input field visible and cursor in test outputs.
+	textFieldRune = '_'
+	cursorRune = '█'
+
 	tests := []struct {
 		desc         string
 		callback     *callbackTracker
@@ -92,10 +101,448 @@ func TestTextInput(t *testing.T) {
 			},
 			wantNewErr: true,
 		},
+		{
+			desc:   "takes all space without label",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					cvs.Area(),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "text field with border",
+			opts: []Option{
+				Border(linestyle.Light),
+			},
+			canvas: image.Rect(0, 0, 10, 3),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustBorder(cvs, cvs.Area())
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(1, 1, 9, 2),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets custom border color",
+			opts: []Option{
+				Border(linestyle.Light),
+				BorderColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 10, 3),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustBorder(cvs, cvs.Area(), draw.BorderCellOpts(cell.FgColor(cell.ColorRed)))
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(1, 1, 9, 2),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets custom fill color",
+			opts: []Option{
+				FillColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					cvs.Area(),
+					textFieldRune,
+					cell.BgColor(cell.ColorRed),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "draws cursor when focused",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					cvs.Area(),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{0, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws place holder text when empty and not focused",
+			opts: []Option{
+				PlaceHolder("holder"),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: false,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					cvs.Area(),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"holder",
+					image.Point{0, 0},
+					draw.TextCellOpts(cell.FgColor(cell.ColorNumber(DefaultPlaceHolderColorNumber))),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets custom place holder text color",
+			opts: []Option{
+				PlaceHolder("holder"),
+				PlaceHolderColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: false,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					cvs.Area(),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"holder",
+					image.Point{0, 0},
+					draw.TextCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets custom cursor color",
+			opts: []Option{
+				CursorColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					cvs.Area(),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{0, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorRed),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets width percentage, results in area too small",
+			opts: []Option{
+				WidthPerc(10),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustResizeNeeded(cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets width percentage, field aligns right",
+			opts: []Option{
+				WidthPerc(50),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(5, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "automatically adjusts space for label, rest for text field",
+			opts: []Option{
+				Label("hi:"),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(cvs, "hi:", image.Point{0, 0})
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(3, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "has label and border, not enough remaining height",
+			opts: []Option{
+				Label("hi:"),
+				Border(linestyle.Light),
+			},
+			canvas: image.Rect(0, 0, 10, 2),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustResizeNeeded(cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws label and border",
+			opts: []Option{
+				Label("hi:"),
+				Border(linestyle.Light),
+			},
+			canvas: image.Rect(0, 0, 10, 3),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(cvs, "hi:", image.Point{0, 1})
+				testdraw.MustBorder(cvs, image.Rect(3, 0, 10, 3))
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(4, 1, 9, 2),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws resize needed if label makes text field too narrow",
+			opts: []Option{
+				Label("hello world:"),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustResizeNeeded(cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets width percentage for text field, label gets the rest, aligns left by default",
+			opts: []Option{
+				Label("hi:"),
+				WidthPerc(50),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(cvs, "hi:", image.Point{0, 0})
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(5, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets width percentage for text field, label gets the rest, aligns left with option",
+			opts: []Option{
+				Label("hi:"),
+				WidthPerc(50),
+				LabelAlign(align.HorizontalLeft),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(cvs, "hi:", image.Point{0, 0})
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(5, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets width percentage for text field, label gets the rest, aligns center with option",
+			opts: []Option{
+				Label("hi:"),
+				WidthPerc(50),
+				LabelAlign(align.HorizontalCenter),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(cvs, "hi:", image.Point{1, 0})
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(5, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets width percentage for text field, label gets the rest, aligns right with option",
+			opts: []Option{
+				Label("hi:"),
+				WidthPerc(50),
+				LabelAlign(align.HorizontalRight),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(cvs, "hi:", image.Point{2, 0})
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(5, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets label cell options",
+			opts: []Option{
+				Label(
+					"hi:",
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
+				),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(
+					cvs,
+					"hi:",
+					image.Point{0, 0},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorRed),
+						cell.BgColor(cell.ColorBlue),
+					),
+				)
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(3, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
 	}
 
-	textFieldRune = '_'
-	cursorRune = '█'
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			gotCallback := tc.callback

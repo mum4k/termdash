@@ -127,7 +127,7 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		forField = textAr
 	}
 
-	if forField.Dx() < minFieldWidth {
+	if forField.Dx() < minFieldWidth || forField.Dy() < minFieldHeight {
 		return draw.ResizeNeeded(cvs)
 	}
 
@@ -152,7 +152,7 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		}
 	}
 
-	if err := cvs.SetAreaCellOpts(forField, cell.BgColor(ti.opts.fillColor)); err != nil {
+	if err := cvs.SetAreaCells(forField, textFieldRune, cell.BgColor(ti.opts.fillColor)); err != nil {
 		return err
 	}
 
@@ -177,6 +177,19 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 			p,
 			cell.FgColor(ti.opts.highlightedColor),
 			cell.BgColor(ti.opts.cursorColor),
+		); err != nil {
+			return err
+		}
+		if cursorRune != 0 {
+			if _, err := cvs.SetCell(p, cursorRune); err != nil {
+				return err
+			}
+		}
+	} else if ti.opts.placeHolder != "" && text == "" {
+		if err := draw.Text(
+			cvs, ti.opts.placeHolder, forField.Min,
+			draw.TextMaxX(forField.Max.X),
+			draw.TextCellOpts(cell.FgColor(ti.opts.placeHolderColor)),
 		); err != nil {
 			return err
 		}
@@ -230,6 +243,9 @@ func (ti *TextInput) Mouse(m *terminalapi.Mouse) error {
 	return nil
 }
 
+// minFieldHeight is the minimum height in cells needed for the text input field.
+const minFieldHeight = 1
+
 // Options implements widgetapi.Widget.Options.
 func (ti *TextInput) Options() widgetapi.Options {
 	ti.mu.Lock()
@@ -240,7 +256,7 @@ func (ti *TextInput) Options() widgetapi.Options {
 		needWidth += lw
 	}
 
-	needHeight := 1
+	needHeight := minFieldHeight
 	if ti.opts.border != linestyle.None {
 		needWidth += 2
 		needHeight += 2

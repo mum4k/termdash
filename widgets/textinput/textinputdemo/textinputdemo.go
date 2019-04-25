@@ -130,6 +130,7 @@ func main() {
 		textinput.Label("New text:", cell.FgColor(cell.ColorBlue)),
 		textinput.MaxWidthCells(20),
 		textinput.Border(linestyle.Light),
+		textinput.PlaceHolder("Enter any text"),
 	)
 	if err != nil {
 		panic(err)

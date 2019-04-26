@@ -28,6 +28,7 @@ import (
 	"github.com/mum4k/termdash/internal/draw"
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -98,6 +99,20 @@ func TestTextInput(t *testing.T) {
 			desc: "fails on MaxWidthCells too low",
 			opts: []Option{
 				MaxWidthCells(3),
+			},
+			wantNewErr: true,
+		},
+		{
+			desc: "fails on HideTextWith control rune",
+			opts: []Option{
+				HideTextWith(0x007f),
+			},
+			wantNewErr: true,
+		},
+		{
+			desc: "fails on HideTextWith full-width rune",
+			opts: []Option{
+				HideTextWith('世'),
 			},
 			wantNewErr: true,
 		},
@@ -206,6 +221,7 @@ func TestTextInput(t *testing.T) {
 					image.Point{0, 0},
 					cursorRune,
 					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
 				)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -294,6 +310,7 @@ func TestTextInput(t *testing.T) {
 					image.Point{0, 0},
 					cursorRune,
 					cell.BgColor(cell.ColorRed),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
 				)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -541,6 +558,729 @@ func TestTextInput(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "displays written text",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "submits written text on enter",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			callback: &callbackTracker{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				text:  "abc",
+				count: 1,
+			},
+		},
+		{
+			desc:   "forwards error returned by SubmitFn",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			callback: &callbackTracker{
+				wantErr: true,
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				text:  "abc",
+				count: 1,
+			},
+			wantEventErr: true,
+		},
+		{
+			desc: "submits written text on enter and clears the text input field",
+			opts: []Option{
+				ClearOnSubmit(),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			callback: &callbackTracker{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				text:  "abc",
+				count: 1,
+			},
+		},
+		{
+			desc: "clears the text input field when enter is pressed and ClearOnSubmit option given",
+			opts: []Option{
+				ClearOnSubmit(),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "write ignores control or unsupported space runes",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: '\t'},
+				&terminalapi.Keyboard{Key: 0x007f},
+				&terminalapi.Keyboard{Key: 'b'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"ab",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "write filters runes with the provided FilterFn",
+			opts: []Option{
+				Filter(func(r rune) bool {
+					return r != 'b' && r != 'c'
+				}),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: 'd'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"ad",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+
+		{
+			desc:   "displays written text with full-width runes",
+			canvas: image.Rect(0, 0, 4, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: '世'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 4, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"⇦世",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "hides text when requested",
+			opts: []Option{
+				HideTextWith('*'),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"***",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "hides text, but doesn't hide scrolling arrows",
+			opts: []Option{
+				HideTextWith('*'),
+			},
+			canvas: image.Rect(0, 0, 4, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: 'd'},
+				&terminalapi.Keyboard{Key: 'e'},
+				&terminalapi.Keyboard{Key: keyboard.KeyArrowLeft},
+				&terminalapi.Keyboard{Key: keyboard.KeyArrowLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 4, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"⇦**⇨",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "hides text hides scrolling arrows that are part of the text",
+			opts: []Option{
+				HideTextWith('*'),
+			},
+			canvas: image.Rect(0, 0, 4, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: '⇦'},
+				&terminalapi.Keyboard{Key: '⇨'},
+				&terminalapi.Keyboard{Key: 'e'},
+				&terminalapi.Keyboard{Key: keyboard.KeyArrowLeft},
+				&terminalapi.Keyboard{Key: keyboard.KeyArrowLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 4, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"⇦**⇨",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "hides full-width runes with two hide runes",
+			opts: []Option{
+				HideTextWith('*'),
+			},
+			canvas: image.Rect(0, 0, 4, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: '世'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 4, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"⇦**",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets custom text color",
+			opts: []Option{
+				TextColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+					draw.TextCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "displays written text and cursor when focused",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{3, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "moves cursor left",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyArrowLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{2, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets custom highlight color",
+			opts: []Option{
+				HighlightedColor(cell.ColorRed),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyArrowLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{2, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorRed),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "moves cursor to start",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyHome},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{0, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "moves cursor right",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyHome},
+				&terminalapi.Keyboard{Key: keyboard.KeyArrowRight},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{1, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "moves cursor to end",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyHome},
+				&terminalapi.Keyboard{Key: keyboard.KeyEnd},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{3, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "deletes rune the cursor is on",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyHome},
+				&terminalapi.Keyboard{Key: keyboard.KeyDelete},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"bc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{0, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "deletes rune just before the cursor",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Keyboard{Key: keyboard.KeyBackspace},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"ab",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{2, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -558,24 +1298,38 @@ func TestTextInput(t *testing.T) {
 				return
 			}
 
-			for _, ev := range tc.events {
+			for i, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Mouse:
 					err := ti.Mouse(e)
-					if (err != nil) != tc.wantEventErr {
-						t.Errorf("Mouse => unexpected error: %v, wantEventErr: %v", err, tc.wantEventErr)
-					}
-					if err != nil {
-						return
+					// Only the last event in test cases is the one that triggers the callback.
+					if i == len(tc.events)-1 {
+						if (err != nil) != tc.wantEventErr {
+							t.Errorf("Mouse => unexpected error: %v, wantEventErr: %v", err, tc.wantEventErr)
+						}
+						if err != nil {
+							return
+						}
+					} else {
+						if err != nil {
+							t.Fatalf("Mouse => unexpected error: %v", err)
+						}
 					}
 
 				case *terminalapi.Keyboard:
 					err := ti.Keyboard(e)
-					if (err != nil) != tc.wantEventErr {
-						t.Errorf("Keyboard => unexpected error: %v, wantEventErr: %v", err, tc.wantEventErr)
-					}
-					if err != nil {
-						return
+					// Only the last event in test cases is the one that triggers the callback.
+					if i == len(tc.events)-1 {
+						if (err != nil) != tc.wantEventErr {
+							t.Errorf("Keyboard => unexpected error: %v, wantEventErr: %v", err, tc.wantEventErr)
+						}
+						if err != nil {
+							return
+						}
+					} else {
+						if err != nil {
+							t.Fatalf("Keyboard => unexpected error: %v", err)
+						}
 					}
 
 				default:
@@ -620,6 +1374,75 @@ func TestTextInput(t *testing.T) {
 
 			if diff := pretty.Compare(tc.wantCallback, gotCallback); diff != "" {
 				t.Errorf("CallbackFn => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestTextInputRead(t *testing.T) {
+	tests := []struct {
+		desc   string
+		events []terminalapi.Event
+		want   string
+	}{
+		{
+			desc:   "reads empty without events",
+			events: []terminalapi.Event{},
+			want:   "",
+		},
+		{
+			desc: "reads written text",
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+			},
+			want: "abc",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			ti, err := New()
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
+
+			for _, ev := range tc.events {
+				switch e := ev.(type) {
+				case *terminalapi.Keyboard:
+					err := ti.Keyboard(e)
+					if err != nil {
+						t.Fatalf("Keyboard => unexpected error: %v", err)
+					}
+
+				default:
+					t.Fatalf("unsupported event type: %T", ev)
+				}
+			}
+
+			got := ti.Read()
+			if got != tc.want {
+				t.Errorf("Read => %q, want %q", got, tc.want)
+			}
+
+			gotRC := ti.ReadAndClear()
+			if gotRC != tc.want {
+				t.Errorf("ReadAndClear after clearing => %q, want %q", gotRC, tc.want)
+			}
+
+			// Both should now return empty content.
+			{
+				want := ""
+				got := ti.Read()
+				if got != want {
+					t.Errorf("Read after clearing => %q, want %q", got, want)
+				}
+
+				gotRC := ti.ReadAndClear()
+				if gotRC != want {
+					t.Errorf("ReadAndClear after clearing => %q, want %q", gotRC, want)
+				}
 			}
 		})
 	}

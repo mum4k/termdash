@@ -21,6 +21,8 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/internal/runewidth"
+	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/linestyle"
 )
 
@@ -57,8 +59,9 @@ type options struct {
 	placeHolder  string
 	hideTextWith rune
 
-	filter   FilterFn
-	onSubmit SubmitFn
+	filter        FilterFn
+	onSubmit      SubmitFn
+	clearOnSubmit bool
 }
 
 // validate validates the provided options.
@@ -69,6 +72,14 @@ func (o *options) validate() error {
 	if min, cells := 4, o.maxWidthCells; cells != nil && *cells < min {
 		return fmt.Errorf("invalid MaxWidthCells(%d), must be value in range %d <= value", *cells, min)
 	}
+	if r := o.hideTextWith; r != 0 {
+		if err := wrap.ValidText(string(r)); err != nil {
+			return fmt.Errorf("invalid HideTextWidth rune %c(%d): %v", r, r, err)
+		}
+		if got, want := runewidth.RuneWidth(r), 1; got != want {
+			return fmt.Errorf("invalid HideTextWidth rune %c(%d), has rune width of %d cells, only runes with width of %d are accepted", r, r, got, want)
+		}
+	}
 	return nil
 }
 
@@ -77,6 +88,7 @@ func newOptions() *options {
 	return &options{
 		fillColor:        cell.ColorNumber(DefaultFillColorNumber),
 		placeHolderColor: cell.ColorNumber(DefaultPlaceHolderColorNumber),
+		highlightedColor: cell.ColorNumber(DefaultHighlightedColorNumber),
 		cursorColor:      cell.ColorNumber(DefaultCursorColorNumber),
 		labelAlign:       DefaultLabelAlign,
 	}
@@ -191,7 +203,7 @@ func PlaceHolder(text string) Option {
 
 // DefaultPlaceHolderColorNumber is the default color number for the
 // PlaceHolderColor option.
-const DefaultPlaceHolderColorNumber = 190
+const DefaultPlaceHolderColorNumber = 194
 
 // PlaceHolderColor sets the color of the placeholder text.
 // Defaults to DefaultPlaceHolderColorNumber.
@@ -204,11 +216,17 @@ func PlaceHolderColor(c cell.Color) Option {
 // HideTextWith sets the rune that should be displayed instead of displaying
 // the text. Useful for fields that accept sensitive information like
 // passwords.
+// The rune must be a printable rune with cell width of one.
 func HideTextWith(r rune) Option {
 	return option(func(opts *options) {
 		opts.hideTextWith = r
 	})
 }
+
+// FilterFn if provided can be used to filter runes that are allowed in the
+// text input field. Any rune for which this function returns false will be
+// rejected.
+type FilterFn func(rune) bool
 
 // Filter sets a function that will be used to filter characters the user can
 // input.
@@ -218,10 +236,30 @@ func Filter(fn FilterFn) Option {
 	})
 }
 
+// SubmitFn if provided is called when the user submits the content of the text
+// input field, the argument text contains all the text in the field.
+// Submitting the input field clears its content.
+//
+// The callback function must be thread-safe as the keyboard event that
+// triggers the submission comes from a separate goroutine.
+type SubmitFn func(text string) error
+
 // OnSubmit sets a function that will be called with the text typed by the user
 // when they submit the content by pressing the Enter key.
+// The SubmitFn must not attempt to read from or modify the TextInput instance
+// in any way as while the SubmitFn is executing, the TextInput is mutex
+// locked. If the intention is to clear the content on submission, use the
+// ClearOnSubmit() option.
 func OnSubmit(fn SubmitFn) Option {
 	return option(func(opts *options) {
 		opts.onSubmit = fn
+	})
+}
+
+// ClearOnSubmit sets the text input to be cleared when a submit of the content
+// is triggered by the user pressing the Enter key.
+func ClearOnSubmit() Option {
+	return option(func(opts *options) {
+		opts.clearOnSubmit = true
 	})
 }

@@ -17,6 +17,7 @@ package textinput
 
 import (
 	"image"
+	"strings"
 	"sync"
 
 	"github.com/mum4k/termdash/align"
@@ -32,19 +33,6 @@ import (
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
-
-// FilterFn if provided can be used to filter runes that are allowed in the
-// text input field. Any rune for which this function returns false will be
-// rejected.
-type FilterFn func(rune) bool
-
-// SubmitFn if provided is called when the user submits the content of the text
-// input field, the argument text contains all the text in the field.
-// Submitting the input field clears its content.
-//
-// The callback function must be thread-safe as the keyboard event that
-// triggers the submission comes from a separate goroutine.
-type SubmitFn func(text string) error
 
 // TextInput accepts text input from the user.
 //
@@ -160,6 +148,11 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	if err != nil {
 		return err
 	}
+
+	if ti.opts.hideTextWith != 0 {
+		text = hideText(text, ti.opts.hideTextWith)
+	}
+
 	if err := draw.Text(
 		cvs, text, forField.Min,
 		draw.TextMaxX(forField.Max.X),
@@ -223,9 +216,22 @@ func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
 	case keyboard.KeyEnd, keyboard.KeyCtrlE:
 		ti.editor.cursorEnd()
 
+	case keyboard.KeyEnter:
+		text := ti.editor.content()
+		if ti.opts.clearOnSubmit {
+			ti.editor.reset()
+		}
+		if ti.opts.onSubmit != nil {
+			return ti.opts.onSubmit(text)
+		}
+
 	default:
 		if err := wrap.ValidText(string(k.Key)); err != nil {
 			// Ignore unsupported runes.
+			return nil
+		}
+		if ti.opts.filter != nil && !ti.opts.filter(rune(k.Key)) {
+			// Ignore filtered runes.
 			return nil
 		}
 		ti.editor.insert(rune(k.Key))
@@ -310,4 +316,27 @@ func split(cvsAr image.Rectangle, label string, widthPerc *int) (labelAr, textAr
 		// Neither a label nor width percentage specified.
 		return image.ZR, cvsAr, nil
 	}
+}
+
+// hideText returns the text with all runes replaced with hr.
+func hideText(text string, hr rune) string {
+	var b strings.Builder
+
+	i := 0
+	sw := runewidth.StringWidth(text)
+	for _, r := range text {
+		rw := runewidth.RuneWidth(r)
+		switch {
+		case i == 0 && r == '⇦':
+			b.WriteRune(r)
+
+		case i == sw-1 && r == '⇨':
+			b.WriteRune(r)
+
+		default:
+			b.WriteString(strings.Repeat(string(hr), rw))
+		}
+		i++
+	}
+	return b.String()
 }

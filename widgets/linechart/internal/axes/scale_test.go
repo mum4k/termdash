@@ -22,8 +22,8 @@ import (
 )
 
 // mustNewYScale returns a new YScale or panics.
-func mustNewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode) *YScale {
-	s, err := NewYScale(min, max, graphHeight, nonZeroDecimals, mode)
+func mustNewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode, formatter valueFormatter) *YScale {
+	s, err := NewYScale(min, max, graphHeight, nonZeroDecimals, mode, formatter)
 	if err != nil {
 		panic(err)
 	}
@@ -766,7 +766,7 @@ func TestYScale(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		scale, err := NewYScale(test.min, test.max, test.graphHeight, test.nonZeroDecimals, test.mode)
+		scale, err := NewYScale(test.min, test.max, test.graphHeight, test.nonZeroDecimals, test.mode, nil)
 		if (err != nil) != test.wantErr {
 			t.Errorf("NewYScale => unexpected error: %v, wantErr: %v", err, test.wantErr)
 		}

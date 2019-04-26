@@ -72,6 +72,8 @@ type YProperties struct {
 	ReqXHeight int
 	// ScaleMode determines how the Y axis scales.
 	ScaleMode YScaleMode
+	// ValueFormatter is the formatter used to format numeric values to string representation.
+	ValueFormatter valueFormatter
 }
 
 // NewYDetails retrieves details about the Y axis required to draw it on a
@@ -85,7 +87,7 @@ func NewYDetails(cvsAr image.Rectangle, yp *YProperties) (*YDetails, error) {
 	}
 
 	graphHeight := cvsHeight - yp.ReqXHeight
-	scale, err := NewYScale(yp.Min, yp.Max, graphHeight, nonZeroDecimals, yp.ScaleMode)
+	scale, err := NewYScale(yp.Min, yp.Max, graphHeight, nonZeroDecimals, yp.ScaleMode, yp.ValueFormatter)
 	if err != nil {
 		return nil, err
 	}

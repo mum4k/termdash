@@ -66,6 +66,10 @@ type YScale struct {
 	GraphHeight int
 	// brailleHeight is the height of the braille canvas based on the GraphHeight.
 	brailleHeight int
+
+	// valueFormatter is the value formatter used for the labels
+	// represented by the values on the scale.
+	valueFormatter valueFormatter
 }
 
 // String implements fmt.Stringer.
@@ -78,7 +82,7 @@ func (ys *YScale) String() string {
 // calculated scale, see NewValue for details.
 // Max must be greater or equal to min. The graphHeight must be a positive
 // number.
-func NewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode) (*YScale, error) {
+func NewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode, valueFormatter valueFormatter) (*YScale, error) {
 	if max < min {
 		return nil, fmt.Errorf("max(%v) cannot be less than min(%v)", max, min)
 	}
@@ -114,11 +118,12 @@ func NewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMo
 	diff := max - min
 	step := NewValue(diff/float64(usablePixels), nonZeroDecimals)
 	return &YScale{
-		Min:           NewValue(min, nonZeroDecimals),
-		Max:           NewValue(max, nonZeroDecimals),
-		Step:          step,
-		GraphHeight:   graphHeight,
-		brailleHeight: brailleHeight,
+		Min:            yScaleNewValue(min, nonZeroDecimals, valueFormatter),
+		Max:            yScaleNewValue(max, nonZeroDecimals, valueFormatter),
+		Step:           step,
+		GraphHeight:    graphHeight,
+		brailleHeight:  brailleHeight,
+		valueFormatter: valueFormatter,
 	}, nil
 }
 
@@ -188,7 +193,18 @@ func (ys *YScale) CellLabel(y int) (*Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewValue(v, ys.Min.NonZeroDecimals), nil
+	return yScaleNewValue(v, ys.Min.NonZeroDecimals, ys.valueFormatter), nil
+}
+
+// yScaleNewValue is a helper method to get new values for the y scale
+// that selects the correct value factory method  depending on the passed
+// arguments.
+func yScaleNewValue(value float64, nonZeroDecimals int, valueFormatter valueFormatter) *Value {
+	if valueFormatter != nil {
+		return NewFormattedValue(value, nonZeroDecimals, valueFormatter)
+	}
+
+	return NewValue(value, nonZeroDecimals)
 }
 
 // XScale is the scale of the X axis.

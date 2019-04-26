@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The `TextInput` widget, an input field allowing interactive text input.
+
 ### Changed
 
 - Widgets now get information whether their container is focused when Draw is

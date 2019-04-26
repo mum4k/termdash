@@ -23,6 +23,8 @@ import (
 	"github.com/mum4k/termdash/internal/numbers"
 )
 
+type valueFormatter = func(float64) string
+
 // Value represents one value.
 type Value struct {
 	// Value is the original unmodified value.
@@ -36,6 +38,9 @@ type Value struct {
 	// NonZeroDecimals indicates the rounding precision used, it is provided on
 	// a call to newValue.
 	NonZeroDecimals int
+	// Formatter will format value to a string representation of the value,
+	// if Formatter is not present it will fallback to default format.
+	Formatter valueFormatter
 
 	// text value if this value was constructed using NewTextValue.
 	text string
@@ -49,12 +54,19 @@ func (v *Value) String() string {
 // NewValue returns a new instance representing the provided value, rounding
 // the value up to the specified number of non-zero decimal places.
 func NewValue(v float64, nonZeroDecimals int) *Value {
+	return NewFormattedValue(v, nonZeroDecimals, nil)
+}
+
+// NewFormattedValue returns a new instance representing the provided value,
+// using a value formatter.
+func NewFormattedValue(v float64, nonZeroDecimals int, formatter valueFormatter) *Value {
 	r, zd := numbers.RoundToNonZeroPlaces(v, nonZeroDecimals)
 	return &Value{
 		Value:           v,
 		Rounded:         r,
 		ZeroDecimals:    zd,
 		NonZeroDecimals: nonZeroDecimals,
+		Formatter:       formatter,
 	}
 }
 
@@ -72,14 +84,24 @@ func (v *Value) Text() string {
 	if v.text != "" {
 		return v.text
 	}
-	if math.Ceil(v.Rounded) == v.Rounded {
-		return fmt.Sprintf("%.0f", v.Rounded)
+
+	if v.Formatter != nil {
+		return v.Formatter(v.Value)
+	}
+
+	return v.defaultFormatter(v.Rounded)
+}
+
+func (v *Value) defaultFormatter(value float64) string {
+	if math.Ceil(value) == value {
+		return fmt.Sprintf("%.0f", value)
 	}
 
 	format := fmt.Sprintf("%%.%df", v.NonZeroDecimals+v.ZeroDecimals)
-	t := fmt.Sprintf(format, v.Rounded)
+	t := fmt.Sprintf(format, value)
 	if len(t) > 10 {
-		t = fmt.Sprintf("%.2e", v.Rounded)
+		t = fmt.Sprintf("%.2e", value)
 	}
+
 	return t
 }

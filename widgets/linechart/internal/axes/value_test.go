@@ -124,3 +124,16 @@ func TestNewTextValue(t *testing.T) {
 		t.Errorf("v.Text => got %q, want %q", got, want)
 	}
 }
+
+func TestFormattedValue(t *testing.T) {
+	const (
+		value = 42
+		want  = "test"
+	)
+
+	v := NewFormattedValue(value, 2, func(float64) string { return "test" })
+	got := v.Text()
+	if got != want {
+		t.Errorf("v.Text => got %q, want %q", got, want)
+	}
+}

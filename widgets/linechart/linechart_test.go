@@ -15,6 +15,7 @@
 package linechart
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"testing"
@@ -1634,6 +1635,48 @@ func TestLineChartDraws(t *testing.T) {
 				testdraw.MustBrailleLine(bc, image.Point{9, 5}, image.Point{10, 4})
 				testdraw.MustBrailleLine(bc, image.Point{10, 4}, image.Point{10, 2})
 				testdraw.MustBrailleLine(bc, image.Point{10, 2}, image.Point{11, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "custom Y-axis labels using a value formatter",
+			canvas: image.Rect(0, 0, 20, 10),
+			opts: []Option{
+				YAxisFormattedValues(func(v float64) string {
+					if v == 0 || math.IsNaN(v) {
+						return "∅"
+					}
+					return fmt.Sprintf("%.1fs", v+10)
+				}),
+			},
+			writes: func(lc *LineChart) error {
+				return lc.Series("first", []float64{0, 100})
+			},
+			wantCapacity: 28,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{5, 0}, End: image.Point{5, 8}},
+					{Start: image.Point{5, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "∅", image.Point{4, 7})
+				testdraw.MustText(c, "61.7s", image.Point{0, 3})
+				testdraw.MustText(c, "0", image.Point{6, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(6, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{26, 0})
 				testbraille.MustCopyTo(bc, c)
 
 				testcanvas.MustApply(c, ft)

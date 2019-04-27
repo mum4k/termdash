@@ -25,6 +25,7 @@ import (
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/container/grid"
 	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/segmentdisplay"
@@ -128,7 +129,7 @@ func main() {
 	input, err := textinput.New(
 		textinput.Label("New text:", cell.FgColor(cell.ColorBlue)),
 		textinput.MaxWidthCells(20),
-		//textinput.Border(linestyle.Light),
+		textinput.Border(linestyle.Light),
 		textinput.PlaceHolder("Enter any text"),
 	)
 	if err != nil {

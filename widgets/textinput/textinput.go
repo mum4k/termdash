@@ -37,10 +37,12 @@ import (
 
 // TextInput accepts text input from the user.
 //
-// Displays an input field where the user can edit text and an optional label.
+// Displays an input field and an optional text label. The input field allows
+// the user to edit and submit text.
 //
 // The text can be submitted by pressing enter or read at any time by calling
-// Read.
+// Read. The text input field can be navigated using arrows, the Home and End
+// button and using mouse.
 //
 // Implements widgetapi.Widget. This object is thread-safe.
 type TextInput struct {
@@ -102,6 +104,64 @@ func (ti *TextInput) ReadAndClear() string {
 	return c
 }
 
+// drawLabel draws the text label in the area.
+func (ti *TextInput) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) error {
+	start, err := alignfor.Text(labelAr, ti.opts.label, ti.opts.labelAlign, align.VerticalMiddle)
+	if err != nil {
+		return err
+	}
+	if err := draw.Text(
+		cvs, ti.opts.label, start,
+		draw.TextOverrunMode(draw.OverrunModeThreeDot),
+		draw.TextMaxX(labelAr.Max.X),
+		draw.TextCellOpts(ti.opts.labelCellOpts...),
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+// drawField draws the text input field.
+func (ti *TextInput) drawField(cvs *canvas.Canvas, text string) error {
+	if err := cvs.SetAreaCells(ti.forField, textFieldRune, cell.BgColor(ti.opts.fillColor)); err != nil {
+		return err
+	}
+
+	if ti.opts.hideTextWith != 0 {
+		text = hideText(text, ti.opts.hideTextWith)
+	}
+
+	if err := draw.Text(
+		cvs, text, ti.forField.Min,
+		draw.TextMaxX(ti.forField.Max.X),
+		draw.TextCellOpts(cell.FgColor(ti.opts.textColor)),
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+// drawCursor draws the cursor within the text input field.
+func (ti *TextInput) drawCursor(cvs *canvas.Canvas, curPos int) error {
+	p := image.Point{
+		curPos + ti.forField.Min.X,
+		ti.forField.Min.Y,
+	}
+	if err := cvs.SetCellOpts(
+		p,
+		cell.FgColor(ti.opts.highlightedColor),
+		cell.BgColor(ti.opts.cursorColor),
+	); err != nil {
+		return err
+	}
+	if cursorRune != 0 {
+		if _, err := cvs.SetCell(p, cursorRune); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Draw draws the TextInput widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
 func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
@@ -124,16 +184,7 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	}
 
 	if !labelAr.Eq(image.ZR) {
-		start, err := alignfor.Text(labelAr, ti.opts.label, ti.opts.labelAlign, align.VerticalMiddle)
-		if err != nil {
-			return err
-		}
-		if err := draw.Text(
-			cvs, ti.opts.label, start,
-			draw.TextOverrunMode(draw.OverrunModeThreeDot),
-			draw.TextMaxX(labelAr.Max.X),
-			draw.TextCellOpts(ti.opts.labelCellOpts...),
-		); err != nil {
+		if err := ti.drawLabel(cvs, labelAr); err != nil {
 			return err
 		}
 	}
@@ -144,43 +195,18 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		}
 	}
 
-	if err := cvs.SetAreaCells(ti.forField, textFieldRune, cell.BgColor(ti.opts.fillColor)); err != nil {
-		return err
-	}
-
 	text, curPos, err := ti.editor.viewFor(ti.forField.Dx())
 	if err != nil {
 		return err
 	}
 
-	if ti.opts.hideTextWith != 0 {
-		text = hideText(text, ti.opts.hideTextWith)
-	}
-
-	if err := draw.Text(
-		cvs, text, ti.forField.Min,
-		draw.TextMaxX(ti.forField.Max.X),
-		draw.TextCellOpts(cell.FgColor(ti.opts.textColor)),
-	); err != nil {
+	if err := ti.drawField(cvs, text); err != nil {
 		return err
 	}
 
 	if meta.Focused {
-		p := image.Point{
-			curPos + ti.forField.Min.X,
-			ti.forField.Min.Y,
-		}
-		if err := cvs.SetCellOpts(
-			p,
-			cell.FgColor(ti.opts.highlightedColor),
-			cell.BgColor(ti.opts.cursorColor),
-		); err != nil {
+		if err := ti.drawCursor(cvs, curPos); err != nil {
 			return err
-		}
-		if cursorRune != 0 {
-			if _, err := cvs.SetCell(p, cursorRune); err != nil {
-				return err
-			}
 		}
 	} else if ti.opts.placeHolder != "" && text == "" {
 		if err := draw.Text(
@@ -191,7 +217,6 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 			return err
 		}
 	}
-
 	return nil
 }
 

@@ -96,7 +96,7 @@ submitting text data. Run the
 go run github.com/mum4k/termdash/widgets/textinput/textinputdemo/textinputdemo.go
 ```
 
-[<img src="./doc/images/textinputdemo.gif" alt="textinputdemo" type="image/gif" width="50%">](widgets/textinput/textinputdemo/textinputdemo.go)
+[<img src="./doc/images/textinputdemo.gif" alt="textinputdemo" type="image/gif" width="80%">](widgets/textinput/textinputdemo/textinputdemo.go)
 
 ## The Gauge
 

@@ -1487,6 +1487,300 @@ func TestFieldEditor(t *testing.T) {
 			wantContent: "ac",
 			wantCurIdx:  2,
 		},
+		{
+			desc:  "all text visible, moves cursor to position zero",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorRelCell(0)
+				return nil
+			},
+			wantView:    "abc",
+			wantContent: "abc",
+			wantCurIdx:  0,
+		},
+		{
+			desc:  "all text visible, moves cursor to position in the middle",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorRelCell(1)
+				return nil
+			},
+			wantView:    "abc",
+			wantContent: "abc",
+			wantCurIdx:  1,
+		},
+		{
+			desc:  "all text visible, moves cursor back to the last character",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				fe.cursorRelCell(2)
+				return nil
+			},
+			wantView:    "abc",
+			wantContent: "abc",
+			wantCurIdx:  2,
+		},
+		{
+			desc:  "all text visible, moves cursor to the appending space",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				fe.cursorRelCell(3)
+				return nil
+			},
+			wantView:    "abc",
+			wantContent: "abc",
+			wantCurIdx:  3,
+		},
+		{
+			desc:  "all text visible, moves cursor before the beginning of data",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				fe.cursorRelCell(-1)
+				return nil
+			},
+			wantView:    "abc",
+			wantContent: "abc",
+			wantCurIdx:  0,
+		},
+		{
+			desc:  "all text visible, moves cursor after the appending space",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				if _, _, err := fe.viewFor(6); err != nil {
+					return err
+				}
+				fe.cursorStart()
+				fe.cursorRelCell(10)
+				return nil
+			},
+			wantView:    "abc",
+			wantContent: "abc",
+			wantCurIdx:  3,
+		},
+		{
+			desc:  "moves cursor when there is no text",
+			width: 6,
+			ops: func(fe *fieldEditor) error {
+				fe.cursorRelCell(10)
+				return nil
+			},
+			wantView:    "",
+			wantContent: "",
+			wantCurIdx:  0,
+		},
+		{
+			desc:  "both ends hidden, moves cursor onto the left arrow",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.cursorRelCell(0)
+				return nil
+			},
+			wantView:    "⇦cd⇨",
+			wantContent: "abcde",
+			wantCurIdx:  1,
+		},
+		{
+			desc:  "both ends hidden, moves cursor onto the first character",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRight()
+				fe.cursorRelCell(1)
+				return nil
+			},
+			wantView:    "⇦cd⇨",
+			wantContent: "abcde",
+			wantCurIdx:  1,
+		},
+		{
+			desc:  "both ends hidden, moves cursor onto the right arrow",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRelCell(3)
+				return nil
+			},
+			wantView:    "⇦cd⇨",
+			wantContent: "abcde",
+			wantCurIdx:  2,
+		},
+		{
+			desc:  "both ends hidden, moves cursor onto the last character",
+			width: 4,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('a')
+				fe.insert('b')
+				fe.insert('c')
+				fe.insert('d')
+				fe.insert('e')
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(4); err != nil {
+					return err
+				}
+				fe.cursorRelCell(2)
+				return nil
+			},
+			wantView:    "⇦cd⇨",
+			wantContent: "abcde",
+			wantCurIdx:  2,
+		},
+		{
+			desc:  "moves cursor onto the first cell containing a full-width rune",
+			width: 8,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('你')
+				fe.insert('好')
+				fe.insert('世')
+				fe.insert('界')
+				fe.insert('你')
+				if _, _, err := fe.viewFor(8); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(8); err != nil {
+					return err
+				}
+				fe.cursorRelCell(4)
+				return nil
+			},
+			wantView:    "⇦⇦世界⇨",
+			wantContent: "你好世界你",
+			wantCurIdx:  4,
+		},
+		{
+			desc:  "moves cursor onto the second cell containing a full-width rune",
+			width: 8,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('你')
+				fe.insert('好')
+				fe.insert('世')
+				fe.insert('界')
+				fe.insert('你')
+				if _, _, err := fe.viewFor(8); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(8); err != nil {
+					return err
+				}
+				fe.cursorRelCell(5)
+				return nil
+			},
+			wantView:    "⇦⇦世界⇨",
+			wantContent: "你好世界你",
+			wantCurIdx:  4,
+		},
+		{
+			desc:  "moves cursor onto the second right arrow",
+			width: 8,
+			ops: func(fe *fieldEditor) error {
+				fe.insert('你')
+				fe.insert('好')
+				fe.insert('世')
+				fe.insert('界')
+				fe.insert('你')
+				if _, _, err := fe.viewFor(8); err != nil {
+					return err
+				}
+				fe.cursorLeft()
+				fe.cursorLeft()
+				fe.cursorLeft()
+				if _, _, err := fe.viewFor(8); err != nil {
+					return err
+				}
+				fe.cursorRelCell(1)
+				return nil
+			},
+			wantView:    "⇦⇦世界⇨",
+			wantContent: "你好世界你",
+			wantCurIdx:  2,
+		},
 	}
 
 	for _, tc := range tests {

@@ -30,6 +30,7 @@ import (
 	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -48,6 +49,10 @@ type TextInput struct {
 
 	// editor tracks the edits and the state of the text input field.
 	editor *fieldEditor
+
+	// forField is the area that was occupied by the text input field last
+	// time Draw() was called.
+	forField image.Rectangle
 
 	// opts are the provided options.
 	opts *options
@@ -108,14 +113,13 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		return err
 	}
 
-	var forField image.Rectangle
 	if ti.opts.border != linestyle.None {
-		forField = area.ExcludeBorder(textAr)
+		ti.forField = area.ExcludeBorder(textAr)
 	} else {
-		forField = textAr
+		ti.forField = textAr
 	}
 
-	if forField.Dx() < minFieldWidth || forField.Dy() < minFieldHeight {
+	if ti.forField.Dx() < minFieldWidth || ti.forField.Dy() < minFieldHeight {
 		return draw.ResizeNeeded(cvs)
 	}
 
@@ -140,11 +144,11 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		}
 	}
 
-	if err := cvs.SetAreaCells(forField, textFieldRune, cell.BgColor(ti.opts.fillColor)); err != nil {
+	if err := cvs.SetAreaCells(ti.forField, textFieldRune, cell.BgColor(ti.opts.fillColor)); err != nil {
 		return err
 	}
 
-	text, curPos, err := ti.editor.viewFor(forField.Dx())
+	text, curPos, err := ti.editor.viewFor(ti.forField.Dx())
 	if err != nil {
 		return err
 	}
@@ -154,8 +158,8 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	}
 
 	if err := draw.Text(
-		cvs, text, forField.Min,
-		draw.TextMaxX(forField.Max.X),
+		cvs, text, ti.forField.Min,
+		draw.TextMaxX(ti.forField.Max.X),
 		draw.TextCellOpts(cell.FgColor(ti.opts.textColor)),
 	); err != nil {
 		return err
@@ -163,8 +167,8 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 
 	if meta.Focused {
 		p := image.Point{
-			curPos + forField.Min.X,
-			forField.Min.Y,
+			curPos + ti.forField.Min.X,
+			ti.forField.Min.Y,
 		}
 		if err := cvs.SetCellOpts(
 			p,
@@ -180,8 +184,8 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		}
 	} else if ti.opts.placeHolder != "" && text == "" {
 		if err := draw.Text(
-			cvs, ti.opts.placeHolder, forField.Min,
-			draw.TextMaxX(forField.Max.X),
+			cvs, ti.opts.placeHolder, ti.forField.Min,
+			draw.TextMaxX(ti.forField.Max.X),
 			draw.TextCellOpts(cell.FgColor(ti.opts.placeHolderColor)),
 		); err != nil {
 			return err
@@ -246,6 +250,12 @@ func (ti *TextInput) Mouse(m *terminalapi.Mouse) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 
+	if m.Button != mouse.ButtonLeft || !m.Position.In(ti.forField) {
+		return nil
+	}
+
+	cellIdx := m.Position.X - ti.forField.Min.X
+	ti.editor.cursorRelCell(cellIdx)
 	return nil
 }
 

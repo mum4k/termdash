@@ -200,7 +200,8 @@ func (fd *fieldData) runesIn(start, end int) []rune {
 // position used for appending new runes.
 // This might return smaller number of runes than the size of the range,
 // depending on the width of the individual runes.
-func (fd *fieldData) fitRunes(firstRune, curPos, cells int) (string, int) {
+// Returns the text and the start and end positions within the data.
+func (fd *fieldData) fitRunes(firstRune, curPos, cells int) (string, int, int) {
 	forRunes := cells - 1 // One cell reserved for the cursor when appending.
 
 	// Determine how many runes fit from the start.
@@ -252,7 +253,7 @@ func (fd *fieldData) fitRunes(firstRune, curPos, cells int) (string, int) {
 		// always reserved for the cursor or the arrow.
 		b.WriteRune('⇨')
 	}
-	return b.String(), start
+	return b.String(), start, end
 }
 
 // fieldEditor maintains the cursor position and allows editing of the data in
@@ -270,6 +271,9 @@ type fieldEditor struct {
 	// firstRune is the index of the first displayed rune in the text input
 	// field.
 	firstRune int
+
+	// width is the width of the text input field last time viewFor was called.
+	width int
 }
 
 // newFieldEditor returns a new fieldEditor instance.
@@ -309,8 +313,9 @@ func (fe *fieldEditor) viewFor(width int) (string, int, error) {
 	if min := minFieldWidth; width < min { // One for left arrow, two for one full-width rune and one for the cursor.
 		return "", -1, fmt.Errorf("width %d is too small, the minimum is %d", width, min)
 	}
-	runes, start := fe.data.fitRunes(fe.firstRune, fe.curDataPos, width)
+	runes, start, _ := fe.data.fitRunes(fe.firstRune, fe.curDataPos, width)
 	fe.firstRune = start
+	fe.width = width
 	return runes, fe.curCell(width), nil
 }
 
@@ -372,4 +377,41 @@ func (fe *fieldEditor) cursorStart() {
 // cursorEnd moves the cursor to the end of the data.
 func (fe *fieldEditor) cursorEnd() {
 	fe.curDataPos = len(fe.data)
+}
+
+// cursorRelCell sets the cursor onto the cell index within the visible
+// area.
+// If the index falls before the window, the cursor is moved onto the first
+// visible position.
+// If the pos falls after the end of data, the cursor is moved onto the last
+// visible position.
+func (fe *fieldEditor) cursorRelCell(cellIdx int) {
+	runes, start, end := fe.data.fitRunes(fe.firstRune, fe.curDataPos, fe.width)
+	minDataIdx := curMinIdx(start, fe.width)
+	maxDataIdx := curMaxIdx(start, end, fe.width, len(fe.data))
+
+	// Index of the rune we should move the cursor to relative to the visible
+	// range.
+	var relRuneIdx int
+	var cell int
+	for _, r := range runes {
+		cell += runewidth.RuneWidth(r)
+		if cell > cellIdx {
+			break
+		}
+		relRuneIdx++
+	}
+
+	// Absolute index of the rune we should move the cursor to.
+	dataIdx := fe.firstRune + relRuneIdx
+	switch {
+	case dataIdx < minDataIdx:
+		fe.curDataPos = minDataIdx
+
+	case dataIdx > maxDataIdx:
+		fe.curDataPos = maxDataIdx
+
+	default:
+		fe.curDataPos = dataIdx
+	}
 }

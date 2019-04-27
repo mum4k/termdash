@@ -30,6 +30,7 @@ import (
 	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -1281,6 +1282,129 @@ func TestTextInput(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "left mouse button moves the cursor",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Mouse{
+					Button:   mouse.ButtonLeft,
+					Position: image.Point{1, 0},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{1, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "ignores other mouse buttons",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Mouse{
+					Button:   mouse.ButtonRight,
+					Position: image.Point{1, 0},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{3, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "ignores mouse events outside of the text field",
+			canvas: image.Rect(0, 0, 10, 1),
+			meta: &widgetapi.Meta{
+				Focused: true,
+			},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: 'a'},
+				&terminalapi.Keyboard{Key: 'b'},
+				&terminalapi.Keyboard{Key: 'c'},
+				&terminalapi.Mouse{
+					Button:   mouse.ButtonLeft,
+					Position: image.Point{5, 15},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"abc",
+					image.Point{0, 0},
+				)
+				testcanvas.MustSetCell(
+					cvs,
+					image.Point{3, 0},
+					cursorRune,
+					cell.BgColor(cell.ColorNumber(DefaultCursorColorNumber)),
+					cell.FgColor(cell.ColorNumber(DefaultHighlightedColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -1296,6 +1420,22 @@ func TestTextInput(t *testing.T) {
 			}
 			if err != nil {
 				return
+			}
+
+			{
+				// Draw once so mouse events are acceptable.
+				c, err := canvas.New(tc.canvas)
+				if err != nil {
+					t.Fatalf("canvas.New => unexpected error: %v", err)
+				}
+
+				err = ti.Draw(c, tc.meta)
+				if (err != nil) != tc.wantDrawErr {
+					t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
+				}
+				if err != nil {
+					return
+				}
 			}
 
 			for i, ev := range tc.events {

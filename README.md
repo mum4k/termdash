@@ -86,6 +86,18 @@ go run github.com/mum4k/termdash/widgets/button/buttondemo/buttondemo.go
 
 [<img src="./doc/images/buttondemo.gif" alt="buttondemo" type="image/gif" width="50%">](widgets/button/buttondemo/buttondemo.go)
 
+## The TextInput
+
+Allows users to interact with the application by entering, editing and
+submitting text data. Run the
+[textinputdemo](widgets/textinput/textinputdemo/textinputdemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/textinput/textinputdemo/textinputdemo.go
+```
+
+[<img src="./doc/images/textinputdemo.gif" alt="textinputdemo" type="image/gif" width="50%">](widgets/textinput/textinputdemo/textinputdemo.go)
+
 ## The Gauge
 
 Displays the progress of an operation. Run the

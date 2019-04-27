@@ -78,6 +78,29 @@ func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right im
 	return left, right, nil
 }
 
+// VSplitCells returns two new areas created by splitting the provided area
+// after the specified amount of cells of its width. The number of cells must
+// be a zero or a positive integer. Providing a zero returns left=image.ZR,
+// right=area. Providing a number equal or larger to area's width returns
+// left=area, right=image.ZR.
+func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
+	if min := 0; cells < min {
+		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
+	}
+	if cells == 0 {
+		return image.ZR, area, nil
+	}
+
+	width := area.Dx()
+	if cells >= width {
+		return area, image.ZR, nil
+	}
+
+	left = image.Rect(area.Min.X, area.Min.Y, area.Min.X+cells, area.Max.Y)
+	right = image.Rect(area.Min.X+cells, area.Min.Y, area.Max.X, area.Max.Y)
+	return left, right, nil
+}
+
 // ExcludeBorder returns a new area created by subtracting a border around the
 // provided area. Return the zero area if there isn't enough space to exclude
 // the border.

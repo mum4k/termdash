@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The `TextInput` widget, an input field allowing interactive text input.
+
 ### Changed
 
 - Widgets now get information whether their container is focused when Draw is
@@ -26,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Termdash now requires at least Go version 1.10, which allows us to utilize
   `math.Round` instead of our own implementation and `strings.Builder` instead
   of `bytes.Buffer`.
+- Terminal shortcuts like `Ctrl-A` no longer come as two separate events,
+  Termdash now mirrors termbox-go and sends these as one event.
 
 ## [0.8.0] - 30-Mar-2019
 

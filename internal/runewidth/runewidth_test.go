@@ -66,12 +66,12 @@ func TestRuneWidth(t *testing.T) {
 		},
 		{
 			desc:  "termdash special runes",
-			runes: []rune{'⇄', '…', '⇧', '⇩'},
+			runes: []rune{'⇄', '…', '⇧', '⇩', '⇦', '⇨'},
 			want:  1,
 		},
 		{
 			desc:      "termdash special runes in eastAsian",
-			runes:     []rune{'⇄', '…', '⇧', '⇩'},
+			runes:     []rune{'⇄', '…', '⇧', '⇩', '⇦', '⇨'},
 			eastAsian: true,
 			want:      1,
 		},

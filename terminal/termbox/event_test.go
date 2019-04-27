@@ -193,86 +193,99 @@ func TestKeyboardKeys(t *testing.T) {
 	tests := []struct {
 		key     tbx.Key
 		ch      rune
-		want    []keyboard.Key
+		want    keyboard.Key
 		wantErr bool
 	}{
 		{key: tbx.KeyF1, ch: 'a', wantErr: true},
 		{key: 2000, wantErr: true},
-		{ch: 'a', want: []keyboard.Key{'a'}},
-		{ch: 'A', want: []keyboard.Key{'A'}},
-		{ch: 'z', want: []keyboard.Key{'z'}},
-		{ch: 'Z', want: []keyboard.Key{'Z'}},
-		{ch: '0', want: []keyboard.Key{'0'}},
-		{ch: '9', want: []keyboard.Key{'9'}},
-		{ch: '!', want: []keyboard.Key{'!'}},
-		{ch: ')', want: []keyboard.Key{')'}},
-		{key: tbx.KeySpace, want: []keyboard.Key{keyboard.KeySpace}},
-		{key: tbx.KeyF1, want: []keyboard.Key{keyboard.KeyF1}},
-		{key: tbx.KeyF2, want: []keyboard.Key{keyboard.KeyF2}},
-		{key: tbx.KeyF3, want: []keyboard.Key{keyboard.KeyF3}},
-		{key: tbx.KeyF4, want: []keyboard.Key{keyboard.KeyF4}},
-		{key: tbx.KeyF5, want: []keyboard.Key{keyboard.KeyF5}},
-		{key: tbx.KeyF6, want: []keyboard.Key{keyboard.KeyF6}},
-		{key: tbx.KeyF7, want: []keyboard.Key{keyboard.KeyF7}},
-		{key: tbx.KeyF8, want: []keyboard.Key{keyboard.KeyF8}},
-		{key: tbx.KeyF9, want: []keyboard.Key{keyboard.KeyF9}},
-		{key: tbx.KeyF10, want: []keyboard.Key{keyboard.KeyF10}},
-		{key: tbx.KeyF11, want: []keyboard.Key{keyboard.KeyF11}},
-		{key: tbx.KeyF12, want: []keyboard.Key{keyboard.KeyF12}},
-		{key: tbx.KeyInsert, want: []keyboard.Key{keyboard.KeyInsert}},
-		{key: tbx.KeyDelete, want: []keyboard.Key{keyboard.KeyDelete}},
-		{key: tbx.KeyHome, want: []keyboard.Key{keyboard.KeyHome}},
-		{key: tbx.KeyEnd, want: []keyboard.Key{keyboard.KeyEnd}},
-		{key: tbx.KeyPgup, want: []keyboard.Key{keyboard.KeyPgUp}},
-		{key: tbx.KeyPgdn, want: []keyboard.Key{keyboard.KeyPgDn}},
-		{key: tbx.KeyArrowUp, want: []keyboard.Key{keyboard.KeyArrowUp}},
-		{key: tbx.KeyArrowDown, want: []keyboard.Key{keyboard.KeyArrowDown}},
-		{key: tbx.KeyArrowLeft, want: []keyboard.Key{keyboard.KeyArrowLeft}},
-		{key: tbx.KeyArrowRight, want: []keyboard.Key{keyboard.KeyArrowRight}},
-		{key: tbx.KeyBackspace, want: []keyboard.Key{keyboard.KeyBackspace}},
-		{key: tbx.KeyCtrlH, want: []keyboard.Key{keyboard.KeyBackspace}},
-		{key: tbx.KeyTab, want: []keyboard.Key{keyboard.KeyTab}},
-		{key: tbx.KeyCtrlI, want: []keyboard.Key{keyboard.KeyTab}},
-		{key: tbx.KeyEnter, want: []keyboard.Key{keyboard.KeyEnter}},
-		{key: tbx.KeyCtrlM, want: []keyboard.Key{keyboard.KeyEnter}},
-		{key: tbx.KeyEsc, want: []keyboard.Key{keyboard.KeyEsc}},
-		{key: tbx.KeyCtrlLsqBracket, want: []keyboard.Key{keyboard.KeyEsc}},
-		{key: tbx.KeyCtrl3, want: []keyboard.Key{keyboard.KeyEsc}},
-		{key: tbx.KeyCtrl2, want: []keyboard.Key{keyboard.KeyCtrl, '2'}},
-		{key: tbx.KeyCtrlTilde, want: []keyboard.Key{keyboard.KeyCtrl, '2'}},
-		{key: tbx.KeyCtrlSpace, want: []keyboard.Key{keyboard.KeyCtrl, '2'}},
-		{key: tbx.KeyCtrl4, want: []keyboard.Key{keyboard.KeyCtrl, '4'}},
-		{key: tbx.KeyCtrlBackslash, want: []keyboard.Key{keyboard.KeyCtrl, '4'}},
-		{key: tbx.KeyCtrl5, want: []keyboard.Key{keyboard.KeyCtrl, '5'}},
-		{key: tbx.KeyCtrlRsqBracket, want: []keyboard.Key{keyboard.KeyCtrl, '5'}},
-		{key: tbx.KeyCtrl6, want: []keyboard.Key{keyboard.KeyCtrl, '6'}},
-		{key: tbx.KeyCtrl7, want: []keyboard.Key{keyboard.KeyCtrl, '7'}},
-		{key: tbx.KeyCtrlSlash, want: []keyboard.Key{keyboard.KeyCtrl, '7'}},
-		{key: tbx.KeyCtrlUnderscore, want: []keyboard.Key{keyboard.KeyCtrl, '7'}},
-		{key: tbx.KeyCtrl8, want: []keyboard.Key{keyboard.KeyCtrl, '8'}},
-		{key: tbx.KeyCtrlA, want: []keyboard.Key{keyboard.KeyCtrl, 'a'}},
-		{key: tbx.KeyCtrlB, want: []keyboard.Key{keyboard.KeyCtrl, 'b'}},
-		{key: tbx.KeyCtrlC, want: []keyboard.Key{keyboard.KeyCtrl, 'c'}},
-		{key: tbx.KeyCtrlD, want: []keyboard.Key{keyboard.KeyCtrl, 'd'}},
-		{key: tbx.KeyCtrlE, want: []keyboard.Key{keyboard.KeyCtrl, 'e'}},
-		{key: tbx.KeyCtrlF, want: []keyboard.Key{keyboard.KeyCtrl, 'f'}},
-		{key: tbx.KeyCtrlG, want: []keyboard.Key{keyboard.KeyCtrl, 'g'}},
-		{key: tbx.KeyCtrlJ, want: []keyboard.Key{keyboard.KeyCtrl, 'j'}},
-		{key: tbx.KeyCtrlK, want: []keyboard.Key{keyboard.KeyCtrl, 'k'}},
-		{key: tbx.KeyCtrlL, want: []keyboard.Key{keyboard.KeyCtrl, 'l'}},
-		{key: tbx.KeyCtrlN, want: []keyboard.Key{keyboard.KeyCtrl, 'n'}},
-		{key: tbx.KeyCtrlO, want: []keyboard.Key{keyboard.KeyCtrl, 'o'}},
-		{key: tbx.KeyCtrlP, want: []keyboard.Key{keyboard.KeyCtrl, 'p'}},
-		{key: tbx.KeyCtrlQ, want: []keyboard.Key{keyboard.KeyCtrl, 'q'}},
-		{key: tbx.KeyCtrlR, want: []keyboard.Key{keyboard.KeyCtrl, 'r'}},
-		{key: tbx.KeyCtrlS, want: []keyboard.Key{keyboard.KeyCtrl, 's'}},
-		{key: tbx.KeyCtrlT, want: []keyboard.Key{keyboard.KeyCtrl, 't'}},
-		{key: tbx.KeyCtrlU, want: []keyboard.Key{keyboard.KeyCtrl, 'u'}},
-		{key: tbx.KeyCtrlV, want: []keyboard.Key{keyboard.KeyCtrl, 'v'}},
-		{key: tbx.KeyCtrlW, want: []keyboard.Key{keyboard.KeyCtrl, 'w'}},
-		{key: tbx.KeyCtrlX, want: []keyboard.Key{keyboard.KeyCtrl, 'x'}},
-		{key: tbx.KeyCtrlY, want: []keyboard.Key{keyboard.KeyCtrl, 'y'}},
-		{key: tbx.KeyCtrlZ, want: []keyboard.Key{keyboard.KeyCtrl, 'z'}},
+		{ch: 'a', want: 'a'},
+		{ch: 'A', want: 'A'},
+		{ch: 'z', want: 'z'},
+		{ch: 'Z', want: 'Z'},
+		{ch: '0', want: '0'},
+		{ch: '9', want: '9'},
+		{ch: '!', want: '!'},
+		{ch: ')', want: ')'},
+		{key: tbx.KeySpace, want: keyboard.KeySpace},
+		{key: tbx.KeyF1, want: keyboard.KeyF1},
+		{key: tbx.KeyF2, want: keyboard.KeyF2},
+		{key: tbx.KeyF3, want: keyboard.KeyF3},
+		{key: tbx.KeyF4, want: keyboard.KeyF4},
+		{key: tbx.KeyF5, want: keyboard.KeyF5},
+		{key: tbx.KeyF6, want: keyboard.KeyF6},
+		{key: tbx.KeyF7, want: keyboard.KeyF7},
+		{key: tbx.KeyF8, want: keyboard.KeyF8},
+		{key: tbx.KeyF9, want: keyboard.KeyF9},
+		{key: tbx.KeyF10, want: keyboard.KeyF10},
+		{key: tbx.KeyF11, want: keyboard.KeyF11},
+		{key: tbx.KeyF12, want: keyboard.KeyF12},
+		{key: tbx.KeyInsert, want: keyboard.KeyInsert},
+		{key: tbx.KeyDelete, want: keyboard.KeyDelete},
+		{key: tbx.KeyHome, want: keyboard.KeyHome},
+		{key: tbx.KeyEnd, want: keyboard.KeyEnd},
+		{key: tbx.KeyPgup, want: keyboard.KeyPgUp},
+		{key: tbx.KeyPgdn, want: keyboard.KeyPgDn},
+		{key: tbx.KeyArrowUp, want: keyboard.KeyArrowUp},
+		{key: tbx.KeyArrowDown, want: keyboard.KeyArrowDown},
+		{key: tbx.KeyArrowLeft, want: keyboard.KeyArrowLeft},
+		{key: tbx.KeyArrowRight, want: keyboard.KeyArrowRight},
+		{key: tbx.KeyCtrlTilde, want: keyboard.KeyCtrlTilde},
+		{key: tbx.KeyCtrlTilde, want: keyboard.KeyCtrl2},
+		{key: tbx.KeyCtrlTilde, want: keyboard.KeyCtrlSpace},
+		{key: tbx.KeyCtrl2, want: keyboard.KeyCtrlTilde},
+		{key: tbx.KeyCtrlSpace, want: keyboard.KeyCtrlTilde},
+		{key: tbx.KeyCtrlA, want: keyboard.KeyCtrlA},
+		{key: tbx.KeyCtrlB, want: keyboard.KeyCtrlB},
+		{key: tbx.KeyCtrlC, want: keyboard.KeyCtrlC},
+		{key: tbx.KeyCtrlD, want: keyboard.KeyCtrlD},
+		{key: tbx.KeyCtrlE, want: keyboard.KeyCtrlE},
+		{key: tbx.KeyCtrlF, want: keyboard.KeyCtrlF},
+		{key: tbx.KeyCtrlG, want: keyboard.KeyCtrlG},
+		{key: tbx.KeyBackspace, want: keyboard.KeyBackspace},
+		{key: tbx.KeyBackspace, want: keyboard.KeyCtrlH},
+		{key: tbx.KeyCtrlH, want: keyboard.KeyBackspace},
+		{key: tbx.KeyTab, want: keyboard.KeyTab},
+		{key: tbx.KeyTab, want: keyboard.KeyCtrlI},
+		{key: tbx.KeyCtrlI, want: keyboard.KeyTab},
+		{key: tbx.KeyCtrlJ, want: keyboard.KeyCtrlJ},
+		{key: tbx.KeyCtrlK, want: keyboard.KeyCtrlK},
+		{key: tbx.KeyCtrlL, want: keyboard.KeyCtrlL},
+		{key: tbx.KeyEnter, want: keyboard.KeyEnter},
+		{key: tbx.KeyEnter, want: keyboard.KeyCtrlM},
+		{key: tbx.KeyCtrlM, want: keyboard.KeyEnter},
+		{key: tbx.KeyCtrlN, want: keyboard.KeyCtrlN},
+		{key: tbx.KeyCtrlO, want: keyboard.KeyCtrlO},
+		{key: tbx.KeyCtrlP, want: keyboard.KeyCtrlP},
+		{key: tbx.KeyCtrlQ, want: keyboard.KeyCtrlQ},
+		{key: tbx.KeyCtrlR, want: keyboard.KeyCtrlR},
+		{key: tbx.KeyCtrlS, want: keyboard.KeyCtrlS},
+		{key: tbx.KeyCtrlT, want: keyboard.KeyCtrlT},
+		{key: tbx.KeyCtrlU, want: keyboard.KeyCtrlU},
+		{key: tbx.KeyCtrlV, want: keyboard.KeyCtrlV},
+		{key: tbx.KeyCtrlW, want: keyboard.KeyCtrlW},
+		{key: tbx.KeyCtrlX, want: keyboard.KeyCtrlX},
+		{key: tbx.KeyCtrlY, want: keyboard.KeyCtrlY},
+		{key: tbx.KeyCtrlZ, want: keyboard.KeyCtrlZ},
+		{key: tbx.KeyEsc, want: keyboard.KeyEsc},
+		{key: tbx.KeyEsc, want: keyboard.KeyCtrlLsqBracket},
+		{key: tbx.KeyEsc, want: keyboard.KeyCtrl3},
+		{key: tbx.KeyCtrlLsqBracket, want: keyboard.KeyEsc},
+		{key: tbx.KeyCtrl3, want: keyboard.KeyEsc},
+		{key: tbx.KeyCtrl4, want: keyboard.KeyCtrl4},
+		{key: tbx.KeyCtrl4, want: keyboard.KeyCtrlBackslash},
+		{key: tbx.KeyCtrlBackslash, want: keyboard.KeyCtrl4},
+		{key: tbx.KeyCtrl5, want: keyboard.KeyCtrl5},
+		{key: tbx.KeyCtrl5, want: keyboard.KeyCtrlRsqBracket},
+		{key: tbx.KeyCtrlRsqBracket, want: keyboard.KeyCtrl5},
+		{key: tbx.KeyCtrl6, want: keyboard.KeyCtrl6},
+		{key: tbx.KeyCtrl7, want: keyboard.KeyCtrl7},
+		{key: tbx.KeyCtrl7, want: keyboard.KeyCtrlSlash},
+		{key: tbx.KeyCtrl7, want: keyboard.KeyCtrlUnderscore},
+		{key: tbx.KeyCtrlSlash, want: keyboard.KeyCtrl7},
+		{key: tbx.KeyCtrlUnderscore, want: keyboard.KeyCtrl7},
+		{key: tbx.KeyBackspace2, want: keyboard.KeyBackspace2},
+		{key: tbx.KeyBackspace2, want: keyboard.KeyCtrl8},
+		{key: tbx.KeyCtrl8, want: keyboard.KeyBackspace2},
 	}
 
 	for _, tc := range tests {
@@ -284,34 +297,27 @@ func TestKeyboardKeys(t *testing.T) {
 			})
 
 			gotCount := len(evs)
-			var wantCount int
-			if tc.wantErr {
-				wantCount = 1
-			} else {
-				wantCount = len(tc.want)
-			}
-
+			wantCount := 1
 			if gotCount != wantCount {
 				t.Fatalf("toTermdashEvents => got %d events, want %d, events were:\n%v", gotCount, wantCount, pretty.Sprint(evs))
 			}
+			ev := evs[0]
 
-			for i, ev := range evs {
-				if err, ok := ev.(*terminalapi.Error); ok != tc.wantErr {
-					t.Fatalf("toTermdashEvents => unexpected error:%v, wantErr: %v", err, tc.wantErr)
-				}
-				if _, ok := ev.(*terminalapi.Error); ok {
-					return
+			if err, ok := ev.(*terminalapi.Error); ok != tc.wantErr {
+				t.Fatalf("toTermdashEvents => unexpected error:%v, wantErr: %v", err, tc.wantErr)
+			}
+			if _, ok := ev.(*terminalapi.Error); ok {
+				return
+			}
+
+			switch e := ev.(type) {
+			case *terminalapi.Keyboard:
+				if got, want := e.Key, tc.want; got != want {
+					t.Errorf("toTermdashEvents => got key %v, want %v", got, want)
 				}
 
-				switch e := ev.(type) {
-				case *terminalapi.Keyboard:
-					if got, want := e.Key, tc.want[i]; got != want {
-						t.Errorf("toTermdashEvents => got key[%d] %v, want %v", got, i, want)
-					}
-
-				default:
-					t.Fatalf("toTermdashEvents => unexpected event type %T", e)
-				}
+			default:
+				t.Fatalf("toTermdashEvents => unexpected event type %T", e)
 			}
 		})
 	}

@@ -19,8 +19,8 @@ package sparkline
 
 import (
 	"fmt"
+	"math"
 
-	"github.com/mum4k/termdash/internal/numbers"
 	"github.com/mum4k/termdash/internal/runewidth"
 )
 
@@ -75,7 +75,7 @@ func toBlocks(value, max, vertCells int) blocks {
 	scale := float64(cellSparks) * float64(vertCells) / float64(max)
 
 	// How many smallest spark elements are needed to represent the value.
-	elements := int(numbers.Round(float64(value) * scale))
+	elements := int(math.Round(float64(value) * scale))
 
 	b := blocks{
 		full: elements / cellSparks,

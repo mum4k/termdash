@@ -120,61 +120,6 @@ func alike(a, b float64) bool {
 	return false
 }
 
-var round = []float64{
-	5,
-	8,
-	math.Copysign(0, -1),
-	-5,
-	10,
-	3,
-	5,
-	3,
-	2,
-	-9,
-}
-
-var vf = []float64{
-	4.9790119248836735e+00,
-	7.7388724745781045e+00,
-	-2.7688005719200159e-01,
-	-5.0106036182710749e+00,
-	9.6362937071984173e+00,
-	2.9263772392439646e+00,
-	5.2290834314593066e+00,
-	2.7279399104360102e+00,
-	1.8253080916808550e+00,
-	-8.6859247685756013e+00,
-}
-
-var vfroundSC = [][2]float64{
-	{0, 0},
-	{1.390671161567e-309, 0}, // denormal
-	{0.49999999999999994, 0}, // 0.5-epsilon
-	{0.5, 1},
-	{0.5000000000000001, 1}, // 0.5+epsilon
-	{-1.5, -2},
-	{-2.5, -3},
-	{math.NaN(), math.NaN()},
-	{math.Inf(1), math.Inf(1)},
-	{2251799813685249.5, 2251799813685250}, // 1 bit fraction
-	{2251799813685250.5, 2251799813685251},
-	{4503599627370495.5, 4503599627370496}, // 1 bit fraction, rounding to 0 bit fraction
-	{4503599627370497, 4503599627370497},   // large integer
-}
-
-func TestRound(t *testing.T) {
-	for i := 0; i < len(vf); i++ {
-		if f := Round(vf[i]); !alike(round[i], f) {
-			t.Errorf("Round(%g) = %g, want %g", vf[i], f, round[i])
-		}
-	}
-	for i := 0; i < len(vfroundSC); i++ {
-		if f := Round(vfroundSC[i][0]); !alike(vfroundSC[i][1], f) {
-			t.Errorf("Round(%g) = %g, want %g", vfroundSC[i][0], f, vfroundSC[i][1])
-		}
-	}
-}
-
 func TestMinMax(t *testing.T) {
 	tests := []struct {
 		desc    string
@@ -215,13 +160,28 @@ func TestMinMax(t *testing.T) {
 			wantMin: -11.3,
 			wantMax: 22.5,
 		},
+		{
+			desc:    "min and max among negative, positive, zero and NaN values",
+			values:  []float64{1.1, 0, 1.3, math.NaN(), -11.3, 22.5},
+			wantMin: -11.3,
+			wantMax: 22.5,
+		},
+		{
+			desc:    "all NaN values",
+			values:  []float64{math.NaN(), math.NaN(), math.NaN(), math.NaN()},
+			wantMin: math.NaN(),
+			wantMax: math.NaN(),
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			gotMin, gotMax := MinMax(tc.values)
-			if gotMin != tc.wantMin || gotMax != tc.wantMax {
-				t.Errorf("MinMax => (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
+			if diff := pretty.Compare(tc.wantMin, gotMin); diff != "" {
+				t.Errorf("MinMax => unexpected min, diff (-want, +got):\n %s", diff)
+			}
+			if diff := pretty.Compare(tc.wantMax, gotMax); diff != "" {
+				t.Errorf("MinMax => unexpected max, diff (-want, +got):\n %s", diff)
 			}
 		})
 	}

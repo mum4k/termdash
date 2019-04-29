@@ -245,7 +245,7 @@ func TestDrawWidget(t *testing.T) {
 				wAr := image.Rect(5, 2, 17, 6)
 				wCvs := testcanvas.MustNew(wAr)
 				// Fake widget border.
-				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, wCvs, &widgetapi.Meta{}, widgetapi.Options{})
 				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -278,7 +278,7 @@ func TestDrawWidget(t *testing.T) {
 				wAr := image.Rect(4, 2, 14, 16)
 				wCvs := testcanvas.MustNew(wAr)
 				// Fake widget border.
-				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, wCvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -357,7 +357,7 @@ func TestDrawWidget(t *testing.T) {
 				wAr := image.Rect(9, 3, 25, 13)
 				wCvs := testcanvas.MustNew(wAr)
 				// Fake widget border.
-				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, wCvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -600,7 +600,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget.
 				cvs := testcanvas.MustNew(image.Rect(1, 1, 11, 11))
-				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, cvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -632,7 +632,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget.
 				cvs := testcanvas.MustNew(image.Rect(1, 1, 11, 21))
-				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, cvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -664,7 +664,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget.
 				cvs := testcanvas.MustNew(image.Rect(1, 1, 21, 11))
-				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, cvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -694,9 +694,15 @@ func TestDrawWidget(t *testing.T) {
 				)
 
 				// Fake widget border.
-				testdraw.MustBorder(cvs, image.Rect(1, 1, 11, 21))
-				testdraw.MustText(cvs, "(10,20)", image.Point{2, 2})
+				wCvs := testcanvas.MustNew(image.Rect(1, 1, 11, 21))
+				fakewidget.MustDraw(
+					ft,
+					wCvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -727,7 +733,7 @@ func TestDrawWidget(t *testing.T) {
 
 				// Fake widget.
 				cvs := testcanvas.MustNew(image.Rect(1, 1, 20, 20))
-				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, cvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -757,9 +763,15 @@ func TestDrawWidget(t *testing.T) {
 				)
 
 				// Fake widget border.
-				testdraw.MustBorder(cvs, image.Rect(1, 1, 11, 21))
-				testdraw.MustText(cvs, "(10,20)", image.Point{2, 2})
+				wCvs := testcanvas.MustNew(image.Rect(1, 1, 11, 21))
+				fakewidget.MustDraw(
+					ft,
+					wCvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -788,9 +800,15 @@ func TestDrawWidget(t *testing.T) {
 				)
 
 				// Fake widget border.
-				testdraw.MustBorder(cvs, image.Rect(6, 1, 16, 21))
-				testdraw.MustText(cvs, "(10,20)", image.Point{7, 2})
+				wCvs := testcanvas.MustNew(image.Rect(6, 1, 16, 21))
+				fakewidget.MustDraw(
+					ft,
+					wCvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -819,9 +837,15 @@ func TestDrawWidget(t *testing.T) {
 				)
 
 				// Fake widget border.
-				testdraw.MustBorder(cvs, image.Rect(11, 1, 21, 21))
-				testdraw.MustText(cvs, "(10,20)", image.Point{12, 2})
+				wCvs := testcanvas.MustNew(image.Rect(11, 1, 21, 21))
+				fakewidget.MustDraw(
+					ft,
+					wCvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -850,9 +874,15 @@ func TestDrawWidget(t *testing.T) {
 				)
 
 				// Fake widget border.
-				testdraw.MustBorder(cvs, image.Rect(1, 1, 21, 11))
-				testdraw.MustText(cvs, "(20,10)", image.Point{2, 2})
+				wCvs := testcanvas.MustNew(image.Rect(1, 1, 21, 11))
+				fakewidget.MustDraw(
+					ft,
+					wCvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -881,9 +911,15 @@ func TestDrawWidget(t *testing.T) {
 				)
 
 				// Fake widget border.
-				testdraw.MustBorder(cvs, image.Rect(1, 6, 21, 16))
-				testdraw.MustText(cvs, "(20,10)", image.Point{2, 7})
+				wCvs := testcanvas.MustNew(image.Rect(1, 6, 21, 16))
+				fakewidget.MustDraw(
+					ft,
+					wCvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -912,9 +948,15 @@ func TestDrawWidget(t *testing.T) {
 				)
 
 				// Fake widget border.
-				testdraw.MustBorder(cvs, image.Rect(1, 11, 21, 21))
-				testdraw.MustText(cvs, "(20,10)", image.Point{2, 12})
+				wCvs := testcanvas.MustNew(image.Rect(1, 11, 21, 21))
+				fakewidget.MustDraw(
+					ft,
+					wCvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 
+				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -994,21 +1036,25 @@ func TestDrawHandlesTerminalResize(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 30, 5)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 30, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(30, 0, 45, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(45, 0, 60, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1023,21 +1069,25 @@ func TestDrawHandlesTerminalResize(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 40, 5)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 40, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(40, 0, 60, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(60, 0, 80, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1052,21 +1102,25 @@ func TestDrawHandlesTerminalResize(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 25, 5)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 25, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(25, 0, 37, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(37, 0, 50, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				return ft

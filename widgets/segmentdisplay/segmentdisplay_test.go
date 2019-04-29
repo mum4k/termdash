@@ -45,7 +45,9 @@ func TestSegmentDisplay(t *testing.T) {
 		opts          []Option
 		update        func(*SegmentDisplay) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
+		wantCapacity  int
 		wantNewErr    bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
 		wantDrawErr   bool
@@ -121,8 +123,9 @@ func TestSegmentDisplay(t *testing.T) {
 			wantUpdateErr: true,
 		},
 		{
-			desc:   "draws empty without text",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			desc:         "draws empty without text",
+			canvas:       image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			wantCapacity: 1,
 		},
 		{
 			desc: "draws multiple segments, all fit exactly",
@@ -151,6 +154,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "write sanitizes text by default",
@@ -170,6 +174,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "write sanitizes text with option",
@@ -189,6 +194,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc:   "aligns segment vertical middle by default",
@@ -205,6 +211,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc:   "subsequent calls to write overwrite previous text",
@@ -224,6 +231,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "sets cell options per text chunk",
@@ -268,10 +276,14 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
-			desc:   "reset resets the text content",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			desc: "reset resets the text content and reports capacity when maximizing fit and with gaps",
+			opts: []Option{
+				MaximizeDisplayedText(),
+			},
+			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
 					return err
@@ -279,6 +291,54 @@ func TestSegmentDisplay(t *testing.T) {
 				sd.Reset()
 				return nil
 			},
+			wantCapacity: 2,
+		},
+		{
+			desc: "reset resets the text content and reports capacity when maximizing fit and without gaps",
+			opts: []Option{
+				GapPercent(0),
+				MaximizeDisplayedText(),
+			},
+			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows+2),
+			update: func(sd *SegmentDisplay) error {
+				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
+					return err
+				}
+				sd.Reset()
+				return nil
+			},
+			wantCapacity: 3,
+		},
+		{
+			desc: "reset resets the text content and reports capacity when maximizing segment height and gaps",
+			opts: []Option{
+				MaximizeSegmentHeight(),
+			},
+			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows+2),
+			update: func(sd *SegmentDisplay) error {
+				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
+					return err
+				}
+				sd.Reset()
+				return nil
+			},
+			wantCapacity: 2,
+		},
+		{
+			desc: "reset resets the text content and reports capacity when maximizing segment height and no gaps",
+			opts: []Option{
+				GapPercent(0),
+				MaximizeSegmentHeight(),
+			},
+			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows+2),
+			update: func(sd *SegmentDisplay) error {
+				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
+					return err
+				}
+				sd.Reset()
+				return nil
+			},
+			wantCapacity: 2,
 		},
 		{
 			desc:   "reset resets provided cell options",
@@ -305,6 +365,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment vertical middle with option",
@@ -324,6 +385,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment vertical top with option",
@@ -343,6 +405,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "options given to Write override those given to New so aligns top",
@@ -365,6 +428,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment vertical bottom with option",
@@ -384,6 +448,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc:   "aligns segment horizontal center by default",
@@ -400,6 +465,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment horizontal center with option",
@@ -419,6 +485,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment horizontal left with option",
@@ -438,6 +505,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment horizontal right with option",
@@ -457,6 +525,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes segment height with option",
@@ -485,6 +554,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes displayed text by default and fits all",
@@ -513,6 +583,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes displayed text but cannot fit all",
@@ -541,6 +612,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes displayed text with option",
@@ -570,6 +642,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc:   "draws multiple segments with a gap by default",
@@ -595,6 +668,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a gap, exact fit",
@@ -623,6 +697,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a larger gap",
@@ -650,6 +725,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "draws multiple segments with a gap, not all fit, maximizes displayed text",
@@ -678,6 +754,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a gap, not all fit, last segment would fit without a gap",
@@ -706,6 +783,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a gap, not enough space, maximizes segment height with option",
@@ -734,6 +812,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "regression for #174, protects against external data mutation",
@@ -768,6 +847,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 	}
 
@@ -796,7 +876,7 @@ func TestSegmentDisplay(t *testing.T) {
 				}
 			}
 
-			err = sd.Draw(c)
+			err = sd.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}
@@ -822,6 +902,10 @@ func TestSegmentDisplay(t *testing.T) {
 
 			if diff := faketerm.Diff(want, got); diff != "" {
 				t.Errorf("Draw => %v", diff)
+			}
+
+			if gotCapacity := sd.Capacity(); gotCapacity != tc.wantCapacity {
+				t.Errorf("Capacity => %d, want %d", gotCapacity, tc.wantCapacity)
 			}
 		})
 	}

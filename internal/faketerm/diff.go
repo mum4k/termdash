@@ -17,10 +17,10 @@ package faketerm
 // diff.go provides functions that highlight differences between fake terminals.
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"reflect"
+	"strings"
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/cell"
@@ -43,7 +43,7 @@ func Diff(want, got *Terminal) string {
 		return ""
 	}
 
-	var b bytes.Buffer
+	var b strings.Builder
 	b.WriteString("found differences between the two fake terminals.\n")
 	b.WriteString("   got:\n")
 	b.WriteString(got.String())

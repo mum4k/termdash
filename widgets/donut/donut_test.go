@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
@@ -36,6 +37,7 @@ func TestDonut(t *testing.T) {
 		opts          []Option
 		update        func(*Donut) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantNewErr    bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
@@ -142,8 +144,14 @@ func TestDonut(t *testing.T) {
 			update: func(d *Donut) error {
 				return d.Percent(100)
 			},
-			canvas:      image.Rect(0, 0, 1, 1),
-			wantDrawErr: true,
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustResizeNeeded(cvs)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
 		},
 		{
 			desc:   "smallest valid donut, 100% progress",
@@ -158,6 +166,23 @@ func TestDonut(t *testing.T) {
 				testdraw.MustBrailleCircle(bc, image.Point{2, 5}, 2, draw.BrailleCircleFilled())
 
 				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "adding label to the smallest canvas makes it too small",
+			opts: []Option{
+				Label("hi"),
+			},
+			canvas: image.Rect(0, 0, 3, 3),
+			update: func(d *Donut) error {
+				return d.Percent(100)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustResizeNeeded(cvs)
+				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
 		},
@@ -296,6 +321,33 @@ func TestDonut(t *testing.T) {
 				)
 
 				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws hole and label",
+			opts: []Option{
+				Label("hi"),
+			},
+			canvas: image.Rect(0, 0, 6, 6),
+			update: func(d *Donut) error {
+				return d.Percent(100, HolePercent(50))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				bc := testbraille.MustNew(ft.Area())
+
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 3,
+					draw.BrailleCircleFilled(),
+					draw.BrailleCircleClearPixels(),
+				)
+				testbraille.MustCopyTo(bc, c)
+
+				testdraw.MustText(c, "hi", image.Point{2, 5})
+
+				testcanvas.MustApply(c, ft)
 				return ft
 			},
 		},
@@ -576,6 +628,197 @@ func TestDonut(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc: "displays text label under the donut",
+			opts: []Option{
+				Label("hi"),
+			},
+			canvas: image.Rect(0, 0, 7, 7),
+			update: func(d *Donut) error {
+				return d.Percent(100, HolePercent(80))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				bc := testbraille.MustNew(c.Area())
+
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+					draw.BrailleCircleFilled(),
+					draw.BrailleCircleClearPixels(),
+				)
+				testbraille.MustCopyTo(bc, c)
+
+				testdraw.MustText(c, "100%", image.Point{2, 3})
+
+				testdraw.MustText(c, "hi", image.Point{2, 6})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "aligns text label center with option",
+			opts: []Option{
+				Label("hi"),
+				LabelAlign(align.HorizontalCenter),
+			},
+			canvas: image.Rect(0, 0, 7, 7),
+			update: func(d *Donut) error {
+				return d.Percent(100, HolePercent(80))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				bc := testbraille.MustNew(c.Area())
+
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+					draw.BrailleCircleFilled(),
+					draw.BrailleCircleClearPixels(),
+				)
+				testbraille.MustCopyTo(bc, c)
+
+				testdraw.MustText(c, "100%", image.Point{2, 3})
+
+				testdraw.MustText(c, "hi", image.Point{2, 6})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "aligns text label left",
+			opts: []Option{
+				Label("hi"),
+				LabelAlign(align.HorizontalLeft),
+			},
+			canvas: image.Rect(0, 0, 7, 7),
+			update: func(d *Donut) error {
+				return d.Percent(100, HolePercent(80))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				bc := testbraille.MustNew(c.Area())
+
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+					draw.BrailleCircleFilled(),
+					draw.BrailleCircleClearPixels(),
+				)
+				testbraille.MustCopyTo(bc, c)
+
+				testdraw.MustText(c, "100%", image.Point{2, 3})
+
+				testdraw.MustText(c, "hi", image.Point{0, 6})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "aligns text label right",
+			opts: []Option{
+				Label("hi"),
+				LabelAlign(align.HorizontalRight),
+			},
+			canvas: image.Rect(0, 0, 7, 7),
+			update: func(d *Donut) error {
+				return d.Percent(100, HolePercent(80))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				bc := testbraille.MustNew(c.Area())
+
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+					draw.BrailleCircleFilled(),
+					draw.BrailleCircleClearPixels(),
+				)
+				testbraille.MustCopyTo(bc, c)
+
+				testdraw.MustText(c, "100%", image.Point{2, 3})
+
+				testdraw.MustText(c, "hi", image.Point{5, 6})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets cell options on text label",
+			opts: []Option{
+				Label(
+					"hi",
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
+				),
+			},
+			canvas: image.Rect(0, 0, 7, 7),
+			update: func(d *Donut) error {
+				return d.Percent(100, HolePercent(80))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				bc := testbraille.MustNew(c.Area())
+
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+					draw.BrailleCircleFilled(),
+					draw.BrailleCircleClearPixels(),
+				)
+				testbraille.MustCopyTo(bc, c)
+
+				testdraw.MustText(c, "100%", image.Point{2, 3})
+
+				testdraw.MustText(
+					c,
+					"hi",
+					image.Point{2, 6},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorRed),
+						cell.BgColor(cell.ColorBlue),
+					),
+				)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "text label too long, gets trimmed",
+			opts: []Option{
+				Label(
+					"hello world",
+				),
+			},
+			canvas: image.Rect(0, 0, 7, 7),
+			update: func(d *Donut) error {
+				return d.Percent(100, HolePercent(80))
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				bc := testbraille.MustNew(c.Area())
+
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+					draw.BrailleCircleFilled(),
+					draw.BrailleCircleClearPixels(),
+				)
+				testbraille.MustCopyTo(bc, c)
+
+				testdraw.MustText(c, "100%", image.Point{2, 3})
+
+				testdraw.MustText(c, "hello …", image.Point{0, 6})
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -604,7 +847,7 @@ func TestDonut(t *testing.T) {
 				}
 			}
 
-			err = d.Draw(c)
+			err = d.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

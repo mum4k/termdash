@@ -907,9 +907,12 @@ func TestNew(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				testdraw.MustBorder(cvs, image.Rect(0, 0, 10, 10))
-				testdraw.MustText(cvs, "(10,10)", image.Point{1, 1})
-				testcanvas.MustApply(cvs, ft)
+				fakewidget.MustDraw(
+					ft,
+					cvs,
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{},
+				)
 				return ft
 			},
 		},
@@ -1033,11 +1036,13 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 20, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(20, 0, 40, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 				)
 
@@ -1045,6 +1050,7 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(20, 10, 40, 20)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -1089,6 +1095,7 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 20, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeGlobal},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -1097,6 +1104,7 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(20, 0, 40, 10)),
+					&widgetapi.Meta{},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 				)
 
@@ -1104,6 +1112,7 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(20, 10, 40, 20)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -1128,6 +1137,7 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1152,6 +1162,7 @@ func TestKeyboard(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1249,6 +1260,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1301,11 +1313,13 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 25, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(25, 10, 50, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Keyboard{},
 				)
@@ -1314,6 +1328,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(25, 0, 50, 10)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{24, 9}, Button: mouse.ButtonLeft},
 					&terminalapi.Mouse{Position: image.Point{24, 9}, Button: mouse.ButtonRelease},
@@ -1381,11 +1396,13 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 0, 25, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(25, 10, 50, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Keyboard{},
 				)
@@ -1394,6 +1411,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(26, 1, 49, 9)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{22, 7}, Button: mouse.ButtonLeft},
 					&terminalapi.Mouse{Position: image.Point{22, 7}, Button: mouse.ButtonRelease},
@@ -1419,6 +1437,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1453,6 +1472,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(1, 1, 19, 19)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1487,6 +1507,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(1, 1, 20, 19)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
 				)
@@ -1522,6 +1543,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(1, 1, 20, 19)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
 				)
@@ -1553,6 +1575,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1583,6 +1606,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
 				)
@@ -1614,6 +1638,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
 				)
@@ -1650,6 +1675,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 10, 20, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1685,6 +1711,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 10, 20, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{},
 				)
 				return ft
@@ -1720,6 +1747,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 10, 20, 20)),
+					&widgetapi.Meta{},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
 				)
@@ -1751,6 +1779,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				)
@@ -1782,6 +1811,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(image.Rect(6, 0, 24, 20)),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				)
@@ -1807,6 +1837,7 @@ func TestMouse(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -2009,7 +2040,7 @@ func TestUpdate(t *testing.T) {
 				cvs := testcanvas.MustNew(ft.Area())
 				wAr := image.Rect(10, 0, 20, 10)
 				wCvs := testcanvas.MustNew(wAr)
-				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, wCvs, &widgetapi.Meta{}, widgetapi.Options{})
 				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -2041,7 +2072,7 @@ func TestUpdate(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, cvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
@@ -2212,6 +2243,7 @@ func TestUpdate(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					cvs,
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				)
@@ -2243,6 +2275,7 @@ func TestUpdate(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					cvs,
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
 				)

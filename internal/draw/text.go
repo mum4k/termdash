@@ -17,9 +17,9 @@ package draw
 // text.go contains code that prints UTF-8 encoded strings on the canvas.
 
 import (
-	"bytes"
 	"fmt"
 	"image"
+	"strings"
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
@@ -124,7 +124,7 @@ func TrimText(text string, maxCells int, om OverrunMode) (string, error) {
 		return "", fmt.Errorf("unsupported overrun mode %d", om)
 	}
 
-	var b bytes.Buffer
+	var b strings.Builder
 	cur := 0
 	for _, r := range text {
 		rw := runewidth.RuneWidth(r)

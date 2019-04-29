@@ -73,7 +73,7 @@ func New(opts ...Option) (*BarChart, error) {
 
 // Draw draws the BarChart widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (bc *BarChart) Draw(cvs *canvas.Canvas) error {
+func (bc *BarChart) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
 

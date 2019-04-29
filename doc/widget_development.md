@@ -48,7 +48,7 @@ won't change the data between calls to **Options** and **Draw**.
 A widget can draw a character indicating that a resize is needed in such cases:
 
 ```go
-func (w *Widget) Draw(cvs *canvas.Canvas) error {
+func (w *Widget) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
   min := w.minSize() // Output depends on the current state.
   needAr, err := area.FromSize(min)
   if err != nil {
@@ -84,12 +84,15 @@ func TestWidget(t *testing.T) {
   tests := []struct {
     desc    string
     canvas  image.Rectangle
+    meta    *widgetapi.Meta
     opts    []Option
     want    func(size image.Point) *faketerm.Terminal
     wantErr bool
   }{
     {
       desc: "a test case",
+      // The metadata widget receives when drawn.
+      meta: &widgetapi.Meta{},
       // canvas determines the size of the allocated canvas in the test case.
       canvas: image.Rect(0,0,10,10),
       // want creates the expected content on the fake terminal.
@@ -112,7 +115,7 @@ func TestWidget(t *testing.T) {
       }
 
       widget := New()
-      err = widget.Draw(c)
+      err = widget.Draw(c, tc.meta)
       if (err != nil) != tc.wantErr {
         t.Errorf("Draw => unexpected error: %v, wantErr: %v", err, tc.wantErr)
       }

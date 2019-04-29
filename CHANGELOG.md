@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 28-Apr-2019
+
+### Added
+
+- The `TextInput` widget, an input field allowing interactive text input.
+- The `Donut` widget can now display an optional text label under the donut.
+
+### Changed
+
+- Widgets now get information whether their container is focused when Draw is
+  executed.
+- The SegmentDisplay widget now has a method that returns the observed character
+  capacity the last time Draw was called.
+- The grid.Builder API now allows users to specify options for intermediate
+  containers, i.e. containers that don't have widgets, but represent rows and
+  columns.
+- Line chart widget now allows `math.NaN` values to represent "no value" (values
+  that will not be rendered) in the values slice.
+
+#### Breaking API changes
+
+- The widgetapi.Widget.Draw method now accepts a second argument which provides
+  widgets with additional metadata. This affects all implemented widgets.
+- Termdash now requires at least Go version 1.10, which allows us to utilize
+  `math.Round` instead of our own implementation and `strings.Builder` instead
+  of `bytes.Buffer`.
+- Terminal shortcuts like `Ctrl-A` no longer come as two separate events,
+  Termdash now mirrors termbox-go and sends these as one event.
+
 ## [0.8.0] - 30-Mar-2019
 
 ### Added
@@ -70,10 +99,10 @@ identifiers shouldn't be used externally.
 - The draw.LineStyle enum was refactored into its own package
   linestyle.LineStyle. Users will have to replace:
 
-  -  draw.LineStyleNone -> linestyle.None
-  -  draw.LineStyleLight -> linestyle.Light
-  -  draw.LineStyleDouble -> linestyle.Double
-  -  draw.LineStyleRound -> linestyle.Round
+  - draw.LineStyleNone -> linestyle.None
+  - draw.LineStyleLight -> linestyle.Light
+  - draw.LineStyleDouble -> linestyle.Double
+  - draw.LineStyleRound -> linestyle.Round
 
 ## [0.7.0] - 24-Feb-2019
 
@@ -106,7 +135,6 @@ identifiers shouldn't be used externally.
 
 - The Text widget now has a Write option that atomically replaces the entire
   text content.
-
 
 #### Improvements to the infrastructure
 
@@ -236,7 +264,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[Unreleased]: https://github.com/mum4k/termdash/compare/v0.8.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.9.0...devel
+[0.9.0]: https://github.com/mum4k/termdash/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/mum4k/termdash/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/mum4k/termdash/compare/v0.7.0...v0.7.1

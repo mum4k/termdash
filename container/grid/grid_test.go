@@ -368,7 +368,7 @@ func TestBuilder(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
-				fakewidget.MustDraw(ft, cvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, cvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -384,8 +384,47 @@ func TestBuilder(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				top, bot := mustHSplit(ft.Area(), 50)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(top), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(top), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "two equal rows with options",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(RowHeightPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				b.Add(RowHeightPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				top, bot := mustHSplit(ft.Area(), 50)
+				topCvs := testcanvas.MustNew(top)
+				botCvs := testcanvas.MustNew(bot)
+				testdraw.MustBorder(topCvs, topCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testdraw.MustBorder(botCvs, botCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testcanvas.MustApply(topCvs, ft)
+				testcanvas.MustApply(botCvs, ft)
+
+				topWidget := testcanvas.MustNew(area.ExcludeBorder(top))
+				botWidget := testcanvas.MustNew(area.ExcludeBorder(bot))
+				fakewidget.MustDraw(ft, topWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, botWidget, &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -401,8 +440,47 @@ func TestBuilder(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				top, bot := mustHSplit(ft.Area(), 20)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(top), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(top), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "two equal columns with options",
+			termSize: image.Point{20, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(ColWidthPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				b.Add(ColWidthPercWithOpts(
+					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				left, right := mustVSplit(ft.Area(), 50)
+				leftCvs := testcanvas.MustNew(left)
+				rightCvs := testcanvas.MustNew(right)
+				testdraw.MustBorder(leftCvs, leftCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testdraw.MustBorder(rightCvs, rightCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testcanvas.MustApply(leftCvs, ft)
+				testcanvas.MustApply(rightCvs, ft)
+
+				leftWidget := testcanvas.MustNew(area.ExcludeBorder(left))
+				rightWidget := testcanvas.MustNew(area.ExcludeBorder(right))
+				fakewidget.MustDraw(ft, leftWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, rightWidget, &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -418,8 +496,8 @@ func TestBuilder(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				left, right := mustVSplit(ft.Area(), 50)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(left), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(right), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(right), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -435,8 +513,8 @@ func TestBuilder(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				left, right := mustVSplit(ft.Area(), 20)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(left), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(right), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(right), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -465,10 +543,10 @@ func TestBuilder(t *testing.T) {
 
 				topLeft, topRight := mustVSplit(top, 50)
 				botLeft, botRight := mustVSplit(bot, 50)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -497,10 +575,10 @@ func TestBuilder(t *testing.T) {
 
 				topLeft, topRight := mustVSplit(top, 20)
 				botLeft, botRight := mustVSplit(bot, 80)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -529,10 +607,10 @@ func TestBuilder(t *testing.T) {
 
 				topLeft, topRight := mustVSplit(top, 50)
 				botLeft, botRight := mustVSplit(bot, 50)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -561,10 +639,10 @@ func TestBuilder(t *testing.T) {
 
 				topLeft, topRight := mustHSplit(left, 20)
 				botLeft, botRight := mustHSplit(right, 80)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -613,14 +691,14 @@ func TestBuilder(t *testing.T) {
 				topBotLeft, topBotRight := mustVSplit(topBot, 50)
 				botTopLeft, botTopRight := mustVSplit(botTop, 50)
 				botBotLeft, botBotRight := mustVSplit(botBot, 50)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topTopLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topTopRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topBotLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topBotRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botTopLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botTopRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botBotLeft), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botBotRight), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topTopLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topTopRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topBotLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topBotRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botTopLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botTopRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botBotLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botBotRight), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -643,10 +721,10 @@ func TestBuilder(t *testing.T) {
 
 				left, right := mustVSplit(bot, 20)
 				topRight, botRight := mustHSplit(right, 25)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(top), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(left), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(top), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -670,15 +748,15 @@ func TestBuilder(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				top, bot := mustHSplit(ft.Area(), 50)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), &widgetapi.Meta{}, widgetapi.Options{})
 
 				topTop, topBot := mustHSplit(top, 20)
 				left, right := mustVSplit(topBot, 20)
 				topRight, botRight := mustHSplit(right, 25)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topTop), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(left), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topTop), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -705,7 +783,7 @@ func TestBuilder(t *testing.T) {
 					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
 				)
 				wCvs := testcanvas.MustNew(area.ExcludeBorder(cvs.Area()))
-				fakewidget.MustDraw(ft, wCvs, widgetapi.Options{})
+				fakewidget.MustDraw(ft, wCvs, &widgetapi.Meta{Focused: true}, widgetapi.Options{})
 				testcanvas.MustCopyTo(wCvs, cvs)
 				testcanvas.MustApply(cvs, ft)
 				return ft

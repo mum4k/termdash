@@ -66,7 +66,7 @@ func New(opts ...Option) (*SparkLine, error) {
 
 // Draw draws the SparkLine widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (sl *SparkLine) Draw(cvs *canvas.Canvas) error {
+func (sl *SparkLine) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
 

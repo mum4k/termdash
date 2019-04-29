@@ -282,6 +282,176 @@ func TestVSplit(t *testing.T) {
 	}
 }
 
+func TestVSplitCells(t *testing.T) {
+	tests := []struct {
+		desc      string
+		area      image.Rectangle
+		cells     int
+		wantLeft  image.Rectangle
+		wantRight image.Rectangle
+		wantErr   bool
+	}{
+		{
+			desc:    "fails on negative cells",
+			area:    image.Rect(1, 1, 2, 2),
+			cells:   -1,
+			wantErr: true,
+		},
+		{
+			desc:      "returns area as left on cells too large",
+			area:      image.Rect(1, 1, 2, 2),
+			cells:     2,
+			wantLeft:  image.Rect(1, 1, 2, 2),
+			wantRight: image.ZR,
+		},
+		{
+			desc:      "returns area as left on cells equal area width",
+			area:      image.Rect(1, 1, 2, 2),
+			cells:     1,
+			wantLeft:  image.Rect(1, 1, 2, 2),
+			wantRight: image.ZR,
+		},
+		{
+			desc:      "returns area as right on zero cells",
+			area:      image.Rect(1, 1, 2, 2),
+			cells:     0,
+			wantRight: image.Rect(1, 1, 2, 2),
+			wantLeft:  image.ZR,
+		},
+		{
+			desc:      "zero area to begin with",
+			area:      image.ZR,
+			cells:     0,
+			wantLeft:  image.ZR,
+			wantRight: image.ZR,
+		},
+		{
+			desc:      "splits area with even width",
+			area:      image.Rect(1, 1, 3, 3),
+			cells:     1,
+			wantLeft:  image.Rect(1, 1, 2, 3),
+			wantRight: image.Rect(2, 1, 3, 3),
+		},
+		{
+			desc:      "splits area with odd width",
+			area:      image.Rect(1, 1, 4, 4),
+			cells:     1,
+			wantLeft:  image.Rect(1, 1, 2, 4),
+			wantRight: image.Rect(2, 1, 4, 4),
+		},
+		{
+			desc:      "splits to unequal areas",
+			area:      image.Rect(0, 0, 4, 4),
+			cells:     3,
+			wantLeft:  image.Rect(0, 0, 3, 4),
+			wantRight: image.Rect(3, 0, 4, 4),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			gotLeft, gotRight, err := VSplitCells(tc.area, tc.cells)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("VSplitCells => unexpected error:%v, wantErr:%v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+			if diff := pretty.Compare(tc.wantLeft, gotLeft); diff != "" {
+				t.Errorf("VSplitCells => left value unexpected diff (-want, +got):\n%s", diff)
+			}
+			if diff := pretty.Compare(tc.wantRight, gotRight); diff != "" {
+				t.Errorf("VSplitCells => right value unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestHSplitCells(t *testing.T) {
+	tests := []struct {
+		desc       string
+		area       image.Rectangle
+		cells      int
+		wantTop    image.Rectangle
+		wantBottom image.Rectangle
+		wantErr    bool
+	}{
+		{
+			desc:    "fails on negative cells",
+			area:    image.Rect(1, 1, 2, 2),
+			cells:   -1,
+			wantErr: true,
+		},
+		{
+			desc:       "returns area as top on cells too large",
+			area:       image.Rect(1, 1, 2, 2),
+			cells:      2,
+			wantTop:    image.Rect(1, 1, 2, 2),
+			wantBottom: image.ZR,
+		},
+		{
+			desc:       "returns area as top on cells equal area width",
+			area:       image.Rect(1, 1, 2, 2),
+			cells:      1,
+			wantTop:    image.Rect(1, 1, 2, 2),
+			wantBottom: image.ZR,
+		},
+		{
+			desc:       "returns area as bottom on zero cells",
+			area:       image.Rect(1, 1, 2, 2),
+			cells:      0,
+			wantBottom: image.Rect(1, 1, 2, 2),
+			wantTop:    image.ZR,
+		},
+		{
+			desc:       "zero area to begin with",
+			area:       image.ZR,
+			cells:      0,
+			wantTop:    image.ZR,
+			wantBottom: image.ZR,
+		},
+		{
+			desc:       "splits area with even height",
+			area:       image.Rect(1, 1, 3, 3),
+			cells:      1,
+			wantTop:    image.Rect(1, 1, 3, 2),
+			wantBottom: image.Rect(1, 2, 3, 3),
+		},
+		{
+			desc:       "splits area with odd width",
+			area:       image.Rect(1, 1, 4, 4),
+			cells:      1,
+			wantTop:    image.Rect(1, 1, 4, 2),
+			wantBottom: image.Rect(1, 2, 4, 4),
+		},
+		{
+			desc:       "splits to unequal areas",
+			area:       image.Rect(0, 0, 4, 4),
+			cells:      3,
+			wantTop:    image.Rect(0, 0, 4, 3),
+			wantBottom: image.Rect(0, 3, 4, 4),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			gotTop, gotBottom, err := HSplitCells(tc.area, tc.cells)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("HSplitCells => unexpected error:%v, wantErr:%v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+			if diff := pretty.Compare(tc.wantTop, gotTop); diff != "" {
+				t.Errorf("HSplitCells => left value unexpected diff (-want, +got):\n%s", diff)
+			}
+			if diff := pretty.Compare(tc.wantBottom, gotBottom); diff != "" {
+				t.Errorf("HSplitCells => right value unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestExcludeBorder(t *testing.T) {
 	tests := []struct {
 		desc string

@@ -25,6 +25,7 @@ import (
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/widgetapi"
 )
 
 // drawTree draws this container and all of its sub containers.
@@ -130,7 +131,11 @@ func drawWidget(c *Container) error {
 		return err
 	}
 
-	if err := c.opts.widget.Draw(cvs); err != nil {
+	meta := &widgetapi.Meta{
+		Focused: c.focusTracker.isActive(c),
+	}
+
+	if err := c.opts.widget.Draw(cvs, meta); err != nil {
 		return err
 	}
 	return cvs.Apply(c.term)

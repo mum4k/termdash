@@ -34,6 +34,7 @@ func TestSparkLine(t *testing.T) {
 		opts          []Option
 		update        func(*SparkLine) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantCapacity  int
 		wantErr       bool
@@ -475,7 +476,7 @@ func TestSparkLine(t *testing.T) {
 				return
 			}
 
-			err = sp.Draw(c)
+			err = sp.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

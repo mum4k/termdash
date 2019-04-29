@@ -35,6 +35,7 @@ func TestTextDraws(t *testing.T) {
 	tests := []struct {
 		desc         string
 		canvas       image.Rectangle
+		meta         *widgetapi.Meta
 		opts         []Option
 		writes       func(*Text) error
 		events       func(*Text)
@@ -601,7 +602,7 @@ func TestTextDraws(t *testing.T) {
 			},
 			events: func(widget *Text) {
 				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3))); err != nil {
+				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
 					panic(err)
 				}
 				widget.Mouse(&terminalapi.Mouse{
@@ -630,7 +631,7 @@ func TestTextDraws(t *testing.T) {
 			},
 			events: func(widget *Text) {
 				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3))); err != nil {
+				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
 					panic(err)
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
@@ -659,7 +660,7 @@ func TestTextDraws(t *testing.T) {
 			},
 			events: func(widget *Text) {
 				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3))); err != nil {
+				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
 					panic(err)
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
@@ -689,7 +690,7 @@ func TestTextDraws(t *testing.T) {
 			},
 			events: func(widget *Text) {
 				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3))); err != nil {
+				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
 					panic(err)
 				}
 				widget.Mouse(&terminalapi.Mouse{
@@ -719,7 +720,7 @@ func TestTextDraws(t *testing.T) {
 			},
 			events: func(widget *Text) {
 				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3))); err != nil {
+				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
 					panic(err)
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
@@ -749,7 +750,7 @@ func TestTextDraws(t *testing.T) {
 			},
 			events: func(widget *Text) {
 				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3))); err != nil {
+				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
 					panic(err)
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
@@ -798,7 +799,7 @@ func TestTextDraws(t *testing.T) {
 				tc.events(widget)
 			}
 
-			if err := widget.Draw(c); err != nil {
+			if err := widget.Draw(c, tc.meta); err != nil {
 				t.Fatalf("Draw => unexpected error: %v", err)
 			}
 

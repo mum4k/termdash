@@ -26,6 +26,7 @@ import (
 	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/segdisp"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -276,7 +277,7 @@ func (*SegmentDisplay) Mouse(m *terminalapi.Mouse) error {
 func (sd *SegmentDisplay) Options() widgetapi.Options {
 	return widgetapi.Options{
 		// The smallest supported size of a display segment.
-		MinimumSize:  image.Point{sixteen.MinCols, sixteen.MinRows},
+		MinimumSize:  image.Point{segdisp.MinCols, segdisp.MinRows},
 		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    widgetapi.MouseScopeNone,
 	}

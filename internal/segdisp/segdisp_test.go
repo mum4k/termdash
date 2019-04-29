@@ -1,0 +1,113 @@
+package segdisp
+
+import (
+	"image"
+	"testing"
+
+	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/braille"
+	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
+)
+
+func TestRequired(t *testing.T) {
+	tests := []struct {
+		desc     string
+		cellArea image.Rectangle
+		want     image.Rectangle
+		wantErr  bool
+	}{
+		{
+			desc:     "fails when area isn't wide enough",
+			cellArea: image.Rect(0, 0, MinCols-1, MinRows),
+			wantErr:  true,
+		},
+		{
+			desc:     "fails when area isn't tall enough",
+			cellArea: image.Rect(0, 0, MinCols, MinRows-1),
+			wantErr:  true,
+		},
+		{
+			desc:     "returns same area when no adjustment needed",
+			cellArea: image.Rect(0, 0, MinCols, MinRows),
+			want:     image.Rect(0, 0, MinCols, MinRows),
+		},
+		{
+			desc:     "adjusts width to aspect ratio",
+			cellArea: image.Rect(0, 0, MinCols+100, MinRows),
+			want:     image.Rect(0, 0, MinCols, MinRows),
+		},
+		{
+			desc:     "adjusts height to aspect ratio",
+			cellArea: image.Rect(0, 0, MinCols, MinRows+100),
+			want:     image.Rect(0, 0, MinCols, MinRows),
+		},
+		{
+			desc:     "adjusts larger area to aspect ratio",
+			cellArea: image.Rect(0, 0, MinCols*2, MinRows*4),
+			want:     image.Rect(0, 0, 12, 10),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := Required(tc.cellArea)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Required => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("Required => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestToBraille(t *testing.T) {
+	tests := []struct {
+		desc     string
+		cellArea image.Rectangle
+		wantBC   *braille.Canvas
+		wantAr   image.Rectangle
+		wantErr  bool
+	}{
+		{
+			desc:     "fails when area isn't wide enough",
+			cellArea: image.Rect(0, 0, MinCols-1, MinRows),
+			wantErr:  true,
+		},
+		{
+			desc:     "canvas creates braille with the desired aspect ratio",
+			cellArea: image.Rect(0, 0, MinCols, MinRows),
+			wantBC:   testbraille.MustNew(image.Rect(0, 0, MinCols, MinRows)),
+			wantAr:   image.Rect(0, 0, MinCols*braille.ColMult, MinRows*braille.RowMult),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			cvs, err := canvas.New(tc.cellArea)
+			if err != nil {
+				t.Fatalf("canvas.New => unexpected error: %v", err)
+			}
+
+			gotBC, gotAr, err := ToBraille(cvs)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("ToBraille => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.wantBC, gotBC); diff != "" {
+				t.Errorf("ToBraille => unexpected braille canvas, diff (-want, +got):\n%s", diff)
+			}
+			if diff := pretty.Compare(tc.wantAr, gotAr); diff != "" {
+				t.Errorf("ToBraille => unexpected area, diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}

@@ -26,6 +26,7 @@ import (
 	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/internal/segdisp"
 	"github.com/mum4k/termdash/internal/segdisp/segment"
 	"github.com/mum4k/termdash/internal/segdisp/segment/testsegment"
 )
@@ -45,17 +46,17 @@ func TestDraw(t *testing.T) {
 	}{
 		{
 			desc:       "fails for area not wide enough",
-			cellCanvas: image.Rect(0, 0, MinCols-1, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols-1, segdisp.MinRows),
 			wantErr:    true,
 		},
 		{
 			desc:       "fails for area not tall enough",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows-1),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows-1),
 			wantErr:    true,
 		},
 		{
 			desc:       "fails to set invalid segment (too small)",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(Segment(-1))
 			},
@@ -63,7 +64,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "fails to set invalid segment (too large)",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(Segment(segmentMax))
 			},
@@ -71,7 +72,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "fails to clear invalid segment (too small)",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.ClearSegment(Segment(-1))
 			},
@@ -79,7 +80,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "fails to clear invalid segment (too large)",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.ClearSegment(Segment(segmentMax))
 			},
@@ -87,7 +88,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "fails to toggle invalid segment (too small)",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.ToggleSegment(Segment(-1))
 			},
@@ -95,7 +96,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "fails to toggle invalid segment (too large)",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.ToggleSegment(Segment(segmentMax))
 			},
@@ -103,11 +104,11 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "empty when no segments set",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 		},
 		{
 			desc:       "smallest valid display 6x5, A1",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(A1)
 			},
@@ -122,7 +123,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, A2",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(A2)
 			},
@@ -137,7 +138,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, F",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(F)
 			},
@@ -152,7 +153,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, J",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(J)
 			},
@@ -167,7 +168,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, B",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(B)
 			},
@@ -182,7 +183,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, G1",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(G1)
 			},
@@ -197,7 +198,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, G2",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(G2)
 			},
@@ -212,7 +213,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, E",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(E)
 			},
@@ -227,7 +228,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, M",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(M)
 			},
@@ -242,7 +243,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, C",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(C)
 			},
@@ -257,7 +258,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, D1",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(D1)
 			},
@@ -272,7 +273,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, D2",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(D2)
 			},
@@ -287,7 +288,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, H",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(H)
 			},
@@ -302,7 +303,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, K",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(K)
 			},
@@ -318,7 +319,7 @@ func TestDraw(t *testing.T) {
 
 		{
 			desc:       "smallest valid display 6x5, N",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(N)
 			},
@@ -333,7 +334,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, L",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				return d.SetSegment(L)
 			},
@@ -348,7 +349,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "smallest valid display 6x5, all segments",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -394,7 +395,7 @@ func TestDraw(t *testing.T) {
 					cell.BgColor(cell.ColorGreen),
 				),
 			},
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -444,7 +445,7 @@ func TestDraw(t *testing.T) {
 					cell.BgColor(cell.ColorGreen),
 				),
 			},
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -488,7 +489,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "clears the display",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -501,7 +502,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "clears the display and sets cell options",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				d.Clear(CellOpts(cell.FgColor(cell.ColorBlue)))
 				return d.SetSegment(A1)
@@ -517,7 +518,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "clears some segments",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -553,7 +554,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "toggles some segments off",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -589,7 +590,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "toggles some segments on",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				for _, s := range []Segment{A1, A2, G1, G2, D1, D2, L} {
 					if err := d.ToggleSegment(s); err != nil {
@@ -619,7 +620,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "set is idempotent",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				if err := d.SetSegment(A1); err != nil {
 					return err
@@ -637,7 +638,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "clear is idempotent",
-			cellCanvas: image.Rect(0, 0, MinCols, MinRows),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(d *Display) error {
 				if err := d.SetSegment(A1); err != nil {
 					return err
@@ -650,7 +651,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "segment width of two",
-			cellCanvas: image.Rect(0, 0, MinCols*2, MinRows*2),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols*2, segdisp.MinRows*2),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -690,7 +691,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "segment width of three",
-			cellCanvas: image.Rect(0, 0, MinCols*3, MinRows*3),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows*3),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -730,7 +731,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "segment with even width is changed to odd",
-			cellCanvas: image.Rect(0, 0, MinCols*4, MinRows*4),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols*4, segdisp.MinRows*4),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -770,7 +771,7 @@ func TestDraw(t *testing.T) {
 		},
 		{
 			desc:       "segment with odd width and e√en peak to peak distance is changed to odd",
-			cellCanvas: image.Rect(0, 0, MinCols*7, MinRows*7),
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols*7, segdisp.MinRows*7),
 			update: func(d *Display) error {
 				for _, s := range AllSegments() {
 					if err := d.SetSegment(s); err != nil {
@@ -1582,7 +1583,7 @@ func TestSetCharacter(t *testing.T) {
 				}
 			}
 
-			ar := image.Rect(0, 0, MinCols, MinRows)
+			ar := image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)
 			cvs, err := canvas.New(ar)
 			if err != nil {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
@@ -1607,62 +1608,6 @@ func TestSetCharacter(t *testing.T) {
 			}
 			if diff := faketerm.Diff(want, got); diff != "" {
 				t.Fatalf("SetCharacter => %v", diff)
-			}
-		})
-	}
-}
-
-func TestRequired(t *testing.T) {
-	tests := []struct {
-		desc     string
-		cellArea image.Rectangle
-		want     image.Rectangle
-		wantErr  bool
-	}{
-		{
-			desc:     "fails when area isn't wide enough",
-			cellArea: image.Rect(0, 0, MinCols-1, MinRows),
-			wantErr:  true,
-		},
-		{
-			desc:     "fails when area isn't tall enough",
-			cellArea: image.Rect(0, 0, MinCols, MinRows-1),
-			wantErr:  true,
-		},
-		{
-			desc:     "returns same area when no adjustment needed",
-			cellArea: image.Rect(0, 0, MinCols, MinRows),
-			want:     image.Rect(0, 0, MinCols, MinRows),
-		},
-		{
-			desc:     "adjusts width to aspect ratio",
-			cellArea: image.Rect(0, 0, MinCols+100, MinRows),
-			want:     image.Rect(0, 0, MinCols, MinRows),
-		},
-		{
-			desc:     "adjusts height to aspect ratio",
-			cellArea: image.Rect(0, 0, MinCols, MinRows+100),
-			want:     image.Rect(0, 0, MinCols, MinRows),
-		},
-		{
-			desc:     "adjusts larger area to aspect ratio",
-			cellArea: image.Rect(0, 0, MinCols*2, MinRows*4),
-			want:     image.Rect(0, 0, 12, 10),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			got, err := Required(tc.cellArea)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("Required => unexpected error: %v, wantErr: %v", err, tc.wantErr)
-			}
-			if err != nil {
-				return
-			}
-
-			if diff := pretty.Compare(tc.want, got); diff != "" {
-				t.Errorf("Required => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

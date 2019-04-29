@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The `TextInput` widget, an input field allowing interactive text input.
+- The `Donut` widget can now display an optional text label under the donut.
 
 ### Changed
 

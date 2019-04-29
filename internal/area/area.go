@@ -101,6 +101,29 @@ func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right i
 	return left, right, nil
 }
 
+// HSplitCells returns two new areas created by splitting the provided area
+// after the specified amount of cells of its height. The number of cells must
+// be a zero or a positive integer. Providing a zero returns top=image.ZR,
+// bottom=area. Providing a number equal or larger to area's height returns
+// top=area, bottom=image.ZR.
+func HSplitCells(area image.Rectangle, cells int) (top image.Rectangle, bottom image.Rectangle, err error) {
+	if min := 0; cells < min {
+		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
+	}
+	if cells == 0 {
+		return image.ZR, area, nil
+	}
+
+	height := area.Dy()
+	if cells >= height {
+		return area, image.ZR, nil
+	}
+
+	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+cells)
+	bottom = image.Rect(area.Min.X, area.Min.Y+cells, area.Max.X, area.Max.Y)
+	return top, bottom, nil
+}
+
 // ExcludeBorder returns a new area created by subtracting a border around the
 // provided area. Return the zero area if there isn't enough space to exclude
 // the border.

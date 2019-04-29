@@ -19,6 +19,7 @@ package donut
 import (
 	"fmt"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 )
 
@@ -43,6 +44,10 @@ type options struct {
 
 	textCellOpts []cell.Option
 	cellOpts     []cell.Option
+
+	labelCellOpts []cell.Option
+	labelAlign    align.Horizontal
+	label         string
 
 	// The angle in degrees that represents 0 and 100% of the progress.
 	startAngle int
@@ -74,6 +79,7 @@ func newOptions() *options {
 			cell.FgColor(cell.ColorDefault),
 			cell.BgColor(cell.ColorDefault),
 		},
+		labelAlign: DefaultLabelAlign,
 	}
 }
 
@@ -155,5 +161,23 @@ func Clockwise() Option {
 func CounterClockwise() Option {
 	return option(func(opts *options) {
 		opts.direction = 1
+	})
+}
+
+// Label sets a text label to be displayed under the donut.
+func Label(text string, cOpts ...cell.Option) Option {
+	return option(func(opts *options) {
+		opts.label = text
+		opts.labelCellOpts = cOpts
+	})
+}
+
+// DefaultLabelAlign is the default value for the LabelAlign option.
+const DefaultLabelAlign = align.HorizontalCenter
+
+// LabelAlign sets the alignment of the label under the donut.
+func LabelAlign(la align.Horizontal) Option {
+	return option(func(opts *options) {
+		opts.labelAlign = la
 	})
 }

@@ -50,7 +50,7 @@ func playDonut(ctx context.Context, d *donut.Donut, start, step int, delay time.
 		case <-ticker.C:
 			switch pt {
 			case playTypePercent:
-				if err := d.Percent(100); err != nil {
+				if err := d.Percent(progress); err != nil {
 					panic(err)
 				}
 			case playTypeAbsolute:
@@ -117,22 +117,20 @@ func main() {
 		t,
 		container.Border(linestyle.Light),
 		container.BorderTitle("PRESS Q TO QUIT"),
-		container.PlaceWidget(green),
-		/*
-			container.SplitVertical(
-				container.Left(
-					container.SplitVertical(
-						container.Left(container.PlaceWidget(green)),
-						container.Right(container.PlaceWidget(blue)),
-					),
+		container.SplitVertical(
+			container.Left(
+				container.SplitVertical(
+					container.Left(container.PlaceWidget(green)),
+					container.Right(container.PlaceWidget(blue)),
 				),
-				container.Right(
-					container.SplitVertical(
-						container.Left(container.PlaceWidget(yellow)),
-						container.Right(container.PlaceWidget(red)),
-					),
+			),
+			container.Right(
+				container.SplitVertical(
+					container.Left(container.PlaceWidget(yellow)),
+					container.Right(container.PlaceWidget(red)),
 				),
-			),*/
+			),
+		),
 	)
 	if err != nil {
 		panic(err)

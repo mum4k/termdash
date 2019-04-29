@@ -186,16 +186,16 @@ func Shrink(area image.Rectangle, topCells, rightCells, bottomCells, leftCells i
 		}
 	}
 
-	shrinked := area
-	shrinked.Min.X, _ = numbers.MinMaxInts([]int{shrinked.Min.X + leftCells, shrinked.Max.X})
-	_, shrinked.Max.X = numbers.MinMaxInts([]int{shrinked.Max.X - rightCells, shrinked.Min.X})
-	shrinked.Min.Y, _ = numbers.MinMaxInts([]int{shrinked.Min.Y + topCells, shrinked.Max.Y})
-	_, shrinked.Max.Y = numbers.MinMaxInts([]int{shrinked.Max.Y - bottomCells, shrinked.Min.Y})
+	shrunk := area
+	shrunk.Min.X, _ = numbers.MinMaxInts([]int{shrunk.Min.X + leftCells, shrunk.Max.X})
+	_, shrunk.Max.X = numbers.MinMaxInts([]int{shrunk.Max.X - rightCells, shrunk.Min.X})
+	shrunk.Min.Y, _ = numbers.MinMaxInts([]int{shrunk.Min.Y + topCells, shrunk.Max.Y})
+	_, shrunk.Max.Y = numbers.MinMaxInts([]int{shrunk.Max.Y - bottomCells, shrunk.Min.Y})
 
-	if shrinked.Dx() == 0 || shrinked.Dy() == 0 {
+	if shrunk.Dx() == 0 || shrunk.Dy() == 0 {
 		return image.ZR, nil
 	}
-	return shrinked, nil
+	return shrunk, nil
 }
 
 // ShrinkPercent returns a new area whose size is reduced by percentage of its

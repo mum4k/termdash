@@ -143,6 +143,9 @@ func main() {
 		button.GlobalKey(keyboard.KeyEnter),
 		button.FillColor(cell.ColorNumber(220)),
 	)
+	if err != nil {
+		panic(err)
+	}
 	clearB, err := button.New("Clear", func() error {
 		input.ReadAndClear()
 		updateText <- ""
@@ -151,6 +154,9 @@ func main() {
 		button.WidthFor("Submit"),
 		button.FillColor(cell.ColorNumber(220)),
 	)
+	if err != nil {
+		panic(err)
+	}
 	quitB, err := button.New("Quit", func() error {
 		cancel()
 		return nil
@@ -158,6 +164,9 @@ func main() {
 		button.WidthFor("Submit"),
 		button.FillColor(cell.ColorNumber(196)),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	builder := grid.New()
 	builder.Add(

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The `Donut` widget now guarantees spacing between the donut and its label.
+
 ## [0.9.0] - 28-Apr-2019
 
 ### Added

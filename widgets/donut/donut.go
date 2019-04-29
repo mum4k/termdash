@@ -167,8 +167,7 @@ func (d *Donut) holeRadius(donutRadius int) int {
 // The text is only drawn if the radius of the donut "hole" is large enough to
 // accommodate it.
 // The mid point addresses coordinates in pixels on a braille canvas.
-// The donutAr is the cell area for the donut itself.
-func (d *Donut) drawText(cvs *canvas.Canvas, donutAr image.Rectangle, mid image.Point, holeR int) error {
+func (d *Donut) drawText(cvs *canvas.Canvas, mid image.Point, holeR int) error {
 	cells, first := availableCells(mid, holeR)
 	t := d.progressText()
 	needCells := runewidth.StringWidth(t)
@@ -176,13 +175,6 @@ func (d *Donut) drawText(cvs *canvas.Canvas, donutAr image.Rectangle, mid image.
 		return nil
 	}
 
-	if donutAr.Min.Y > 0 {
-		// donutAr is what the braille canvas is created from, mid is relative
-		// to it.
-		// donutAr might have non-zero Y coordinate if we are displaying a text
-		// label.
-		first.Y += donutAr.Min.Y
-	}
 	ar := image.Rect(first.X, first.Y, first.X+cells+2, first.Y+1)
 	start, err := alignfor.Text(ar, t, align.HorizontalCenter, align.VerticalMiddle)
 	if err != nil {
@@ -270,7 +262,7 @@ func (d *Donut) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	}
 
 	if !d.opts.hideTextProgress {
-		if err := d.drawText(cvs, donutAr, mid, holeR); err != nil {
+		if err := d.drawText(cvs, mid, holeR); err != nil {
 			return err
 		}
 	}

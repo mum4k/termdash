@@ -86,7 +86,10 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	green, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorGreen)))
+	green, err := donut.New(
+		donut.CellOpts(cell.FgColor(cell.ColorGreen)),
+		donut.Label("text label", cell.FgColor(cell.ColorGreen)),
+	)
 	if err != nil {
 		panic(err)
 	}

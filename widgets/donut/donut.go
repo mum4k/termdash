@@ -192,15 +192,12 @@ func (d *Donut) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) error {
 	if err != nil {
 		return err
 	}
-	if err := draw.Text(
+	return draw.Text(
 		cvs, d.opts.label, start,
 		draw.TextOverrunMode(draw.OverrunModeThreeDot),
 		draw.TextMaxX(labelAr.Max.X),
 		draw.TextCellOpts(d.opts.labelCellOpts...),
-	); err != nil {
-		return err
-	}
-	return nil
+	)
 }
 
 // Draw draws the Donut widget onto the canvas.

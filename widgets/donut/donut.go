@@ -196,7 +196,7 @@ func (d *Donut) drawText(cvs *canvas.Canvas, donutAr image.Rectangle, mid image.
 
 // drawLabel draws the text label in the area.
 func (d *Donut) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) error {
-	start, err := alignfor.Text(labelAr, d.opts.label, d.opts.labelAlign, align.VerticalMiddle)
+	start, err := alignfor.Text(labelAr, d.opts.label, d.opts.labelAlign, align.VerticalBottom)
 	if err != nil {
 		return err
 	}
@@ -310,20 +310,14 @@ func (d *Donut) Options() widgetapi.Options {
 	}
 }
 
-// donutAndLabel splits the canvas area into square area for the donut and an
+// donutAndLabel splits the canvas area into an area for the donut and an
 // area under the donut for the text label.
 func donutAndLabel(cvsAr image.Rectangle) (donAr, labelAr image.Rectangle, err error) {
 	height := cvsAr.Dy()
-	// One line for the text label at the bottom.
-	top, labelAr, err := area.HSplitCells(cvsAr, height-1)
-	if err != nil {
-		return image.ZR, image.ZR, err
-	}
-
-	// Remove one line from the top too so the donut area remains square.
-	// When using braille, this effectively removes 4 pixels from both the top
-	// and the bottom. See braille.RowMult.
-	donAr, err = area.Shrink(top, 1, 0, 0, 0)
+	// Two lines for the text label at the bottom.
+	// One for the text itself and one for visual space between the donut and
+	// the label.
+	donAr, labelAr, err = area.HSplitCells(cvsAr, height-2)
 	if err != nil {
 		return image.ZR, image.ZR, err
 	}

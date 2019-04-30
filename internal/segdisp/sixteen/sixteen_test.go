@@ -893,7 +893,7 @@ func TestSetCharacter(t *testing.T) {
 	}{
 		{
 			desc:    "fails on unsupported character",
-			char:    '.',
+			char:    '←',
 			wantErr: true,
 		},
 		{
@@ -1642,15 +1642,15 @@ func TestSupportsChars(t *testing.T) {
 		},
 		{
 			desc:       "supports some chars in the string",
-			str:        " w.W :",
+			str:        " w←W :",
 			wantRes:    false,
-			wantUnsupp: []rune{'.'},
+			wantUnsupp: []rune{'←'},
 		},
 		{
 			desc:       "supports no chars in the string",
-			str:        ".",
+			str:        "←",
 			wantRes:    false,
-			wantUnsupp: []rune{'.'},
+			wantUnsupp: []rune{'←'},
 		},
 	}
 
@@ -1690,12 +1690,12 @@ func TestSanitize(t *testing.T) {
 		},
 		{
 			desc: "some characters are supported",
-			str:  " w.W:",
+			str:  " w←W:",
 			want: " w W:",
 		},
 		{
 			desc: "no characters are supported",
-			str:  ".",
+			str:  "←",
 			want: " ",
 		},
 	}

@@ -26,6 +26,7 @@ import (
 	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/segdisp"
+	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 )
 
 // segmentSize given an area for the display determines the size of individual
@@ -53,30 +54,36 @@ type attributes struct {
 
 	// segSize is the width of a vertical or height of a horizontal segment.
 	segSize int
+
+	// sixteen are attributes of a 16-segment display when placed on the same
+	// area.
+	sixteen *sixteen.Attributes
 }
 
 // newAttributes calculates attributes needed to place the segments for the
 // provided pixel area.
 func newAttributes(bcAr image.Rectangle) *attributes {
-	// Dots have double width of normal segments to fill more space in the
-	// segment display.
-	segSize := segdisp.SegmentSize(bcAr) * 2
-
+	segSize := segdisp.SegmentSize(bcAr)
 	return &attributes{
 		bcAr:    bcAr,
 		segSize: segSize,
+		sixteen: sixteen.NewAttributes(bcAr),
 	}
 }
 
 // segArea returns the area for the specified segment.
 func (a *attributes) segArea(seg Segment) (image.Rectangle, error) {
+	// Dots have double width of normal segments to fill more space in the
+	// segment display.
+	segSize := a.segSize * 2
+
 	// An area representing the dot which gets aligned and moved into position
 	// below.
 	dotAr := image.Rect(
 		a.bcAr.Min.X,
 		a.bcAr.Min.Y,
-		a.bcAr.Min.X+a.segSize,
-		a.bcAr.Min.Y+a.segSize,
+		a.bcAr.Min.X+segSize,
+		a.bcAr.Min.Y+segSize,
 	)
 	mid, err := alignfor.Rectangle(a.bcAr, dotAr, align.HorizontalCenter, align.VerticalMiddle)
 	if err != nil {
@@ -86,7 +93,7 @@ func (a *attributes) segArea(seg Segment) (image.Rectangle, error) {
 	// moveBySize is the multiplier of segment size to determine by how many
 	// pixels to move D1 and D2 up and down from the center.
 	const moveBySize = 1.5
-	moveBy := int(math.Round(moveBySize * float64(a.segSize)))
+	moveBy := int(math.Round(moveBySize * float64(segSize)))
 	switch seg {
 	case D1:
 		moved, err := area.MoveUp(mid, moveBy)
@@ -103,12 +110,22 @@ func (a *attributes) segArea(seg Segment) (image.Rectangle, error) {
 		return moved, nil
 
 	case D3:
+		// Align at the middle of the bottom.
 		bot, err := alignfor.Rectangle(a.bcAr, dotAr, align.HorizontalCenter, align.VerticalBottom)
 		if err != nil {
 			return image.ZR, err
 		}
 
-		return bot, nil
+		// Shift up to where the sixteen segment actually places its bottom
+		// segments.
+		diff := bot.Min.Y - a.sixteen.VertBotY
+		// Shift further up by one segment size, since the dots have double width.
+		diff += a.segSize
+		moved, err := area.MoveUp(bot, diff)
+		if err != nil {
+			return image.ZR, err
+		}
+		return moved, nil
 
 	default:
 		return image.ZR, fmt.Errorf("cannot calculate area for %v(%d)", seg, seg)

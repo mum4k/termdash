@@ -27,6 +27,7 @@ import (
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/segdisp"
+	"github.com/mum4k/termdash/internal/segdisp/dotseg"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -55,6 +56,10 @@ type SegmentDisplay struct {
 	// time Draw was called.
 	lastCanFit int
 
+	// dotChars are characters that are drawn using the dot segment.
+	// All other characters are draws using the 16-segment display.
+	dotChars map[rune]bool
+
 	// mu protects the widget.
 	mu sync.Mutex
 
@@ -71,9 +76,15 @@ func New(opts ...Option) (*SegmentDisplay, error) {
 	if err := opt.validate(); err != nil {
 		return nil, err
 	}
+
+	dotChars := map[rune]bool{}
+	for _, r := range dotseg.SupportedChars() {
+		dotChars[r] = true
+	}
 	return &SegmentDisplay{
 		wOptsTracker: attrrange.NewTracker(),
 		opts:         opt,
+		dotChars:     dotChars,
 	}, nil
 }
 
@@ -225,11 +236,6 @@ func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 			break
 		}
 
-		disp := sixteen.New()
-		if err := disp.SetCharacter(c); err != nil {
-			return fmt.Errorf("disp.SetCharacter => %v", err)
-		}
-
 		endX := startX + segAr.segment.Dx()
 		ar := image.Rect(startX, aligned.Min.Y, endX, aligned.Max.Y)
 		startX = endX
@@ -251,14 +257,36 @@ func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 			optRange = or
 		}
 		wOpts := sd.givenWOpts[optRange.AttrIdx]
-
-		if err := disp.Draw(dCvs, sixteen.CellOpts(wOpts.cellOpts...)); err != nil {
-			return fmt.Errorf("disp.Draw => %v", err)
+		if err := sd.drawChar(dCvs, c, wOpts); err != nil {
+			return err
 		}
 
 		if err := dCvs.CopyTo(cvs); err != nil {
 			return fmt.Errorf("dCvs.CopyTo => %v", err)
 		}
+	}
+	return nil
+}
+
+// drawChar draws a single character onto the provided canvas.
+func (sd *SegmentDisplay) drawChar(dCvs *canvas.Canvas, c rune, wOpts *writeOptions) error {
+	if sd.dotChars[c] {
+		disp := dotseg.New()
+		if err := disp.SetCharacter(c); err != nil {
+			return fmt.Errorf("dotseg.Display.SetCharacter => %v", err)
+		}
+		if err := disp.Draw(dCvs, dotseg.CellOpts(wOpts.cellOpts...)); err != nil {
+			return fmt.Errorf("dotseg.Display..Draw => %v", err)
+		}
+		return nil
+	}
+
+	disp := sixteen.New()
+	if err := disp.SetCharacter(c); err != nil {
+		return fmt.Errorf("sixteen.Display.SetCharacter => %v", err)
+	}
+	if err := disp.Draw(dCvs, sixteen.CellOpts(wOpts.cellOpts...)); err != nil {
+		return fmt.Errorf("sixteen.Display.Draw => %v", err)
 	}
 	return nil
 }

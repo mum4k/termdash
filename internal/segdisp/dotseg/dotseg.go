@@ -234,10 +234,5 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 			return err
 		}
 	}
-
-	if err := bc.CopyTo(cvs); err != nil {
-		return err
-	}
-	return nil
-	//draw.Border(cvs, cvs.Area())
+	return bc.CopyTo(cvs)
 }

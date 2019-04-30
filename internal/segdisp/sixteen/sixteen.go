@@ -137,6 +137,7 @@ var characterSegments = map[rune][]Segment{
 	'+':  {J, G1, G2, M},
 	',':  {N},
 	'-':  {G1, G2},
+	'.':  {D1},
 	'/':  {N, K},
 
 	'0': {A1, A2, F, K, B, E, N, C, D1, D2},
@@ -386,7 +387,7 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		return err
 	}
 
-	attr := newAttributes(bcAr)
+	attr := NewAttributes(bcAr)
 	var sOpts []segment.Option
 	if len(d.cellOpts) > 0 {
 		sOpts = append(sOpts, segment.CellOpts(d.cellOpts...))

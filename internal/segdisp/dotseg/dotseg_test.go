@@ -122,7 +122,7 @@ func TestDraw(t *testing.T) {
 
 				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal)   // D1
 				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal) // D2
-				testsegment.MustHV(bc, image.Rect(5, 18, 7, 20), segment.Horizontal) // D3
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal) // D3
 				testbraille.MustApply(bc, ft)
 				return ft
 			},

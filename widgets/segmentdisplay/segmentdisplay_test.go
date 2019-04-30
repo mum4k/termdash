@@ -25,6 +25,8 @@ import (
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/segdisp"
+	"github.com/mum4k/termdash/internal/segdisp/dotseg"
+	"github.com/mum4k/termdash/internal/segdisp/dotseg/testdotseg"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen/testsixteen"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -32,11 +34,20 @@ import (
 )
 
 // mustDrawChar draws the provided character in the area of the canvas or panics.
-func mustDrawChar(cvs *canvas.Canvas, char rune, ar image.Rectangle, opts ...sixteen.Option) {
-	d := sixteen.New()
-	testsixteen.MustSetCharacter(d, char)
+func mustDrawChar(cvs *canvas.Canvas, char rune, ar image.Rectangle, cOpts ...cell.Option) {
 	c := testcanvas.MustNew(ar)
-	testsixteen.MustDraw(d, c, opts...)
+	switch {
+	case char == '.' || char == ':':
+		d := dotseg.New()
+		testdotseg.MustSetCharacter(d, char)
+		testdotseg.MustDraw(d, c, dotseg.CellOpts(cOpts...))
+
+	default:
+		d := sixteen.New()
+		testsixteen.MustSetCharacter(d, char)
+		testsixteen.MustDraw(d, c, sixteen.CellOpts(cOpts...))
+	}
+
 	testcanvas.MustCopyTo(c, cvs)
 }
 
@@ -119,7 +130,7 @@ func TestSegmentDisplay(t *testing.T) {
 			desc:   "write fails on unsupported characters when requested",
 			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
-				return sd.Write([]*TextChunk{NewChunk(".", WriteErrOnUnsupported())})
+				return sd.Write([]*TextChunk{NewChunk("←", WriteErrOnUnsupported())})
 			},
 			wantUpdateErr: true,
 		},
@@ -158,13 +169,71 @@ func TestSegmentDisplay(t *testing.T) {
 			wantCapacity: 3,
 		},
 		{
+			desc: "uses the dot segment for a colon",
+			opts: []Option{
+				GapPercent(0),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows),
+			update: func(sd *SegmentDisplay) error {
+				return sd.Write([]*TextChunk{NewChunk("1:3")})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				for _, tc := range []struct {
+					char rune
+					area image.Rectangle
+				}{
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{':', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2, 0, segdisp.MinCols*3, segdisp.MinRows)},
+				} {
+					mustDrawChar(cvs, tc.char, tc.area)
+				}
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCapacity: 3,
+		},
+		{
+			desc: "uses the dot segment for a dot",
+			opts: []Option{
+				GapPercent(0),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows),
+			update: func(sd *SegmentDisplay) error {
+				return sd.Write([]*TextChunk{NewChunk("1.3")})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				for _, tc := range []struct {
+					char rune
+					area image.Rectangle
+				}{
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'.', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2, 0, segdisp.MinCols*3, segdisp.MinRows)},
+				} {
+					mustDrawChar(cvs, tc.char, tc.area)
+				}
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCapacity: 3,
+		},
+		{
 			desc: "write sanitizes text by default",
 			opts: []Option{
 				GapPercent(0),
 			},
 			canvas: image.Rect(0, 0, segdisp.MinCols*2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
-				return sd.Write([]*TextChunk{NewChunk(".1")})
+				return sd.Write([]*TextChunk{NewChunk("←1")})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -184,7 +253,7 @@ func TestSegmentDisplay(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, segdisp.MinCols*2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
-				return sd.Write([]*TextChunk{NewChunk(".1", WriteSanitize())})
+				return sd.Write([]*TextChunk{NewChunk("←1", WriteSanitize())})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -260,18 +329,14 @@ func TestSegmentDisplay(t *testing.T) {
 				mustDrawChar(
 					cvs, '1',
 					image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
-					sixteen.CellOpts(
-						cell.FgColor(cell.ColorRed),
-						cell.BgColor(cell.ColorBlue),
-					),
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
 				)
 				mustDrawChar(
 					cvs, '2',
 					image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows),
-					sixteen.CellOpts(
-						cell.FgColor(cell.ColorGreen),
-						cell.BgColor(cell.ColorYellow),
-					),
+					cell.FgColor(cell.ColorGreen),
+					cell.BgColor(cell.ColorYellow),
 				)
 
 				testcanvas.MustApply(cvs, ft)

@@ -224,3 +224,35 @@ func ShrinkPercent(area image.Rectangle, topPerc, rightPerc, bottomPerc, leftPer
 	left := area.Dx() * leftPerc / 100
 	return Shrink(area, top, right, bottom, left)
 }
+
+// MoveUp returns a new area that is moved up by the specified amount of cells.
+// Returns an error if the move would result in negative Y coordinates.
+// The values must be zero or positive integers.
+func MoveUp(area image.Rectangle, cells int) (image.Rectangle, error) {
+	if min := 0; cells < min {
+		return image.ZR, fmt.Errorf("cannot move area %v up by %d cells, must be in range %d <= value", area, cells, min)
+	}
+
+	if area.Min.Y < cells {
+		return image.ZR, fmt.Errorf("cannot move area %v up by %d cells, would result in negative Y coordinate", area, cells)
+	}
+
+	moved := area
+	moved.Min.Y -= cells
+	moved.Max.Y -= cells
+	return moved, nil
+}
+
+// MoveDown returns a new area that is moved down by the specified amount of
+// cells.
+// The values must be zero or positive integers.
+func MoveDown(area image.Rectangle, cells int) (image.Rectangle, error) {
+	if min := 0; cells < min {
+		return image.ZR, fmt.Errorf("cannot move area %v down by %d cells, must be in range %d <= value", area, cells, min)
+	}
+
+	moved := area
+	moved.Min.Y += cells
+	moved.Max.Y += cells
+	return moved, nil
+}

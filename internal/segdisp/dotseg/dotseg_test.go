@@ -22,9 +22,12 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/internal/segdisp"
+	"github.com/mum4k/termdash/internal/segdisp/segment"
+	"github.com/mum4k/termdash/internal/segdisp/segment/testsegment"
 )
 
 func TestDraw(t *testing.T) {
@@ -101,6 +104,28 @@ func TestDraw(t *testing.T) {
 		{
 			desc:       "empty when no segments set",
 			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+		},
+		{
+			desc:       "smallest valid display 6x5, all segments",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal)   // D1
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal) // D2
+				testsegment.MustHV(bc, image.Rect(5, 18, 7, 20), segment.Horizontal) // D3
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
 		},
 	}
 

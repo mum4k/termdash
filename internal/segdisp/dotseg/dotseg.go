@@ -44,6 +44,7 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/segdisp"
+	"github.com/mum4k/termdash/internal/segdisp/segment"
 )
 
 // Segment represents a single segment in the display.
@@ -214,10 +215,29 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		o.set(d)
 	}
 
-	bc, _, err := segdisp.ToBraille(cvs)
+	bc, bcAr, err := segdisp.ToBraille(cvs)
 	if err != nil {
 		return err
 	}
 
-	return bc.CopyTo(cvs)
+	attr := newAttributes(bcAr)
+	for seg, isSet := range d.segments {
+		if !isSet {
+			continue
+		}
+
+		ar, err := attr.segArea(seg)
+		if err != nil {
+			return err
+		}
+		if err := segment.HV(bc, ar, segment.Vertical, segment.CellOpts(d.cellOpts...)); err != nil {
+			return err
+		}
+	}
+
+	if err := bc.CopyTo(cvs); err != nil {
+		return err
+	}
+	return nil
+	//draw.Border(cvs, cvs.Area())
 }

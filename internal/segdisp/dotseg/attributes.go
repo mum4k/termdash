@@ -29,22 +29,6 @@ import (
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 )
 
-// segmentSize given an area for the display determines the size of individual
-// segments, i.e. the width of a vertical or the height of a horizontal
-// segment.
-func segmentSize(ar image.Rectangle) int {
-	// widthPerc is the relative width of a segment to the width of the canvas.
-	const widthPerc = 9
-	s := int(math.Round(float64(ar.Dx()) * widthPerc / 100))
-	if s > 3 && s%2 == 0 {
-		// Segments with odd number of pixels in their width/height look
-		// better, since the spike at the top of their slopes has only one
-		// pixel.
-		s++
-	}
-	return s
-}
-
 // attributes contains attributes needed to draw the segment display.
 // Refer to doc/segment_placement.svg for a visual aid and explanation of the
 // usage of the square roots.

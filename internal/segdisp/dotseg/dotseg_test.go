@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
@@ -122,6 +123,85 @@ func TestDraw(t *testing.T) {
 
 				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal)   // D1
 				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal) // D2
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal) // D3
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "smallest valid display 6x5, all segments, sets cell options",
+			opts: []Option{
+				CellOpts(
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorGreen),
+				),
+			},
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				opts := []segment.Option{
+					segment.CellOpts(
+						cell.FgColor(cell.ColorRed),
+						cell.BgColor(cell.ColorGreen),
+					),
+				}
+				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal, opts...)   // D1
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal, opts...) // D2
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal, opts...) // D5
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, D1",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				return d.SetSegment(D1)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal) // D1
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, D2",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				return d.SetSegment(D2)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal) // D2
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "smallest valid display 6x5, D3",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				return d.SetSegment(D3)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
 				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal) // D3
 				testbraille.MustApply(bc, ft)
 				return ft

@@ -23,6 +23,7 @@ import (
 	"math"
 
 	"github.com/mum4k/termdash/internal/numbers"
+	"github.com/mum4k/termdash/internal/segdisp"
 	"github.com/mum4k/termdash/internal/segdisp/segment"
 )
 
@@ -48,22 +49,6 @@ var diaSegType = map[Segment]segment.DiagonalType{
 	K: segment.RightToLeft,
 	N: segment.RightToLeft,
 	L: segment.LeftToRight,
-}
-
-// segmentSize given an area for the display determines the size of individual
-// segments, i.e. the width of a vertical or the height of a horizontal
-// segment.
-func segmentSize(ar image.Rectangle) int {
-	// widthPerc is the relative width of a segment to the width of the canvas.
-	const widthPerc = 9
-	s := int(math.Round(float64(ar.Dx()) * widthPerc / 100))
-	if s > 3 && s%2 == 0 {
-		// Segments with odd number of pixels in their width/height look
-		// better, since the spike at the top of their slopes has only one
-		// pixel.
-		s++
-	}
-	return s
 }
 
 // attributes contains attributes needed to draw the segment display.
@@ -115,7 +100,7 @@ type attributes struct {
 // newAttributes calculates attributes needed to place the segments for the
 // provided pixel area.
 func newAttributes(bcAr image.Rectangle) *attributes {
-	segSize := segmentSize(bcAr)
+	segSize := segdisp.SegmentSize(bcAr)
 
 	// diaPerc is the size of the diaGap in percentage of the segment's size.
 	const diaPerc = 40

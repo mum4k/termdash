@@ -72,3 +72,19 @@ func ToBraille(cvs *canvas.Canvas) (*braille.Canvas, image.Rectangle, error) {
 	}
 	return bc, area.WithRatio(bc.Area(), aspectRatio), nil
 }
+
+// SegmentSize given an area for the display segment determines the size of
+// individual segments, i.e. the width of a vertical or the height of a
+// horizontal segment.
+func SegmentSize(ar image.Rectangle) int {
+	// widthPerc is the relative width of a segment to the width of the canvas.
+	const widthPerc = 9
+	s := int(math.Round(float64(ar.Dx()) * widthPerc / 100))
+	if s > 3 && s%2 == 0 {
+		// Segments with odd number of pixels in their width/height look
+		// better, since the spike at the top of their slopes has only one
+		// pixel.
+		s++
+	}
+	return s
+}

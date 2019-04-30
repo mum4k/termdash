@@ -125,3 +125,46 @@ func TestToBraille(t *testing.T) {
 		})
 	}
 }
+
+func TestSegmentSize(t *testing.T) {
+	tests := []struct {
+		desc string
+		ar   image.Rectangle
+		want int
+	}{
+		{
+			desc: "zero area",
+			ar:   image.ZR,
+			want: 0,
+		},
+		{
+			desc: "smallest segment size",
+			ar:   image.Rect(0, 0, 15, 1),
+			want: 1,
+		},
+		{
+			desc: "allows even size of two",
+			ar:   image.Rect(0, 0, 22, 1),
+			want: 2,
+		},
+		{
+			desc: "lands on even width, corrected to odd",
+			ar:   image.Rect(0, 0, 44, 1),
+			want: 5,
+		},
+		{
+			desc: "lands on odd width",
+			ar:   image.Rect(0, 0, 55, 1),
+			want: 5,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := SegmentSize(tc.ar)
+			if got != tc.want {
+				t.Errorf("SegmentSize => %d, want %d", got, tc.want)
+			}
+		})
+	}
+}

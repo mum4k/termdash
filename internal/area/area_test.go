@@ -871,3 +871,111 @@ func TestShrinkPercent(t *testing.T) {
 		})
 	}
 }
+
+func TestMoveUp(t *testing.T) {
+	tests := []struct {
+		desc    string
+		area    image.Rectangle
+		cells   int
+		want    image.Rectangle
+		wantErr bool
+	}{
+		{
+			desc:    "fails on negative cells",
+			area:    image.Rect(0, 0, 1, 1),
+			cells:   -1,
+			wantErr: true,
+		},
+		{
+			desc:    "zero area cannot be moved",
+			area:    image.ZR,
+			cells:   1,
+			wantErr: true,
+		},
+		{
+			desc:    "cannot move area beyond zero Y coordinate",
+			area:    image.Rect(0, 5, 1, 10),
+			cells:   6,
+			wantErr: true,
+		},
+		{
+			desc:  "move by zero cells is idempotent",
+			area:  image.Rect(0, 5, 1, 10),
+			cells: 0,
+			want:  image.Rect(0, 5, 1, 10),
+		},
+		{
+			desc:  "moves area up",
+			area:  image.Rect(0, 5, 1, 10),
+			cells: 3,
+			want:  image.Rect(0, 2, 1, 7),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := MoveUp(tc.area, tc.cells)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("MoveUp => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("MoveUp => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestMoveDown(t *testing.T) {
+	tests := []struct {
+		desc    string
+		area    image.Rectangle
+		cells   int
+		want    image.Rectangle
+		wantErr bool
+	}{
+		{
+			desc:    "fails on negative cells",
+			area:    image.Rect(0, 0, 1, 1),
+			cells:   -1,
+			wantErr: true,
+		},
+		{
+			desc:  "moves zero area",
+			area:  image.ZR,
+			cells: 1,
+			want:  image.Rect(0, 1, 0, 1),
+		},
+		{
+			desc:  "move by zero cells is idempotent",
+			area:  image.Rect(0, 5, 1, 10),
+			cells: 0,
+			want:  image.Rect(0, 5, 1, 10),
+		},
+		{
+			desc:  "moves area down",
+			area:  image.Rect(0, 5, 1, 10),
+			cells: 3,
+			want:  image.Rect(0, 8, 1, 13),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := MoveDown(tc.area, tc.cells)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("MoveDown => unexpected error: %v, wantErr: %v", err, tc.wantErr)
+			}
+			if err != nil {
+				return
+			}
+
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("MoveDown => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}

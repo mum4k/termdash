@@ -23,6 +23,7 @@ import (
 	"math"
 
 	"github.com/mum4k/termdash/internal/numbers"
+	"github.com/mum4k/termdash/internal/segdisp"
 	"github.com/mum4k/termdash/internal/segdisp/segment"
 )
 
@@ -50,26 +51,10 @@ var diaSegType = map[Segment]segment.DiagonalType{
 	L: segment.LeftToRight,
 }
 
-// segmentSize given an area for the display determines the size of individual
-// segments, i.e. the width of a vertical or the height of a horizontal
-// segment.
-func segmentSize(ar image.Rectangle) int {
-	// widthPerc is the relative width of a segment to the width of the canvas.
-	const widthPerc = 9
-	s := int(math.Round(float64(ar.Dx()) * widthPerc / 100))
-	if s > 3 && s%2 == 0 {
-		// Segments with odd number of pixels in their width/height look
-		// better, since the spike at the top of their slopes has only one
-		// pixel.
-		s++
-	}
-	return s
-}
-
-// attributes contains attributes needed to draw the segment display.
+// Attributes contains attributes needed to draw the segment display.
 // Refer to doc/segment_placement.svg for a visual aid and explanation of the
 // usage of the square roots.
-type attributes struct {
+type Attributes struct {
 	// segSize is the width of a vertical or height of a horizontal segment.
 	segSize int
 
@@ -107,15 +92,15 @@ type attributes struct {
 	// vertCenY is the Y coordinate where the area of the segment vertically
 	// in the center starts, i.e. Y coordinate of G1 and G2.
 	vertCenY int
-	// vertBotY is the Y coordinate where the area of the segment vertically
+	// VertBotY is the Y coordinate where the area of the segment vertically
 	// at the bottom starts, i.e. Y coordinate of D1 and D2.
-	vertBotY int
+	VertBotY int
 }
 
-// newAttributes calculates attributes needed to place the segments for the
+// NewAttributes calculates attributes needed to place the segments for the
 // provided pixel area.
-func newAttributes(bcAr image.Rectangle) *attributes {
-	segSize := segmentSize(bcAr)
+func NewAttributes(bcAr image.Rectangle) *Attributes {
+	segSize := segdisp.SegmentSize(bcAr)
 
 	// diaPerc is the size of the diaGap in percentage of the segment's size.
 	const diaPerc = 40
@@ -162,7 +147,7 @@ func newAttributes(bcAr image.Rectangle) *attributes {
 	vertCenY := horizLeftX + longLen + offset
 	vertBotY := horizLeftX + longLen + ptp + longLen + offset
 
-	return &attributes{
+	return &Attributes{
 		segSize:     segSize,
 		diaGap:      diaGap,
 		segPeakDist: segPeakDist,
@@ -175,12 +160,12 @@ func newAttributes(bcAr image.Rectangle) *attributes {
 		horizMidX:   horizMidX,
 		horizRightX: horizRightX,
 		vertCenY:    vertCenY,
-		vertBotY:    vertBotY,
+		VertBotY:    vertBotY,
 	}
 }
 
 // hvSegArea returns the area for the specified horizontal or vertical segment.
-func (a *attributes) hvSegArea(s Segment) image.Rectangle {
+func (a *Attributes) hvSegArea(s Segment) image.Rectangle {
 	var (
 		start  image.Point
 		length int
@@ -233,12 +218,12 @@ func (a *attributes) hvSegArea(s Segment) image.Rectangle {
 		length = a.longLen
 
 	case D1:
-		start = image.Point{a.horizLeftX, a.vertBotY}
+		start = image.Point{a.horizLeftX, a.VertBotY}
 		length = a.shortLen
 
 	case D2:
 		d1 := a.hvSegArea(D1)
-		start = image.Point{d1.Max.X + a.peakToPeak, a.vertBotY}
+		start = image.Point{d1.Max.X + a.peakToPeak, a.VertBotY}
 		length = a.shortLen
 
 	default:
@@ -250,7 +235,7 @@ func (a *attributes) hvSegArea(s Segment) image.Rectangle {
 
 // hvArFromStart given start coordinates of a segment, its length and its type,
 // determines its area.
-func (a *attributes) hvArFromStart(start image.Point, s Segment, length int) image.Rectangle {
+func (a *Attributes) hvArFromStart(start image.Point, s Segment, length int) image.Rectangle {
 	st := hvSegType[s]
 	switch st {
 	case segment.Horizontal:
@@ -263,7 +248,7 @@ func (a *attributes) hvArFromStart(start image.Point, s Segment, length int) ima
 }
 
 // diaSegArea returns the area for the specified diagonal segment.
-func (a *attributes) diaSegArea(s Segment) image.Rectangle {
+func (a *Attributes) diaSegArea(s Segment) image.Rectangle {
 	switch s {
 	case H:
 		return a.diaBetween(A1, F, J, G1)
@@ -281,7 +266,7 @@ func (a *attributes) diaSegArea(s Segment) image.Rectangle {
 
 // diaBetween given four segments (two horizontal and two vertical) returns the
 // area between them for a diagonal segment.
-func (a *attributes) diaBetween(top, left, right, bottom Segment) image.Rectangle {
+func (a *Attributes) diaBetween(top, left, right, bottom Segment) image.Rectangle {
 	topAr := a.hvSegArea(top)
 	leftAr := a.hvSegArea(left)
 	rightAr := a.hvSegArea(right)

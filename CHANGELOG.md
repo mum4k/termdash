@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The `SegmentDisplay` can now display dots and colons ('.' and ':').
 - The `Donut` widget now guarantees spacing between the donut and its label.
 
 ### Fixed

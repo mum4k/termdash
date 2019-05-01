@@ -31,6 +31,34 @@ import (
 	"github.com/mum4k/termdash/internal/segdisp/segment/testsegment"
 )
 
+func TestSegmentString(t *testing.T) {
+	tests := []struct {
+		desc string
+		seg  Segment
+		want string
+	}{
+		{
+			desc: "known segment",
+			seg:  D1,
+			want: "D1",
+		},
+		{
+			desc: "unknown segment",
+			seg:  Segment(-1),
+			want: "SegmentUnknown",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := tc.seg.String()
+			if got != tc.want {
+				t.Errorf("String => %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestDraw(t *testing.T) {
 	tests := []struct {
 		desc       string
@@ -129,8 +157,42 @@ func TestDraw(t *testing.T) {
 			},
 		},
 		{
-			desc: "smallest valid display 6x5, all segments, sets cell options",
+			desc: "smallest valid display 6x5, all segments, New sets cell options",
 			opts: []Option{
+				CellOpts(
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorGreen),
+				),
+			},
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				opts := []segment.Option{
+					segment.CellOpts(
+						cell.FgColor(cell.ColorRed),
+						cell.BgColor(cell.ColorGreen),
+					),
+				}
+				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal, opts...)   // D1
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal, opts...) // D2
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal, opts...) // D5
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc: "smallest valid display 6x5, all segments, Draw sets cell options",
+			drawOpts: []Option{
 				CellOpts(
 					cell.FgColor(cell.ColorRed),
 					cell.BgColor(cell.ColorGreen),
@@ -203,6 +265,145 @@ func TestDraw(t *testing.T) {
 				bc := testbraille.MustNew(ft.Area())
 
 				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal) // D3
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "clears segment",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				return d.ClearSegment(D1)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal) // D2
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal) // D3
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "clears the display",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				d.Clear()
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				return ft
+			},
+		},
+		{
+			desc:       "clear sets new cell options",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				d.Clear(CellOpts(
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorGreen),
+				))
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				opts := []segment.Option{
+					segment.CellOpts(
+						cell.FgColor(cell.ColorRed),
+						cell.BgColor(cell.ColorGreen),
+					),
+				}
+				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal, opts...)   // D1
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal, opts...) // D2
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal, opts...) // D5
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "toggles segment off",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				return d.ToggleSegment(D1)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal) // D2
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal) // D3
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+		{
+			desc:       "toggles segment on",
+			cellCanvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				if err := d.ToggleSegment(D1); err != nil {
+					return err
+				}
+				return d.ToggleSegment(D1)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(5, 6, 7, 8), segment.Horizontal)   // D1
+				testsegment.MustHV(bc, image.Rect(5, 12, 7, 14), segment.Horizontal) // D2
+				testsegment.MustHV(bc, image.Rect(5, 15, 7, 17), segment.Horizontal) // D3
+				testbraille.MustApply(bc, ft)
+				return ft
+			},
+		},
+
+		{
+			desc:       "larger display 18x15, all segments",
+			cellCanvas: image.Rect(0, 0, 3*segdisp.MinCols, 3*segdisp.MinRows),
+			update: func(d *Display) error {
+				for _, seg := range AllSegments() {
+					if err := d.SetSegment(seg); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				bc := testbraille.MustNew(ft.Area())
+
+				testsegment.MustHV(bc, image.Rect(15, 18, 21, 24), segment.Horizontal) // D1
+				testsegment.MustHV(bc, image.Rect(15, 36, 21, 42), segment.Horizontal) // D2
+				testsegment.MustHV(bc, image.Rect(15, 51, 21, 57), segment.Horizontal) // D3
 				testbraille.MustApply(bc, ft)
 				return ft
 			},

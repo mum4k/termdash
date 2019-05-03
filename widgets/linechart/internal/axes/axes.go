@@ -18,6 +18,8 @@ package axes
 import (
 	"fmt"
 	"image"
+
+	"github.com/mum4k/termdash/internal/runewidth"
 )
 
 const (
@@ -128,7 +130,7 @@ func NewYDetails(cvsAr image.Rectangle, yp *YProperties) (*YDetails, error) {
 func longestLabel(labels []*Label) int {
 	var widest int
 	for _, label := range labels {
-		if l := len(label.Value.Text()); l > widest {
+		if l := runewidth.StringWidth(label.Value.Text()); l > widest {
 			widest = l
 		}
 	}

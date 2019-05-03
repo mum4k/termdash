@@ -213,8 +213,8 @@ func TestY(t *testing.T) {
 				End:   image.Point{1, 2},
 				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored, testValueFormatter),
 				Labels: []*Label{
-					{NewFormattedValue(0, nonZeroDecimals, testValueFormatter), image.Point{0, 1}},
-					{NewFormattedValue(1.72, nonZeroDecimals, testValueFormatter), image.Point{0, 0}},
+					{NewValue(0, nonZeroDecimals, ValueFormatter(testValueFormatter)), image.Point{0, 1}},
+					{NewValue(1.72, nonZeroDecimals, ValueFormatter(testValueFormatter)), image.Point{0, 0}},
 				},
 			},
 		},

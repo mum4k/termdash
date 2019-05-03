@@ -69,7 +69,7 @@ type YScale struct {
 
 	// valueFormatter is the value formatter used for the labels
 	// represented by the values on the scale.
-	valueFormatter valueFormatter
+	valueFormatter func(float64) string
 }
 
 // String implements fmt.Stringer.
@@ -82,7 +82,7 @@ func (ys *YScale) String() string {
 // calculated scale, see NewValue for details.
 // Max must be greater or equal to min. The graphHeight must be a positive
 // number.
-func NewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode, valueFormatter valueFormatter) (*YScale, error) {
+func NewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode, valueFormatter func(float64) string) (*YScale, error) {
 	if max < min {
 		return nil, fmt.Errorf("max(%v) cannot be less than min(%v)", max, min)
 	}
@@ -199,12 +199,13 @@ func (ys *YScale) CellLabel(y int) (*Value, error) {
 // yScaleNewValue is a helper method to get new values for the y scale
 // that selects the correct value factory method  depending on the passed
 // arguments.
-func yScaleNewValue(value float64, nonZeroDecimals int, valueFormatter valueFormatter) *Value {
+func yScaleNewValue(value float64, nonZeroDecimals int, valueFormatter func(float64) string) *Value {
+	opts := []ValueOption{}
 	if valueFormatter != nil {
-		return NewFormattedValue(value, nonZeroDecimals, valueFormatter)
+		opts = append(opts, ValueFormatter(valueFormatter))
 	}
 
-	return NewValue(value, nonZeroDecimals)
+	return NewValue(value, nonZeroDecimals, opts...)
 }
 
 // XScale is the scale of the X axis.

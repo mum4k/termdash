@@ -73,7 +73,7 @@ type YProperties struct {
 	// ScaleMode determines how the Y axis scales.
 	ScaleMode YScaleMode
 	// ValueFormatter is the formatter used to format numeric values to string representation.
-	ValueFormatter valueFormatter
+	ValueFormatter func(float64) string
 }
 
 // NewYDetails retrieves details about the Y axis required to draw it on a

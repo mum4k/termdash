@@ -23,7 +23,30 @@ import (
 	"github.com/mum4k/termdash/internal/numbers"
 )
 
-type valueFormatter = func(float64) string
+// ValueOption is used to provide options to the NewValue function.
+type ValueOption interface {
+	// set sets the provided option.
+	set(*valueOptions)
+}
+
+type valueOptions struct {
+	formatter func(v float64) string
+}
+
+// valueOption implements ValueOption.
+type valueOption func(opts *valueOptions)
+
+// set implements ValueOption.set.
+func (vo valueOption) set(opts *valueOptions) {
+	vo(opts)
+}
+
+// ValueFormatter sets a custom formatter for the value.
+func ValueFormatter(formatter func(float64) string) ValueOption {
+	return valueOption(func(opts *valueOptions) {
+		opts.formatter = formatter
+	})
+}
 
 // Value represents one value.
 type Value struct {
@@ -38,10 +61,10 @@ type Value struct {
 	// NonZeroDecimals indicates the rounding precision used, it is provided on
 	// a call to newValue.
 	NonZeroDecimals int
-	// Formatter will format value to a string representation of the value,
-	// if Formatter is not present it will fallback to default format.
-	Formatter valueFormatter
 
+	// formatter will format value to a string representation of the value,
+	// if Formatter is not present it will fallback to default format.
+	formatter func(float64) string
 	// text value if this value was constructed using NewTextValue.
 	text string
 }
@@ -53,20 +76,19 @@ func (v *Value) String() string {
 
 // NewValue returns a new instance representing the provided value, rounding
 // the value up to the specified number of non-zero decimal places.
-func NewValue(v float64, nonZeroDecimals int) *Value {
-	return NewFormattedValue(v, nonZeroDecimals, nil)
-}
+func NewValue(v float64, nonZeroDecimals int, opts ...ValueOption) *Value {
+	opt := &valueOptions{}
+	for _, o := range opts {
+		o.set(opt)
+	}
 
-// NewFormattedValue returns a new instance representing the provided value,
-// using a value formatter.
-func NewFormattedValue(v float64, nonZeroDecimals int, formatter valueFormatter) *Value {
 	r, zd := numbers.RoundToNonZeroPlaces(v, nonZeroDecimals)
 	return &Value{
 		Value:           v,
 		Rounded:         r,
 		ZeroDecimals:    zd,
 		NonZeroDecimals: nonZeroDecimals,
-		Formatter:       formatter,
+		formatter:       opt.formatter,
 	}
 }
 
@@ -85,19 +107,19 @@ func (v *Value) Text() string {
 		return v.text
 	}
 
-	if v.Formatter != nil {
-		return v.Formatter(v.Value)
+	if v.formatter != nil {
+		return v.formatter(v.Value)
 	}
 
-	return v.defaultFormatter(v.Rounded)
+	return defaultFormatter(v.Rounded, v.NonZeroDecimals, v.ZeroDecimals)
 }
 
-func (v *Value) defaultFormatter(value float64) string {
+func defaultFormatter(value float64, nonZeroDecimals, zeroDecimals int) string {
 	if math.Ceil(value) == value {
 		return fmt.Sprintf("%.0f", value)
 	}
 
-	format := fmt.Sprintf("%%.%df", v.NonZeroDecimals+v.ZeroDecimals)
+	format := fmt.Sprintf("%%.%df", nonZeroDecimals+zeroDecimals)
 	t := fmt.Sprintf(format, value)
 	if len(t) > 10 {
 		t = fmt.Sprintf("%.2e", value)

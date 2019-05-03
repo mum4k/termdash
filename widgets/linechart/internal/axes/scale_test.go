@@ -22,8 +22,8 @@ import (
 )
 
 // mustNewYScale returns a new YScale or panics.
-func mustNewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode, formatter valueFormatter) *YScale {
-	s, err := NewYScale(min, max, graphHeight, nonZeroDecimals, mode, formatter)
+func mustNewYScale(min, max float64, graphHeight, nonZeroDecimals int, mode YScaleMode, valueFormatter func(float64) string) *YScale {
+	s, err := NewYScale(min, max, graphHeight, nonZeroDecimals, mode, valueFormatter)
 	if err != nil {
 		panic(err)
 	}

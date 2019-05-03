@@ -244,6 +244,12 @@ func TestText(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:    "fails when text contains non-printable characters",
+			rect:    image.Rect(0, 0, 3, 3),
+			text:    "a\tb",
+			wantErr: true,
+		},
+		{
 			desc:   "aligns text top and left",
 			rect:   image.Rect(1, 1, 4, 4),
 			text:   "a",

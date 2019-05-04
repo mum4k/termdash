@@ -75,7 +75,7 @@ func (t *Table) Write(c *Content) error {
 
 // Draw draws the Table widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (t *Table) Draw(cvs *canvas.Canvas) error {
+func (t *Table) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return nil

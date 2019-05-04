@@ -31,6 +31,7 @@ func TestTable(t *testing.T) {
 		opts          []Option
 		update        func(*Table) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantNewErr    bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
@@ -62,7 +63,7 @@ func TestTable(t *testing.T) {
 				}
 			}
 
-			err = tbl.Draw(c)
+			err = tbl.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

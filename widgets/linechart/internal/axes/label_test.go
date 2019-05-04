@@ -45,7 +45,7 @@ func TestYLabels(t *testing.T) {
 			min:         0,
 			max:         1,
 			graphHeight: 2,
-			labelWidth:  0,
+			labelWidth:  -1,
 			wantErr:     true,
 		},
 		{

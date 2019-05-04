@@ -1692,7 +1692,31 @@ func TestLineChartDraws(t *testing.T) {
 			writes: func(lc *LineChart) error {
 				return lc.Series("first", []float64{0, 100})
 			},
-			wantDrawErr: true,
+			wantCapacity: 38,
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				// Y and X axis.
+				lines := []draw.HVLine{
+					{Start: image.Point{0, 0}, End: image.Point{0, 8}},
+					{Start: image.Point{0, 8}, End: image.Point{19, 8}},
+				}
+				testdraw.MustHVLines(c, lines)
+
+				// Value labels.
+				testdraw.MustText(c, "0", image.Point{1, 9})
+				testdraw.MustText(c, "1", image.Point{19, 9})
+
+				// Braille line.
+				graphAr := image.Rect(1, 0, 20, 8)
+				bc := testbraille.MustNew(graphAr)
+				testdraw.MustBrailleLine(bc, image.Point{0, 31}, image.Point{36, 0})
+				testbraille.MustCopyTo(bc, c)
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
 		},
 		{
 			desc:   "custom Y-axis labels using a value formatter that returns very long strings",

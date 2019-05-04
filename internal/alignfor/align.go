@@ -90,14 +90,17 @@ func Rectangle(rect image.Rectangle, ar image.Rectangle, h align.Horizontal, v a
 // Text aligns the text within the given rectangle, returns the start point for the text.
 // For the purposes of the alignment this assumes that text will be trimmed if
 // it overruns the rectangle.
-// This only supports a single line of text, the text must not contain non-printable characters.
+// This only supports a single line of text, the text must not contain non-printable characters,
+// allows empty text.
 func Text(rect image.Rectangle, text string, h align.Horizontal, v align.Vertical) (image.Point, error) {
 	if strings.ContainsRune(text, '\n') {
 		return image.ZP, fmt.Errorf("the provided text contains a newline character: %q", text)
 	}
 
-	if err := wrap.ValidText(text); err != nil {
-		return image.ZP, fmt.Errorf("the provided text contains non printable character(s): %s", err)
+	if text != "" {
+		if err := wrap.ValidText(text); err != nil {
+			return image.ZP, fmt.Errorf("the provided text contains non printable character(s): %s", err)
+		}
 	}
 
 	cells := runewidth.StringWidth(text)

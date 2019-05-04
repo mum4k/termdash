@@ -73,7 +73,7 @@ func New(opts ...Option) (*BarChart, error) {
 
 // Draw draws the BarChart widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (bc *BarChart) Draw(cvs *canvas.Canvas) error {
+func (bc *BarChart) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
 
@@ -264,14 +264,17 @@ func (bc *BarChart) Values(values []int, max int, opts ...Option) error {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
 
-	if err := validateValues(values, max); err != nil {
+	// Copy to avoid external modifications. See #174.
+	v := make([]int, len(values))
+	copy(v, values)
+	if err := validateValues(v, max); err != nil {
 		return err
 	}
 
 	for _, opt := range opts {
 		opt.set(bc.opts)
 	}
-	bc.values = values
+	bc.values = v
 	bc.max = max
 	return nil
 }

@@ -34,6 +34,7 @@ func TestSparkLine(t *testing.T) {
 		opts          []Option
 		update        func(*SparkLine) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantCapacity  int
 		wantErr       bool
@@ -426,6 +427,30 @@ func TestSparkLine(t *testing.T) {
 			},
 			wantCapacity: 2,
 		},
+		{
+			desc: "regression for #174, protects against external data mutation",
+			update: func(sl *SparkLine) error {
+				values := []int{0, 1, 2, 3, 4, 5, 6, 7, 8}
+				if err := sl.Add(values); err != nil {
+					return err
+				}
+				// Mutation should have no effect.
+				values[0] = 8
+				return nil
+			},
+			canvas: image.Rect(0, 0, 9, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "▁▂▃▄▅▆▇█", image.Point{1, 0}, draw.TextCellOpts(
+					cell.FgColor(DefaultColor),
+				))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+			wantCapacity: 9,
+		},
 	}
 
 	for _, tc := range tests {
@@ -451,7 +476,7 @@ func TestSparkLine(t *testing.T) {
 				return
 			}
 
-			err = sp.Draw(c)
+			err = sp.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

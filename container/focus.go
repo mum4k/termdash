@@ -73,9 +73,9 @@ func (ft *focusTracker) isActive(c *Container) bool {
 	return ft.container == c
 }
 
-// active returns the currently focused container.
-func (ft *focusTracker) active() *Container {
-	return ft.container
+// setActive sets the currently active container to the one provided.
+func (ft *focusTracker) setActive(c *Container) {
+	ft.container = c
 }
 
 // mouse identifies mouse events that change the focused container and track
@@ -97,4 +97,20 @@ func (ft *focusTracker) mouse(target *Container, m *terminalapi.Mouse) {
 // mouse clicks.
 func (ft *focusTracker) updateArea(ar image.Rectangle) {
 	ft.buttonFSM.UpdateArea(ar)
+}
+
+// reachableFrom asserts whether the currently focused container is reachable
+// from the provided node in the tree.
+func (ft *focusTracker) reachableFrom(node *Container) bool {
+	var (
+		errStr    string
+		reachable bool
+	)
+	preOrder(node, &errStr, visitFunc(func(c *Container) error {
+		if c == ft.container {
+			reachable = true
+		}
+		return nil
+	}))
+	return reachable
 }

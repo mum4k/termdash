@@ -24,6 +24,9 @@ import (
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/testcanvas"
 	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/internal/segdisp"
+	"github.com/mum4k/termdash/internal/segdisp/dotseg"
+	"github.com/mum4k/termdash/internal/segdisp/dotseg/testdotseg"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen/testsixteen"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -31,11 +34,20 @@ import (
 )
 
 // mustDrawChar draws the provided character in the area of the canvas or panics.
-func mustDrawChar(cvs *canvas.Canvas, char rune, ar image.Rectangle, opts ...sixteen.Option) {
-	d := sixteen.New()
-	testsixteen.MustSetCharacter(d, char)
+func mustDrawChar(cvs *canvas.Canvas, char rune, ar image.Rectangle, cOpts ...cell.Option) {
 	c := testcanvas.MustNew(ar)
-	testsixteen.MustDraw(d, c, opts...)
+	switch {
+	case char == '.' || char == ':':
+		d := dotseg.New()
+		testdotseg.MustSetCharacter(d, char)
+		testdotseg.MustDraw(d, c, dotseg.CellOpts(cOpts...))
+
+	default:
+		d := sixteen.New()
+		testsixteen.MustSetCharacter(d, char)
+		testsixteen.MustDraw(d, c, sixteen.CellOpts(cOpts...))
+	}
+
 	testcanvas.MustCopyTo(c, cvs)
 }
 
@@ -45,7 +57,9 @@ func TestSegmentDisplay(t *testing.T) {
 		opts          []Option
 		update        func(*SegmentDisplay) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
+		wantCapacity  int
 		wantNewErr    bool
 		wantUpdateErr bool // whether to expect an error on a call to the update function
 		wantDrawErr   bool
@@ -55,7 +69,7 @@ func TestSegmentDisplay(t *testing.T) {
 			opts: []Option{
 				GapPercent(-1),
 			},
-			canvas:     image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas:     image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			wantNewErr: true,
 		},
 		{
@@ -63,12 +77,12 @@ func TestSegmentDisplay(t *testing.T) {
 			opts: []Option{
 				GapPercent(101),
 			},
-			canvas:     image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas:     image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			wantNewErr: true,
 		},
 		{
 			desc:   "write fails on invalid GapPercent (too low)",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write(
 					[]*TextChunk{NewChunk("1")},
@@ -79,7 +93,7 @@ func TestSegmentDisplay(t *testing.T) {
 		},
 		{
 			desc:   "write fails on invalid GapPercent (too high)",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write(
 					[]*TextChunk{NewChunk("1")},
@@ -90,7 +104,7 @@ func TestSegmentDisplay(t *testing.T) {
 		},
 		{
 			desc:   "fails on area too small for a segment",
-			canvas: image.Rect(0, 0, sixteen.MinCols-1, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols-1, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("1")})
 			},
@@ -98,7 +112,7 @@ func TestSegmentDisplay(t *testing.T) {
 		},
 		{
 			desc:   "write fails without chunks",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write(nil)
 			},
@@ -106,7 +120,7 @@ func TestSegmentDisplay(t *testing.T) {
 		},
 		{
 			desc:   "write fails with an empty chunk",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("")})
 			},
@@ -114,22 +128,23 @@ func TestSegmentDisplay(t *testing.T) {
 		},
 		{
 			desc:   "write fails on unsupported characters when requested",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
-				return sd.Write([]*TextChunk{NewChunk(".", WriteErrOnUnsupported())})
+				return sd.Write([]*TextChunk{NewChunk("←", WriteErrOnUnsupported())})
 			},
 			wantUpdateErr: true,
 		},
 		{
-			desc:   "draws empty without text",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			desc:         "draws empty without text",
+			canvas:       image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+			wantCapacity: 1,
 		},
 		{
 			desc: "draws multiple segments, all fit exactly",
 			opts: []Option{
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -141,9 +156,9 @@ func TestSegmentDisplay(t *testing.T) {
 					char rune
 					area image.Rectangle
 				}{
-					{'1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows)},
-					{'2', image.Rect(sixteen.MinCols, 0, sixteen.MinCols*2, sixteen.MinRows)},
-					{'3', image.Rect(sixteen.MinCols*2, 0, sixteen.MinCols*3, sixteen.MinRows)},
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'2', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2, 0, segdisp.MinCols*3, segdisp.MinRows)},
 				} {
 					mustDrawChar(cvs, tc.char, tc.area)
 				}
@@ -151,48 +166,109 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
+		},
+		{
+			desc: "uses the dot segment for a colon",
+			opts: []Option{
+				GapPercent(0),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows),
+			update: func(sd *SegmentDisplay) error {
+				return sd.Write([]*TextChunk{NewChunk("1:3")})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				for _, tc := range []struct {
+					char rune
+					area image.Rectangle
+				}{
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{':', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2, 0, segdisp.MinCols*3, segdisp.MinRows)},
+				} {
+					mustDrawChar(cvs, tc.char, tc.area)
+				}
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCapacity: 3,
+		},
+		{
+			desc: "uses the dot segment for a dot",
+			opts: []Option{
+				GapPercent(0),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows),
+			update: func(sd *SegmentDisplay) error {
+				return sd.Write([]*TextChunk{NewChunk("1.3")})
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				for _, tc := range []struct {
+					char rune
+					area image.Rectangle
+				}{
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'.', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2, 0, segdisp.MinCols*3, segdisp.MinRows)},
+				} {
+					mustDrawChar(cvs, tc.char, tc.area)
+				}
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "write sanitizes text by default",
 			opts: []Option{
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
-				return sd.Write([]*TextChunk{NewChunk(".1")})
+				return sd.Write([]*TextChunk{NewChunk("←1")})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(sixteen.MinCols, 0, sixteen.MinCols*2, sixteen.MinRows))
+				mustDrawChar(cvs, '1', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "write sanitizes text with option",
 			opts: []Option{
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
-				return sd.Write([]*TextChunk{NewChunk(".1", WriteSanitize())})
+				return sd.Write([]*TextChunk{NewChunk("←1", WriteSanitize())})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(sixteen.MinCols, 0, sixteen.MinCols*2, sixteen.MinRows))
+				mustDrawChar(cvs, '1', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc:   "aligns segment vertical middle by default",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("1")})
 			},
@@ -200,15 +276,16 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(0, 1, sixteen.MinCols, sixteen.MinRows+1))
+				mustDrawChar(cvs, '1', image.Rect(0, 1, segdisp.MinCols, segdisp.MinRows+1))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc:   "subsequent calls to write overwrite previous text",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
 					return err
@@ -219,18 +296,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '4', image.Rect(0, 1, sixteen.MinCols, sixteen.MinRows+1))
+				mustDrawChar(cvs, '4', image.Rect(0, 1, segdisp.MinCols, segdisp.MinRows+1))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "sets cell options per text chunk",
 			opts: []Option{
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write(
 					[]*TextChunk{
@@ -250,28 +328,28 @@ func TestSegmentDisplay(t *testing.T) {
 
 				mustDrawChar(
 					cvs, '1',
-					image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
-					sixteen.CellOpts(
-						cell.FgColor(cell.ColorRed),
-						cell.BgColor(cell.ColorBlue),
-					),
+					image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
+					cell.FgColor(cell.ColorRed),
+					cell.BgColor(cell.ColorBlue),
 				)
 				mustDrawChar(
 					cvs, '2',
-					image.Rect(sixteen.MinCols, 0, sixteen.MinCols*2, sixteen.MinRows),
-					sixteen.CellOpts(
-						cell.FgColor(cell.ColorGreen),
-						cell.BgColor(cell.ColorYellow),
-					),
+					image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows),
+					cell.FgColor(cell.ColorGreen),
+					cell.BgColor(cell.ColorYellow),
 				)
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
-			desc:   "reset resets the text content",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			desc: "reset resets the text content and reports capacity when maximizing fit and with gaps",
+			opts: []Option{
+				MaximizeDisplayedText(),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
 					return err
@@ -279,10 +357,58 @@ func TestSegmentDisplay(t *testing.T) {
 				sd.Reset()
 				return nil
 			},
+			wantCapacity: 2,
+		},
+		{
+			desc: "reset resets the text content and reports capacity when maximizing fit and without gaps",
+			opts: []Option{
+				GapPercent(0),
+				MaximizeDisplayedText(),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows+2),
+			update: func(sd *SegmentDisplay) error {
+				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
+					return err
+				}
+				sd.Reset()
+				return nil
+			},
+			wantCapacity: 3,
+		},
+		{
+			desc: "reset resets the text content and reports capacity when maximizing segment height and gaps",
+			opts: []Option{
+				MaximizeSegmentHeight(),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows+2),
+			update: func(sd *SegmentDisplay) error {
+				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
+					return err
+				}
+				sd.Reset()
+				return nil
+			},
+			wantCapacity: 2,
+		},
+		{
+			desc: "reset resets the text content and reports capacity when maximizing segment height and no gaps",
+			opts: []Option{
+				GapPercent(0),
+				MaximizeSegmentHeight(),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows+2),
+			update: func(sd *SegmentDisplay) error {
+				if err := sd.Write([]*TextChunk{NewChunk("123")}); err != nil {
+					return err
+				}
+				sd.Reset()
+				return nil
+			},
+			wantCapacity: 2,
 		},
 		{
 			desc:   "reset resets provided cell options",
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				if err := sd.Write(
 					[]*TextChunk{
@@ -300,18 +426,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows))
+				mustDrawChar(cvs, '1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment vertical middle with option",
 			opts: []Option{
 				AlignVertical(align.VerticalMiddle),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("1")})
 			},
@@ -319,18 +446,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(0, 1, sixteen.MinCols, sixteen.MinRows+1))
+				mustDrawChar(cvs, '1', image.Rect(0, 1, segdisp.MinCols, segdisp.MinRows+1))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment vertical top with option",
 			opts: []Option{
 				AlignVertical(align.VerticalTop),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("1")})
 			},
@@ -338,18 +466,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows))
+				mustDrawChar(cvs, '1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "options given to Write override those given to New so aligns top",
 			opts: []Option{
 				AlignVertical(align.VerticalBottom),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write(
 					[]*TextChunk{NewChunk("1")},
@@ -360,18 +489,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows))
+				mustDrawChar(cvs, '1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment vertical bottom with option",
 			opts: []Option{
 				AlignVertical(align.VerticalBottom),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows+2),
+			canvas: image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows+2),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("1")})
 			},
@@ -379,15 +509,16 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '1', image.Rect(0, 2, sixteen.MinCols, sixteen.MinRows+2))
+				mustDrawChar(cvs, '1', image.Rect(0, 2, segdisp.MinCols, segdisp.MinRows+2))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc:   "aligns segment horizontal center by default",
-			canvas: image.Rect(0, 0, sixteen.MinCols+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("8")})
 			},
@@ -395,18 +526,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '8', image.Rect(1, 0, sixteen.MinCols+1, sixteen.MinRows))
+				mustDrawChar(cvs, '8', image.Rect(1, 0, segdisp.MinCols+1, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment horizontal center with option",
 			opts: []Option{
 				AlignHorizontal(align.HorizontalCenter),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("8")})
 			},
@@ -414,18 +546,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '8', image.Rect(1, 0, sixteen.MinCols+1, sixteen.MinRows))
+				mustDrawChar(cvs, '8', image.Rect(1, 0, segdisp.MinCols+1, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment horizontal left with option",
 			opts: []Option{
 				AlignHorizontal(align.HorizontalLeft),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("8")})
 			},
@@ -433,18 +566,19 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '8', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows))
+				mustDrawChar(cvs, '8', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "aligns segment horizontal right with option",
 			opts: []Option{
 				AlignHorizontal(align.HorizontalRight),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("8")})
 			},
@@ -452,11 +586,12 @@ func TestSegmentDisplay(t *testing.T) {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
 
-				mustDrawChar(cvs, '8', image.Rect(2, 0, sixteen.MinCols+2, sixteen.MinRows))
+				mustDrawChar(cvs, '8', image.Rect(2, 0, segdisp.MinCols+2, segdisp.MinRows))
 
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 1,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes segment height with option",
@@ -464,7 +599,7 @@ func TestSegmentDisplay(t *testing.T) {
 				MaximizeSegmentHeight(),
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -476,8 +611,8 @@ func TestSegmentDisplay(t *testing.T) {
 					char rune
 					area image.Rectangle
 				}{
-					{'1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows)},
-					{'2', image.Rect(sixteen.MinCols, 0, sixteen.MinCols*2, sixteen.MinRows)},
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'2', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows)},
 				} {
 					mustDrawChar(cvs, tc.char, tc.area)
 				}
@@ -485,13 +620,14 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes displayed text by default and fits all",
 			opts: []Option{
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows*4),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows*4),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -513,13 +649,14 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes displayed text but cannot fit all",
 			opts: []Option{
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows*4),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows*4),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("1234")})
 			},
@@ -541,6 +678,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments, not enough space, maximizes displayed text with option",
@@ -548,7 +686,7 @@ func TestSegmentDisplay(t *testing.T) {
 				MaximizeDisplayedText(),
 				GapPercent(0),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*3, sixteen.MinRows*4),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows*4),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -570,10 +708,11 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc:   "draws multiple segments with a gap by default",
-			canvas: image.Rect(0, 0, sixteen.MinCols*3+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -585,9 +724,9 @@ func TestSegmentDisplay(t *testing.T) {
 					char rune
 					area image.Rectangle
 				}{
-					{'1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows)},
-					{'2', image.Rect(sixteen.MinCols+1, 0, sixteen.MinCols*2+1, sixteen.MinRows)},
-					{'3', image.Rect(sixteen.MinCols*2+2, 0, sixteen.MinCols*3+2, sixteen.MinRows)},
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'2', image.Rect(segdisp.MinCols+1, 0, segdisp.MinCols*2+1, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2+2, 0, segdisp.MinCols*3+2, segdisp.MinRows)},
 				} {
 					mustDrawChar(cvs, tc.char, tc.area)
 				}
@@ -595,13 +734,14 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a gap, exact fit",
 			opts: []Option{
 				GapPercent(20),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*3+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -613,9 +753,9 @@ func TestSegmentDisplay(t *testing.T) {
 					char rune
 					area image.Rectangle
 				}{
-					{'1', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows)},
-					{'2', image.Rect(sixteen.MinCols+1, 0, sixteen.MinCols*2+1, sixteen.MinRows)},
-					{'3', image.Rect(sixteen.MinCols*2+2, 0, sixteen.MinCols*3+2, sixteen.MinRows)},
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'2', image.Rect(segdisp.MinCols+1, 0, segdisp.MinCols*2+1, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2+2, 0, segdisp.MinCols*3+2, segdisp.MinRows)},
 				} {
 					mustDrawChar(cvs, tc.char, tc.area)
 				}
@@ -623,13 +763,14 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a larger gap",
 			opts: []Option{
 				GapPercent(40),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*3+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -650,13 +791,14 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
 		},
 		{
 			desc: "draws multiple segments with a gap, not all fit, maximizes displayed text",
 			opts: []Option{
 				GapPercent(20),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*3+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*3+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("8888")})
 			},
@@ -668,9 +810,9 @@ func TestSegmentDisplay(t *testing.T) {
 					char rune
 					area image.Rectangle
 				}{
-					{'8', image.Rect(0, 0, sixteen.MinCols, sixteen.MinRows)},
-					{'8', image.Rect(sixteen.MinCols+1, 0, sixteen.MinCols*2+1, sixteen.MinRows)},
-					{'8', image.Rect(sixteen.MinCols*2+2, 0, sixteen.MinCols*3+2, sixteen.MinRows)},
+					{'8', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'8', image.Rect(segdisp.MinCols+1, 0, segdisp.MinCols*2+1, segdisp.MinRows)},
+					{'8', image.Rect(segdisp.MinCols*2+2, 0, segdisp.MinCols*3+2, segdisp.MinRows)},
 				} {
 					mustDrawChar(cvs, tc.char, tc.area)
 				}
@@ -678,13 +820,14 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a gap, not all fit, last segment would fit without a gap",
 			opts: []Option{
 				GapPercent(20),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*4+2, sixteen.MinRows),
+			canvas: image.Rect(0, 0, segdisp.MinCols*4+2, segdisp.MinRows),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("8888")})
 			},
@@ -706,6 +849,7 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 3,
 		},
 		{
 			desc: "draws multiple segments with a gap, not enough space, maximizes segment height with option",
@@ -713,7 +857,7 @@ func TestSegmentDisplay(t *testing.T) {
 				MaximizeSegmentHeight(),
 				GapPercent(20),
 			},
-			canvas: image.Rect(0, 0, sixteen.MinCols*5, sixteen.MinRows*2),
+			canvas: image.Rect(0, 0, segdisp.MinCols*5, segdisp.MinRows*2),
 			update: func(sd *SegmentDisplay) error {
 				return sd.Write([]*TextChunk{NewChunk("123")})
 			},
@@ -734,6 +878,42 @@ func TestSegmentDisplay(t *testing.T) {
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},
+			wantCapacity: 2,
+		},
+		{
+			desc: "regression for #174, protects against external data mutation",
+			opts: []Option{
+				GapPercent(0),
+			},
+			canvas: image.Rect(0, 0, segdisp.MinCols*3, segdisp.MinRows),
+			update: func(sd *SegmentDisplay) error {
+				chunks := []*TextChunk{NewChunk("123")}
+				if err := sd.Write(chunks); err != nil {
+					return err
+				}
+				// Mutates and adds unsupported characters.
+				chunks[0] = NewChunk("\r\t")
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				for _, tc := range []struct {
+					char rune
+					area image.Rectangle
+				}{
+					{'1', image.Rect(0, 0, segdisp.MinCols, segdisp.MinRows)},
+					{'2', image.Rect(segdisp.MinCols, 0, segdisp.MinCols*2, segdisp.MinRows)},
+					{'3', image.Rect(segdisp.MinCols*2, 0, segdisp.MinCols*3, segdisp.MinRows)},
+				} {
+					mustDrawChar(cvs, tc.char, tc.area)
+				}
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCapacity: 3,
 		},
 	}
 
@@ -762,7 +942,7 @@ func TestSegmentDisplay(t *testing.T) {
 				}
 			}
 
-			err = sd.Draw(c)
+			err = sd.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}
@@ -788,6 +968,10 @@ func TestSegmentDisplay(t *testing.T) {
 
 			if diff := faketerm.Diff(want, got); diff != "" {
 				t.Errorf("Draw => %v", diff)
+			}
+
+			if gotCapacity := sd.Capacity(); gotCapacity != tc.wantCapacity {
+				t.Errorf("Capacity => %d, want %d", gotCapacity, tc.wantCapacity)
 			}
 		})
 	}
@@ -820,7 +1004,7 @@ func TestOptions(t *testing.T) {
 	}
 	got := sd.Options()
 	want := widgetapi.Options{
-		MinimumSize:  image.Point{sixteen.MinCols, sixteen.MinRows},
+		MinimumSize:  image.Point{segdisp.MinCols, segdisp.MinRows},
 		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    widgetapi.MouseScopeNone,
 	}

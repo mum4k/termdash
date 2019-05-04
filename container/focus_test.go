@@ -237,6 +237,10 @@ func TestPointCont(t *testing.T) {
 			if err != nil {
 				t.Fatalf("tc.container => unexpected error: %v", err)
 			}
+			// Initial draw to determine sizes of containers.
+			if err := cont.Draw(); err != nil {
+				t.Fatalf("Draw => unexpected error: %v", err)
+			}
 			for _, pc := range tc.cases {
 				gotCont := pointCont(cont, pc.point)
 				if (gotCont == nil) != pc.wantNil {
@@ -410,6 +414,10 @@ func TestFocusTrackerMouse(t *testing.T) {
 
 			eds := event.NewDistributionSystem()
 			root.Subscribe(eds)
+			// Initial draw to determine sizes of containers.
+			if err := root.Draw(); err != nil {
+				t.Fatalf("Draw => unexpected error: %v", err)
+			}
 			for _, ev := range tc.events {
 				eds.Event(ev)
 			}

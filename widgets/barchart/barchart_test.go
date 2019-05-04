@@ -34,6 +34,7 @@ func TestBarChart(t *testing.T) {
 		opts          []Option
 		update        func(*BarChart) error // update gets called before drawing of the widget.
 		canvas        image.Rectangle
+		meta          *widgetapi.Meta
 		want          func(size image.Point) *faketerm.Terminal
 		wantCapacity  int
 		wantErr       bool
@@ -579,6 +580,61 @@ func TestBarChart(t *testing.T) {
 			},
 			wantCapacity: 3,
 		},
+		{
+			desc: "regression for #174, protects against external data mutation",
+			opts: []Option{
+				Char('o'),
+				Labels([]string{
+					"1",
+					"2",
+					"3",
+				}),
+			},
+			update: func(bc *BarChart) error {
+				values := []int{1, 2, 5, 10}
+				if err := bc.Values(values, 10); err != nil {
+					return err
+				}
+				values[0] = 100
+				return nil
+			},
+			canvas: image.Rect(0, 0, 7, 11),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 9, 1, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+				testdraw.MustRectangle(c, image.Rect(2, 8, 3, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+				testdraw.MustRectangle(c, image.Rect(4, 5, 5, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+				testdraw.MustRectangle(c, image.Rect(6, 0, 7, 10),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(DefaultBarColor)),
+				)
+
+				// Labels.
+				testdraw.MustText(c, "1", image.Point{0, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "2", image.Point{2, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testdraw.MustText(c, "3", image.Point{4, 10}, draw.TextCellOpts(
+					cell.FgColor(DefaultLabelColor),
+				))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+			wantCapacity: 4,
+		},
 	}
 
 	for _, tc := range tests {
@@ -605,7 +661,7 @@ func TestBarChart(t *testing.T) {
 				return
 			}
 
-			err = bc.Draw(c)
+			err = bc.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

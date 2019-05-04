@@ -15,8 +15,8 @@
 package wrap
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 	"unicode"
 
@@ -42,7 +42,7 @@ func TestValidTextAndCells(t *testing.T) {
 		{
 			desc: "all printable ASCII characters are allowed",
 			text: func() string {
-				var b bytes.Buffer
+				var b strings.Builder
 				for i := 0; i < unicode.MaxASCII; i++ {
 					r := rune(i)
 					if unicode.IsPrint(r) {
@@ -55,7 +55,7 @@ func TestValidTextAndCells(t *testing.T) {
 		{
 			desc: "all printable Unicode characters in the Latin-1 space are allowed",
 			text: func() string {
-				var b bytes.Buffer
+				var b strings.Builder
 				for i := 0; i < unicode.MaxLatin1; i++ {
 					r := rune(i)
 					if unicode.IsPrint(r) {

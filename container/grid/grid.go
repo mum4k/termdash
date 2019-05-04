@@ -109,18 +109,19 @@ func build(elems []Element, parentHeightPerc, parentWidthPerc int) []container.O
 
 	switch e := elem.(type) {
 	case *row:
+
 		if len(elems) > 0 {
 			perc := innerPerc(e.heightPerc, parentHeightPerc)
 			childHeightPerc := parentHeightPerc - e.heightPerc
 			return []container.Option{
 				container.SplitHorizontal(
-					container.Top(build(e.subElem, 100, parentWidthPerc)...),
+					container.Top(append(e.cOpts, build(e.subElem, 100, parentWidthPerc)...)...),
 					container.Bottom(build(elems, childHeightPerc, parentWidthPerc)...),
 					container.SplitPercent(perc),
 				),
 			}
 		}
-		return build(e.subElem, 100, parentWidthPerc)
+		return append(e.cOpts, build(e.subElem, 100, parentWidthPerc)...)
 
 	case *col:
 		if len(elems) > 0 {
@@ -128,13 +129,13 @@ func build(elems []Element, parentHeightPerc, parentWidthPerc int) []container.O
 			childWidthPerc := parentWidthPerc - e.widthPerc
 			return []container.Option{
 				container.SplitVertical(
-					container.Left(build(e.subElem, parentHeightPerc, 100)...),
+					container.Left(append(e.cOpts, build(e.subElem, parentHeightPerc, 100)...)...),
 					container.Right(build(elems, parentHeightPerc, childWidthPerc)...),
 					container.SplitPercent(perc),
 				),
 			}
 		}
-		return build(e.subElem, parentHeightPerc, 100)
+		return append(e.cOpts, build(e.subElem, parentHeightPerc, 100)...)
 
 	case *widget:
 		opts := e.cOpts
@@ -186,6 +187,9 @@ type row struct {
 
 	// subElem are the sub Rows or Columns or a single widget.
 	subElem []Element
+
+	// cOpts are the options for the row's container.
+	cOpts []container.Option
 }
 
 // isElement implements Element.isElement.
@@ -204,6 +208,9 @@ type col struct {
 
 	// subElem are the sub Rows or Columns or a single widget.
 	subElem []Element
+
+	// cOpts are the options for the column's container.
+	cOpts []container.Option
 }
 
 // isElement implements Element.isElement.
@@ -232,7 +239,9 @@ func (w *widget) String() string {
 func (widget) isElement() {}
 
 // RowHeightPerc creates a row of the specified height.
-// The height is supplied as height percentage of the outer container.
+// The height is supplied as height percentage of the parent element.
+// The sum of all heights at the same level cannot be larger than 100%. If it
+// is less that 100%, the last element stretches to the edge of the screen.
 // The subElements can be either a single Widget or any combination of Rows and
 // Columns.
 func RowHeightPerc(heightPerc int, subElements ...Element) Element {
@@ -242,14 +251,36 @@ func RowHeightPerc(heightPerc int, subElements ...Element) Element {
 	}
 }
 
+// RowHeightPercWithOpts is like RowHeightPerc, but also allows to apply
+// additional options to the container that represents the row.
+func RowHeightPercWithOpts(heightPerc int, cOpts []container.Option, subElements ...Element) Element {
+	return &row{
+		heightPerc: heightPerc,
+		subElem:    subElements,
+		cOpts:      cOpts,
+	}
+}
+
 // ColWidthPerc creates a column of the specified width.
-// The width is supplied as width percentage of the outer container.
+// The width is supplied as width percentage of the parent element.
+// The sum of all widths at the same level cannot be larger than 100%. If it
+// is less that 100%, the last element stretches to the edge of the screen.
 // The subElements can be either a single Widget or any combination of Rows and
 // Columns.
 func ColWidthPerc(widthPerc int, subElements ...Element) Element {
 	return &col{
 		widthPerc: widthPerc,
 		subElem:   subElements,
+	}
+}
+
+// ColWidthPercWithOpts is like ColWidthPerc, but also allows to apply
+// additional options to the container that represents the column.
+func ColWidthPercWithOpts(widthPerc int, cOpts []container.Option, subElements ...Element) Element {
+	return &col{
+		widthPerc: widthPerc,
+		subElem:   subElements,
+		cOpts:     cOpts,
 	}
 }
 

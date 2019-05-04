@@ -78,6 +78,52 @@ func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right im
 	return left, right, nil
 }
 
+// VSplitCells returns two new areas created by splitting the provided area
+// after the specified amount of cells of its width. The number of cells must
+// be a zero or a positive integer. Providing a zero returns left=image.ZR,
+// right=area. Providing a number equal or larger to area's width returns
+// left=area, right=image.ZR.
+func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
+	if min := 0; cells < min {
+		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
+	}
+	if cells == 0 {
+		return image.ZR, area, nil
+	}
+
+	width := area.Dx()
+	if cells >= width {
+		return area, image.ZR, nil
+	}
+
+	left = image.Rect(area.Min.X, area.Min.Y, area.Min.X+cells, area.Max.Y)
+	right = image.Rect(area.Min.X+cells, area.Min.Y, area.Max.X, area.Max.Y)
+	return left, right, nil
+}
+
+// HSplitCells returns two new areas created by splitting the provided area
+// after the specified amount of cells of its height. The number of cells must
+// be a zero or a positive integer. Providing a zero returns top=image.ZR,
+// bottom=area. Providing a number equal or larger to area's height returns
+// top=area, bottom=image.ZR.
+func HSplitCells(area image.Rectangle, cells int) (top image.Rectangle, bottom image.Rectangle, err error) {
+	if min := 0; cells < min {
+		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
+	}
+	if cells == 0 {
+		return image.ZR, area, nil
+	}
+
+	height := area.Dy()
+	if cells >= height {
+		return area, image.ZR, nil
+	}
+
+	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+cells)
+	bottom = image.Rect(area.Min.X, area.Min.Y+cells, area.Max.X, area.Max.Y)
+	return top, bottom, nil
+}
+
 // ExcludeBorder returns a new area created by subtracting a border around the
 // provided area. Return the zero area if there isn't enough space to exclude
 // the border.
@@ -140,16 +186,16 @@ func Shrink(area image.Rectangle, topCells, rightCells, bottomCells, leftCells i
 		}
 	}
 
-	shrinked := area
-	shrinked.Min.X, _ = numbers.MinMaxInts([]int{shrinked.Min.X + leftCells, shrinked.Max.X})
-	_, shrinked.Max.X = numbers.MinMaxInts([]int{shrinked.Max.X - rightCells, shrinked.Min.X})
-	shrinked.Min.Y, _ = numbers.MinMaxInts([]int{shrinked.Min.Y + topCells, shrinked.Max.Y})
-	_, shrinked.Max.Y = numbers.MinMaxInts([]int{shrinked.Max.Y - bottomCells, shrinked.Min.Y})
+	shrunk := area
+	shrunk.Min.X, _ = numbers.MinMaxInts([]int{shrunk.Min.X + leftCells, shrunk.Max.X})
+	_, shrunk.Max.X = numbers.MinMaxInts([]int{shrunk.Max.X - rightCells, shrunk.Min.X})
+	shrunk.Min.Y, _ = numbers.MinMaxInts([]int{shrunk.Min.Y + topCells, shrunk.Max.Y})
+	_, shrunk.Max.Y = numbers.MinMaxInts([]int{shrunk.Max.Y - bottomCells, shrunk.Min.Y})
 
-	if shrinked.Dx() == 0 || shrinked.Dy() == 0 {
+	if shrunk.Dx() == 0 || shrunk.Dy() == 0 {
 		return image.ZR, nil
 	}
-	return shrinked, nil
+	return shrunk, nil
 }
 
 // ShrinkPercent returns a new area whose size is reduced by percentage of its
@@ -177,4 +223,36 @@ func ShrinkPercent(area image.Rectangle, topPerc, rightPerc, bottomPerc, leftPer
 	right := area.Dx() * rightPerc / 100
 	left := area.Dx() * leftPerc / 100
 	return Shrink(area, top, right, bottom, left)
+}
+
+// MoveUp returns a new area that is moved up by the specified amount of cells.
+// Returns an error if the move would result in negative Y coordinates.
+// The values must be zero or positive integers.
+func MoveUp(area image.Rectangle, cells int) (image.Rectangle, error) {
+	if min := 0; cells < min {
+		return image.ZR, fmt.Errorf("cannot move area %v up by %d cells, must be in range %d <= value", area, cells, min)
+	}
+
+	if area.Min.Y < cells {
+		return image.ZR, fmt.Errorf("cannot move area %v up by %d cells, would result in negative Y coordinate", area, cells)
+	}
+
+	moved := area
+	moved.Min.Y -= cells
+	moved.Max.Y -= cells
+	return moved, nil
+}
+
+// MoveDown returns a new area that is moved down by the specified amount of
+// cells.
+// The values must be zero or positive integers.
+func MoveDown(area image.Rectangle, cells int) (image.Rectangle, error) {
+	if min := 0; cells < min {
+		return image.ZR, fmt.Errorf("cannot move area %v down by %d cells, must be in range %d <= value", area, cells, min)
+	}
+
+	moved := area
+	moved.Min.Y += cells
+	moved.Max.Y += cells
+	return moved, nil
 }

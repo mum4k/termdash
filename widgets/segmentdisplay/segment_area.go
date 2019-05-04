@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/internal/segdisp/sixteen"
+	"github.com/mum4k/termdash/internal/segdisp"
 )
 
 // segArea contains information about the area that will contain the segments.
@@ -50,7 +50,7 @@ func (sa *segArea) needArea() image.Rectangle {
 // newSegArea calculates the area for segments given available canvas area,
 // length of the text to be displayed and the size of gap between segments
 func newSegArea(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, error) {
-	segAr, err := sixteen.Required(cvsAr)
+	segAr, err := segdisp.Required(cvsAr)
 	if err != nil {
 		return nil, fmt.Errorf("sixteen.Required => %v", err)
 	}
@@ -61,7 +61,7 @@ func newSegArea(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, error
 		canFit int
 		taken  int
 	)
-	for i := 0; i < textLen; i++ {
+	for i := 0; ; {
 		taken += segAr.Dx()
 
 		if taken > cvsAr.Dx() {
@@ -85,6 +85,7 @@ func newSegArea(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, error
 			// So insert neither.
 			break
 		}
+		i++
 	}
 	return &segArea{
 		segment:   segAr,
@@ -99,14 +100,14 @@ func newSegArea(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, error
 // required for a single segment and the number of segments we can fit.
 func maximizeFit(cvsAr image.Rectangle, textLen, gapPercent int) (*segArea, error) {
 	var bestSegAr *segArea
-	for height := cvsAr.Dy(); height >= sixteen.MinRows; height-- {
+	for height := cvsAr.Dy(); height >= segdisp.MinRows; height-- {
 		cvsAr := image.Rect(cvsAr.Min.X, cvsAr.Min.Y, cvsAr.Max.X, cvsAr.Min.Y+height)
 		segAr, err := newSegArea(cvsAr, textLen, gapPercent)
 		if err != nil {
 			return nil, err
 		}
 
-		if segAr.canFit >= textLen {
+		if textLen > 0 && segAr.canFit >= textLen {
 			return segAr, nil
 		}
 		bestSegAr = segAr

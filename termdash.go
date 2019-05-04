@@ -323,6 +323,12 @@ func (td *termdash) processEvents(ctx context.Context) {
 // start starts the terminal dashboard. Blocks until the context expires or
 // until stop() is called.
 func (td *termdash) start(ctx context.Context) error {
+	// Redraw once to initialize the container sizes.
+	if err := td.periodicRedraw(); err != nil {
+		close(td.exitCh)
+		return err
+	}
+
 	redrawTimer := time.NewTicker(td.redrawInterval)
 	defer redrawTimer.Stop()
 

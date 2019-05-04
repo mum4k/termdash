@@ -412,6 +412,18 @@ func TestSetCell(t *testing.T) {
 			}(),
 		},
 		{
+			desc:      "sets zero-value rune in a cell",
+			buffer:    mustNew(image.Point{3, 3}),
+			point:     image.Point{1, 2},
+			r:         0,
+			wantCells: 1,
+			want: func() Buffer {
+				b := mustNew(size)
+				b[1][2].Rune = 0
+				return b
+			}(),
+		},
+		{
 			desc:   "sets cell options",
 			buffer: mustNew(image.Point{3, 3}),
 			point:  image.Point{1, 2},

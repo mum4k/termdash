@@ -10,7 +10,7 @@
 
 Termdash is a cross-platform customizable terminal based dashboard.
 
-[<img src="./doc/images/termdashdemo_0_7_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
+[<img src="./doc/images/termdashdemo_0_9_0.gif" alt="termdashdemo" type="image/gif">](termdashdemo/termdashdemo.go)
 
 The feature set is inspired by the
 [gizak/termui](http://github.com/gizak/termui) project, which in turn was
@@ -39,6 +39,7 @@ project reaches version 1.0.0. Any breaking changes will be published in the
 
 - Full support for terminal window resizing throughout the infrastructure.
 - Customizable layout, widget placement, borders, margins, padding, colors, etc.
+- Dynamic layout changes at runtime.
 - Binary tree and Grid forms of setting up the layout.
 - Focusable containers and widgets.
 - Processing of keyboard and mouse events.
@@ -52,7 +53,7 @@ project reaches version 1.0.0. Any breaking changes will be published in the
 
 To install this library, run the following:
 
-```
+```go
 go get -u github.com/mum4k/termdash
 ```
 
@@ -62,7 +63,7 @@ The usage of most of these elements is demonstrated in
 [termdashdemo.go](termdashdemo/termdashdemo.go). To execute the demo:
 
 
-```
+```go
 go run github.com/mum4k/termdash/termdashdemo/termdashdemo.go
 ```
 
@@ -84,6 +85,18 @@ go run github.com/mum4k/termdash/widgets/button/buttondemo/buttondemo.go
 ```
 
 [<img src="./doc/images/buttondemo.gif" alt="buttondemo" type="image/gif" width="50%">](widgets/button/buttondemo/buttondemo.go)
+
+## The TextInput
+
+Allows users to interact with the application by entering, editing and
+submitting text data. Run the
+[textinputdemo](widgets/textinput/textinputdemo/textinputdemo.go).
+
+```go
+go run github.com/mum4k/termdash/widgets/textinput/textinputdemo/textinputdemo.go
+```
+
+[<img src="./doc/images/textinputdemo.gif" alt="textinputdemo" type="image/gif" width="80%">](widgets/textinput/textinputdemo/textinputdemo.go)
 
 ## The Gauge
 

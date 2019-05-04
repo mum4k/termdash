@@ -71,6 +71,7 @@ func TestButton(t *testing.T) {
 		opts     []Option
 		events   []terminalapi.Event
 		canvas   image.Rectangle
+		meta     *widgetapi.Meta
 
 		// timeSince is used to replace time.Since for tests, leave nil to use
 		// the original.
@@ -635,7 +636,7 @@ func TestButton(t *testing.T) {
 				if err != nil {
 					t.Fatalf("canvas.New => unexpected error: %v", err)
 				}
-				err = b.Draw(c)
+				err = b.Draw(c, tc.meta)
 				if (err != nil) != tc.wantDrawErr {
 					t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 				}
@@ -688,7 +689,7 @@ func TestButton(t *testing.T) {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			err = b.Draw(c)
+			err = b.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

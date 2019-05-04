@@ -25,146 +25,84 @@ import (
 	tbx "github.com/nsf/termbox-go"
 )
 
-// newKeyboard creates a new termdash keyboard events with the provided keys.
-func newKeyboard(keys ...keyboard.Key) []terminalapi.Event {
-	var evs []terminalapi.Event
-	for _, k := range keys {
-		evs = append(evs, &terminalapi.Keyboard{Key: k})
-	}
-	return evs
+// tbxToTd maps termbox key values to the termdash format.
+var tbxToTd = map[tbx.Key]keyboard.Key{
+	tbx.KeySpace:      keyboard.KeySpace,
+	tbx.KeyF1:         keyboard.KeyF1,
+	tbx.KeyF2:         keyboard.KeyF2,
+	tbx.KeyF3:         keyboard.KeyF3,
+	tbx.KeyF4:         keyboard.KeyF4,
+	tbx.KeyF5:         keyboard.KeyF5,
+	tbx.KeyF6:         keyboard.KeyF6,
+	tbx.KeyF7:         keyboard.KeyF7,
+	tbx.KeyF8:         keyboard.KeyF8,
+	tbx.KeyF9:         keyboard.KeyF9,
+	tbx.KeyF10:        keyboard.KeyF10,
+	tbx.KeyF11:        keyboard.KeyF11,
+	tbx.KeyF12:        keyboard.KeyF12,
+	tbx.KeyInsert:     keyboard.KeyInsert,
+	tbx.KeyDelete:     keyboard.KeyDelete,
+	tbx.KeyHome:       keyboard.KeyHome,
+	tbx.KeyEnd:        keyboard.KeyEnd,
+	tbx.KeyPgup:       keyboard.KeyPgUp,
+	tbx.KeyPgdn:       keyboard.KeyPgDn,
+	tbx.KeyArrowUp:    keyboard.KeyArrowUp,
+	tbx.KeyArrowDown:  keyboard.KeyArrowDown,
+	tbx.KeyArrowLeft:  keyboard.KeyArrowLeft,
+	tbx.KeyArrowRight: keyboard.KeyArrowRight,
+	tbx.KeyCtrlTilde:  keyboard.KeyCtrlTilde,
+	tbx.KeyCtrlA:      keyboard.KeyCtrlA,
+	tbx.KeyCtrlB:      keyboard.KeyCtrlB,
+	tbx.KeyCtrlC:      keyboard.KeyCtrlC,
+	tbx.KeyCtrlD:      keyboard.KeyCtrlD,
+	tbx.KeyCtrlE:      keyboard.KeyCtrlE,
+	tbx.KeyCtrlF:      keyboard.KeyCtrlF,
+	tbx.KeyCtrlG:      keyboard.KeyCtrlG,
+	tbx.KeyBackspace:  keyboard.KeyBackspace,
+	tbx.KeyTab:        keyboard.KeyTab,
+	tbx.KeyCtrlJ:      keyboard.KeyCtrlJ,
+	tbx.KeyCtrlK:      keyboard.KeyCtrlK,
+	tbx.KeyCtrlL:      keyboard.KeyCtrlL,
+	tbx.KeyEnter:      keyboard.KeyEnter,
+	tbx.KeyCtrlN:      keyboard.KeyCtrlN,
+	tbx.KeyCtrlO:      keyboard.KeyCtrlO,
+	tbx.KeyCtrlP:      keyboard.KeyCtrlP,
+	tbx.KeyCtrlQ:      keyboard.KeyCtrlQ,
+	tbx.KeyCtrlR:      keyboard.KeyCtrlR,
+	tbx.KeyCtrlS:      keyboard.KeyCtrlS,
+	tbx.KeyCtrlT:      keyboard.KeyCtrlT,
+	tbx.KeyCtrlU:      keyboard.KeyCtrlU,
+	tbx.KeyCtrlV:      keyboard.KeyCtrlV,
+	tbx.KeyCtrlW:      keyboard.KeyCtrlW,
+	tbx.KeyCtrlX:      keyboard.KeyCtrlX,
+	tbx.KeyCtrlY:      keyboard.KeyCtrlY,
+	tbx.KeyCtrlZ:      keyboard.KeyCtrlZ,
+	tbx.KeyEsc:        keyboard.KeyEsc,
+	tbx.KeyCtrl4:      keyboard.KeyCtrl4,
+	tbx.KeyCtrl5:      keyboard.KeyCtrl5,
+	tbx.KeyCtrl6:      keyboard.KeyCtrl6,
+	tbx.KeyCtrl7:      keyboard.KeyCtrl7,
+	tbx.KeyBackspace2: keyboard.KeyBackspace2,
 }
 
 // convKey converts a termbox keyboard event to the termdash format.
-func convKey(tbxEv tbx.Event) []terminalapi.Event {
+func convKey(tbxEv tbx.Event) terminalapi.Event {
 	if tbxEv.Key != 0 && tbxEv.Ch != 0 {
-		return []terminalapi.Event{
-			terminalapi.NewErrorf("the key event contain both a key(%v) and a character(%v)", tbxEv.Key, tbxEv.Ch),
-		}
+		return terminalapi.NewErrorf("the key event contain both a key(%v) and a character(%v)", tbxEv.Key, tbxEv.Ch)
 	}
 
 	if tbxEv.Ch != 0 {
-		return []terminalapi.Event{&terminalapi.Keyboard{
+		return &terminalapi.Keyboard{
 			Key: keyboard.Key(tbxEv.Ch),
-		}}
+		}
 	}
 
-	switch k := tbxEv.Key; k {
-	case tbx.KeySpace:
-		return newKeyboard(keyboard.KeySpace)
-	case tbx.KeyF1:
-		return newKeyboard(keyboard.KeyF1)
-	case tbx.KeyF2:
-		return newKeyboard(keyboard.KeyF2)
-	case tbx.KeyF3:
-		return newKeyboard(keyboard.KeyF3)
-	case tbx.KeyF4:
-		return newKeyboard(keyboard.KeyF4)
-	case tbx.KeyF5:
-		return newKeyboard(keyboard.KeyF5)
-	case tbx.KeyF6:
-		return newKeyboard(keyboard.KeyF6)
-	case tbx.KeyF7:
-		return newKeyboard(keyboard.KeyF7)
-	case tbx.KeyF8:
-		return newKeyboard(keyboard.KeyF8)
-	case tbx.KeyF9:
-		return newKeyboard(keyboard.KeyF9)
-	case tbx.KeyF10:
-		return newKeyboard(keyboard.KeyF10)
-	case tbx.KeyF11:
-		return newKeyboard(keyboard.KeyF11)
-	case tbx.KeyF12:
-		return newKeyboard(keyboard.KeyF12)
-	case tbx.KeyInsert:
-		return newKeyboard(keyboard.KeyInsert)
-	case tbx.KeyDelete:
-		return newKeyboard(keyboard.KeyDelete)
-	case tbx.KeyHome:
-		return newKeyboard(keyboard.KeyHome)
-	case tbx.KeyEnd:
-		return newKeyboard(keyboard.KeyEnd)
-	case tbx.KeyPgup:
-		return newKeyboard(keyboard.KeyPgUp)
-	case tbx.KeyPgdn:
-		return newKeyboard(keyboard.KeyPgDn)
-	case tbx.KeyArrowUp:
-		return newKeyboard(keyboard.KeyArrowUp)
-	case tbx.KeyArrowDown:
-		return newKeyboard(keyboard.KeyArrowDown)
-	case tbx.KeyArrowLeft:
-		return newKeyboard(keyboard.KeyArrowLeft)
-	case tbx.KeyArrowRight:
-		return newKeyboard(keyboard.KeyArrowRight)
-	case tbx.KeyBackspace /*, tbx.KeyCtrlH */ :
-		return newKeyboard(keyboard.KeyBackspace)
-	case tbx.KeyTab /*, tbx.KeyCtrlI */ :
-		return newKeyboard(keyboard.KeyTab)
-	case tbx.KeyEnter /*, tbx.KeyCtrlM*/ :
-		return newKeyboard(keyboard.KeyEnter)
-	case tbx.KeyEsc /*, tbx.KeyCtrlLsqBracket, tbx.KeyCtrl3 */ :
-		return newKeyboard(keyboard.KeyEsc)
-	case tbx.KeyCtrl2 /*, tbx.KeyCtrlTilde, tbx.KeyCtrlSpace */ :
-		return newKeyboard(keyboard.KeyCtrl, '2')
-	case tbx.KeyCtrl4 /*, tbx.KeyCtrlBackslash */ :
-		return newKeyboard(keyboard.KeyCtrl, '4')
-	case tbx.KeyCtrl5 /*, tbx.KeyCtrlRsqBracket */ :
-		return newKeyboard(keyboard.KeyCtrl, '5')
-	case tbx.KeyCtrl6:
-		return newKeyboard(keyboard.KeyCtrl, '6')
-	case tbx.KeyCtrl7 /*, tbx.KeyCtrlSlash, tbx.KeyCtrlUnderscore */ :
-		return newKeyboard(keyboard.KeyCtrl, '7')
-	case tbx.KeyCtrl8:
-		return newKeyboard(keyboard.KeyCtrl, '8')
-	case tbx.KeyCtrlA:
-		return newKeyboard(keyboard.KeyCtrl, 'a')
-	case tbx.KeyCtrlB:
-		return newKeyboard(keyboard.KeyCtrl, 'b')
-	case tbx.KeyCtrlC:
-		return newKeyboard(keyboard.KeyCtrl, 'c')
-	case tbx.KeyCtrlD:
-		return newKeyboard(keyboard.KeyCtrl, 'd')
-	case tbx.KeyCtrlE:
-		return newKeyboard(keyboard.KeyCtrl, 'e')
-	case tbx.KeyCtrlF:
-		return newKeyboard(keyboard.KeyCtrl, 'f')
-	case tbx.KeyCtrlG:
-		return newKeyboard(keyboard.KeyCtrl, 'g')
-	case tbx.KeyCtrlJ:
-		return newKeyboard(keyboard.KeyCtrl, 'j')
-	case tbx.KeyCtrlK:
-		return newKeyboard(keyboard.KeyCtrl, 'k')
-	case tbx.KeyCtrlL:
-		return newKeyboard(keyboard.KeyCtrl, 'l')
-	case tbx.KeyCtrlN:
-		return newKeyboard(keyboard.KeyCtrl, 'n')
-	case tbx.KeyCtrlO:
-		return newKeyboard(keyboard.KeyCtrl, 'o')
-	case tbx.KeyCtrlP:
-		return newKeyboard(keyboard.KeyCtrl, 'p')
-	case tbx.KeyCtrlQ:
-		return newKeyboard(keyboard.KeyCtrl, 'q')
-	case tbx.KeyCtrlR:
-		return newKeyboard(keyboard.KeyCtrl, 'r')
-	case tbx.KeyCtrlS:
-		return newKeyboard(keyboard.KeyCtrl, 's')
-	case tbx.KeyCtrlT:
-		return newKeyboard(keyboard.KeyCtrl, 't')
-	case tbx.KeyCtrlU:
-		return newKeyboard(keyboard.KeyCtrl, 'u')
-	case tbx.KeyCtrlV:
-		return newKeyboard(keyboard.KeyCtrl, 'v')
-	case tbx.KeyCtrlW:
-		return newKeyboard(keyboard.KeyCtrl, 'w')
-	case tbx.KeyCtrlX:
-		return newKeyboard(keyboard.KeyCtrl, 'x')
-	case tbx.KeyCtrlY:
-		return newKeyboard(keyboard.KeyCtrl, 'y')
-	case tbx.KeyCtrlZ:
-		return newKeyboard(keyboard.KeyCtrl, 'z')
-	default:
-		return []terminalapi.Event{
-			terminalapi.NewErrorf("unknown keyboard key %v in a keyboard event", k),
-		}
+	k, ok := tbxToTd[tbxEv.Key]
+	if !ok {
+		return terminalapi.NewErrorf("unknown keyboard key '%v' in a keyboard event", k)
+	}
+	return &terminalapi.Keyboard{
+		Key: k,
 	}
 }
 
@@ -230,7 +168,9 @@ func toTermdashEvents(tbxEv tbx.Event) []terminalapi.Event {
 	case tbx.EventMouse:
 		return []terminalapi.Event{convMouse(tbxEv)}
 	case tbx.EventKey:
-		return convKey(tbxEv)
+		return []terminalapi.Event{
+			convKey(tbxEv),
+		}
 	default:
 		return []terminalapi.Event{
 			terminalapi.NewErrorf("unknown termbox event type: %v", t),

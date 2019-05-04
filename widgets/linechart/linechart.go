@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"math"
 	"sort"
 	"sync"
 
@@ -52,9 +53,13 @@ type seriesValues struct {
 
 // newSeriesValues returns a new seriesValues instance.
 func newSeriesValues(values []float64) *seriesValues {
-	min, max := numbers.MinMax(values)
+	// Copy to avoid external modifications. See #174.
+	v := make([]float64, len(values))
+	copy(v, values)
+
+	min, max := minMax(v)
 	return &seriesValues{
-		values: values,
+		values: v,
 		min:    min,
 		max:    max,
 	}
@@ -146,7 +151,12 @@ func SeriesCellOpts(co ...cell.Option) SeriesOption {
 func SeriesXLabels(labels map[int]string) SeriesOption {
 	return seriesOption(func(opts *seriesValues) {
 		opts.xLabelsSet = true
-		opts.xLabels = labels
+
+		// Copy to avoid external modifications. See #174.
+		opts.xLabels = make(map[int]string, len(labels))
+		for pos, label := range labels {
+			opts.xLabels[pos] = label
+		}
 	})
 }
 
@@ -166,8 +176,9 @@ func (lc *LineChart) yMinMax() (float64, float64) {
 		maximums = append(maximums, lc.opts.yAxisCustomScale.max)
 	}
 
-	min, _ := numbers.MinMax(minimums)
-	_, max := numbers.MinMax(maximums)
+	min, _ := minMax(minimums)
+	_, max := minMax(maximums)
+
 	return min, max
 }
 
@@ -187,6 +198,8 @@ func (lc *LineChart) ValueCapacity() int {
 
 // Series sets the values that should be displayed as the line chart with the
 // provided label.
+// The values that should not be displayed on the line chart should be represented
+// as math.NaN values on the values slice.
 // Subsequent calls with the same label replace any previously provided values.
 func (lc *LineChart) Series(label string, values []float64, opts ...SeriesOption) error {
 	if label == "" {
@@ -283,7 +296,7 @@ func (lc *LineChart) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDet
 
 // Draw draws the values as line charts.
 // Implements widgetapi.Widget.Draw.
-func (lc *LineChart) Draw(cvs *canvas.Canvas) error {
+func (lc *LineChart) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
 
@@ -355,6 +368,7 @@ func (lc *LineChart) graphAr(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDe
 // drawSeries draws the graph representing the stored series.
 // Returns XDetails that might be adjusted to not start at zero value if some
 // of the series didn't fit the graphs and XAxisUnscaled was provided.
+// If the series has NaN values they will be ignored and not draw on the graph.
 func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) (*axes.XDetails, error) {
 	graphAr := lc.graphAr(cvs, xd, yd)
 	bc, err := braille.New(graphAr)
@@ -397,7 +411,14 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 
 		var prev float64
 		for i := 1; i < len(sv.values); i++ {
+			v := sv.values[i]
 			prev = sv.values[i-1]
+
+			// Skip the values that are missing.
+			if math.IsNaN(v) || math.IsNaN(prev) {
+				continue
+			}
+
 			if i < int(xdZoomed.Scale.Min.Value)+1 || i > int(xdZoomed.Scale.Max.Value) {
 				// Don't draw lines for values that aren't supposed to be visible.
 				// These are either values outside of the current zoom or
@@ -409,21 +430,21 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 
 			startX, err := xdZoomed.Scale.ValueToPixel(i - 1)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], xdZoomed.Scale.ValueToPixel => %v", name, i-1, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, i-1, xdZoomed.Scale, i-1, err)
 			}
 			endX, err := xdZoomed.Scale.ValueToPixel(i)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], xdZoomed.Scale.ValueToPixel => %v", name, i, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, i, xdZoomed.Scale, i, err)
 			}
 
 			startY, err := yd.Scale.ValueToPixel(prev)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], yd.Scale.ValueToPixel => %v", name, i-1, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, i-1, yd.Scale, prev, err)
 			}
-			v := sv.values[i]
+
 			endY, err := yd.Scale.ValueToPixel(v)
 			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d], yd.Scale.ValueToPixel => %v", name, i, err)
+				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, i, yd.Scale, v, err)
 			}
 
 			if err := draw.BrailleLine(bc,
@@ -509,4 +530,18 @@ func (lc *LineChart) maxXValue() int {
 		return 0
 	}
 	return maxLen - 1
+}
+
+// minMax is a wrapper around numbers.MinMax that controls
+// the output if the values are NaN and sets defaults if it's
+// the case.
+func minMax(values []float64) (x, y float64) {
+	min, max := numbers.MinMax(values)
+	if math.IsNaN(min) {
+		min = 0
+	}
+	if math.IsNaN(max) {
+		max = 0
+	}
+	return min, max
 }

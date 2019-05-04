@@ -17,15 +17,17 @@
 package segmentdisplay
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"image"
+	"strings"
 	"sync"
 
 	"github.com/mum4k/termdash/internal/alignfor"
 	"github.com/mum4k/termdash/internal/attrrange"
 	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/segdisp"
+	"github.com/mum4k/termdash/internal/segdisp/dotseg"
 	"github.com/mum4k/termdash/internal/segdisp/sixteen"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -43,12 +45,20 @@ import (
 // Implements widgetapi.Widget. This object is thread-safe.
 type SegmentDisplay struct {
 	// buff contains the text to be displayed.
-	buff bytes.Buffer
+	buff strings.Builder
 
 	// givenWOpts are write options given for the text in buff.
 	givenWOpts []*writeOptions
 	// wOptsTracker tracks the positions in a buff to which the givenWOpts apply.
 	wOptsTracker *attrrange.Tracker
+
+	// lastCanFit is the number of segments that could fit the area the last
+	// time Draw was called.
+	lastCanFit int
+
+	// dotChars are characters that are drawn using the dot segment.
+	// All other characters are draws using the 16-segment display.
+	dotChars map[rune]bool
 
 	// mu protects the widget.
 	mu sync.Mutex
@@ -66,9 +76,15 @@ func New(opts ...Option) (*SegmentDisplay, error) {
 	if err := opt.validate(); err != nil {
 		return nil, err
 	}
+
+	dotChars := map[rune]bool{}
+	for _, r := range dotseg.SupportedChars() {
+		dotChars[r] = true
+	}
 	return &SegmentDisplay{
 		wOptsTracker: attrrange.NewTracker(),
 		opts:         opt,
+		dotChars:     dotChars,
 	}, nil
 }
 
@@ -134,6 +150,20 @@ func (sd *SegmentDisplay) Write(chunks []*TextChunk, opts ...Option) error {
 	return nil
 }
 
+// Capacity returns the number of characters that can fit into the canvas.
+// This is essentially the number of individual segments that can fit on the
+// canvas at the time the last call to draw. Returns zero if draw wasn't
+// called.
+//
+// Note that this capacity changes each time the terminal resizes, so there is
+// no guarantee this remains the same next time Draw is called.
+// Should be used as a hint only.
+func (sd *SegmentDisplay) Capacity() int {
+	sd.mu.Lock()
+	defer sd.mu.Unlock()
+	return sd.lastCanFit
+}
+
 // Reset resets the widget back to empty content.
 func (sd *SegmentDisplay) Reset() {
 	sd.mu.Lock()
@@ -161,7 +191,7 @@ func (sd *SegmentDisplay) preprocess(cvsAr image.Rectangle) (*segArea, error) {
 	}
 
 	need := sd.buff.Len()
-	if need <= segAr.canFit || sd.opts.maximizeSegSize {
+	if (need > 0 && need <= segAr.canFit) || sd.opts.maximizeSegSize {
 		return segAr, nil
 	}
 
@@ -174,17 +204,18 @@ func (sd *SegmentDisplay) preprocess(cvsAr image.Rectangle) (*segArea, error) {
 
 // Draw draws the SegmentDisplay widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
-func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas) error {
+func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	sd.mu.Lock()
 	defer sd.mu.Unlock()
-
-	if sd.buff.Len() == 0 {
-		return nil
-	}
 
 	segAr, err := sd.preprocess(cvs.Area())
 	if err != nil {
 		return err
+	}
+
+	sd.lastCanFit = segAr.canFit
+	if sd.buff.Len() == 0 {
+		return nil
 	}
 
 	text := sd.buff.String()
@@ -203,11 +234,6 @@ func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas) error {
 	for i, c := range text {
 		if i >= segAr.canFit {
 			break
-		}
-
-		disp := sixteen.New()
-		if err := disp.SetCharacter(c); err != nil {
-			return fmt.Errorf("disp.SetCharacter => %v", err)
 		}
 
 		endX := startX + segAr.segment.Dx()
@@ -231,14 +257,36 @@ func (sd *SegmentDisplay) Draw(cvs *canvas.Canvas) error {
 			optRange = or
 		}
 		wOpts := sd.givenWOpts[optRange.AttrIdx]
-
-		if err := disp.Draw(dCvs, sixteen.CellOpts(wOpts.cellOpts...)); err != nil {
-			return fmt.Errorf("disp.Draw => %v", err)
+		if err := sd.drawChar(dCvs, c, wOpts); err != nil {
+			return err
 		}
 
 		if err := dCvs.CopyTo(cvs); err != nil {
 			return fmt.Errorf("dCvs.CopyTo => %v", err)
 		}
+	}
+	return nil
+}
+
+// drawChar draws a single character onto the provided canvas.
+func (sd *SegmentDisplay) drawChar(dCvs *canvas.Canvas, c rune, wOpts *writeOptions) error {
+	if sd.dotChars[c] {
+		disp := dotseg.New()
+		if err := disp.SetCharacter(c); err != nil {
+			return fmt.Errorf("dotseg.Display.SetCharacter => %v", err)
+		}
+		if err := disp.Draw(dCvs, dotseg.CellOpts(wOpts.cellOpts...)); err != nil {
+			return fmt.Errorf("dotseg.Display..Draw => %v", err)
+		}
+		return nil
+	}
+
+	disp := sixteen.New()
+	if err := disp.SetCharacter(c); err != nil {
+		return fmt.Errorf("sixteen.Display.SetCharacter => %v", err)
+	}
+	if err := disp.Draw(dCvs, sixteen.CellOpts(wOpts.cellOpts...)); err != nil {
+		return fmt.Errorf("sixteen.Display.Draw => %v", err)
 	}
 	return nil
 }
@@ -257,7 +305,7 @@ func (*SegmentDisplay) Mouse(m *terminalapi.Mouse) error {
 func (sd *SegmentDisplay) Options() widgetapi.Options {
 	return widgetapi.Options{
 		// The smallest supported size of a display segment.
-		MinimumSize:  image.Point{sixteen.MinCols, sixteen.MinRows},
+		MinimumSize:  image.Point{segdisp.MinCols, segdisp.MinRows},
 		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    widgetapi.MouseScopeNone,
 	}

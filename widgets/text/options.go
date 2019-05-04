@@ -143,7 +143,7 @@ const (
 	DefaultScrollKeyPageDown = keyboard.KeyPgDn
 )
 
-// ScrollKeys configures the mouse buttons that scroll the content.
+// ScrollKeys configures the keyboard keys that scroll the content.
 // The provided keys must be unique, e.g. the same key cannot be both up and
 // down.
 func ScrollKeys(up, down, pageUp, pageDown keyboard.Key) Option {

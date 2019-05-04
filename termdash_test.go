@@ -211,6 +211,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -241,13 +242,14 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 			},
-			wantProcessed: 3,
+			wantProcessed: 2,
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantMouse: widgetapi.MouseScopeWidget,
 					},
@@ -274,6 +276,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    widgetapi.MouseScopeWidget,
@@ -308,6 +311,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -339,6 +343,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
 					},
@@ -359,7 +364,7 @@ func TestRun(t *testing.T) {
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
 			},
-			wantProcessed: 4,
+			wantProcessed: 3,
 			after: func(eh *eventHandlers) error {
 				want := terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp}
 				if diff := pretty.Compare(want, eh.mouseSub.get()); diff != "" {
@@ -373,6 +378,7 @@ func TestRun(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantMouse: widgetapi.MouseScopeWidget,
 					},
@@ -480,6 +486,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    widgetapi.MouseScopeWidget,
@@ -508,6 +515,7 @@ func TestController(t *testing.T) {
 					mirror,
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 				)
 				return ft
 			},
@@ -530,6 +538,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -550,6 +559,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft
@@ -579,6 +589,7 @@ func TestController(t *testing.T) {
 				fakewidget.MustDraw(
 					ft,
 					testcanvas.MustNew(ft.Area()),
+					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{},
 				)
 				return ft

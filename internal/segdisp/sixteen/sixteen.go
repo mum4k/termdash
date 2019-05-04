@@ -40,15 +40,12 @@ The following outlines segments in the display and their names.
 package sixteen
 
 import (
-	"bytes"
 	"fmt"
-	"image"
-	"math"
+	"strings"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/braille"
+	"github.com/mum4k/termdash/internal/segdisp"
 	"github.com/mum4k/termdash/internal/segdisp/segment"
 )
 
@@ -140,6 +137,7 @@ var characterSegments = map[rune][]Segment{
 	'+':  {J, G1, G2, M},
 	',':  {N},
 	'-':  {G1, G2},
+	'.':  {D1},
 	'/':  {N, K},
 
 	'0': {A1, A2, F, K, B, E, N, C, D1, D2},
@@ -250,7 +248,7 @@ func SupportsChars(s string) (bool, []rune) {
 // Sanitize returns a copy of the string, replacing all unsupported characters
 // with a space character.
 func Sanitize(s string) string {
-	var b bytes.Buffer
+	var b strings.Builder
 	for _, r := range s {
 		if _, ok := characterSegments[r]; !ok {
 			b.WriteRune(' ')
@@ -375,17 +373,6 @@ func (d *Display) SetCharacter(c rune) error {
 	return nil
 }
 
-// Minimum valid size of a cell canvas in order to draw the segment display.
-const (
-	// MinCols is the smallest valid amount of columns in a cell area.
-	MinCols = 6
-	// MinRowPixels is the smallest valid amount of rows in a cell area.
-	MinRows = 5
-)
-
-// aspectRatio is the desired aspect ratio of a single segment display.
-var aspectRatio = image.Point{3, 5}
-
 // Draw draws the current state of the segment display onto the canvas.
 // The canvas must be at least MinCols x MinRows cells, or an error will be
 // returned.
@@ -395,12 +382,12 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		o.set(d)
 	}
 
-	bc, bcAr, err := toBraille(cvs)
+	bc, bcAr, err := segdisp.ToBraille(cvs)
 	if err != nil {
 		return err
 	}
 
-	attr := newAttributes(bcAr)
+	attr := NewAttributes(bcAr)
 	var sOpts []segment.Option
 	if len(d.cellOpts) > 0 {
 		sOpts = append(sOpts, segment.CellOpts(d.cellOpts...))
@@ -450,40 +437,4 @@ func (d *Display) Draw(cvs *canvas.Canvas, opts ...Option) error {
 		}
 	}
 	return bc.CopyTo(cvs)
-}
-
-// Required when given an area of cells, returns either an area of the same
-// size or a smaller area that is required to draw one display.
-// Returns a smaller area when the provided area didn't have the required
-// aspect ratio.
-// Returns an error if the area is too small to draw a segment display, i.e.
-// smaller than MinCols x MinRows.
-func Required(cellArea image.Rectangle) (image.Rectangle, error) {
-	if cols, rows := cellArea.Dx(), cellArea.Dy(); cols < MinCols || rows < MinRows {
-		return image.ZR, fmt.Errorf("cell area %v is too small to draw the segment display, has %dx%d cells, need at least %dx%d cells",
-			cellArea, cols, rows, MinCols, MinRows)
-	}
-
-	bcAr := image.Rect(cellArea.Min.X, cellArea.Min.Y, cellArea.Max.X*braille.ColMult, cellArea.Max.Y*braille.RowMult)
-	bcArAdj := area.WithRatio(bcAr, aspectRatio)
-
-	needCols := int(math.Ceil(float64(bcArAdj.Dx()) / braille.ColMult))
-	needRows := int(math.Ceil(float64(bcArAdj.Dy()) / braille.RowMult))
-	needAr := image.Rect(cellArea.Min.X, cellArea.Min.Y, cellArea.Min.X+needCols, cellArea.Min.Y+needRows)
-	return needAr, nil
-}
-
-// toBraille converts the canvas into a braille canvas and returns a pixel area
-// with aspect ratio adjusted for the segment display.
-func toBraille(cvs *canvas.Canvas) (*braille.Canvas, image.Rectangle, error) {
-	ar, err := Required(cvs.Area())
-	if err != nil {
-		return nil, image.ZR, fmt.Errorf("Required => %v", err)
-	}
-
-	bc, err := braille.New(ar)
-	if err != nil {
-		return nil, image.ZR, fmt.Errorf("braille.New => %v", err)
-	}
-	return bc, area.WithRatio(bc.Area(), aspectRatio), nil
 }

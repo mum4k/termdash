@@ -14,6 +14,11 @@
 
 package container
 
+import (
+	"errors"
+	"fmt"
+)
+
 // traversal.go provides functions that navigate the container tree.
 
 // rootCont returns the root container.
@@ -55,4 +60,27 @@ func postOrder(c *Container, errStr *string, visit visitFunc) {
 		*errStr = err.Error()
 		return
 	}
+}
+
+// findID finds container with the provided ID.
+// Returns an error of there is no container with the specified ID.
+func findID(root *Container, id string) (*Container, error) {
+	if id == "" {
+		return nil, errors.New("the container ID must not be empty")
+	}
+
+	var (
+		errStr string
+		cont   *Container
+	)
+	preOrder(root, &errStr, visitFunc(func(c *Container) error {
+		if c.opts.id == id {
+			cont = c
+		}
+		return nil
+	}))
+	if cont == nil {
+		return nil, fmt.Errorf("cannot find container with ID %q", id)
+	}
+	return cont, nil
 }

@@ -196,9 +196,7 @@ func (ys *YScale) CellLabel(y int) (*Value, error) {
 	return yScaleNewValue(v, ys.Min.NonZeroDecimals, ys.valueFormatter), nil
 }
 
-// yScaleNewValue is a helper method to get new values for the y scale
-// that selects the correct value factory method  depending on the passed
-// arguments.
+// yScaleNewValue is a helper method to get new values for the y scale.
 func yScaleNewValue(value float64, nonZeroDecimals int, valueFormatter func(float64) string) *Value {
 	opts := []ValueOption{}
 	if valueFormatter != nil {

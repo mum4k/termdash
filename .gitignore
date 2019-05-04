@@ -1,2 +1,6 @@
 # Exclude MacOS attribute files.
 .DS_Store
+
+# Ignore do to JetBrains GoLand IDE.
+/termdashdemo/termdashdemo
+/.idea/

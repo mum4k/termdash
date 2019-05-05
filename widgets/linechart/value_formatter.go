@@ -76,12 +76,18 @@ func decimalFormat(decimals int, unit string) string {
 // to truncate.
 // If the received decimal value is negative it will fallback to a 0 decimal
 // value.
+// The result value formatter handles NaN values, if the value formatter
+// receives a NaN float64 it will return an empty string.
 func ValueFormatterSingleUnitDuration(unit time.Duration, decimals int) ValueFormatter {
 	if decimals < 0 {
 		decimals = 0
 	}
 
 	return func(v float64) string {
+		if math.IsNaN(v) {
+			return ""
+		}
+
 		d := time.Duration(v * float64(unit))
 		return durationSingleUnitPrettyFormat(d, decimals)
 	}
@@ -91,13 +97,9 @@ func ValueFormatterSingleUnitDuration(unit time.Duration, decimals int) ValueFor
 // seconds unit in the float64 argument and will return a pretty
 // format in one single unit without decimals, it doesn't round,
 // it truncates.
-// received seconds that are NaN will be ignored and return an
+// Received seconds that are NaN will be ignored and return an
 // empty string.
 func ValueFormatterSingleUnitSeconds(seconds float64) string {
-	if math.IsNaN(seconds) {
-		return ""
-	}
-
 	f := ValueFormatterSingleUnitDuration(time.Second, 0)
 	return f(seconds)
 }

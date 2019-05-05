@@ -36,12 +36,6 @@ func TestFormatters(t *testing.T) {
 			want:      "0ns",
 		},
 		{
-			desc:      "Pretty Second duration formatter handles NaN values",
-			value:     math.NaN(),
-			formatter: ValueFormatterSingleUnitSeconds,
-			want:      "",
-		},
-		{
 			desc:      "Pretty duration formatter handles minus minute values",
 			value:     -1500,
 			formatter: ValueFormatterSingleUnitSeconds,
@@ -136,6 +130,18 @@ func TestFormatters(t *testing.T) {
 			value:     2525789,
 			formatter: ValueFormatterSingleUnitDuration(time.Millisecond, -4),
 			want:      "42m",
+		},
+		{
+			desc:      "Pretty Second duration formatter handles NaN values",
+			value:     math.NaN(),
+			formatter: ValueFormatterSingleUnitSeconds,
+			want:      "",
+		},
+		{
+			desc:      "Pretty custom duration formatter handles NaN values",
+			value:     math.NaN(),
+			formatter: ValueFormatterSingleUnitDuration(time.Nanosecond, 8),
+			want:      "",
 		},
 	}
 

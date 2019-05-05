@@ -1,4 +1,4 @@
-// Copyright 2018 Google Inc.
+// Copyright 2019 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
 // limitations under the License.
 
 package linechart
+
+// value_formatter.go provides common implementations of ValueFormatter that can be
+// used with the YAxisFormattedValues() LineChart option.
 
 import (
 	"fmt"
@@ -35,32 +38,32 @@ func durationSingleUnitPrettyFormat(d time.Duration, decimals int) string {
 	switch {
 	// Nanoseconds.
 	case d.Nanoseconds() < 1000:
-		dfmt := prefix + "%dns"
-		return fmt.Sprintf(dfmt, d.Nanoseconds())
+		dFmt := prefix + "%dns"
+		return fmt.Sprintf(dFmt, d.Nanoseconds())
 	// Microseconds.
 	case d.Seconds()*1000*1000 < 1000:
-		dfmt := prefix + decimalFormat(decimals, "µs")
-		return fmt.Sprintf(dfmt, d.Seconds()*1000*1000)
+		dFmt := prefix + decimalFormat(decimals, "µs")
+		return fmt.Sprintf(dFmt, d.Seconds()*1000*1000)
 	// Milliseconds.
 	case d.Seconds()*1000 < 1000:
-		dfmt := prefix + decimalFormat(decimals, "ms")
-		return fmt.Sprintf(dfmt, d.Seconds()*1000)
+		dFmt := prefix + decimalFormat(decimals, "ms")
+		return fmt.Sprintf(dFmt, d.Seconds()*1000)
 	// Seconds.
 	case d.Seconds() < 60:
-		dfmt := prefix + decimalFormat(decimals, "s")
-		return fmt.Sprintf(dfmt, d.Seconds())
+		dFmt := prefix + decimalFormat(decimals, "s")
+		return fmt.Sprintf(dFmt, d.Seconds())
 	// Minutes.
 	case d.Minutes() < 60:
-		dfmt := prefix + decimalFormat(decimals, "m")
-		return fmt.Sprintf(dfmt, d.Minutes())
+		dFmt := prefix + decimalFormat(decimals, "m")
+		return fmt.Sprintf(dFmt, d.Minutes())
 	// Hours.
 	case d.Hours() < 24:
-		dfmt := prefix + decimalFormat(decimals, "h")
-		return fmt.Sprintf(dfmt, d.Hours())
+		dFmt := prefix + decimalFormat(decimals, "h")
+		return fmt.Sprintf(dFmt, d.Hours())
 	// Days.
 	default:
-		dfmt := prefix + decimalFormat(decimals, "d")
-		return fmt.Sprintf(dfmt, d.Hours()/24)
+		dFmt := prefix + decimalFormat(decimals, "d")
+		return fmt.Sprintf(dFmt, d.Hours()/24)
 	}
 }
 
@@ -68,18 +71,33 @@ func decimalFormat(decimals int, unit string) string {
 	return fmt.Sprintf("%%.%df%s", decimals, unit)
 }
 
-// SingleUnitDurationValueFormatter is a factory to create a custom duration
+// ValueFormatterSingleUnitDuration is a factory to create a custom duration
 // in a single unit representation formatter based on a unit and the decimals
 // to truncate.
-func SingleUnitDurationValueFormatter(unit time.Duration, decimals int) ValueFormatter {
+// If the received decimal value is negative it will fallback to a 0 decimal
+// value.
+func ValueFormatterSingleUnitDuration(unit time.Duration, decimals int) ValueFormatter {
+	if decimals < 0 {
+		decimals = 0
+	}
+
 	return func(v float64) string {
 		d := time.Duration(v * float64(unit))
 		return durationSingleUnitPrettyFormat(d, decimals)
 	}
 }
 
-// SingleUnitSecondsValueFormatter is a formatter that will receive
+// ValueFormatterSingleUnitSeconds is a formatter that will receive
 // seconds unit in the float64 argument and will return a pretty
 // format in one single unit without decimals, it doesn't round,
 // it truncates.
-var SingleUnitSecondsValueFormatter = SingleUnitDurationValueFormatter(time.Second, 0)
+// received seconds that are NaN will be ignored and return an
+// empty string.
+func ValueFormatterSingleUnitSeconds(seconds float64) string {
+	if math.IsNaN(seconds) {
+		return ""
+	}
+
+	f := ValueFormatterSingleUnitDuration(time.Second, 0)
+	return f(seconds)
+}

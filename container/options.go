@@ -77,6 +77,8 @@ type options struct {
 	// split identifies how is this container split.
 	split        splitType
 	splitPercent int
+	topHeight int
+	bottomHeight int
 
 	// widget is the widget in the container.
 	// A container can have either two sub containers (left and right) or a
@@ -167,6 +169,8 @@ func newOptions(parent *options) *options {
 		hAlign:       align.HorizontalCenter,
 		vAlign:       align.VerticalMiddle,
 		splitPercent: DefaultSplitPercent,
+		topHeight: -1,
+		bottomHeight: -1,
 	}
 	if parent != nil {
 		opts.inherited = parent.inherited
@@ -212,6 +216,20 @@ func SplitPercent(p int) SplitOption {
 			return fmt.Errorf("invalid split percentage %d, must be in range %d < p < %d", p, min, max)
 		}
 		opts.splitPercent = p
+		return nil
+	})
+}
+
+// FixHeight sets the heights of the top and the bottom containers.
+// If an argument is equal to -1, then the height will be set automatically,
+// i.e. will fill the rest of the space that is available.
+func FixHeight(th int, bh int) SplitOption {
+	return splitOption(func(opts *options) error {
+		if th < -1 || bh < -1 {
+			return fmt.Errorf("invalid fixed height %d or %d, must be in range %d <= th, bh", th, bh, -1)
+		}
+		opts.topHeight = th
+		opts.bottomHeight = bh
 		return nil
 	})
 }

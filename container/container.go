@@ -172,9 +172,9 @@ func (c *Container) split() (image.Rectangle, image.Rectangle, error) {
 		return image.ZR, image.ZR, err
 	}
 	if c.opts.split == splitTypeVertical {
-		return area.VSplit(ar, c.opts.splitPercent)
+		return area.VSplit(ar, c.opts.splitPercent, c.opts.splitFixed)
 	}
-	return area.HSplit(ar, c.opts.splitPercent, c.opts.topHeight, c.opts.bottomHeight)
+	return area.HSplit(ar, c.opts.splitPercent, c.opts.splitFixed)
 }
 
 // createFirst creates and returns the first sub container of this container.

@@ -25,6 +25,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/internal/alignfor"
+	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/internal/canvas/braille"
 	"github.com/mum4k/termdash/internal/draw"
@@ -165,6 +166,7 @@ func (d *Donut) holeRadius(donutRadius int) int {
 // drawText draws the text label showing the progress.
 // The text is only drawn if the radius of the donut "hole" is large enough to
 // accommodate it.
+// The mid point addresses coordinates in pixels on a braille canvas.
 func (d *Donut) drawText(cvs *canvas.Canvas, mid image.Point, holeR int) error {
 	cells, first := availableCells(mid, holeR)
 	t := d.progressText()
@@ -184,21 +186,54 @@ func (d *Donut) drawText(cvs *canvas.Canvas, mid image.Point, holeR int) error {
 	return nil
 }
 
+// drawLabel draws the text label in the area.
+func (d *Donut) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) error {
+	start, err := alignfor.Text(labelAr, d.opts.label, d.opts.labelAlign, align.VerticalBottom)
+	if err != nil {
+		return err
+	}
+	return draw.Text(
+		cvs, d.opts.label, start,
+		draw.TextOverrunMode(draw.OverrunModeThreeDot),
+		draw.TextMaxX(labelAr.Max.X),
+		draw.TextCellOpts(d.opts.labelCellOpts...),
+	)
+}
+
 // Draw draws the Donut widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
 func (d *Donut) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	bc, err := braille.New(cvs.Area())
-	if err != nil {
-		return fmt.Errorf("braille.New => %v", err)
-	}
-
 	startA, endA := startEndAngles(d.current, d.total, d.opts.startAngle, d.opts.direction)
 	if startA == endA {
 		// No progress recorded, so nothing to do.
 		return nil
+	}
+
+	var donutAr, labelAr image.Rectangle
+	if len(d.opts.label) > 0 {
+		d, l, err := donutAndLabel(cvs.Area())
+		if err != nil {
+			return err
+		}
+		donutAr = d
+		labelAr = l
+
+	} else {
+		donutAr = cvs.Area()
+	}
+
+	if donutAr.Dx() < minSize.X || donutAr.Dy() < minSize.Y {
+		// Reserving area for the label might have resulted in donutAr being
+		// too small.
+		return draw.ResizeNeeded(cvs)
+	}
+
+	bc, err := braille.New(donutAr)
+	if err != nil {
+		return fmt.Errorf("braille.New => %v", err)
 	}
 
 	mid, r := midAndRadius(bc.Area())
@@ -224,7 +259,15 @@ func (d *Donut) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	}
 
 	if !d.opts.hideTextProgress {
-		return d.drawText(cvs, mid, holeR)
+		if err := d.drawText(cvs, mid, holeR); err != nil {
+			return err
+		}
+	}
+
+	if !labelAr.Empty() {
+		if err := d.drawLabel(cvs, labelAr); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -239,6 +282,9 @@ func (*Donut) Mouse(m *terminalapi.Mouse) error {
 	return errors.New("the Donut widget doesn't support mouse events")
 }
 
+// minSize is the smallest area we can draw donut on.
+var minSize = image.Point{3, 3}
+
 // Options implements widgetapi.Widget.Options.
 func (d *Donut) Options() widgetapi.Options {
 	return widgetapi.Options{
@@ -247,8 +293,22 @@ func (d *Donut) Options() widgetapi.Options {
 		Ratio: image.Point{braille.RowMult, braille.ColMult},
 
 		// The smallest circle that "looks" like a circle on the canvas.
-		MinimumSize:  image.Point{3, 3},
+		MinimumSize:  minSize,
 		WantKeyboard: widgetapi.KeyScopeNone,
 		WantMouse:    widgetapi.MouseScopeNone,
 	}
+}
+
+// donutAndLabel splits the canvas area into an area for the donut and an
+// area under the donut for the text label.
+func donutAndLabel(cvsAr image.Rectangle) (donAr, labelAr image.Rectangle, err error) {
+	height := cvsAr.Dy()
+	// Two lines for the text label at the bottom.
+	// One for the text itself and one for visual space between the donut and
+	// the label.
+	donAr, labelAr, err = area.HSplitCells(cvsAr, height-2)
+	if err != nil {
+		return image.ZR, image.ZR, err
+	}
+	return donAr, labelAr, nil
 }

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The `SegmentDisplay` can now display dots and colons ('.' and ':').
+- The `Donut` widget now guarantees spacing between the donut and its label.
+
+### Fixed
+
+- Lint issues found on the Go report card.
+
+## [0.9.0] - 28-Apr-2019
+
+### Added
+
+- The `TextInput` widget, an input field allowing interactive text input.
+- The `Donut` widget can now display an optional text label under the donut.
+
+### Changed
+
 - Widgets now get information whether their container is focused when Draw is
   executed.
 - The SegmentDisplay widget now has a method that returns the observed character
@@ -26,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Termdash now requires at least Go version 1.10, which allows us to utilize
   `math.Round` instead of our own implementation and `strings.Builder` instead
   of `bytes.Buffer`.
+- Terminal shortcuts like `Ctrl-A` no longer come as two separate events,
+  Termdash now mirrors termbox-go and sends these as one event.
 
 ## [0.8.0] - 30-Mar-2019
 
@@ -255,7 +273,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.8.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.9.0...devel
+[0.9.0]: https://github.com/mum4k/termdash/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/mum4k/termdash/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/mum4k/termdash/compare/v0.7.0...v0.7.1

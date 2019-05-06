@@ -55,11 +55,40 @@ var buttonNames = map[Key]string{
 	KeyArrowDown:  "KeyArrowDown",
 	KeyArrowLeft:  "KeyArrowLeft",
 	KeyArrowRight: "KeyArrowRight",
+	KeyCtrlTilde:  "KeyCtrlTilde",
+	KeyCtrlA:      "KeyCtrlA",
+	KeyCtrlB:      "KeyCtrlB",
+	KeyCtrlC:      "KeyCtrlC",
+	KeyCtrlD:      "KeyCtrlD",
+	KeyCtrlE:      "KeyCtrlE",
+	KeyCtrlF:      "KeyCtrlF",
+	KeyCtrlG:      "KeyCtrlG",
 	KeyBackspace:  "KeyBackspace",
 	KeyTab:        "KeyTab",
+	KeyCtrlJ:      "KeyCtrlJ",
+	KeyCtrlK:      "KeyCtrlK",
+	KeyCtrlL:      "KeyCtrlL",
 	KeyEnter:      "KeyEnter",
+	KeyCtrlN:      "KeyCtrlN",
+	KeyCtrlO:      "KeyCtrlO",
+	KeyCtrlP:      "KeyCtrlP",
+	KeyCtrlQ:      "KeyCtrlQ",
+	KeyCtrlR:      "KeyCtrlR",
+	KeyCtrlS:      "KeyCtrlS",
+	KeyCtrlT:      "KeyCtrlT",
+	KeyCtrlU:      "KeyCtrlU",
+	KeyCtrlV:      "KeyCtrlV",
+	KeyCtrlW:      "KeyCtrlW",
+	KeyCtrlX:      "KeyCtrlX",
+	KeyCtrlY:      "KeyCtrlY",
+	KeyCtrlZ:      "KeyCtrlZ",
 	KeyEsc:        "KeyEsc",
-	KeyCtrl:       "KeyCtrl",
+	KeyCtrl4:      "KeyCtrl4",
+	KeyCtrl5:      "KeyCtrl5",
+	KeyCtrl6:      "KeyCtrl6",
+	KeyCtrl7:      "KeyCtrl7",
+	KeySpace:      "KeySpace",
+	KeyBackspace2: "KeyBackspace2",
 }
 
 // Printable characters, but worth having constants for them.
@@ -91,9 +120,53 @@ const (
 	KeyArrowDown
 	KeyArrowLeft
 	KeyArrowRight
+	KeyCtrlTilde
+	KeyCtrlA
+	KeyCtrlB
+	KeyCtrlC
+	KeyCtrlD
+	KeyCtrlE
+	KeyCtrlF
+	KeyCtrlG
 	KeyBackspace
 	KeyTab
+	KeyCtrlJ
+	KeyCtrlK
+	KeyCtrlL
 	KeyEnter
+	KeyCtrlN
+	KeyCtrlO
+	KeyCtrlP
+	KeyCtrlQ
+	KeyCtrlR
+	KeyCtrlS
+	KeyCtrlT
+	KeyCtrlU
+	KeyCtrlV
+	KeyCtrlW
+	KeyCtrlX
+	KeyCtrlY
+	KeyCtrlZ
 	KeyEsc
-	KeyCtrl
+	KeyCtrl4
+	KeyCtrl5
+	KeyCtrl6
+	KeyCtrl7
+	KeyBackspace2
+)
+
+// Keys declared as duplicates by termbox.
+const (
+	KeyCtrl2          Key = KeyCtrlTilde
+	KeyCtrlSpace      Key = KeyCtrlTilde
+	KeyCtrlH          Key = KeyBackspace
+	KeyCtrlI          Key = KeyTab
+	KeyCtrlM          Key = KeyEnter
+	KeyCtrlLsqBracket Key = KeyEsc
+	KeyCtrl3          Key = KeyEsc
+	KeyCtrlBackslash  Key = KeyCtrl4
+	KeyCtrlRsqBracket Key = KeyCtrl5
+	KeyCtrlSlash      Key = KeyCtrl7
+	KeyCtrlUnderscore Key = KeyCtrl7
+	KeyCtrl8          Key = KeyBackspace2
 )

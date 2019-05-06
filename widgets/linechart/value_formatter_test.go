@@ -143,6 +143,90 @@ func TestFormatters(t *testing.T) {
 			formatter: ValueFormatterSingleUnitDuration(time.Nanosecond, 8),
 			want:      "",
 		},
+		{
+			desc:      "Round formatter handles NaN values",
+			value:     math.NaN(),
+			formatter: ValueFormatterRound,
+			want:      "",
+		},
+		{
+			desc:      "Round formatter handles 0 values",
+			value:     0,
+			formatter: ValueFormatterRound,
+			want:      "0",
+		},
+		{
+			desc:      "Round formatter handles > x.5 values",
+			value:     96.7,
+			formatter: ValueFormatterRound,
+			want:      "97",
+		},
+		{
+			desc:      "Round formatter handles < x.5 values",
+			value:     1621.2,
+			formatter: ValueFormatterRound,
+			want:      "1621",
+		},
+		{
+			desc:      "Round formatter handles x.5 values",
+			value:     6.5,
+			formatter: ValueFormatterRound,
+			want:      "7",
+		},
+		{
+			desc:      "Round formatter handles minus > x.5 values",
+			value:     -96.7,
+			formatter: ValueFormatterRound,
+			want:      "-97",
+		},
+		{
+			desc:      "Round formatter handles minus < x.5 values",
+			value:     -1621.2,
+			formatter: ValueFormatterRound,
+			want:      "-1621",
+		},
+		{
+			desc:      "Round formatter handles minus x.5 values",
+			value:     -6.5,
+			formatter: ValueFormatterRound,
+			want:      "-7",
+		},
+		{
+			desc:      "Round formatter handles values with suffix",
+			value:     96.7,
+			formatter: ValueFormatterRoundWithSuffix("km"),
+			want:      "97km",
+		},
+		{
+			desc:      "Suffix formatter handles values with decimals",
+			value:     11234567890.71234567890,
+			formatter: ValueFormatterSuffix(4, " reqps"),
+			want:      "11234567890.7123 reqps",
+		},
+		{
+			desc:      "Suffix formatter handles NaN values",
+			value:     math.NaN(),
+			formatter: ValueFormatterSuffix(2, "test"),
+			want:      "",
+		},
+		{
+			desc:      "Suffix formatter handles 0 values",
+			value:     0,
+			formatter: ValueFormatterSuffix(2, "test"),
+			want:      "0.00test",
+		},
+		{
+			desc:      "Suffix formatters handles correctly percent suffix",
+			value:     96.78,
+			formatter: ValueFormatterSuffix(2, "%"),
+			want:      "96.78%",
+		},
+		{
+			desc:      "Round formatter handles values with percent suffix",
+			value:     96.7,
+			formatter: ValueFormatterRoundWithSuffix("%"),
+			want:      "97%",
+		},
 	}
 
 	for _, tc := range tests {

@@ -188,7 +188,8 @@ func trimmedRows(content *Content, colIdx int, colWidth columnWidth) int {
 			// no influence on the calculated column widths.
 			continue
 		}
-		if tgtCell.width > int(colWidth) {
+		available := int(colWidth) - 2*tgtCell.hierarchical.getHorizontalPadding()
+		if tgtCell.width > available {
 			trimmed++
 		}
 	}

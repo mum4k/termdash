@@ -75,8 +75,102 @@ func TestColumnWidths(t *testing.T) {
 					NewCell("cde"),
 				),
 			},
-			cvsWidth: 50,
-			want:     []columnWidth{25, 25},
+			cvsWidth: 6,
+			want:     []columnWidth{3, 3},
+		},
+		{
+			desc:    "horizontal padding at content level trims",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("ab"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell("a"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell(""),
+					NewCell("cde"),
+				),
+			},
+			opts: []ContentOption{
+				HorizontalPadding(1),
+			},
+			cvsWidth: 6,
+			want:     []columnWidth{1, 5},
+		},
+		{
+			desc:    "padding larger than width",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("ab"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell("a"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell(""),
+					NewCell("cde"),
+				),
+			},
+			opts: []ContentOption{
+				HorizontalPadding(7),
+			},
+			cvsWidth: 6,
+			want:     []columnWidth{1, 5},
+		},
+		{
+			desc:    "horizontal padding at row level trims",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRowWithOpts(
+					[]*Cell{
+						NewCell("ab"),
+						NewCell("cde"),
+					},
+					RowHorizontalPadding(1),
+				),
+				NewRow(
+					NewCell("a"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell(""),
+					NewCell("cde"),
+				),
+			},
+			cvsWidth: 6,
+			want:     []columnWidth{1, 5},
+		},
+		{
+			desc:    "horizontal padding at cell level trims",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("ab"),
+					NewCellWithOpts(
+						[]*Data{
+							NewData("cde"),
+						},
+						CellHorizontalPadding(1),
+					),
+				),
+				NewRow(
+					NewCell("a"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell(""),
+					NewCell("cde"),
+				),
+			},
+			cvsWidth: 6,
+			want:     []columnWidth{1, 5},
 		},
 		{
 			desc:    "two columns, canvas wide enough, no trimming",

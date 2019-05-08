@@ -18,6 +18,8 @@ package table
 
 import (
 	"image"
+
+	"github.com/mum4k/termdash/internal/numbers"
 )
 
 // contentLayout determines how the content gets placed onto the canvas.
@@ -59,17 +61,17 @@ func newContentLayout(content *Content, cvsAr image.Rectangle) (*contentLayout, 
 	}, nil
 }
 
-/*
-TODO:
-- given cvsWidth, determine space available to cells (minus border and padding).
-- columnWidths to account for padding
-- calculate column widths
+// cellUsable determines the usable width for the specified cell given the
+// column widths. This accounts for additional space requirements when border
+// or padding is used. Can return zero if no width is available for the cell.
+func cellUsableWidth(content *Content, cell *Cell, cw columnWidth) int {
+	sub := 0
+	if content.hasBorder() {
+		// Reserve one terminal cell per table cell for the left border.
+		sub++
+	}
+	sub += 2 * cell.hierarchical.getHorizontalPadding()
 
-- each row should report its required height - accounting for content of cells + padding
-- process to draw row by row - top down and bottom up, account for when doesn't fit.
-
-- func: given a cell - give me its area
-- each cell - draw itself on a canvas, best effort on size.
-
-- ensure content copies data given by the user to prevent races.
-*/
+	_, usable := numbers.MinMaxInts([]int{0, int(cw) - sub})
+	return usable
+}

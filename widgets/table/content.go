@@ -230,6 +230,11 @@ func (c *Content) validate() error {
 	return validateContent(c)
 }
 
+// hasBorder asserts whether the content has a border configured.
+func (c *Content) hasBorder() bool {
+	return c.opts.border != linestyle.None
+}
+
 // AddRows adds the rows to the content.
 func (c *Content) AddRows(rows []*Row) error {
 	c.mu.Lock()

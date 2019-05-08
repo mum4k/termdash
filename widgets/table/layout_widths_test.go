@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/mum4k/termdash/linestyle"
 )
 
 func TestColumnWidths(t *testing.T) {
@@ -77,6 +78,29 @@ func TestColumnWidths(t *testing.T) {
 			},
 			cvsWidth: 6,
 			want:     []columnWidth{3, 3},
+		},
+		{
+			desc:    "accounts for space needed for the border",
+			columns: Columns(2),
+			rows: []*Row{
+				NewRow(
+					NewCell("ab"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell("a"),
+					NewCell("cde"),
+				),
+				NewRow(
+					NewCell(""),
+					NewCell("cde"),
+				),
+			},
+			opts: []ContentOption{
+				Border(linestyle.Light),
+			},
+			cvsWidth: 7,
+			want:     []columnWidth{2, 4},
 		},
 		{
 			desc:    "horizontal padding at content level trims",

@@ -29,9 +29,28 @@ type columnWidth int
 
 // columnWidths given the content and the available canvas width returns the
 // widths of individual columns.
-// The argument cvsWidth is assumed to exclude space required for any border,
-// padding or spacing.
+// If a border is configured, the returned column widths will reserve one
+// terminal cell for the right-most portion of the border. The calculation of
+// column widths accounts for border inside cells and for any horizontal
+// padding. The returned column width include the border and padding.
+//
+// Example:
+//
+// cvsWidth of 17, returns two columns of width 8 and one terminal cell is
+// reserved for the right-most border.
+// -----------------
+// | cell1 | cell2 |
+//  ^     ^        ^ right-most border subtracted from the width.
+//  padding
+// ^ border accounted for per cell.
 func columnWidths(content *Content, cvsWidth int) ([]columnWidth, error) {
+	if content.hasBorder() {
+		// Account for one terminal cell for the right-most part of the border.
+		// Then account for one terminal cell used by the border at each table
+		// cell.
+		cvsWidth--
+	}
+
 	if wp := content.opts.columnWidthsPercent; len(wp) > 0 {
 		// If the user provided widths for the columns, use those.
 		widths, err := splitToPercent(cvsWidth, wp)
@@ -189,6 +208,10 @@ func trimmedRows(content *Content, colIdx int, colWidth columnWidth) int {
 			continue
 		}
 		available := int(colWidth) - 2*tgtCell.hierarchical.getHorizontalPadding()
+		if content.hasBorder() {
+			available--
+		}
+
 		if tgtCell.width > available {
 			trimmed++
 		}

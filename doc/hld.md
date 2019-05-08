@@ -5,7 +5,7 @@
 Develop infrastructure of dashboard widgets. The widgets should support both
 input (mouse and keyboard) and output (display of information to the user).
 
-Fulfill the requirements outlined in the main
+Fulfil the requirements outlined in the main
 [README](http://github.com/mum4k/termdash).
 
 ## Background
@@ -76,11 +76,11 @@ The infrastructure handles terminal setup, input events and manages containers.
 #### Input events
 
 The infrastructure regularly polls events from the terminal layer and feeds
-them into the event distribution system (EDS). The EDS fulfills the following
+them into the event distribution system (EDS). The EDS fulfils the following
 functions:
 
 - Allow subscribers to specify the type of events they want to receive.
-- Distributeis events in a non-blocking manner, i.e. a single slow subscriber
+- Distributes events in a non-blocking manner, i.e. a single slow subscriber
   cannot slow down other subscribers.
 - Events to each subscriber are throttled, if a subscriber builds a long tail
   of unprocessed input events, the EDS selectively drops repetitive events

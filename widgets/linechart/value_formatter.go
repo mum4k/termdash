@@ -69,7 +69,7 @@ func durationSingleUnitPrettyFormat(d time.Duration, decimals int) string {
 }
 
 func suffixDecimalFormat(decimals int, suffix string) string {
-	suffix = strings.ReplaceAll(suffix, "%", "%%") // safe `%` character for fmt.
+	suffix = strings.Replace(suffix, "%", "%%", -1) // Safe `%` character for fmt.
 	return fmt.Sprintf("%%.%df%s", decimals, suffix)
 }
 

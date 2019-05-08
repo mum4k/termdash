@@ -45,23 +45,14 @@ func FromSize(size image.Point) (image.Rectangle, error) {
 //
 // The fixed value must by in the range -1 <= heightFixed.
 // If fixed value is -1 (default value), heightPerc is used instead.
-func HSplit(area image.Rectangle, heightPerc int, heightFixed int) (top image.Rectangle, bottom image.Rectangle, err error) {
+func HSplit(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
 	if min, max := 0, 100; heightPerc < min || heightPerc > max {
 		return image.ZR, image.ZR, fmt.Errorf("invalid heightPerc %d, must be in range %d <= heightPerc <= %d", heightPerc, min, max)
 	}
-	if heightFixed < -1 {
-		return image.ZR, image.ZR, fmt.Errorf("invalid heightFixed %d, must be in range %d <= heightFixed", heightFixed, -1)
-	}
 
-	// Prioritize `SplitFixed()` over `SplitPercent()`.
-	if heightFixed >= 0 {
-		top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+heightFixed)
-		bottom = image.Rect(area.Min.X, area.Min.Y+heightFixed, area.Max.X, area.Max.Y)
-	} else {
-		height := area.Dy() * heightPerc / 100
-		top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+height)
-		bottom = image.Rect(area.Min.X, area.Min.Y+height, area.Max.X, area.Max.Y)
-	}
+	height := area.Dy() * heightPerc / 100
+	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+height)
+	bottom = image.Rect(area.Min.X, area.Min.Y+height, area.Max.X, area.Max.Y)
 	if top.Dy() == 0 {
 		top = image.ZR
 	}
@@ -78,23 +69,14 @@ func HSplit(area image.Rectangle, heightPerc int, heightFixed int) (top image.Re
 //
 // The fixed value must by in the range -1 <= heightFixed.
 // If fixed value is -1 (default value), heightPerc is used instead.
-func VSplit(area image.Rectangle, widthPerc int, widthFixed int) (left image.Rectangle, right image.Rectangle, err error) {
+func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle, err error) {
 	if min, max := 0, 100; widthPerc < min || widthPerc > max {
 		return image.ZR, image.ZR, fmt.Errorf("invalid widthPerc %d, must be in range %d <= widthPerc <= %d", widthPerc, min, max)
 	}
-	if widthFixed < -1 {
-		return image.ZR, image.ZR, fmt.Errorf("invalid widthFixed %d, must be in range %d <= widthFixed", widthFixed, -1)
-	}
 
-	// Prioritize `SplitFixed()` over `SplitPercent()`.
-	if widthFixed >= 0 {
-		left = image.Rect(area.Min.X, area.Min.Y, area.Min.X+widthFixed, area.Max.Y)
-		right = image.Rect(area.Min.X+widthFixed, area.Min.Y, area.Max.X, area.Max.Y)
-	} else {
-		width := area.Dx() * widthPerc / 100
-		left = image.Rect(area.Min.X, area.Min.Y, area.Min.X+width, area.Max.Y)
-		right = image.Rect(area.Min.X+width, area.Min.Y, area.Max.X, area.Max.Y)
-	}
+	width := area.Dx() * widthPerc / 100
+	left = image.Rect(area.Min.X, area.Min.Y, area.Min.X+width, area.Max.Y)
+	right = image.Rect(area.Min.X+width, area.Min.Y, area.Max.X, area.Max.Y)
 	if left.Dx() == 0 {
 		left = image.ZR
 	}

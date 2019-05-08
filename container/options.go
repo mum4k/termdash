@@ -38,9 +38,8 @@ func applyOptions(c *Container, opts ...Option) error {
 	return nil
 }
 
-// validateOptions validates options set in the container tree.
-func validateOptions(c *Container) error {
-	// ensure all the container identifiers are either empty or unique.
+// ensure all the container identifiers are either empty or unique.
+func validateIds(c *Container) error {
 	var errStr string
 	seenID := map[string]bool{}
 	preOrder(c, &errStr, func(c *Container) error {
@@ -57,6 +56,43 @@ func validateOptions(c *Container) error {
 	if errStr != "" {
 		return errors.New(errStr)
 	}
+	return nil
+}
+
+// ensure all the container only have one split modifier.
+func validateSplits(c *Container) error {
+	var errStr string
+	preOrder(c, &errStr, func(c *Container) error {
+		if c.opts.splitFixed > -1 && c.opts.splitPercent != 50 {
+			return fmt.Errorf(
+				"only one of splitFixed `%v` and splitPercent `%v` is allowed to be set per container",
+				c.opts.splitFixed,
+				c.opts.splitPercent,
+			)
+		}
+
+		return nil
+	})
+	if errStr != "" {
+		return errors.New(errStr)
+	}
+	return nil
+}
+
+// validateOptions validates options set in the container tree.
+func validateOptions(c *Container) error {
+	// ensure all the container identifiers are either empty or unique.
+	errIds := validateIds(c)
+	if errIds != nil {
+		return errIds
+	}
+
+	// ensure that max one split modifier is used per container
+	errSplits := validateSplits(c)
+	if errSplits != nil {
+		return errSplits
+	}
+
 	return nil
 }
 
@@ -218,8 +254,8 @@ func SplitPercent(p int) SplitOption {
 	})
 }
 
-// SplitFixed sets the heights of the top and the bottom containers.
-// The first container will be fixed and the second one will fill the rest of the space.
+// SplitFixed sets the size as a fixed value of the available space.
+// FIXME: More comments
 // Allows values greater or equal to zero.
 func SplitFixed(cells int) SplitOption {
 	return splitOption(func(opts *options) error {

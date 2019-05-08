@@ -127,7 +127,7 @@ func mirror() *fakewidget.Mirror {
 
 // mustHSplit splits the area or panics.
 func mustHSplit(ar image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle) {
-	t, b, err := area.HSplit(ar, heightPerc, -1)
+	t, b, err := area.HSplit(ar, heightPerc)
 	if err != nil {
 		panic(err)
 	}
@@ -136,7 +136,7 @@ func mustHSplit(ar image.Rectangle, heightPerc int) (top image.Rectangle, bottom
 
 // mustVSplit splits the area or panics.
 func mustVSplit(ar image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle) {
-	l, r, err := area.VSplit(ar, widthPerc, -1)
+	l, r, err := area.VSplit(ar, widthPerc)
 	if err != nil {
 		panic(err)
 	}

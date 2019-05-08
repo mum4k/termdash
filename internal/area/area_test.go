@@ -184,7 +184,7 @@ func TestHSplit(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			gotTop, gotBot, err := HSplit(tc.area, tc.heightPerc, -1)
+			gotTop, gotBot, err := HSplit(tc.area, tc.heightPerc)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("VSplit => unexpected error:%v, wantErr:%v", err, tc.wantErr)
 			}
@@ -265,7 +265,7 @@ func TestVSplit(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			gotLeft, gotRight, err := VSplit(tc.area, tc.widthPerc, -1)
+			gotLeft, gotRight, err := VSplit(tc.area, tc.widthPerc)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("VSplit => unexpected error:%v, wantErr:%v", err, tc.wantErr)
 			}

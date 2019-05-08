@@ -330,7 +330,7 @@ func split(cvsAr image.Rectangle, label string, widthPerc *int) (labelAr, textAr
 	switch {
 	case widthPerc != nil:
 		splitP := 100 - *widthPerc
-		labelAr, textAr, err := area.VSplit(cvsAr, splitP, -1)
+		labelAr, textAr, err := area.VSplit(cvsAr, splitP)
 		if err != nil {
 			return image.ZR, image.ZR, err
 		}

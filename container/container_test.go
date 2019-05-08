@@ -491,6 +491,26 @@ func TestNew(t *testing.T) {
 			wantContainerErr: true,
 		},
 		{
+			desc:     "fails when both SplitFixed and SplitPercent are specified",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(linestyle.Light),
+						),
+						Bottom(
+							Border(linestyle.Light),
+						),
+						SplitFixed(4),
+						SplitPercent(20),
+					),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
 			desc:     "empty container",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
@@ -617,6 +637,32 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "horizontal unequal split",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(linestyle.Light),
+						),
+						Bottom(
+							Border(linestyle.Light),
+						),
+						SplitFixed(4),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 10, 4))
+				testdraw.MustBorder(cvs, image.Rect(0, 4, 10, 20))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "horizontal split, parent and children have borders",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
@@ -730,6 +776,32 @@ func TestNew(t *testing.T) {
 							Border(linestyle.Light),
 						),
 						SplitPercent(20),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 4, 10))
+				testdraw.MustBorder(cvs, image.Rect(4, 0, 20, 10))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "vertical fixed splits",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(linestyle.Light),
+						),
+						Right(
+							Border(linestyle.Light),
+						),
+						SplitFixed(4),
 					),
 				)
 			},

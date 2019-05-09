@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `time.Duration` based `ValueFormatter` for the `LineChart` Y-axis labels.
+- Added round and suffix `ValueFormatter` for the `LineChart` Y-axis labels.
+- Added decimal and suffix `ValueFormatter` for the `LineChart` Y-axis labels.
+
 ### Changed
 
+- The `LineChart` can format the labels on the Y-axis with a `ValueFormatter`.
 - The `SegmentDisplay` can now display dots and colons ('.' and ':').
 - The `Donut` widget now guarantees spacing between the donut and its label.
 

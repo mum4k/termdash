@@ -40,6 +40,7 @@ type options struct {
 	xAxisUnscaled       bool
 	yAxisMode           axes.YScaleMode
 	yAxisCustomScale    *customScale
+	yAxisValueFormatter ValueFormatter
 	zoomHightlightColor cell.Color
 	zoomStepPercent     int
 }
@@ -194,3 +195,18 @@ func ZoomStepPercent(perc int) Option {
 		opts.zoomStepPercent = perc
 	})
 }
+
+// YAxisFormattedValues sets a value formatter for the Y axis values.
+// If a formatter is set, it will format the values with the desired
+// ValueFormatter and will use the retuning string from the formatter
+// instead of the numeric value to represent this value on the Y axis.
+func YAxisFormattedValues(vfmt ValueFormatter) Option {
+	return option(func(opts *options) {
+		opts.yAxisValueFormatter = vfmt
+	})
+}
+
+// ValueFormatter will be used to format values onto string based
+// representation.
+// The received float64 value could be a math.NaN value.
+type ValueFormatter func(value float64) string

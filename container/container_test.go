@@ -511,6 +511,25 @@ func TestNew(t *testing.T) {
 			wantContainerErr: true,
 		},
 		{
+			desc:     "fails on SplitFixed less than -1",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitHorizontal(
+						Top(
+							Border(linestyle.Light),
+						),
+						Bottom(
+							Border(linestyle.Light),
+						),
+						SplitPercent(-4),
+					),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
 			desc:     "empty container",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

@@ -39,58 +39,46 @@ func applyOptions(c *Container, opts ...Option) error {
 }
 
 // ensure all the container identifiers are either empty or unique.
-func validateIds(c *Container) error {
-	var errStr string
-	seenID := map[string]bool{}
-	preOrder(c, &errStr, func(c *Container) error {
-		if c.opts.id == "" {
-			return nil
-		}
-
-		if seenID[c.opts.id] {
-			return fmt.Errorf("duplicate container ID %q", c.opts.id)
-		}
-		seenID[c.opts.id] = true
+func validateIds(c *Container, seen *(map[string]bool)) error {
+	if c.opts.id == "" {
 		return nil
-	})
-	if errStr != "" {
-		return errors.New(errStr)
+	} else if (*seen)[c.opts.id] {
+		return fmt.Errorf("duplicate container ID %q", c.opts.id)
 	}
+	(*seen)[c.opts.id] = true
+
 	return nil
 }
 
 // ensure all the container only have one split modifier.
 func validateSplits(c *Container) error {
+	if c.opts.splitFixed > -1 && c.opts.splitPercent != 50 {
+		return fmt.Errorf(
+			"only one of splitFixed `%v` and splitPercent `%v` is allowed to be set per container",
+			c.opts.splitFixed,
+			c.opts.splitPercent,
+		)
+	}
+
+	return nil
+}
+
+// validateOptions validates options set in the container tree.
+func validateOptions(c *Container) error {
 	var errStr string
+	seenID := map[string]bool{}
 	preOrder(c, &errStr, func(c *Container) error {
-		if c.opts.splitFixed > -1 && c.opts.splitPercent != 50 {
-			return fmt.Errorf(
-				"only one of splitFixed `%v` and splitPercent `%v` is allowed to be set per container",
-				c.opts.splitFixed,
-				c.opts.splitPercent,
-			)
+		if err := validateIds(c, &seenID); err != nil {
+			return err
+		}
+		if err := validateSplits(c); err != nil {
+			return err
 		}
 
 		return nil
 	})
 	if errStr != "" {
 		return errors.New(errStr)
-	}
-	return nil
-}
-
-// validateOptions validates options set in the container tree.
-func validateOptions(c *Container) error {
-	// ensure all the container identifiers are either empty or unique.
-	errIds := validateIds(c)
-	if errIds != nil {
-		return errIds
-	}
-
-	// ensure that max one split modifier is used per container
-	errSplits := validateSplits(c)
-	if errSplits != nil {
-		return errSplits
 	}
 
 	return nil

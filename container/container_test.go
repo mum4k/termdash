@@ -523,7 +523,7 @@ func TestNew(t *testing.T) {
 						Bottom(
 							Border(linestyle.Light),
 						),
-						SplitPercent(-4),
+						SplitFixed(-2),
 					),
 				)
 			},

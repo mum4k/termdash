@@ -39,13 +39,13 @@ func applyOptions(c *Container, opts ...Option) error {
 }
 
 // ensure all the container identifiers are either empty or unique.
-func validateIds(c *Container, seen *(map[string]bool)) error {
+func validateIds(c *Container, seen map[string]bool) error {
 	if c.opts.id == "" {
 		return nil
-	} else if (*seen)[c.opts.id] {
+	} else if seen[c.opts.id] {
 		return fmt.Errorf("duplicate container ID %q", c.opts.id)
 	}
-	(*seen)[c.opts.id] = true
+	seen[c.opts.id] = true
 
 	return nil
 }
@@ -68,7 +68,7 @@ func validateOptions(c *Container) error {
 	var errStr string
 	seenID := map[string]bool{}
 	preOrder(c, &errStr, func(c *Container) error {
-		if err := validateIds(c, &seenID); err != nil {
+		if err := validateIds(c, seenID); err != nil {
 			return err
 		}
 		if err := validateSplits(c); err != nil {
@@ -192,7 +192,7 @@ func newOptions(parent *options) *options {
 		hAlign:       align.HorizontalCenter,
 		vAlign:       align.VerticalMiddle,
 		splitPercent: DefaultSplitPercent,
-		splitFixed:   -1,
+		splitFixed:   DefaultSplitFixed,
 	}
 	if parent != nil {
 		opts.inherited = parent.inherited
@@ -225,6 +225,9 @@ func (so splitOption) setSplit(opts *options) error {
 // DefaultSplitPercent is the default value for the SplitPercent option.
 const DefaultSplitPercent = 50
 
+// DefaultSplitFixed is the default value for the SplitFixed option.
+const DefaultSplitFixed = -1
+
 // SplitPercent sets the relative size of the split as percentage of the available space.
 // When using SplitVertical, the provided size is applied to the new left
 // container, the new right container gets the reminder of the size.
@@ -243,8 +246,12 @@ func SplitPercent(p int) SplitOption {
 }
 
 // SplitFixed sets the size as a fixed value of the available space.
-// FIXME: More comments
-// Allows values greater or equal to zero.
+// When using SplitVertical, the provided size is applied to the new left
+// container, the new right container gets the reminder of the size.
+// When using SplitHorizontal, the provided size is applied to the new top
+// container, the new bottom container gets the reminder of the size.
+// The provided value must be a positive number in the range 0 <= cells.
+// If not provided, defaults to DefaultSplitFixed.
 func SplitFixed(cells int) SplitOption {
 	return splitOption(func(opts *options) error {
 		if cells < 0 {

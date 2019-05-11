@@ -171,7 +171,7 @@ func (c *Container) split() (image.Rectangle, image.Rectangle, error) {
 	if err != nil {
 		return image.ZR, image.ZR, err
 	}
-	if c.opts.splitFixed > -1 {
+	if c.opts.splitFixed > DefaultSplitFixed {
 		if c.opts.split == splitTypeVertical {
 			return area.VSplitCells(ar, c.opts.splitFixed)
 		}

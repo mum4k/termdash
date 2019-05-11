@@ -52,7 +52,7 @@ func validateIds(c *Container, seen map[string]bool) error {
 
 // ensure all the container only have one split modifier.
 func validateSplits(c *Container) error {
-	if c.opts.splitFixed > -1 && c.opts.splitPercent != 50 {
+	if c.opts.splitFixed > DefaultSplitFixed && c.opts.splitPercent != DefaultSplitPercent {
 		return fmt.Errorf(
 			"only one of splitFixed `%v` and splitPercent `%v` is allowed to be set per container",
 			c.opts.splitFixed,
@@ -245,13 +245,15 @@ func SplitPercent(p int) SplitOption {
 	})
 }
 
-// SplitFixed sets the size as a fixed value of the available space.
+// SplitFixed sets the size of the first container to be a fixed value
+// and makes the second container take up the remaining space.
 // When using SplitVertical, the provided size is applied to the new left
 // container, the new right container gets the reminder of the size.
 // When using SplitHorizontal, the provided size is applied to the new top
 // container, the new bottom container gets the reminder of the size.
 // The provided value must be a positive number in the range 0 <= cells.
-// If not provided, defaults to DefaultSplitFixed.
+// If SplitFixed() is not specified, it defaults to SplitPercent() and its given value.
+// Only one of SplitFixed() and SplitPercent() can be specified per container.
 func SplitFixed(cells int) SplitOption {
 	return splitOption(func(opts *options) error {
 		if cells < 0 {

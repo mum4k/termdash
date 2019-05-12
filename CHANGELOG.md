@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `time.Duration` based `ValueFormatter` for the `LineChart` Y-axis labels.
 - Added round and suffix `ValueFormatter` for the `LineChart` Y-axis labels.
 - Added decimal and suffix `ValueFormatter` for the `LineChart` Y-axis labels.
+- Added an option that allows fixed size container splits.
 
 ### Changed
 

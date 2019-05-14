@@ -62,7 +62,6 @@ go get -u github.com/mum4k/termdash
 The usage of most of these elements is demonstrated in
 [termdashdemo.go](termdashdemo/termdashdemo.go). To execute the demo:
 
-
 ```go
 go run github.com/mum4k/termdash/termdashdemo/termdashdemo.go
 ```
@@ -207,7 +206,7 @@ Termdash uses [this branching model](https://nvie.com/posts/a-successful-git-bra
 
 # Projects using Termdash
 
-- [grafterm](https://github.com/slok/grafterm)
+- [grafterm](https://github.com/slok/grafterm): Metrics dashboards visualization on the terminal.
 
 # Disclaimer
 

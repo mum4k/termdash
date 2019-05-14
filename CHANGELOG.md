@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Termdash could deadlock when a `Button` or a `TextInput` was configured to
+  call the `Container.Update` method.
+
 ## [0.9.0] - 28-Apr-2019
 
 ### Added

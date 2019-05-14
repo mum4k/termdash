@@ -194,6 +194,20 @@ before contributing.
 If you're developing a new widget, please see the [widget
 development](doc/widget_development.md) section.
 
+Termdash uses [this branching model](https://nvie.com/posts/a-successful-git-branching-model/). When you fork the repository, base your changes off the [devel](https://github.com/mum4k/termdash/tree/devel) branch and the pull request should merge it back to the devel branch. Commits to the master branch are limited to releases, major bug fixes and documentation updates.
+
+# Similar projects in Go
+
+- [termui](https://github.com/gizak/termui)
+- [tview](https://github.com/rivo/tview)
+- [gocui](https://github.com/jroimartin/gocui)
+- [gowid](https://github.com/gcla/gowid)
+- [clui](https://github.com/VladimirMarkelov/clui)
+- [tui-go](https://github.com/marcusolsson/tui-go)
+
+# Projects using Termdash
+
+- [grafterm](https://github.com/slok/grafterm)
 
 # Disclaimer
 

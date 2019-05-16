@@ -275,10 +275,11 @@ func (lc *LineChart) xDetailsForCap(cvs *canvas.Canvas, bc *braille.Canvas, xd *
 func (lc *LineChart) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetails, error) {
 	reqXHeight := axes.RequiredHeight(lc.maxXValue(), lc.xLabels, lc.opts.xLabelOrientation)
 	yp := &axes.YProperties{
-		Min:        lc.yMin,
-		Max:        lc.yMax,
-		ReqXHeight: reqXHeight,
-		ScaleMode:  lc.opts.yAxisMode,
+		Min:            lc.yMin,
+		Max:            lc.yMax,
+		ReqXHeight:     reqXHeight,
+		ScaleMode:      lc.opts.yAxisMode,
+		ValueFormatter: lc.opts.yAxisValueFormatter,
 	}
 	yd, err := axes.NewYDetails(cvs.Area(), yp)
 	if err != nil {

@@ -23,6 +23,31 @@ import (
 	"github.com/mum4k/termdash/internal/numbers"
 )
 
+// ValueOption is used to provide options to the NewValue function.
+type ValueOption interface {
+	// set sets the provided option.
+	set(*valueOptions)
+}
+
+type valueOptions struct {
+	formatter func(v float64) string
+}
+
+// valueOption implements ValueOption.
+type valueOption func(opts *valueOptions)
+
+// set implements ValueOption.set.
+func (vo valueOption) set(opts *valueOptions) {
+	vo(opts)
+}
+
+// ValueFormatter sets a custom formatter for the value.
+func ValueFormatter(formatter func(float64) string) ValueOption {
+	return valueOption(func(opts *valueOptions) {
+		opts.formatter = formatter
+	})
+}
+
 // Value represents one value.
 type Value struct {
 	// Value is the original unmodified value.
@@ -37,6 +62,9 @@ type Value struct {
 	// a call to newValue.
 	NonZeroDecimals int
 
+	// formatter will format value to a string representation of the value,
+	// if Formatter is not present it will fallback to default format.
+	formatter func(float64) string
 	// text value if this value was constructed using NewTextValue.
 	text string
 }
@@ -48,13 +76,19 @@ func (v *Value) String() string {
 
 // NewValue returns a new instance representing the provided value, rounding
 // the value up to the specified number of non-zero decimal places.
-func NewValue(v float64, nonZeroDecimals int) *Value {
+func NewValue(v float64, nonZeroDecimals int, opts ...ValueOption) *Value {
+	opt := &valueOptions{}
+	for _, o := range opts {
+		o.set(opt)
+	}
+
 	r, zd := numbers.RoundToNonZeroPlaces(v, nonZeroDecimals)
 	return &Value{
 		Value:           v,
 		Rounded:         r,
 		ZeroDecimals:    zd,
 		NonZeroDecimals: nonZeroDecimals,
+		formatter:       opt.formatter,
 	}
 }
 
@@ -72,14 +106,24 @@ func (v *Value) Text() string {
 	if v.text != "" {
 		return v.text
 	}
-	if math.Ceil(v.Rounded) == v.Rounded {
-		return fmt.Sprintf("%.0f", v.Rounded)
+
+	if v.formatter != nil {
+		return v.formatter(v.Value)
 	}
 
-	format := fmt.Sprintf("%%.%df", v.NonZeroDecimals+v.ZeroDecimals)
-	t := fmt.Sprintf(format, v.Rounded)
-	if len(t) > 10 {
-		t = fmt.Sprintf("%.2e", v.Rounded)
+	return defaultFormatter(v.Rounded, v.NonZeroDecimals, v.ZeroDecimals)
+}
+
+func defaultFormatter(value float64, nonZeroDecimals, zeroDecimals int) string {
+	if math.Ceil(value) == value {
+		return fmt.Sprintf("%.0f", value)
 	}
+
+	format := fmt.Sprintf("%%.%df", nonZeroDecimals+zeroDecimals)
+	t := fmt.Sprintf(format, value)
+	if len(t) > 10 {
+		t = fmt.Sprintf("%.2e", value)
+	}
+
 	return t
 }

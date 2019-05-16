@@ -71,7 +71,7 @@ func yLabels(scale *YScale, labelWidth int) ([]*Label, error) {
 	if min := 2; scale.GraphHeight < min {
 		return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", scale.GraphHeight, min)
 	}
-	if min := 1; labelWidth < min {
+	if min := 0; labelWidth < min {
 		return nil, fmt.Errorf("cannot place labels in label area width %d, minimum is %d", labelWidth, min)
 	}
 

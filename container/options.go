@@ -38,25 +38,49 @@ func applyOptions(c *Container, opts ...Option) error {
 	return nil
 }
 
+// ensure all the container identifiers are either empty or unique.
+func validateIds(c *Container, seen map[string]bool) error {
+	if c.opts.id == "" {
+		return nil
+	} else if seen[c.opts.id] {
+		return fmt.Errorf("duplicate container ID %q", c.opts.id)
+	}
+	seen[c.opts.id] = true
+
+	return nil
+}
+
+// ensure all the container only have one split modifier.
+func validateSplits(c *Container) error {
+	if c.opts.splitFixed > DefaultSplitFixed && c.opts.splitPercent != DefaultSplitPercent {
+		return fmt.Errorf(
+			"only one of splitFixed `%v` and splitPercent `%v` is allowed to be set per container",
+			c.opts.splitFixed,
+			c.opts.splitPercent,
+		)
+	}
+
+	return nil
+}
+
 // validateOptions validates options set in the container tree.
 func validateOptions(c *Container) error {
-	// ensure all the container identifiers are either empty or unique.
 	var errStr string
 	seenID := map[string]bool{}
 	preOrder(c, &errStr, func(c *Container) error {
-		if c.opts.id == "" {
-			return nil
+		if err := validateIds(c, seenID); err != nil {
+			return err
+		}
+		if err := validateSplits(c); err != nil {
+			return err
 		}
 
-		if seenID[c.opts.id] {
-			return fmt.Errorf("duplicate container ID %q", c.opts.id)
-		}
-		seenID[c.opts.id] = true
 		return nil
 	})
 	if errStr != "" {
 		return errors.New(errStr)
 	}
+
 	return nil
 }
 
@@ -77,6 +101,7 @@ type options struct {
 	// split identifies how is this container split.
 	split        splitType
 	splitPercent int
+	splitFixed   int
 
 	// widget is the widget in the container.
 	// A container can have either two sub containers (left and right) or a
@@ -167,6 +192,7 @@ func newOptions(parent *options) *options {
 		hAlign:       align.HorizontalCenter,
 		vAlign:       align.VerticalMiddle,
 		splitPercent: DefaultSplitPercent,
+		splitFixed:   DefaultSplitFixed,
 	}
 	if parent != nil {
 		opts.inherited = parent.inherited
@@ -199,6 +225,9 @@ func (so splitOption) setSplit(opts *options) error {
 // DefaultSplitPercent is the default value for the SplitPercent option.
 const DefaultSplitPercent = 50
 
+// DefaultSplitFixed is the default value for the SplitFixed option.
+const DefaultSplitFixed = -1
+
 // SplitPercent sets the relative size of the split as percentage of the available space.
 // When using SplitVertical, the provided size is applied to the new left
 // container, the new right container gets the reminder of the size.
@@ -212,6 +241,25 @@ func SplitPercent(p int) SplitOption {
 			return fmt.Errorf("invalid split percentage %d, must be in range %d < p < %d", p, min, max)
 		}
 		opts.splitPercent = p
+		return nil
+	})
+}
+
+// SplitFixed sets the size of the first container to be a fixed value
+// and makes the second container take up the remaining space.
+// When using SplitVertical, the provided size is applied to the new left
+// container, the new right container gets the reminder of the size.
+// When using SplitHorizontal, the provided size is applied to the new top
+// container, the new bottom container gets the reminder of the size.
+// The provided value must be a positive number in the range 0 <= cells.
+// If SplitFixed() is not specified, it defaults to SplitPercent() and its given value.
+// Only one of SplitFixed() and SplitPercent() can be specified per container.
+func SplitFixed(cells int) SplitOption {
+	return splitOption(func(opts *options) error {
+		if cells < 0 {
+			return fmt.Errorf("invalid fixed value %d, must be in range %d <= cells", cells, 0)
+		}
+		opts.splitFixed = cells
 		return nil
 	})
 }

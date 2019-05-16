@@ -22,6 +22,10 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 )
 
+var (
+	testValueFormatter = func(float64) string { return "test" }
+)
+
 type updateY struct {
 	minVal float64
 	maxVal float64
@@ -82,7 +86,7 @@ func TestY(t *testing.T) {
 				Width: 2,
 				Start: image.Point{1, 0},
 				End:   image.Point{1, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored, nil),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -103,7 +107,7 @@ func TestY(t *testing.T) {
 				Width: 2,
 				Start: image.Point{1, 0},
 				End:   image.Point{1, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored, nil),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -124,7 +128,7 @@ func TestY(t *testing.T) {
 				Width: 2,
 				Start: image.Point{1, 0},
 				End:   image.Point{1, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored, nil),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{0, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -145,7 +149,7 @@ func TestY(t *testing.T) {
 				Width: 2,
 				Start: image.Point{1, 0},
 				End:   image.Point{1, 2},
-				Scale: mustNewYScale(1, 6, 2, nonZeroDecimals, YScaleModeAdaptive),
+				Scale: mustNewYScale(1, 6, 2, nonZeroDecimals, YScaleModeAdaptive, nil),
 				Labels: []*Label{
 					{NewValue(1, nonZeroDecimals), image.Point{0, 1}},
 					{NewValue(3.88, nonZeroDecimals), image.Point{0, 0}},
@@ -165,7 +169,7 @@ func TestY(t *testing.T) {
 				Width: 5,
 				Start: image.Point{4, 0},
 				End:   image.Point{4, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored, nil),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
@@ -185,10 +189,32 @@ func TestY(t *testing.T) {
 				Width: 5,
 				Start: image.Point{4, 0},
 				End:   image.Point{4, 2},
-				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored),
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored, nil),
 				Labels: []*Label{
 					{NewValue(0, nonZeroDecimals), image.Point{3, 1}},
 					{NewValue(1.72, nonZeroDecimals), image.Point{0, 0}},
+				},
+			},
+		},
+		{
+			desc: "success for formatted labels scale",
+			yp: &YProperties{
+				Min:            1,
+				Max:            3,
+				ReqXHeight:     2,
+				ScaleMode:      YScaleModeAnchored,
+				ValueFormatter: testValueFormatter,
+			},
+			cvsAr:     image.Rect(0, 0, 3, 4),
+			wantWidth: 2,
+			want: &YDetails{
+				Width: 2,
+				Start: image.Point{1, 0},
+				End:   image.Point{1, 2},
+				Scale: mustNewYScale(0, 3, 2, nonZeroDecimals, YScaleModeAnchored, testValueFormatter),
+				Labels: []*Label{
+					{NewValue(0, nonZeroDecimals, ValueFormatter(testValueFormatter)), image.Point{0, 1}},
+					{NewValue(1.72, nonZeroDecimals, ValueFormatter(testValueFormatter)), image.Point{0, 0}},
 				},
 			},
 		},

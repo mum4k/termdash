@@ -220,9 +220,11 @@ func (ti *TextInput) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	return nil
 }
 
-// Keyboard processes keyboard events.
+// keyboard processes keyboard events.
+// Returns a bool indicating if the content was submitted and the text in the
+// field at submission time.
 // Implements widgetapi.Widget.Keyboard.
-func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
+func (ti *TextInput) keyboard(k *terminalapi.Keyboard) (bool, string) {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 
@@ -251,21 +253,33 @@ func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
 			ti.editor.reset()
 		}
 		if ti.opts.onSubmit != nil {
-			return ti.opts.onSubmit(text)
+			return true, text
 		}
 
 	default:
 		if err := wrap.ValidText(string(k.Key)); err != nil {
 			// Ignore unsupported runes.
-			return nil
+			return false, ""
 		}
 		if ti.opts.filter != nil && !ti.opts.filter(rune(k.Key)) {
 			// Ignore filtered runes.
-			return nil
+			return false, ""
 		}
 		ti.editor.insert(rune(k.Key))
 	}
 
+	return false, ""
+}
+
+// Keyboard processes keyboard events.
+// Implements widgetapi.Widget.Keyboard.
+func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
+	if submitted, text := ti.keyboard(k); submitted {
+		// Mutex must be released when calling the callback.
+		// Users might call container methods from the callback like the
+		// Container.Update, see #205.
+		return ti.opts.onSubmit(text)
+	}
 	return nil
 }
 

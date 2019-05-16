@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 15-May-2019
+
 ### Fixed
 
 - Termdash could deadlock when a `Button` or a `TextInput` was configured to
@@ -269,7 +271,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.9.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.9.1...devel
+[0.9.1]: https://github.com/mum4k/termdash/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/mum4k/termdash/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/mum4k/termdash/compare/v0.7.1...v0.7.2

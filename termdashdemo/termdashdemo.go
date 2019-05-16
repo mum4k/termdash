@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Binary termdashdemo demonstrates the functionality of termdash and its various widgets.
-// Exist when 'q' is pressed.
+// Exits when 'q' is pressed.
 package main
 
 import (

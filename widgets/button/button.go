@@ -154,11 +154,8 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	)
 }
 
-// Keyboard processes keyboard events, acts as a button press on the configured
-// Key.
-//
-// Implements widgetapi.Widget.Keyboard.
-func (b *Button) Keyboard(k *terminalapi.Keyboard) error {
+// activated asserts whether the keyboard event activated the button.
+func (b *Button) keyActivated(k *terminalapi.Keyboard) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -166,16 +163,27 @@ func (b *Button) Keyboard(k *terminalapi.Keyboard) error {
 		b.state = button.Down
 		now := time.Now().UTC()
 		b.keyTriggerTime = &now
+		return true
+	}
+	return false
+}
+
+// Keyboard processes keyboard events, acts as a button press on the configured
+// Key.
+//
+// Implements widgetapi.Widget.Keyboard.
+func (b *Button) Keyboard(k *terminalapi.Keyboard) error {
+	if b.keyActivated(k) {
+		// Mutex must be released when calling the callback.
+		// Users might call container methods from the callback like the
+		// Container.Update, see #205.
 		return b.callback()
 	}
 	return nil
 }
 
-// Mouse processes mouse events, acts as a button press if both the press and
-// the release happen inside the button.
-//
-// Implements widgetapi.Widget.Mouse.
-func (b *Button) Mouse(m *terminalapi.Mouse) error {
+// mouseActivated asserts whether the mouse event activated the button.
+func (b *Button) mouseActivated(m *terminalapi.Mouse) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -183,7 +191,18 @@ func (b *Button) Mouse(m *terminalapi.Mouse) error {
 	b.state = state
 	b.keyTriggerTime = nil
 
-	if clicked {
+	return clicked
+}
+
+// Mouse processes mouse events, acts as a button press if both the press and
+// the release happen inside the button.
+//
+// Implements widgetapi.Widget.Mouse.
+func (b *Button) Mouse(m *terminalapi.Mouse) error {
+	if b.mouseActivated(m) {
+		// Mutex must be released when calling the callback.
+		// Users might call container methods from the callback like the
+		// Container.Update, see #205.
 		return b.callback()
 	}
 	return nil

@@ -197,15 +197,16 @@ Termdash uses [this branching model](https://nvie.com/posts/a-successful-git-bra
 
 # Similar projects in Go
 
-- [termui](https://github.com/gizak/termui)
-- [tview](https://github.com/rivo/tview)
+- [clui](https://github.com/VladimirMarkelov/clui)
 - [gocui](https://github.com/jroimartin/gocui)
 - [gowid](https://github.com/gcla/gowid)
-- [clui](https://github.com/VladimirMarkelov/clui)
+- [termui](https://github.com/gizak/termui)
 - [tui-go](https://github.com/marcusolsson/tui-go)
+- [tview](https://github.com/rivo/tview)
 
 # Projects using Termdash
 
+- [datadash](https://github.com/keithknott26/datadash): Visualize streaming or tabular data inside the terminal.
 - [grafterm](https://github.com/slok/grafterm): Metrics dashboards visualization on the terminal.
 
 # Disclaimer

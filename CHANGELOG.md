@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Lint issues found on the Go report card.
+- An internal library belonging to the `Text` widget was incorrectly passing
+  `math.MaxUint32` as an int argument.
 
 ## [0.9.1] - 15-May-2019
 

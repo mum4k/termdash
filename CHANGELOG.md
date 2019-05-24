@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `LineChart` can format the labels on the Y-axis with a `ValueFormatter`.
 - The `SegmentDisplay` can now display dots and colons ('.' and ':').
 - The `Donut` widget now guarantees spacing between the donut and its label.
+- The continuous build on Travis CI now builds with cgo explicitly disabled to
+  ensure both Termdash and its dependencies use pure Go. 
 
 ### Fixed
 

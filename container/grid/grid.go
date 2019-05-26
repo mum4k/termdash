@@ -35,8 +35,8 @@ func New() *Builder {
 // Add adds the specified elements.
 // The subElements can be either a single Widget or any combination of Rows and
 // Columns.
-// Rows are created using RowHeightPerc() and Columns are created using
-// ColWidthPerc().
+// Rows are created using functions with the RowHeight prefix and Columns are
+// created using functions with the ColWidth prefix
 // Can be called repeatedly, e.g. to add multiple Rows or Columns.
 func (b *Builder) Add(subElements ...Element) {
 	b.elems = append(b.elems, subElements...)
@@ -45,7 +45,7 @@ func (b *Builder) Add(subElements ...Element) {
 // Build builds the grid layout and returns the corresponding container
 // options.
 func (b *Builder) Build() ([]container.Option, error) {
-	if err := validate(b.elems); err != nil {
+	if err := validate(b.elems /* fixedSizeParent = */, false); err != nil {
 		return nil, err
 	}
 	return build(b.elems, 100, 100), nil
@@ -58,26 +58,44 @@ func (b *Builder) Build() ([]container.Option, error) {
 //   Each individual width or height is in the range 0 < v < 100.
 //   The sum of all widths is <= 100.
 //   The sum of all heights is <= 100.
-func validate(elems []Element) error {
-	heightSum := 0
-	widthSum := 0
+// Argument fixedSizeParent indicates if any of the parent elements uses fixed
+// size splitType.
+func validate(elems []Element, fixedSizeParent bool) error {
+	heightPercSum := 0
+	widthPercSum := 0
 	for _, elem := range elems {
 		switch e := elem.(type) {
 		case *row:
-			if min, max := 0, 100; e.heightPerc <= min || e.heightPerc >= max {
-				return fmt.Errorf("invalid row heightPerc(%d), must be a value in the range %d < v < %d", e.heightPerc, min, max)
+			if e.splitType == splitTypeRelative {
+				if min, max := 0, 100; e.heightPerc <= min || e.heightPerc >= max {
+					return fmt.Errorf("invalid row %v, must be a value in the range %d < v < %d", e, min, max)
+				}
 			}
-			heightSum += e.heightPerc
-			if err := validate(e.subElem); err != nil {
+			heightPercSum += e.heightPerc
+
+			if fixedSizeParent && e.splitType == splitTypeRelative {
+				return fmt.Errorf("row %v cannot use relative height when one of its parent elements uses fixed height", e)
+			}
+
+			isFixed := fixedSizeParent || e.splitType == splitTypeFixed
+			if err := validate(e.subElem, isFixed); err != nil {
 				return err
 			}
 
 		case *col:
-			if min, max := 0, 100; e.widthPerc <= min || e.widthPerc >= max {
-				return fmt.Errorf("invalid column widthPerc(%d), must be a value in the range %d < v < %d", e.widthPerc, min, max)
+			if e.splitType == splitTypeRelative {
+				if min, max := 0, 100; e.widthPerc <= min || e.widthPerc >= max {
+					return fmt.Errorf("invalid column %v, must be a value in the range %d < v < %d", e, min, max)
+				}
 			}
-			widthSum += e.widthPerc
-			if err := validate(e.subElem); err != nil {
+			widthPercSum += e.widthPerc
+
+			if fixedSizeParent && e.splitType == splitTypeRelative {
+				return fmt.Errorf("column %v cannot use relative width when one of its parent elements uses fixed height", e)
+			}
+
+			isFixed := fixedSizeParent || e.splitType == splitTypeFixed
+			if err := validate(e.subElem, isFixed); err != nil {
 				return err
 			}
 
@@ -88,8 +106,8 @@ func validate(elems []Element) error {
 		}
 	}
 
-	if max := 100; heightSum > max || widthSum > max {
-		return fmt.Errorf("the sum of all height percentages(%d) and width percentages(%d) at one element level cannot be larger than %d", heightSum, widthSum, max)
+	if max := 100; heightPercSum > max || widthPercSum > max {
+		return fmt.Errorf("the sum of all height percentages(%d) and width percentages(%d) at one element level cannot be larger than %d", heightPercSum, widthPercSum, max)
 	}
 	return nil
 }
@@ -109,15 +127,22 @@ func build(elems []Element, parentHeightPerc, parentWidthPerc int) []container.O
 
 	switch e := elem.(type) {
 	case *row:
-
 		if len(elems) > 0 {
 			perc := innerPerc(e.heightPerc, parentHeightPerc)
 			childHeightPerc := parentHeightPerc - e.heightPerc
+
+			var splitOpts []container.SplitOption
+			if e.splitType == splitTypeRelative {
+				splitOpts = append(splitOpts, container.SplitPercent(perc))
+			} else {
+				splitOpts = append(splitOpts, container.SplitFixed(e.heightFixed))
+			}
+
 			return []container.Option{
 				container.SplitHorizontal(
 					container.Top(append(e.cOpts, build(e.subElem, 100, parentWidthPerc)...)...),
 					container.Bottom(build(elems, childHeightPerc, parentWidthPerc)...),
-					container.SplitPercent(perc),
+					splitOpts...,
 				),
 			}
 		}
@@ -127,11 +152,19 @@ func build(elems []Element, parentHeightPerc, parentWidthPerc int) []container.O
 		if len(elems) > 0 {
 			perc := innerPerc(e.widthPerc, parentWidthPerc)
 			childWidthPerc := parentWidthPerc - e.widthPerc
+
+			var splitOpts []container.SplitOption
+			if e.splitType == splitTypeRelative {
+				splitOpts = append(splitOpts, container.SplitPercent(perc))
+			} else {
+				splitOpts = append(splitOpts, container.SplitFixed(e.widthFixed))
+			}
+
 			return []container.Option{
 				container.SplitVertical(
 					container.Left(append(e.cOpts, build(e.subElem, parentHeightPerc, 100)...)...),
 					container.Right(build(elems, parentHeightPerc, childWidthPerc)...),
-					container.SplitPercent(perc),
+					splitOpts...,
 				),
 			}
 		}
@@ -179,11 +212,41 @@ type Element interface {
 	isElement()
 }
 
+// splitType represents
+type splitType int
+
+// String implements fmt.Stringer()
+func (st splitType) String() string {
+	if n, ok := splitTypeNames[st]; ok {
+		return n
+	}
+	return "splitTypeUnknown"
+}
+
+// splitTypeNames maps splitType values to human readable names.
+var splitTypeNames = map[splitType]string{
+	splitTypeRelative: "splitTypeRelative",
+	splitTypeFixed:    "splitTypeFixed",
+}
+
+const (
+	splitTypeRelative splitType = iota
+	splitTypeFixed
+)
+
 // row is a row in the grid.
 // row implements Element.
 type row struct {
+	// splitType identifies how the size of the split is determined.
+	splitType splitType
+
 	// heightPerc is the height percentage this row occupies.
+	// Only set when splitType is splitTypeRelative.
 	heightPerc int
+
+	// heightFixed is the height in cells this row occupies.
+	// Only set when splitType is splitTypeFixed.
+	heightFixed int
 
 	// subElem are the sub Rows or Columns or a single widget.
 	subElem []Element
@@ -197,14 +260,22 @@ func (row) isElement() {}
 
 // String implements fmt.Stringer.
 func (r *row) String() string {
-	return fmt.Sprintf("row{height:%d, sub:%v}", r.heightPerc, r.subElem)
+	return fmt.Sprintf("row{splitType:%v, heightPerc:%d, heightFixed:%d, sub:%v}", r.splitType, r.heightPerc, r.heightFixed, r.subElem)
 }
 
 // col is a column in the grid.
 // col implements Element.
 type col struct {
+	// splitType identifies how the size of the split is determined.
+	splitType splitType
+
 	// widthPerc is the width percentage this column occupies.
+	// Only set when splitType is splitTypeRelative.
 	widthPerc int
+
+	// widthFixed is the width in cells thiw column occupies.
+	// Only set when splitType is splitTypeRelative.
+	widthFixed int
 
 	// subElem are the sub Rows or Columns or a single widget.
 	subElem []Element
@@ -218,7 +289,7 @@ func (col) isElement() {}
 
 // String implements fmt.Stringer.
 func (c *col) String() string {
-	return fmt.Sprintf("col{width:%d, sub:%v}", c.widthPerc, c.subElem)
+	return fmt.Sprintf("col{splitType:%v, widthPerc:%d, widthFixed:%d, sub:%v}", c.splitType, c.widthPerc, c.widthFixed, c.subElem)
 }
 
 // widget is a widget placed into the grid.
@@ -238,7 +309,7 @@ func (w *widget) String() string {
 // isElement implements Element.isElement.
 func (widget) isElement() {}
 
-// RowHeightPerc creates a row of the specified height.
+// RowHeightPerc creates a row of the specified relative height.
 // The height is supplied as height percentage of the parent element.
 // The sum of all heights at the same level cannot be larger than 100%. If it
 // is less that 100%, the last element stretches to the edge of the screen.
@@ -246,8 +317,27 @@ func (widget) isElement() {}
 // Columns.
 func RowHeightPerc(heightPerc int, subElements ...Element) Element {
 	return &row{
+		splitType:  splitTypeRelative,
 		heightPerc: heightPerc,
 		subElem:    subElements,
+	}
+}
+
+// RowHeightFixed creates a row of the specified fixed height.
+// The height is supplied as a number of cells on the terminal.
+// If the actual terminal size leaves the container with less than the
+// specified amount of cells, the container will be created with zero cells and
+// won't be drawn until the terminal size increases. If the sum of all the
+// heights is less than 100% of the screen height, the last element stretches
+// to the edge of the screen.
+// The subElements can be either a single Widget or any combination of Rows and
+// Columns.
+// A row with fixed height cannot contain any sub-elements with relative size.
+func RowHeightFixed(heightCells int, subElements ...Element) Element {
+	return &row{
+		splitType:   splitTypeFixed,
+		heightFixed: heightCells,
+		subElem:     subElements,
 	}
 }
 
@@ -255,13 +345,25 @@ func RowHeightPerc(heightPerc int, subElements ...Element) Element {
 // additional options to the container that represents the row.
 func RowHeightPercWithOpts(heightPerc int, cOpts []container.Option, subElements ...Element) Element {
 	return &row{
+		splitType:  splitTypeRelative,
 		heightPerc: heightPerc,
 		subElem:    subElements,
 		cOpts:      cOpts,
 	}
 }
 
-// ColWidthPerc creates a column of the specified width.
+// RowHeightFixedWithOpts is like RowHeightFixed, but also allows to apply
+// additional options to the container that represents the row.
+func RowHeightFixedWithOpts(heightCells int, cOpts []container.Option, subElements ...Element) Element {
+	return &row{
+		splitType:   splitTypeFixed,
+		heightFixed: heightCells,
+		subElem:     subElements,
+		cOpts:       cOpts,
+	}
+}
+
+// ColWidthPerc creates a column of the specified relative width.
 // The width is supplied as width percentage of the parent element.
 // The sum of all widths at the same level cannot be larger than 100%. If it
 // is less that 100%, the last element stretches to the edge of the screen.
@@ -269,8 +371,27 @@ func RowHeightPercWithOpts(heightPerc int, cOpts []container.Option, subElements
 // Columns.
 func ColWidthPerc(widthPerc int, subElements ...Element) Element {
 	return &col{
+		splitType: splitTypeRelative,
 		widthPerc: widthPerc,
 		subElem:   subElements,
+	}
+}
+
+// ColWidthFixed creates a column of the specified fixed width.
+// The width is supplied as a number of cells on the terminal.
+// If the actual terminal size leaves the container with less than the
+// specified amount of cells, the container will be created with zero cells and
+// won't be drawn until the terminal size increases. If the sum of all the
+// widths is less than 100% of the screen width, the last element stretches
+// to the edge of the screen.
+// The subElements can be either a single Widget or any combination of Rows and
+// Columns.
+// A column with fixed width cannot contain any sub-elements with relative size.
+func ColWidthFixed(widthCells int, subElements ...Element) Element {
+	return &col{
+		splitType:  splitTypeFixed,
+		widthFixed: widthCells,
+		subElem:    subElements,
 	}
 }
 
@@ -278,9 +399,21 @@ func ColWidthPerc(widthPerc int, subElements ...Element) Element {
 // additional options to the container that represents the column.
 func ColWidthPercWithOpts(widthPerc int, cOpts []container.Option, subElements ...Element) Element {
 	return &col{
+		splitType: splitTypeRelative,
 		widthPerc: widthPerc,
 		subElem:   subElements,
 		cOpts:     cOpts,
+	}
+}
+
+// ColWidthFixedWithOpts is like ColWidthFixed, but also allows to apply
+// additional options to the container that represents the column.
+func ColWidthFixedWithOpts(widthCells int, cOpts []container.Option, subElements ...Element) Element {
+	return &col{
+		splitType:  splitTypeFixed,
+		widthFixed: widthCells,
+		subElem:    subElements,
+		cOpts:      cOpts,
 	}
 }
 

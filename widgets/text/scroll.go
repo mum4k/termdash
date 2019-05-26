@@ -116,7 +116,7 @@ func rollToEnd(st *scrollTracker, lines, height int) rollState {
 	// If the user didn't scroll, just roll the content so that the last line
 	// is visible.
 	if st.scroll == 0 && st.scrollPage == 0 {
-		st.first = normalizeScroll(math.MaxUint32, lines, height)
+		st.first = normalizeScroll(math.MaxInt32, lines, height)
 		return rollToEnd
 	}
 

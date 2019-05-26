@@ -21,17 +21,17 @@ import (
 	"fmt"
 	"image"
 	"sync"
-	"time"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/internal/alignfor"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
+
+	"github.com/keithknott26/termdash/align"
+	"github.com/keithknott26/termdash/internal/alignfor"
+	"github.com/keithknott26/termdash/internal/area"
+	"github.com/keithknott26/termdash/internal/canvas"
+	"github.com/keithknott26/termdash/internal/canvas/braille"
+	"github.com/keithknott26/termdash/internal/draw"
+	"github.com/keithknott26/termdash/internal/runewidth"
 )
 
 // Indicator displays the progress of an operation by filling a partial circle and
@@ -61,23 +61,21 @@ func New(opts ...Option) (*Indicator, error) {
 	}, nil
 }
 
-func (i *Indicator) Flash() error {
+func (i *Indicator) On() error {
+	i.status = true
+	return nil
+}
+
+func (i *Indicator) Off() error {
+	i.status = true
+	return nil
+}
+
+func (i *Indicator) Toggle() error {
 	if i.status == true {
 		i.status = false
 	} else {
 		i.status = true
-	}
-	return nil
-}
-
-func (i *Indicator) Pulse() error {
-	for n := 0; n < 50; n++ {
-		if i.status == true {
-			i.status = false
-		} else {
-			i.status = true
-		}
-		time.Sleep(250 * time.Millisecond)
 	}
 	return nil
 }
@@ -124,10 +122,7 @@ func (i *Indicator) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		indAr = cvs.Area()
 	}
 	var t string
-	// split the indicator and label
-	// checked: \u25C9
-	// unchecked: \u25EF
-	// line: \u2500─────────────
+
 	if i.status == true {
 		t = "\u25C9"
 	} else {

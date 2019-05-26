@@ -67,7 +67,7 @@ func (i *Indicator) On() error {
 }
 
 func (i *Indicator) Off() error {
-	i.status = true
+	i.status = false
 	return nil
 }
 

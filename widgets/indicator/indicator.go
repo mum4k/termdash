@@ -22,16 +22,15 @@ import (
 	"image"
 	"sync"
 
+	"github.com/mum4k/termdash/align"
+	"github.com/mum4k/termdash/internal/alignfor"
+	"github.com/mum4k/termdash/internal/area"
+	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/internal/canvas/braille"
+	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
-
-	"github.com/keithknott26/termdash/align"
-	"github.com/keithknott26/termdash/internal/alignfor"
-	"github.com/keithknott26/termdash/internal/area"
-	"github.com/keithknott26/termdash/internal/canvas"
-	"github.com/keithknott26/termdash/internal/canvas/braille"
-	"github.com/keithknott26/termdash/internal/draw"
-	"github.com/keithknott26/termdash/internal/runewidth"
 )
 
 // Indicator displays the progress of an operation by filling a partial circle and

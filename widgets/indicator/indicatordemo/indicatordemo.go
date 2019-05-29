@@ -20,13 +20,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/keithknott26/termdash"
-	"github.com/keithknott26/termdash/cell"
-	"github.com/keithknott26/termdash/container"
-	"github.com/keithknott26/termdash/linestyle"
-	"github.com/keithknott26/termdash/terminal/termbox"
-	"github.com/keithknott26/termdash/terminal/terminalapi"
-	"github.com/keithknott26/termdash/widgets/indicator"
+	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgets/indicator"
 )
 
 // playType indicates how to play a indicator.
@@ -34,6 +34,8 @@ type playType int
 
 const (
 	toggle playType = iota
+	on
+	off
 )
 
 // playIndicator continuously changes the displayed percent value on the Indicator by the
@@ -47,6 +49,16 @@ func playIndicator(ctx context.Context, i *indicator.Indicator, delay time.Durat
 			switch pt {
 			case toggle:
 				if err := i.Toggle(); err != nil {
+					panic(err)
+				}
+
+			case on:
+				if err := i.On(); err != nil {
+					panic(err)
+				}
+
+			case off:
+				if err := i.Off(); err != nil {
 					panic(err)
 				}
 			}
@@ -65,24 +77,24 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	green, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorGreen)),
-		indicator.Label("label", cell.FgColor(cell.ColorBlue)))
+		indicator.Label("label", cell.FgColor(cell.ColorGreen)))
 	if err != nil {
 		panic(err)
 	}
-	go playIndicator(ctx, green, 200*time.Millisecond, on)
+	go playIndicator(ctx, green, 250*time.Millisecond, off)
 
 	blue, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorBlue)),
-		indicator.Label("long text label", cell.FgColor(cell.ColorGreen)))
+		indicator.Label("long text label", cell.FgColor(cell.ColorBlue)))
 	if err != nil {
 		panic(err)
 	}
-	go playIndicator(ctx, blue, 50*time.Millisecond, toggle)
+	go playIndicator(ctx, blue, 250*time.Millisecond, on)
 
 	yellow, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorYellow)))
 	if err != nil {
 		panic(err)
 	}
-	go playIndicator(ctx, yellow, 500*time.Millisecond, off)
+	go playIndicator(ctx, yellow, 250*time.Millisecond, toggle)
 
 	red, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
@@ -119,7 +131,7 @@ func main() {
 		}
 	}
 
-	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(10*time.Millisecond)); err != nil {
+	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(250*time.Millisecond)); err != nil {
 		panic(err)
 	}
 }

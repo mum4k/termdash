@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"math"
 	"sync"
 
 	"github.com/mum4k/termdash/align"
@@ -95,6 +96,16 @@ func (i *Indicator) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) error
 	return nil
 }
 
+// innerholeRadius calculates the radius of the "inner hole" in the indicator.
+// Returns zero if no hole should be drawn.
+func (i *Indicator) innerHoleRadius(indicatorRadius int) int {
+	r := int(math.Round(float64(indicatorRadius) / 100 * float64(90)))
+	if r < 2 { // Smallest possible circle radius.
+		return 0
+	}
+	return r
+}
+
 // Draw draws the Indicator widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
 func (i *Indicator) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
@@ -128,6 +139,39 @@ func (i *Indicator) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		t = "\u25EF"
 	}
 
+	//
+	bc, err := braille.New(indAr)
+	if err != nil {
+		return fmt.Errorf("braille.New => %v", err)
+	}
+
+	mid, r := midAndRadius(bc.Area())
+	if err := draw.BrailleCircle(bc, mid, r,
+		draw.BrailleCircleCellOpts(i.opts.textCellOpts...),
+	); err != nil {
+		return fmt.Errorf("failed to draw the outer circle: %v", err)
+	}
+	if i.status == true {
+		if err := draw.BrailleCircle(bc, mid, int(float64(r)*float64(.9)),
+			draw.BrailleCircleFilled(),
+			draw.BrailleCircleCellOpts(i.opts.textCellOpts...),
+		); err != nil {
+			return fmt.Errorf("failed to draw the outer circle: %v", err)
+		}
+	}
+	innerHoleR := i.innerHoleRadius(r)
+	if innerHoleR != 0 {
+		if err := draw.BrailleCircle(bc, mid, innerHoleR,
+			draw.BrailleCircleClearPixels(),
+		); err != nil {
+			return fmt.Errorf("failed to draw the outer circle: %v", err)
+		}
+	}
+
+	if err := bc.CopyTo(cvs); err != nil {
+		return err
+	}
+	///
 	needCells := runewidth.StringWidth(t)
 
 	ar := image.Rect(minSize.X, minSize.Y, minSize.X+2, minSize.Y+1)

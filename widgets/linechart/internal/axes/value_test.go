@@ -22,10 +22,13 @@ import (
 )
 
 func TestValue(t *testing.T) {
+	formatter := func(float64) string { return "test" }
+
 	tests := []struct {
 		desc            string
 		float           float64
 		nonZeroDecimals int
+		formatter       func(float64) string
 		want            *Value
 	}{
 		{
@@ -61,11 +64,24 @@ func TestValue(t *testing.T) {
 				NonZeroDecimals: 0,
 			},
 		},
+		{
+			desc:            "formatter value when value formatter as option",
+			float:           1.01234,
+			nonZeroDecimals: 0,
+			formatter:       formatter,
+			want: &Value{
+				Value:           1.01234,
+				Rounded:         1.01234,
+				ZeroDecimals:    1,
+				NonZeroDecimals: 0,
+				formatter:       formatter,
+			},
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			got := NewValue(tc.float, tc.nonZeroDecimals)
+			got := NewValue(tc.float, tc.nonZeroDecimals, ValueFormatter(tc.formatter))
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("NewValue => unexpected diff (-want, +got):\n%s", diff)
 			}

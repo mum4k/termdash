@@ -235,6 +235,36 @@ func TestBuilder(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc:     "fails when Row heightPerc used under Row heightFixed",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(
+					RowHeightFixed(
+						5,
+						RowHeightPerc(10),
+					),
+				)
+				return b
+			}(),
+			wantErr: true,
+		},
+		{
+			desc:     "fails when Row heightPerc used under Col widthFixed",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(
+					ColWidthFixed(
+						5,
+						RowHeightPerc(10),
+					),
+				)
+				return b
+			}(),
+			wantErr: true,
+		},
+		{
 			desc:     "fails when Col widthPerc is too low at top level",
 			termSize: image.Point{10, 10},
 			builder: func() *Builder {
@@ -282,6 +312,36 @@ func TestBuilder(t *testing.T) {
 					ColWidthPerc(
 						50,
 						ColWidthPerc(100),
+					),
+				)
+				return b
+			}(),
+			wantErr: true,
+		},
+		{
+			desc:     "fails when Col widthPerc used under Col widthFixed",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(
+					ColWidthFixed(
+						5,
+						ColWidthPerc(10),
+					),
+				)
+				return b
+			}(),
+			wantErr: true,
+		},
+		{
+			desc:     "fails when Col widthPerc used under Row heightFixed",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(
+					RowHeightFixed(
+						5,
+						ColWidthPerc(10),
 					),
 				)
 				return b
@@ -390,6 +450,23 @@ func TestBuilder(t *testing.T) {
 			},
 		},
 		{
+			desc:     "two equal rows, fixed size",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(RowHeightFixed(5, Widget(mirror())))
+				b.Add(RowHeightFixed(5, Widget(mirror())))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				top, bot := mustHSplit(ft.Area(), 50)
+				fakewidget.MustDraw(ft, testcanvas.MustNew(top), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
 			desc:     "two equal rows with options",
 			termSize: image.Point{10, 10},
 			builder: func() *Builder {
@@ -403,6 +480,45 @@ func TestBuilder(t *testing.T) {
 				))
 				b.Add(RowHeightPercWithOpts(
 					50,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				top, bot := mustHSplit(ft.Area(), 50)
+				topCvs := testcanvas.MustNew(top)
+				botCvs := testcanvas.MustNew(bot)
+				testdraw.MustBorder(topCvs, topCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testdraw.MustBorder(botCvs, botCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testcanvas.MustApply(topCvs, ft)
+				testcanvas.MustApply(botCvs, ft)
+
+				topWidget := testcanvas.MustNew(area.ExcludeBorder(top))
+				botWidget := testcanvas.MustNew(area.ExcludeBorder(bot))
+				fakewidget.MustDraw(ft, topWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, botWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "two equal rows with options, fixed size",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(RowHeightFixedWithOpts(
+					5,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				b.Add(RowHeightFixedWithOpts(
+					5,
 					[]container.Option{
 						container.Border(linestyle.Double),
 					},
@@ -446,6 +562,57 @@ func TestBuilder(t *testing.T) {
 			},
 		},
 		{
+			desc:     "two unequal rows, fixed size",
+			termSize: image.Point{10, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(RowHeightFixed(2, Widget(mirror())))
+				b.Add(RowHeightFixed(8, Widget(mirror())))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				top, bot := mustHSplit(ft.Area(), 20)
+				fakewidget.MustDraw(ft, testcanvas.MustNew(top), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(bot), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "two equal columns",
+			termSize: image.Point{20, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(ColWidthPerc(50, Widget(mirror())))
+				b.Add(ColWidthPerc(50, Widget(mirror())))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				left, right := mustVSplit(ft.Area(), 50)
+				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(right), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "two equal columns, fixed size",
+			termSize: image.Point{20, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(ColWidthFixed(10, Widget(mirror())))
+				b.Add(ColWidthFixed(10, Widget(mirror())))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				left, right := mustVSplit(ft.Area(), 50)
+				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(right), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
 			desc:     "two equal columns with options",
 			termSize: image.Point{20, 10},
 			builder: func() *Builder {
@@ -485,19 +652,41 @@ func TestBuilder(t *testing.T) {
 			},
 		},
 		{
-			desc:     "two equal columns",
+			desc:     "two equal columns with options, fixed size",
 			termSize: image.Point{20, 10},
 			builder: func() *Builder {
 				b := New()
-				b.Add(ColWidthPerc(50, Widget(mirror())))
-				b.Add(ColWidthPerc(50, Widget(mirror())))
+				b.Add(ColWidthFixedWithOpts(
+					10,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
+				b.Add(ColWidthFixedWithOpts(
+					10,
+					[]container.Option{
+						container.Border(linestyle.Double),
+					},
+					Widget(mirror()),
+				))
 				return b
 			}(),
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
+
 				left, right := mustVSplit(ft.Area(), 50)
-				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
-				fakewidget.MustDraw(ft, testcanvas.MustNew(right), &widgetapi.Meta{}, widgetapi.Options{})
+				leftCvs := testcanvas.MustNew(left)
+				rightCvs := testcanvas.MustNew(right)
+				testdraw.MustBorder(leftCvs, leftCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testdraw.MustBorder(rightCvs, rightCvs.Area(), draw.BorderLineStyle(linestyle.Double))
+				testcanvas.MustApply(leftCvs, ft)
+				testcanvas.MustApply(rightCvs, ft)
+
+				leftWidget := testcanvas.MustNew(area.ExcludeBorder(left))
+				rightWidget := testcanvas.MustNew(area.ExcludeBorder(right))
+				fakewidget.MustDraw(ft, leftWidget, &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, rightWidget, &widgetapi.Meta{}, widgetapi.Options{})
 				return ft
 			},
 		},
@@ -508,6 +697,23 @@ func TestBuilder(t *testing.T) {
 				b := New()
 				b.Add(ColWidthPerc(20, Widget(mirror())))
 				b.Add(ColWidthPerc(80, Widget(mirror())))
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				left, right := mustVSplit(ft.Area(), 20)
+				fakewidget.MustDraw(ft, testcanvas.MustNew(left), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(right), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "two unequal columns, fixed size",
+			termSize: image.Point{40, 10},
+			builder: func() *Builder {
+				b := New()
+				b.Add(ColWidthFixed(8, Widget(mirror())))
+				b.Add(ColWidthFixed(32, Widget(mirror())))
 				return b
 			}(),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -560,6 +766,38 @@ func TestBuilder(t *testing.T) {
 						20,
 						ColWidthPerc(20, Widget(mirror())),
 						ColWidthPerc(80, Widget(mirror())),
+					),
+					RowHeightPerc(
+						80,
+						ColWidthPerc(80, Widget(mirror())),
+						ColWidthPerc(20, Widget(mirror())),
+					),
+				)
+				return b
+			}(),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				top, bot := mustHSplit(ft.Area(), 20)
+
+				topLeft, topRight := mustVSplit(top, 20)
+				botLeft, botRight := mustVSplit(bot, 80)
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(topRight), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botLeft), &widgetapi.Meta{}, widgetapi.Options{})
+				fakewidget.MustDraw(ft, testcanvas.MustNew(botRight), &widgetapi.Meta{}, widgetapi.Options{})
+				return ft
+			},
+		},
+		{
+			desc:     "rows with columns (unequal), fixed and relative sizes mixed",
+			termSize: image.Point{40, 20},
+			builder: func() *Builder {
+				b := New()
+				b.Add(
+					RowHeightFixed(
+						4,
+						ColWidthFixed(8, Widget(mirror())),
+						ColWidthFixed(32, Widget(mirror())),
 					),
 					RowHeightPerc(
 						80,
@@ -800,7 +1038,7 @@ func TestBuilder(t *testing.T) {
 
 			gridOpts, err := tc.builder.Build()
 			if (err != nil) != tc.wantErr {
-				t.Errorf("tc.builder => unexpected error:%v, wantErr:%v", err, tc.wantErr)
+				t.Errorf("tc.builder => unexpected error: %v, wantErr:%v", err, tc.wantErr)
 			}
 			if err != nil {
 				return

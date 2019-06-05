@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 5-Jun-2019
+
+### Added
+
+- Added `time.Duration` based `ValueFormatter` for the `LineChart` Y-axis labels.
+- Added round and suffix `ValueFormatter` for the `LineChart` Y-axis labels.
+- Added decimal and suffix `ValueFormatter` for the `LineChart` Y-axis labels.
+- Added a `container.SplitOption` that allows fixed size container splits.
+- Added `grid` functions that allow fixed size rows and columns.
+
+### Changed
+
+- The `LineChart` can format the labels on the Y-axis with a `ValueFormatter`.
+- The `SegmentDisplay` can now display dots and colons ('.' and ':').
+- The `Donut` widget now guarantees spacing between the donut and its label.
+- The continuous build on Travis CI now builds with cgo explicitly disabled to
+  ensure both Termdash and its dependencies use pure Go. 
+
+### Fixed
+
+- Lint issues found on the Go report card.
+- An internal library belonging to the `Text` widget was incorrectly passing
+  `math.MaxUint32` as an int argument.
+
 ## [0.9.1] - 15-May-2019
 
 ### Fixed
@@ -271,7 +295,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.9.1...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.10.0...devel
+[0.10.0]: https://github.com/mum4k/termdash/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/mum4k/termdash/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/mum4k/termdash/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0

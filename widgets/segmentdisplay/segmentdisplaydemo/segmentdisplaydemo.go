@@ -43,7 +43,7 @@ func clock(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 
 			spacer := " "
 			if now.Second()%2 == 0 {
-				spacer = "_"
+				spacer = ":"
 			}
 			chunks := []*segmentdisplay.TextChunk{
 				segmentdisplay.NewChunk(parts[0], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorBlue))),

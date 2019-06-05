@@ -59,8 +59,8 @@ const (
 )
 
 // ValidText validates the provided text for wrapping.
-// The text must not contain any control or space characters other
-// than '\n' and ' '.
+// The text must not be empty, contain any control or
+// space characters other than '\n' and ' '.
 func ValidText(text string) error {
 	if text == "" {
 		return errors.New("the text cannot be empty")

@@ -338,8 +338,8 @@ func TestDonut(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 				bc := testbraille.MustNew(ft.Area())
 
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5, draw.BrailleCircleFilled())
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 3,
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 5, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 3,
 					draw.BrailleCircleFilled(),
 					draw.BrailleCircleClearPixels(),
 				)
@@ -642,14 +642,14 @@ func TestDonut(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 				bc := testbraille.MustNew(c.Area())
 
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 5,
 					draw.BrailleCircleFilled(),
 					draw.BrailleCircleClearPixels(),
 				)
 				testbraille.MustCopyTo(bc, c)
 
-				testdraw.MustText(c, "100%", image.Point{2, 3})
+				testdraw.MustText(c, "100%", image.Point{2, 2})
 
 				testdraw.MustText(c, "hi", image.Point{2, 6})
 
@@ -672,14 +672,14 @@ func TestDonut(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 				bc := testbraille.MustNew(c.Area())
 
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 5,
 					draw.BrailleCircleFilled(),
 					draw.BrailleCircleClearPixels(),
 				)
 				testbraille.MustCopyTo(bc, c)
 
-				testdraw.MustText(c, "100%", image.Point{2, 3})
+				testdraw.MustText(c, "100%", image.Point{2, 2})
 
 				testdraw.MustText(c, "hi", image.Point{2, 6})
 
@@ -702,14 +702,14 @@ func TestDonut(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 				bc := testbraille.MustNew(c.Area())
 
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 5,
 					draw.BrailleCircleFilled(),
 					draw.BrailleCircleClearPixels(),
 				)
 				testbraille.MustCopyTo(bc, c)
 
-				testdraw.MustText(c, "100%", image.Point{2, 3})
+				testdraw.MustText(c, "100%", image.Point{2, 2})
 
 				testdraw.MustText(c, "hi", image.Point{0, 6})
 
@@ -732,14 +732,14 @@ func TestDonut(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 				bc := testbraille.MustNew(c.Area())
 
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 5,
 					draw.BrailleCircleFilled(),
 					draw.BrailleCircleClearPixels(),
 				)
 				testbraille.MustCopyTo(bc, c)
 
-				testdraw.MustText(c, "100%", image.Point{2, 3})
+				testdraw.MustText(c, "100%", image.Point{2, 2})
 
 				testdraw.MustText(c, "hi", image.Point{5, 6})
 
@@ -765,14 +765,14 @@ func TestDonut(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 				bc := testbraille.MustNew(c.Area())
 
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 5,
 					draw.BrailleCircleFilled(),
 					draw.BrailleCircleClearPixels(),
 				)
 				testbraille.MustCopyTo(bc, c)
 
-				testdraw.MustText(c, "100%", image.Point{2, 3})
+				testdraw.MustText(c, "100%", image.Point{2, 2})
 
 				testdraw.MustText(
 					c,
@@ -804,14 +804,14 @@ func TestDonut(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 				bc := testbraille.MustNew(c.Area())
 
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 6, draw.BrailleCircleFilled())
-				testdraw.MustBrailleCircle(bc, image.Point{6, 13}, 5,
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 6, draw.BrailleCircleFilled())
+				testdraw.MustBrailleCircle(bc, image.Point{6, 9}, 5,
 					draw.BrailleCircleFilled(),
 					draw.BrailleCircleClearPixels(),
 				)
 				testbraille.MustCopyTo(bc, c)
 
-				testdraw.MustText(c, "100%", image.Point{2, 3})
+				testdraw.MustText(c, "100%", image.Point{2, 2})
 
 				testdraw.MustText(c, "hello …", image.Point{0, 6})
 

@@ -110,15 +110,12 @@ func (ti *TextInput) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) erro
 	if err != nil {
 		return err
 	}
-	if err := draw.Text(
+	return draw.Text(
 		cvs, ti.opts.label, start,
 		draw.TextOverrunMode(draw.OverrunModeThreeDot),
 		draw.TextMaxX(labelAr.Max.X),
 		draw.TextCellOpts(ti.opts.labelCellOpts...),
-	); err != nil {
-		return err
-	}
-	return nil
+	)
 }
 
 // drawField draws the text input field.
@@ -131,14 +128,11 @@ func (ti *TextInput) drawField(cvs *canvas.Canvas, text string) error {
 		text = hideText(text, ti.opts.hideTextWith)
 	}
 
-	if err := draw.Text(
+	return draw.Text(
 		cvs, text, ti.forField.Min,
 		draw.TextMaxX(ti.forField.Max.X),
 		draw.TextCellOpts(cell.FgColor(ti.opts.textColor)),
-	); err != nil {
-		return err
-	}
-	return nil
+	)
 }
 
 // drawCursor draws the cursor within the text input field.

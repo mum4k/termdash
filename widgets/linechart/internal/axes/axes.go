@@ -18,6 +18,8 @@ package axes
 import (
 	"fmt"
 	"image"
+
+	"github.com/mum4k/termdash/internal/runewidth"
 )
 
 const (
@@ -72,6 +74,8 @@ type YProperties struct {
 	ReqXHeight int
 	// ScaleMode determines how the Y axis scales.
 	ScaleMode YScaleMode
+	// ValueFormatter is the formatter used to format numeric values to string representation.
+	ValueFormatter func(float64) string
 }
 
 // NewYDetails retrieves details about the Y axis required to draw it on a
@@ -85,7 +89,7 @@ func NewYDetails(cvsAr image.Rectangle, yp *YProperties) (*YDetails, error) {
 	}
 
 	graphHeight := cvsHeight - yp.ReqXHeight
-	scale, err := NewYScale(yp.Min, yp.Max, graphHeight, nonZeroDecimals, yp.ScaleMode)
+	scale, err := NewYScale(yp.Min, yp.Max, graphHeight, nonZeroDecimals, yp.ScaleMode, yp.ValueFormatter)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +130,7 @@ func NewYDetails(cvsAr image.Rectangle, yp *YProperties) (*YDetails, error) {
 func longestLabel(labels []*Label) int {
 	var widest int
 	for _, label := range labels {
-		if l := len(label.Value.Text()); l > widest {
+		if l := runewidth.StringWidth(label.Value.Text()); l > widest {
 			widest = l
 		}
 	}

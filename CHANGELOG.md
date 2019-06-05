@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 5-Jun-2019
+
 ### Added
 
 - Added `time.Duration` based `ValueFormatter` for the `LineChart` Y-axis labels.
@@ -293,7 +295,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.9.1...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.10.0...devel
+[0.10.0]: https://github.com/mum4k/termdash/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/mum4k/termdash/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/mum4k/termdash/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mum4k/termdash/compare/v0.7.2...v0.8.0

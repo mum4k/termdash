@@ -76,27 +76,31 @@ func main() {
 	defer t.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	green, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorGreen)),
-		indicator.Label("label", cell.FgColor(cell.ColorGreen)))
+	green, err := indicator.New(indicator.Color(cell.FgColor(cell.ColorGreen)),
+		indicator.Label("label"),
+		indicator.LabelColor(cell.FgColor(cell.ColorGreen)))
 	if err != nil {
 		panic(err)
 	}
 	go playIndicator(ctx, green, 250*time.Millisecond, off)
 
-	blue, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorBlue)),
-		indicator.Label("long text label", cell.FgColor(cell.ColorBlue)))
+	blue, err := indicator.New(indicator.Color(cell.FgColor(cell.ColorBlue)),
+		indicator.Label("long text label"),
+		indicator.LabelColor(cell.FgColor(cell.ColorWhite)))
 	if err != nil {
 		panic(err)
 	}
 	go playIndicator(ctx, blue, 250*time.Millisecond, on)
 
-	yellow, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorYellow)))
+	yellow, err := indicator.New(indicator.Color(cell.FgColor(cell.ColorYellow)),
+		indicator.MaxSize(10))
 	if err != nil {
 		panic(err)
 	}
 	go playIndicator(ctx, yellow, 250*time.Millisecond, toggle)
 
-	red, err := indicator.New(indicator.TextCellOpts(cell.FgColor(cell.ColorRed)))
+	red, err := indicator.New(indicator.Color(cell.FgColor(cell.ColorRed)),
+		indicator.MaxSize(30))
 	if err != nil {
 		panic(err)
 	}

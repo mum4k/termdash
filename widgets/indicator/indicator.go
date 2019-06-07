@@ -38,7 +38,7 @@ import (
 // The circle can has a "hole" in the middle, which is where the name comes from.
 // Implements widgetapi.Widget. This object is thread-safe.
 type Indicator struct {
-	// status is the current indication that will be drawn.
+	// status is the current status (on/off) that will be displayed.
 	status bool
 	// mu protects the Indicator.
 	mu sync.Mutex
@@ -81,7 +81,7 @@ func (i *Indicator) Toggle() error {
 }
 
 func (i *Indicator) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) error {
-	start, err := alignfor.Text(labelAr, i.opts.label, i.opts.labelAlign, align.VerticalMiddle)
+	start, err := alignfor.Text(labelAr, i.opts.label, i.opts.labelAlign, align.VerticalBottom)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (i *Indicator) drawLabel(cvs *canvas.Canvas, labelAr image.Rectangle) error
 		cvs, i.opts.label, start,
 		draw.TextOverrunMode(draw.OverrunModeThreeDot),
 		draw.TextMaxX(labelAr.Max.X),
-		draw.TextCellOpts(i.opts.labelCellOpts...),
+		draw.TextCellOpts(i.opts.labelColor...),
 	); err != nil {
 		return err
 	}
@@ -131,57 +131,62 @@ func (i *Indicator) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	} else {
 		indAr = cvs.Area()
 	}
+
 	var t string
+	if indAr.Dx() < minScaledSize.X || indAr.Dy() < minScaledSize.Y {
+		if i.status == true {
+			t = "\u25C9"
+		} else {
+			t = "\u25EF"
+		}
+		needCells := runewidth.StringWidth(t)
 
-	if i.status == true {
-		t = "\u25C9"
+		ar := image.Rect(minSize.X, minSize.Y, minSize.X+2, minSize.Y+1)
+		start, err := alignfor.Text(ar, t, align.HorizontalCenter, align.VerticalMiddle)
+		if err != nil {
+			return fmt.Errorf("alignfor.Text => %v", err)
+		}
+		if err := draw.Text(cvs, t, start, draw.TextMaxX(start.X+needCells), draw.TextCellOpts(i.opts.color...)); err != nil {
+			return fmt.Errorf("draw.Text => %v", err)
+		}
 	} else {
-		t = "\u25EF"
-	}
+		bc, err := braille.New(indAr)
+		if err != nil {
+			return fmt.Errorf("braille.New => %v", err)
+		}
 
-	//
-	bc, err := braille.New(indAr)
-	if err != nil {
-		return fmt.Errorf("braille.New => %v", err)
-	}
-
-	mid, r := midAndRadius(bc.Area())
-	if err := draw.BrailleCircle(bc, mid, r,
-		draw.BrailleCircleCellOpts(i.opts.textCellOpts...),
-	); err != nil {
-		return fmt.Errorf("failed to draw the outer circle: %v", err)
-	}
-	if i.status == true {
-		if err := draw.BrailleCircle(bc, mid, int(float64(r)*float64(.9)),
-			draw.BrailleCircleFilled(),
-			draw.BrailleCircleCellOpts(i.opts.textCellOpts...),
+		mid, r := midAndRadius(bc.Area())
+		if r > i.opts.maxDiameter {
+			r = i.opts.maxDiameter
+		}
+		if err := draw.BrailleCircle(bc, mid, r,
+			draw.BrailleCircleCellOpts(i.opts.color...),
 		); err != nil {
 			return fmt.Errorf("failed to draw the outer circle: %v", err)
 		}
-	}
-	innerHoleR := i.innerHoleRadius(r)
-	if innerHoleR != 0 {
-		if err := draw.BrailleCircle(bc, mid, innerHoleR,
-			draw.BrailleCircleClearPixels(),
-		); err != nil {
-			return fmt.Errorf("failed to draw the outer circle: %v", err)
+		if i.status == true {
+			if err := draw.BrailleCircle(bc, mid, int(float64(r)*float64(.9)),
+				draw.BrailleCircleFilled(),
+				draw.BrailleCircleCellOpts(i.opts.color...),
+			); err != nil {
+				return fmt.Errorf("failed to draw the outer circle: %v", err)
+			}
 		}
+		innerHoleR := i.innerHoleRadius(r)
+		if innerHoleR != 0 {
+			if err := draw.BrailleCircle(bc, mid, innerHoleR,
+				draw.BrailleCircleClearPixels(),
+			); err != nil {
+				return fmt.Errorf("failed to draw the outer circle: %v", err)
+			}
+		}
+
+		if err := bc.CopyTo(cvs); err != nil {
+			return err
+		}
+		///
 	}
 
-	if err := bc.CopyTo(cvs); err != nil {
-		return err
-	}
-	///
-	needCells := runewidth.StringWidth(t)
-
-	ar := image.Rect(minSize.X, minSize.Y, minSize.X+2, minSize.Y+1)
-	start, err := alignfor.Text(ar, t, align.HorizontalCenter, align.VerticalMiddle)
-	if err != nil {
-		return fmt.Errorf("alignfor.Text => %v", err)
-	}
-	if err := draw.Text(cvs, t, start, draw.TextMaxX(start.X+needCells), draw.TextCellOpts(i.opts.textCellOpts...)); err != nil {
-		return fmt.Errorf("draw.Text => %v", err)
-	}
 	if indAr.Dx() < minSize.X || indAr.Dy() < minSize.Y {
 		// Reserving area for the label might have resulted in indAr being
 		// too small.
@@ -199,7 +204,7 @@ func (i *Indicator) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 // minSize determines the minimum required size of the canvas.
 func (i *Indicator) minSize() image.Point {
 	minWidth := 1  // Shorter indicator than this cannot display anything.
-	minHeight := 1 // At least 3 for the indicator itself.
+	minHeight := 1 // At least 1 for the indicator itself.
 	return image.Point{minWidth, minHeight}
 }
 
@@ -215,6 +220,7 @@ func (*Indicator) Mouse(m *terminalapi.Mouse) error {
 
 // minSize is the smallest area we can draw indicator on.
 var minSize = image.Point{1, 1}
+var minScaledSize = image.Point{3, 3}
 
 // Options implements widgetapi.Widget.Options.
 func (s *Indicator) Options() widgetapi.Options {
@@ -234,7 +240,7 @@ func (s *Indicator) Options() widgetapi.Options {
 func indicatorAndLabel(cvsAr image.Rectangle) (indAr, labelAr image.Rectangle, err error) {
 	height := cvsAr.Dy()
 	// Two lines for the text label at the bottom.
-	// One for the text itself and one for visual space between the indcator and
+	// One for the text itself and one for visual space between the donut and
 	// the label.
 	indAr, labelAr, err = area.HSplitCells(cvsAr, height-2)
 	if err != nil {

@@ -60,9 +60,11 @@ func newOptions() *options {
 			cell.BgColor(cell.ColorDefault),
 		},
 		labelAlign:  DefaultLabelAlign,
-		maxDiameter: 50,
+		maxDiameter: DefaultMaxSize,
 	}
 }
+
+const DefaultMaxSize = 50
 
 // MaxSize sets maximum size of the indicator widget
 func MaxSize(size int) Option {

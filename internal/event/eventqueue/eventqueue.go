@@ -54,7 +54,7 @@ type Unbound struct {
 // Call Close() when done with the queue.
 func New() *Unbound {
 	u := &Unbound{
-		done: make(chan (struct{})),
+		done: make(chan struct{}),
 	}
 	u.cond = sync.NewCond(&u.condMU)
 	go u.wake() // Stops when Close() is called.

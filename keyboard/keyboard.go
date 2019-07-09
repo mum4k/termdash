@@ -157,16 +157,16 @@ const (
 
 // Keys declared as duplicates by termbox.
 const (
-	KeyCtrl2          Key = KeyCtrlTilde
-	KeyCtrlSpace      Key = KeyCtrlTilde
-	KeyCtrlH          Key = KeyBackspace
-	KeyCtrlI          Key = KeyTab
-	KeyCtrlM          Key = KeyEnter
-	KeyCtrlLsqBracket Key = KeyEsc
-	KeyCtrl3          Key = KeyEsc
-	KeyCtrlBackslash  Key = KeyCtrl4
-	KeyCtrlRsqBracket Key = KeyCtrl5
-	KeyCtrlSlash      Key = KeyCtrl7
-	KeyCtrlUnderscore Key = KeyCtrl7
-	KeyCtrl8          Key = KeyBackspace2
+	KeyCtrl2          = KeyCtrlTilde
+	KeyCtrlSpace      = KeyCtrlTilde
+	KeyCtrlH          = KeyBackspace
+	KeyCtrlI          = KeyTab
+	KeyCtrlM          = KeyEnter
+	KeyCtrlLsqBracket = KeyEsc
+	KeyCtrl3          = KeyEsc
+	KeyCtrlBackslash  = KeyCtrl4
+	KeyCtrlRsqBracket = KeyCtrl5
+	KeyCtrlSlash      = KeyCtrl7
+	KeyCtrlUnderscore = KeyCtrl7
+	KeyCtrl8          = KeyBackspace2
 )

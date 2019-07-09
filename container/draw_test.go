@@ -18,15 +18,15 @@ import (
 	"image"
 	"testing"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas/testcanvas"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/draw/testdraw"
-	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/internal/fakewidget"
-	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/align"
+	"termdash/cell"
+	"termdash/internal/canvas/testcanvas"
+	"termdash/internal/draw"
+	"termdash/internal/draw/testdraw"
+	"termdash/internal/faketerm"
+	"termdash/internal/fakewidget"
+	"termdash/linestyle"
+	"termdash/widgetapi"
 )
 
 func TestDrawWidget(t *testing.T) {

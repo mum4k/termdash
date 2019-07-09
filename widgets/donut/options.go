@@ -19,8 +19,8 @@ package donut
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/cell"
+	"termdash/align"
+	"termdash/cell"
 )
 
 // Option is used to provide options.

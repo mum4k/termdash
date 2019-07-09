@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/linestyle"
+	"termdash/linestyle"
 )
 
 // hVLineEdge is an edge between two points on the graph.

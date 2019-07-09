@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
+	"termdash/keyboard"
+	"termdash/mouse"
 )
 
 // event.go defines events that can be received through the terminal API.

@@ -22,13 +22,13 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgets/text"
+	"termdash"
+	"termdash/cell"
+	"termdash/container"
+	"termdash/linestyle"
+	"termdash/terminal/termbox"
+	"termdash/terminal/terminalapi"
+	"termdash/widgets/text"
 )
 
 // quotations are used as text that is rolled up in a text widget.

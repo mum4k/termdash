@@ -19,10 +19,11 @@ import (
 	"context"
 	"image"
 
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/event/eventqueue"
-	"github.com/mum4k/termdash/terminal/terminalapi"
 	tbx "github.com/nsf/termbox-go"
+
+	"termdash/cell"
+	"termdash/internal/event/eventqueue"
+	"termdash/terminal/terminalapi"
 )
 
 // Option is used to provide options.

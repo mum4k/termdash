@@ -19,10 +19,10 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas/buffer"
-	"github.com/mum4k/termdash/internal/faketerm"
+	"termdash/cell"
+	"termdash/internal/area"
+	"termdash/internal/canvas/buffer"
+	"termdash/internal/faketerm"
 )
 
 func TestNew(t *testing.T) {

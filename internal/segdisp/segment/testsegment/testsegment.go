@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/internal/segdisp/segment"
+	"termdash/internal/canvas/braille"
+	"termdash/internal/segdisp/segment"
 )
 
 // MustHV draws the segment or panics.

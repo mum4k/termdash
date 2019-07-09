@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/align"
+	"termdash/cell"
+	"termdash/internal/area"
+	"termdash/linestyle"
+	"termdash/widgetapi"
 )
 
 // applyOptions applies the options to the container and validates them.

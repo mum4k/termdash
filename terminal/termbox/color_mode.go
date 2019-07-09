@@ -17,8 +17,9 @@ package termbox
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/terminal/terminalapi"
 	tbx "github.com/nsf/termbox-go"
+
+	"termdash/terminal/terminalapi"
 )
 
 // colorMode converts termdash color modes to the termbox format.

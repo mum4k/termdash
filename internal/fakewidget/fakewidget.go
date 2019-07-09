@@ -21,13 +21,13 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/internal/area"
+	"termdash/internal/canvas"
+	"termdash/internal/draw"
+	"termdash/keyboard"
+	"termdash/mouse"
+	"termdash/terminal/terminalapi"
+	"termdash/widgetapi"
 )
 
 // outputLines are the number of lines written by this plugin.

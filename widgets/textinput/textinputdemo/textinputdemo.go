@@ -19,17 +19,17 @@ import (
 	"context"
 	"time"
 
-	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/container/grid"
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/widgets/button"
-	"github.com/mum4k/termdash/widgets/segmentdisplay"
-	"github.com/mum4k/termdash/widgets/textinput"
+	"termdash"
+	"termdash/align"
+	"termdash/cell"
+	"termdash/container"
+	"termdash/container/grid"
+	"termdash/keyboard"
+	"termdash/linestyle"
+	"termdash/terminal/termbox"
+	"termdash/widgets/button"
+	"termdash/widgets/segmentdisplay"
+	"termdash/widgets/textinput"
 )
 
 // rotate returns a new slice with inputs rotated by step.

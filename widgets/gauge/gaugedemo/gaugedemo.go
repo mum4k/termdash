@@ -20,13 +20,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgets/gauge"
+	"termdash"
+	"termdash/cell"
+	"termdash/container"
+	"termdash/linestyle"
+	"termdash/terminal/termbox"
+	"termdash/terminal/terminalapi"
+	"termdash/widgets/gauge"
 )
 
 // playType indicates how to play a gauge.

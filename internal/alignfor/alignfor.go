@@ -20,9 +20,9 @@ import (
 	"image"
 	"strings"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/internal/runewidth"
-	"github.com/mum4k/termdash/internal/wrap"
+	"termdash/align"
+	"termdash/internal/runewidth"
+	"termdash/internal/wrap"
 )
 
 // hAlign aligns the given area in the rectangle horizontally.

@@ -19,10 +19,11 @@ package termbox
 import (
 	"image"
 
-	"github.com/mum4k/termdash/keyboard"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminal/terminalapi"
 	tbx "github.com/nsf/termbox-go"
+
+	"termdash/keyboard"
+	"termdash/mouse"
+	"termdash/terminal/terminalapi"
 )
 
 // tbxToTd maps termbox key values to the termdash format.

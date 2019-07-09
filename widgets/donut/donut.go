@@ -23,15 +23,15 @@ import (
 	"math"
 	"sync"
 
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/internal/alignfor"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/runewidth"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/align"
+	"termdash/internal/alignfor"
+	"termdash/internal/area"
+	"termdash/internal/canvas"
+	"termdash/internal/canvas/braille"
+	"termdash/internal/draw"
+	"termdash/internal/runewidth"
+	"termdash/terminal/terminalapi"
+	"termdash/widgetapi"
 )
 
 // progressType indicates how was the current progress provided by the caller.

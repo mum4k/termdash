@@ -17,8 +17,9 @@ package termbox
 import (
 	"testing"
 
-	"github.com/mum4k/termdash/cell"
 	tbx "github.com/nsf/termbox-go"
+
+	"termdash/cell"
 )
 
 func TestCellColor(t *testing.T) {

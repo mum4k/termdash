@@ -19,9 +19,9 @@ package container
 import (
 	"image"
 
-	"github.com/mum4k/termdash/internal/button"
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminal/terminalapi"
+	"termdash/internal/button"
+	"termdash/mouse"
+	"termdash/terminal/terminalapi"
 )
 
 // pointCont finds the top-most (on the screen) container whose area contains

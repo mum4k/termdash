@@ -19,15 +19,15 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/testcanvas"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/draw/testdraw"
-	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/align"
+	"termdash/cell"
+	"termdash/internal/canvas"
+	"termdash/internal/canvas/testcanvas"
+	"termdash/internal/draw"
+	"termdash/internal/draw/testdraw"
+	"termdash/internal/faketerm"
+	"termdash/linestyle"
+	"termdash/widgetapi"
 )
 
 // percentCall contains arguments for a call to GaugePercent().

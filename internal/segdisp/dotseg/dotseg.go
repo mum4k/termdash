@@ -41,10 +41,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/segdisp"
-	"github.com/mum4k/termdash/internal/segdisp/segment"
+	"termdash/cell"
+	"termdash/internal/canvas"
+	"termdash/internal/segdisp"
+	"termdash/internal/segdisp/segment"
 )
 
 // Segment represents a single segment in the display.

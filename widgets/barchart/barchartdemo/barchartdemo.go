@@ -21,13 +21,13 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgets/barchart"
+	"termdash"
+	"termdash/cell"
+	"termdash/container"
+	"termdash/linestyle"
+	"termdash/terminal/termbox"
+	"termdash/terminal/terminalapi"
+	"termdash/widgets/barchart"
 )
 
 // playBarChart continuously changes the displayed values on the bar chart once every delay.

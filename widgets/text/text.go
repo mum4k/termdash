@@ -20,11 +20,11 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/buffer"
-	"github.com/mum4k/termdash/internal/wrap"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/internal/canvas"
+	"termdash/internal/canvas/buffer"
+	"termdash/internal/wrap"
+	"termdash/terminal/terminalapi"
+	"termdash/widgetapi"
 )
 
 // Text displays a block of text.

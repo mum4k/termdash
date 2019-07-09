@@ -19,16 +19,16 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
-	"github.com/mum4k/termdash/internal/canvas/testcanvas"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/internal/draw/testdraw"
-	"github.com/mum4k/termdash/internal/faketerm"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/align"
+	"termdash/cell"
+	"termdash/internal/canvas"
+	"termdash/internal/canvas/braille/testbraille"
+	"termdash/internal/canvas/testcanvas"
+	"termdash/internal/draw"
+	"termdash/internal/draw/testdraw"
+	"termdash/internal/faketerm"
+	"termdash/terminal/terminalapi"
+	"termdash/widgetapi"
 )
 
 func TestDonut(t *testing.T) {

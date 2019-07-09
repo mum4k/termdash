@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/draw"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/cell"
+	"termdash/internal/area"
+	"termdash/internal/canvas"
+	"termdash/internal/draw"
+	"termdash/widgetapi"
 )
 
 // drawTree draws this container and all of its sub containers.

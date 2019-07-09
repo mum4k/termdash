@@ -16,7 +16,7 @@
 // gives different treatment to certain runes with ambiguous width.
 package runewidth
 
-import runewidth "github.com/mattn/go-runewidth"
+import "github.com/mattn/go-runewidth"
 
 // RuneWidth returns the number of cells needed to draw r.
 // Background in http://www.unicode.org/reports/tr11/.

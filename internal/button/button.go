@@ -18,8 +18,8 @@ package button
 import (
 	"image"
 
-	"github.com/mum4k/termdash/mouse"
-	"github.com/mum4k/termdash/terminal/terminalapi"
+	"termdash/mouse"
+	"termdash/terminal/terminalapi"
 )
 
 // State represents the state of the mouse button.

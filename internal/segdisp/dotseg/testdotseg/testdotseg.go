@@ -18,8 +18,8 @@ package testdotseg
 import (
 	"fmt"
 
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/segdisp/dotseg"
+	"termdash/internal/canvas"
+	"termdash/internal/segdisp/dotseg"
 )
 
 // MustSetCharacter sets the character on the display or panics.

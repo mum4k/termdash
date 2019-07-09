@@ -19,7 +19,8 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/align"
+
+	"termdash/align"
 )
 
 func TestRectangle(t *testing.T) {

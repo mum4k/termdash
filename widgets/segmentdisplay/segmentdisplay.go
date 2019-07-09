@@ -23,14 +23,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/alignfor"
-	"github.com/mum4k/termdash/internal/attrrange"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/segdisp"
-	"github.com/mum4k/termdash/internal/segdisp/dotseg"
-	"github.com/mum4k/termdash/internal/segdisp/sixteen"
-	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgetapi"
+	"termdash/internal/alignfor"
+	"termdash/internal/attrrange"
+	"termdash/internal/canvas"
+	"termdash/internal/segdisp"
+	"termdash/internal/segdisp/dotseg"
+	"termdash/internal/segdisp/sixteen"
+	"termdash/terminal/terminalapi"
+	"termdash/widgetapi"
 )
 
 // SegmentDisplay displays ASCII content by simulating a segment display.

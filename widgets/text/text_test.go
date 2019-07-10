@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+
 	"termdash/cell"
 	"termdash/internal/canvas"
 	"termdash/internal/canvas/testcanvas"

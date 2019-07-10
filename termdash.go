@@ -30,10 +30,9 @@ import (
 	"sync"
 	"time"
 
+	"termdash/container"
 	"termdash/internal/event"
 	"termdash/terminal/terminalapi"
-
-	"termdash/container"
 )
 
 // DefaultRedrawInterval is the default for the RedrawInterval option.

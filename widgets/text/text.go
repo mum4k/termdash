@@ -169,7 +169,7 @@ func (t *Text) draw(cvs *canvas.Canvas) error {
 			return err
 		}
 		if scrlUp {
-			cur = image.Point{0, cur.Y + 1} // Move to the next line.
+			cur = image.Point{X: 0, Y: cur.Y + 1} // Move to the next line.
 			// Skip one line of text, the marker replaced it.
 			continue
 		}
@@ -197,9 +197,9 @@ func (t *Text) draw(cvs *canvas.Canvas) error {
 			if err != nil {
 				return err
 			}
-			cur = image.Point{cur.X + cells, cur.Y} // Move within the same line.
+			cur = image.Point{X: cur.X + cells, Y: cur.Y} // Move within the same line.
 		}
-		cur = image.Point{0, cur.Y + 1} // Move to the next line.
+		cur = image.Point{X: 0, Y: cur.Y + 1} // Move to the next line.
 	}
 	return nil
 }
@@ -212,7 +212,7 @@ func (t *Text) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 
 	width := cvs.Area().Dx()
 	if len(t.content) > 0 && (t.contentChanged || t.lastWidth != width) {
-		// The previous text preprocessing (line wrapping) is invalidated when
+		// The previous text pre-processing (line wrapping) is invalidated when
 		// new text is added or the width of the canvas changed.
 		wr, err := wrap.Cells(t.content, width, t.opts.wrapMode)
 		if err != nil {
@@ -279,7 +279,7 @@ func (t *Text) Options() widgetapi.Options {
 
 	return widgetapi.Options{
 		// At least one line with at least one full-width rune.
-		MinimumSize:  image.Point{1, 1},
+		MinimumSize:  image.Point{X: 1, Y: 1},
 		WantMouse:    ms,
 		WantKeyboard: ks,
 	}

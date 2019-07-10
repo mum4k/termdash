@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+
 	"termdash/mouse"
 	"termdash/terminal/terminalapi"
 	"termdash/widgets/linechart/internal/axes"
@@ -234,19 +235,19 @@ func TestTracker(t *testing.T) {
 			graphAr: image.Rect(2, 0, 6, 6),
 			mutate: func(tr *Tracker) error {
 				if err := tr.Mouse(&terminalapi.Mouse{
-					Position: image.Point{2, 0},
+					Position: image.Point{X: 2, Y: 0},
 					Button:   mouse.ButtonLeft,
 				}); err != nil {
 					return err
 				}
 				if err := tr.Mouse(&terminalapi.Mouse{
-					Position: image.Point{4, 0},
+					Position: image.Point{X: 4, Y: 0},
 					Button:   mouse.ButtonLeft,
 				}); err != nil {
 					return err
 				}
 				return tr.Mouse(&terminalapi.Mouse{
-					Position: image.Point{3, 0},
+					Position: image.Point{X: 3, Y: 0},
 					Button:   mouse.ButtonLeft,
 				})
 			},

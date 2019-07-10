@@ -1,4 +1,4 @@
-module termdash
+module github.com/donaldww/termdash
 
 go 1.12
 

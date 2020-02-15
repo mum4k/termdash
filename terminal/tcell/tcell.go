@@ -21,6 +21,7 @@ type Terminal struct {
 	// done gets closed when Close() is called.
 	done chan struct{}
 
+	// the tcell terminal window
 	screen tcell.Screen
 }
 

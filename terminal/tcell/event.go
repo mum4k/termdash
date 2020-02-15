@@ -12,9 +12,6 @@ import (
 // tcell representation of the space key
 var tcellSpaceKey = tcell.Key(' ')
 
-// tcell representation of the tilde key
-var tcellTildeKey = tcell.Key('~')
-
 // tcellToTd maps tcell key values to the termdash format.
 var tcellToTd = map[tcell.Key]keyboard.Key{
 	tcellSpaceKey:           keyboard.KeySpace,
@@ -41,7 +38,6 @@ var tcellToTd = map[tcell.Key]keyboard.Key{
 	tcell.KeyLeft:           keyboard.KeyArrowLeft,
 	tcell.KeyRight:          keyboard.KeyArrowRight,
 	tcell.KeyEnter:          keyboard.KeyEnter,
-	tcellTildeKey:           keyboard.KeyCtrlTilde,
 	tcell.KeyCtrlA:          keyboard.KeyCtrlA,
 	tcell.KeyCtrlB:          keyboard.KeyCtrlB,
 	tcell.KeyCtrlC:          keyboard.KeyCtrlC,
@@ -72,6 +68,7 @@ var tcellToTd = map[tcell.Key]keyboard.Key{
 	tcell.KeyCtrlRightSq:    keyboard.KeyCtrlRsqBracket,
 	tcell.KeyCtrlUnderscore: keyboard.KeyCtrlUnderscore,
 	tcell.KeyBackspace2:     keyboard.KeyBackspace2,
+	tcell.KeyCtrlSpace:      keyboard.KeyCtrlSpace,
 }
 
 // convKey converts a tcell keyboard event to the termdash format.
@@ -97,19 +94,33 @@ func convKey(event *tcell.EventKey) terminalapi.Event {
 
 // convMouse converts a tcell mouse event to the termdash format.
 func convMouse(event *tcell.EventMouse) terminalapi.Event {
-	//var button mouse.Button
 	var button mouse.Button
 	x, y := event.Position()
 
-	// Get wheel events
 	tcellBtn := event.Buttons()
+
+	// tcell uses signed int16 for button masks, and negative values are invalid
+	if tcellBtn < 0 {
+		return terminalapi.NewErrorf("unknown mouse key %v in a mouse event", tcellBtn)
+	}
+
+	// Get wheel events
 	if tcellBtn&tcell.WheelUp != 0 {
 		button = mouse.ButtonWheelUp
 	} else if tcellBtn&tcell.WheelDown != 0 {
 		button = mouse.ButtonWheelDown
 	}
 
-	// Get button events
+	// Return wheel event if found
+	if button > 0 {
+		return &terminalapi.Mouse{
+			Position: image.Point{X: x, Y: y},
+			Button:   button,
+		}
+	}
+
+	// Get only button events, not wheel events
+	tcellBtn &= tcell.ButtonMask(0xff)
 	switch tcellBtn = event.Buttons(); tcellBtn {
 	case tcell.ButtonNone:
 		button = mouse.ButtonRelease
@@ -120,7 +131,8 @@ func convMouse(event *tcell.EventMouse) terminalapi.Event {
 	case tcell.Button3:
 		button = mouse.ButtonMiddle
 	default:
-		return terminalapi.NewErrorf("unknown mouse key %v in a mouse event", tcellBtn)
+		// Do nothing, since tcell allows multiple buttons to be pressed at the same time
+		// Maybe refactor terminalapi to handle multiple mouse buttons being pressed at the same time (e.g. M1 + M2)
 	}
 
 	return &terminalapi.Mouse{

@@ -98,7 +98,7 @@ func convKey(event *tcell.EventKey) terminalapi.Event {
 
 	k, ok := tcellToTd[tcellKey]
 	if !ok {
-		return terminalapi.NewErrorf("unknown keyboard key '%v' in a keyboard event", tcellKey)
+		return terminalapi.NewErrorf("unknown keyboard key '%v' in a keyboard event %v", tcellKey, event.Name())
 	}
 
 	return &terminalapi.Keyboard{

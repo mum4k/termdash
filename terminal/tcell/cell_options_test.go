@@ -112,3 +112,44 @@ func TestFixColor(t *testing.T) {
 		})
 	}
 }
+
+func TestCellOptsToStyle(t *testing.T) {
+	tests := []struct {
+		colorMode terminalapi.ColorMode
+		opts      cell.Options
+		want      tcell.Style
+	}{
+		{
+			colorMode: terminalapi.ColorMode256,
+			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
+			want:      tcell.StyleDefault.Foreground(tcell.ColorSilver).Background(tcell.ColorBlack),
+		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
+			want:      tcell.StyleDefault.Foreground(tcell.ColorSilver).Background(tcell.ColorBlack),
+		},
+		{
+			colorMode: terminalapi.ColorModeGrayscale,
+			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
+			want:      tcell.StyleDefault.Foreground(tcell.Color239).Background(tcell.Color232),
+		},
+		{
+			colorMode: terminalapi.ColorMode216,
+			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
+			want:      tcell.StyleDefault.Foreground(tcell.Color23).Background(tcell.Color16),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.opts.FgColor.String()+"+"+tc.opts.BgColor.String(), func(t *testing.T) {
+			got := cellOptsToStyle(&tc.opts, tc.colorMode)
+			if got != tc.want {
+				fg, bg, _ := got.Decompose()
+				wantFg, wantBg, _ := tc.want.Decompose()
+				t.Errorf("cellOptsToStyle(%v, fg=%v, bg=%v) => got (fg=%X, bg=%X), want (fg=%X, bg=%X)",
+					tc.colorMode, tc.opts.FgColor, tc.opts.BgColor, fg, bg, wantFg, wantBg)
+			}
+		})
+	}
+}

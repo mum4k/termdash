@@ -11,6 +11,42 @@ import (
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
+// Option is used to provide options.
+type Option interface {
+	// set sets the provided option.
+	set(*Terminal)
+}
+
+// option implements Option.
+type option func(*Terminal)
+
+// set implements Option.set.
+func (o option) set(t *Terminal) {
+	o(t)
+}
+
+// DefaultColorMode is the default value for the ColorMode option.
+const DefaultColorMode = terminalapi.ColorMode256
+
+// ColorMode sets the terminal color mode.
+// Defaults to DefaultColorMode.
+func ColorMode(cm terminalapi.ColorMode) Option {
+	return option(func(t *Terminal) {
+		t.colorMode = cm
+	})
+}
+
+// ClearStyle sets the style to use for tcell when clearing the screen.
+// Defaults to white foreground and black background.
+func ClearStyle(fg, bg cell.Color) Option {
+	return option(func(t *Terminal) {
+		t.clearStyle = &cell.Options{
+			FgColor: fg,
+			BgColor: bg,
+		}
+	})
+}
+
 // Terminal provides input and output to a real terminal. Wraps the
 // gdamore/tcell terminal implementation. This object is not thread-safe.
 // Implements terminalapi.Terminal.
@@ -23,37 +59,55 @@ type Terminal struct {
 
 	// the tcell terminal window
 	screen tcell.Screen
+
+	// Options.
+	colorMode  terminalapi.ColorMode
+	clearStyle *cell.Options
 }
 
-// New returns a new tcell based Terminal.
-// Call Close() when the terminal isn't required anymore.
-func New() (*Terminal, error) {
-	// Enable full character set support for tcell
-	encoding.Register()
-
+// newTerminal creates the terminal and applies the options.
+func newTerminal(opts ...Option) (*Terminal, error) {
 	screen, err := tcell.NewScreen()
 	if err != nil {
 		return nil, err
 	}
 
 	t := &Terminal{
-		events: eventqueue.New(),
-		done:   make(chan struct{}),
+		events:    eventqueue.New(),
+		done:      make(chan struct{}),
+		colorMode: DefaultColorMode,
+		clearStyle: &cell.Options{
+			FgColor: cell.ColorWhite,
+			BgColor: cell.ColorBlack,
+		},
 		screen: screen,
 	}
+	for _, opt := range opts {
+		opt.set(t)
+	}
 
+	return t, nil
+}
+
+// New returns a new tcell based Terminal.
+// Call Close() when the terminal isn't required anymore.
+func New(opts ...Option) (*Terminal, error) {
+	// Enable full character set support for tcell
+	encoding.Register()
+
+	t, err := newTerminal(opts...)
+	if err != nil {
+		return nil, err
+	}
 	if err = t.screen.Init(); err != nil {
 		return nil, err
 	}
 
-	defaultStyle := tcell.StyleDefault.
-		Foreground(tcell.ColorWhite).
-		Background(tcell.ColorBlack)
-
+	clearStyle := cellOptsToStyle(t.clearStyle, t.colorMode)
 	t.screen.EnableMouse()
-	t.screen.SetStyle(defaultStyle)
+	t.screen.SetStyle(clearStyle)
 
-	go t.pollEvents()
+	go t.pollEvents() // Stops when Close() is called.
 	return t, nil
 }
 
@@ -69,7 +123,7 @@ func (t *Terminal) Size() image.Point {
 // Clear implements terminalapi.Terminal.Clear.
 func (t *Terminal) Clear(opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
-	st := cellOptsToStyle(o)
+	st := cellOptsToStyle(o, t.colorMode)
 	w, h := t.screen.Size()
 	for row := 0; row < h; row++ {
 		for col := 0; col < w; col++ {
@@ -98,7 +152,7 @@ func (t *Terminal) HideCursor() {
 // SetCell implements terminalapi.Terminal.SetCell.
 func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
-	st := cellOptsToStyle(o)
+	st := cellOptsToStyle(o, t.colorMode)
 	t.screen.SetContent(p.X, p.Y, r, nil, st)
 	return nil
 }

@@ -79,7 +79,7 @@ func TestFixColor(t *testing.T) {
 		{terminalapi.ColorModeNormal, cell.ColorWhite, tcell.ColorSilver},
 		{terminalapi.ColorModeNormal, cell.ColorNumber(42), tcell.Color(10)},
 		// Grayscale colors (all the grey colours from 231 to 255)
-		{terminalapi.ColorModeGrayscale, cell.ColorDefault, tcell.Color231},
+		{terminalapi.ColorModeGrayscale, cell.ColorDefault, tcell.ColorDefault},
 		{terminalapi.ColorModeGrayscale, cell.ColorBlack, tcell.Color232},
 		{terminalapi.ColorModeGrayscale, cell.ColorRed, tcell.Color233},
 		{terminalapi.ColorModeGrayscale, cell.ColorGreen, tcell.Color234},
@@ -90,7 +90,7 @@ func TestFixColor(t *testing.T) {
 		{terminalapi.ColorModeGrayscale, cell.ColorWhite, tcell.Color239},
 		{terminalapi.ColorModeGrayscale, cell.ColorNumber(42), tcell.Color(250)},
 		// 216 colors (16 to 231)
-		{terminalapi.ColorMode216, cell.ColorDefault, tcell.ColorWhite},
+		{terminalapi.ColorMode216, cell.ColorDefault, tcell.ColorDefault},
 		{terminalapi.ColorMode216, cell.ColorBlack, tcell.Color16},
 		{terminalapi.ColorMode216, cell.ColorRed, tcell.Color17},
 		{terminalapi.ColorMode216, cell.ColorGreen, tcell.Color18},
@@ -100,6 +100,8 @@ func TestFixColor(t *testing.T) {
 		{terminalapi.ColorMode216, cell.ColorCyan, tcell.Color22},
 		{terminalapi.ColorMode216, cell.ColorWhite, tcell.Color23},
 		{terminalapi.ColorMode216, cell.ColorNumber(42), tcell.Color(58)},
+		// Unknown color mode
+		{-1, cell.ColorRed, tcell.ColorDefault},
 	}
 
 	for _, tc := range tests {

@@ -107,7 +107,9 @@ func convKey(event *tcell.EventKey) terminalapi.Event {
 }
 
 // convMouse converts a tcell mouse event to the termdash format.
-func convMouse(event *tcell.EventMouse) terminalapi.Event {
+// Since tcell supports many combinations of mouse events, such as multiple mouse buttons pressed at the same time,
+// this function returns a secondary bool that denotes whether the event is valid for termdash.
+func convMouse(event *tcell.EventMouse) (terminalapi.Event, bool) {
 	var button mouse.Button
 	x, y := event.Position()
 
@@ -115,7 +117,7 @@ func convMouse(event *tcell.EventMouse) terminalapi.Event {
 
 	// tcell uses signed int16 for button masks, and negative values are invalid
 	if tcellBtn < 0 {
-		return terminalapi.NewErrorf("unknown mouse key %v in a mouse event", tcellBtn)
+		return terminalapi.NewErrorf("unknown mouse key %v in a mouse event", tcellBtn), true
 	}
 
 	// Get wheel events
@@ -130,7 +132,7 @@ func convMouse(event *tcell.EventMouse) terminalapi.Event {
 		return &terminalapi.Mouse{
 			Position: image.Point{X: x, Y: y},
 			Button:   button,
-		}
+		}, true
 	}
 
 	// Get only button events, not wheel events
@@ -145,14 +147,17 @@ func convMouse(event *tcell.EventMouse) terminalapi.Event {
 	case tcell.Button3:
 		button = mouse.ButtonMiddle
 	default:
-		// Do nothing, since tcell allows multiple buttons to be pressed at the same time
-		// Maybe refactor terminalapi to handle multiple mouse buttons being pressed at the same time (e.g. M1 + M2)
+		// Unknown event to termdash
+		return &terminalapi.Mouse{
+			Position: image.Point{X: x, Y: y},
+			Button:   button,
+		}, false
 	}
 
 	return &terminalapi.Mouse{
 		Position: image.Point{X: x, Y: y},
 		Button:   button,
-	}
+	}, true
 }
 
 // convResize converts a tcell resize event to the termdash format.
@@ -177,7 +182,14 @@ func toTermdashEvents(event tcell.Event) []terminalapi.Event {
 	case *tcell.EventKey:
 		return []terminalapi.Event{convKey(event)}
 	case *tcell.EventMouse:
-		return []terminalapi.Event{convMouse(event)}
+		mouseEvent, termdashOk := convMouse(event)
+		if termdashOk {
+			return []terminalapi.Event{mouseEvent}
+		} else {
+			return []terminalapi.Event{
+				terminalapi.NewErrorf("unknown tcell event type: %v", event),
+			}
+		}
 	case *tcell.EventResize:
 		return []terminalapi.Event{convResize(event)}
 	case *tcell.EventError:

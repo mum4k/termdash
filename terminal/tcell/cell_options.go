@@ -27,7 +27,7 @@ func cellColor(c cell.Color) tcell.Color {
 
 // fixColor converts the target color for the current color mode
 func fixColor(c tcell.Color, colorMode terminalapi.ColorMode) tcell.Color {
-	if colorMode == DefaultColorMode {
+	if c == tcell.ColorDefault {
 		return c
 	}
 	switch colorMode {

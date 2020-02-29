@@ -99,7 +99,7 @@ func TestFixColor(t *testing.T) {
 		{terminalapi.ColorMode216, cell.ColorMagenta, tcell.Color21},
 		{terminalapi.ColorMode216, cell.ColorCyan, tcell.Color22},
 		{terminalapi.ColorMode216, cell.ColorWhite, tcell.Color23},
-		{terminalapi.ColorMode216, cell.ColorNumber(42), tcell.Color(66)},
+		{terminalapi.ColorMode216, cell.ColorNumber(42), tcell.Color(58)},
 	}
 
 	for _, tc := range tests {

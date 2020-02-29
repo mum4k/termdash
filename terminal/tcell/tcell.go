@@ -138,12 +138,7 @@ func (t *Terminal) Size() image.Point {
 func (t *Terminal) Clear(opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
 	st := cellOptsToStyle(o, t.colorMode)
-	w, h := t.screen.Size()
-	for row := 0; row < h; row++ {
-		for col := 0; col < w; col++ {
-			t.screen.SetContent(col, row, ' ', nil, st)
-		}
-	}
+	t.screen.Fill(' ', st)
 	return nil
 }
 

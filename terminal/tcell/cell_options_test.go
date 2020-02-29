@@ -19,6 +19,7 @@ import (
 
 	"github.com/gdamore/tcell"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 func TestCellColor(t *testing.T) {
@@ -43,6 +44,70 @@ func TestCellColor(t *testing.T) {
 			got := cellColor(tc.color)
 			if got != tc.want {
 				t.Errorf("cellColor(%v) => got %v, want %v", tc.color, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFixColor(t *testing.T) {
+	tests := []struct {
+		colorMode terminalapi.ColorMode
+		color     cell.Color
+		want      tcell.Color
+	}{
+		// See https://jonasjacek.github.io/colors/ for a good reference of all 256 xterm colors
+		// All 256 colors
+		{terminalapi.ColorMode256, cell.ColorDefault, tcell.ColorDefault},
+		{terminalapi.ColorMode256, cell.ColorBlack, tcell.ColorBlack},
+		{terminalapi.ColorMode256, cell.ColorRed, tcell.ColorMaroon},
+		{terminalapi.ColorMode256, cell.ColorGreen, tcell.ColorGreen},
+		{terminalapi.ColorMode256, cell.ColorYellow, tcell.ColorOlive},
+		{terminalapi.ColorMode256, cell.ColorBlue, tcell.ColorNavy},
+		{terminalapi.ColorMode256, cell.ColorMagenta, tcell.ColorPurple},
+		{terminalapi.ColorMode256, cell.ColorCyan, tcell.ColorTeal},
+		{terminalapi.ColorMode256, cell.ColorWhite, tcell.ColorSilver},
+		{terminalapi.ColorMode256, cell.ColorNumber(42), tcell.Color(42)},
+		// 8 system colors
+		{terminalapi.ColorModeNormal, cell.ColorDefault, tcell.ColorDefault},
+		{terminalapi.ColorModeNormal, cell.ColorBlack, tcell.ColorBlack},
+		{terminalapi.ColorModeNormal, cell.ColorRed, tcell.ColorMaroon},
+		{terminalapi.ColorModeNormal, cell.ColorGreen, tcell.ColorGreen},
+		{terminalapi.ColorModeNormal, cell.ColorYellow, tcell.ColorOlive},
+		{terminalapi.ColorModeNormal, cell.ColorBlue, tcell.ColorNavy},
+		{terminalapi.ColorModeNormal, cell.ColorMagenta, tcell.ColorPurple},
+		{terminalapi.ColorModeNormal, cell.ColorCyan, tcell.ColorTeal},
+		{terminalapi.ColorModeNormal, cell.ColorWhite, tcell.ColorSilver},
+		{terminalapi.ColorModeNormal, cell.ColorNumber(42), tcell.Color(10)},
+		// Grayscale colors (all the grey colours from 231 to 255)
+		{terminalapi.ColorModeGrayscale, cell.ColorDefault, tcell.Color231},
+		{terminalapi.ColorModeGrayscale, cell.ColorBlack, tcell.Color232},
+		{terminalapi.ColorModeGrayscale, cell.ColorRed, tcell.Color233},
+		{terminalapi.ColorModeGrayscale, cell.ColorGreen, tcell.Color234},
+		{terminalapi.ColorModeGrayscale, cell.ColorYellow, tcell.Color235},
+		{terminalapi.ColorModeGrayscale, cell.ColorBlue, tcell.Color236},
+		{terminalapi.ColorModeGrayscale, cell.ColorMagenta, tcell.Color237},
+		{terminalapi.ColorModeGrayscale, cell.ColorCyan, tcell.Color238},
+		{terminalapi.ColorModeGrayscale, cell.ColorWhite, tcell.Color239},
+		{terminalapi.ColorModeGrayscale, cell.ColorNumber(42), tcell.Color(250)},
+		// 216 colors (16 to 231)
+		{terminalapi.ColorMode216, cell.ColorDefault, tcell.ColorWhite},
+		{terminalapi.ColorMode216, cell.ColorBlack, tcell.Color16},
+		{terminalapi.ColorMode216, cell.ColorRed, tcell.Color17},
+		{terminalapi.ColorMode216, cell.ColorGreen, tcell.Color18},
+		{terminalapi.ColorMode216, cell.ColorYellow, tcell.Color19},
+		{terminalapi.ColorMode216, cell.ColorBlue, tcell.Color20},
+		{terminalapi.ColorMode216, cell.ColorMagenta, tcell.Color21},
+		{terminalapi.ColorMode216, cell.ColorCyan, tcell.Color22},
+		{terminalapi.ColorMode216, cell.ColorWhite, tcell.Color23},
+		{terminalapi.ColorMode216, cell.ColorNumber(42), tcell.Color(66)},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.colorMode.String()+"_"+tc.color.String(), func(t *testing.T) {
+			color := cellColor(tc.color)
+			got := fixColor(color, tc.colorMode)
+			if got != tc.want {
+				t.Errorf("fixColor(%v_%v), => got %v, want %v", tc.colorMode, tc.color, got, tc.want)
 			}
 		})
 	}

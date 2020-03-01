@@ -51,7 +51,7 @@ func ColorMode(cm terminalapi.ColorMode) Option {
 }
 
 // ClearStyle sets the style to use for tcell when clearing the screen.
-// Defaults to white foreground and black background.
+// Defaults to ColorDefault for foreground and background.
 func ClearStyle(fg, bg cell.Color) Option {
 	return option(func(t *Terminal) {
 		t.clearStyle = &cell.Options{
@@ -91,8 +91,8 @@ func newTerminal(opts ...Option) (*Terminal, error) {
 		done:      make(chan struct{}),
 		colorMode: DefaultColorMode,
 		clearStyle: &cell.Options{
-			FgColor: cell.ColorWhite,
-			BgColor: cell.ColorBlack,
+			FgColor: cell.ColorDefault,
+			BgColor: cell.ColorDefault,
 		},
 		screen: screen,
 	}

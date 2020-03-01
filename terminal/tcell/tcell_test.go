@@ -76,8 +76,8 @@ func TestNewTerminalClearStyle(t *testing.T) {
 			want: &Terminal{
 				colorMode: terminalapi.ColorMode256,
 				clearStyle: &cell.Options{
-					FgColor: cell.ColorWhite,
-					BgColor: cell.ColorBlack,
+					FgColor: cell.ColorDefault,
+					BgColor: cell.ColorDefault,
 				},
 			},
 		},

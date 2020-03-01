@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New [`tcell`](https://github.com/gdamore/tcell) based terminal implementation
+  which implements the `terminalapi.Terminal` interface. 
+- tcell implementation supports two initialization `Option`s:
+  - `ColorMode` the terminal color output mode (defaults to 256 color mode)
+  - `ClearStyle` the foreground and background color style to use when clearing
+    the screen (defaults to the global ColorDefault for both foreground and background)
+
 ## [0.10.0] - 5-Jun-2019
 
 ### Added

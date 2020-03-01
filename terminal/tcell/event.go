@@ -182,9 +182,8 @@ func toTermdashEvents(event tcell.Event) []terminalapi.Event {
 		mouseEvent := convMouse(event)
 		if mouseEvent != nil {
 			return []terminalapi.Event{mouseEvent}
-		} else {
-			return nil
 		}
+		return nil
 	case *tcell.EventResize:
 		return []terminalapi.Event{convResize(event)}
 	case *tcell.EventError:

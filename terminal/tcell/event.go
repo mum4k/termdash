@@ -109,7 +109,7 @@ func convKey(event *tcell.EventKey) terminalapi.Event {
 // convMouse converts a tcell mouse event to the termdash format.
 // Since tcell supports many combinations of mouse events, such as multiple mouse buttons pressed at the same time,
 // this function returns a secondary bool that denotes whether the event is valid for termdash.
-func convMouse(event *tcell.EventMouse) (terminalapi.Event, bool) {
+func convMouse(event *tcell.EventMouse) terminalapi.Event {
 	var button mouse.Button
 	x, y := event.Position()
 
@@ -117,7 +117,7 @@ func convMouse(event *tcell.EventMouse) (terminalapi.Event, bool) {
 
 	// tcell uses signed int16 for button masks, and negative values are invalid
 	if tcellBtn < 0 {
-		return terminalapi.NewErrorf("unknown mouse key %v in a mouse event", tcellBtn), true
+		return terminalapi.NewErrorf("unknown mouse key %v in a mouse event", tcellBtn)
 	}
 
 	// Get wheel events
@@ -132,7 +132,7 @@ func convMouse(event *tcell.EventMouse) (terminalapi.Event, bool) {
 		return &terminalapi.Mouse{
 			Position: image.Point{X: x, Y: y},
 			Button:   button,
-		}, true
+		}
 	}
 
 	// Get only button events, not wheel events
@@ -148,16 +148,13 @@ func convMouse(event *tcell.EventMouse) (terminalapi.Event, bool) {
 		button = mouse.ButtonMiddle
 	default:
 		// Unknown event to termdash
-		return &terminalapi.Mouse{
-			Position: image.Point{X: x, Y: y},
-			Button:   button,
-		}, false
+		return nil
 	}
 
 	return &terminalapi.Mouse{
 		Position: image.Point{X: x, Y: y},
 		Button:   button,
-	}, true
+	}
 }
 
 // convResize converts a tcell resize event to the termdash format.
@@ -182,8 +179,8 @@ func toTermdashEvents(event tcell.Event) []terminalapi.Event {
 	case *tcell.EventKey:
 		return []terminalapi.Event{convKey(event)}
 	case *tcell.EventMouse:
-		mouseEvent, termdashOk := convMouse(event)
-		if termdashOk {
+		mouseEvent := convMouse(event)
+		if mouseEvent != nil {
 			return []terminalapi.Event{mouseEvent}
 		} else {
 			return nil

@@ -186,9 +186,7 @@ func toTermdashEvents(event tcell.Event) []terminalapi.Event {
 		if termdashOk {
 			return []terminalapi.Event{mouseEvent}
 		} else {
-			return []terminalapi.Event{
-				terminalapi.NewErrorf("unknown tcell event type: %v", event),
-			}
+			return nil
 		}
 	case *tcell.EventResize:
 		return []terminalapi.Event{convResize(event)}

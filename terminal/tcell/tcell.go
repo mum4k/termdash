@@ -177,9 +177,7 @@ func (t *Terminal) pollEvents() {
 
 		events := toTermdashEvents(t.screen.PollEvent())
 		for _, ev := range events {
-			if ev != nil {
-				t.events.Push(ev)
-			}
+			t.events.Push(ev)
 		}
 	}
 }

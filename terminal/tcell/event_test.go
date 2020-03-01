@@ -112,24 +112,30 @@ func TestToTermdashEvents(t *testing.T) {
 func TestMouseButtons(t *testing.T) {
 	tests := []struct {
 		btnMask tcell.ButtonMask
-		want    mouse.Button
+		want    []mouse.Button
 		wantErr bool
 	}{
-		{btnMask: -1, wantErr: true},
-		{btnMask: tcell.Button1, want: mouse.ButtonLeft},
-		{btnMask: tcell.Button3, want: mouse.ButtonMiddle},
-		{btnMask: tcell.Button2, want: mouse.ButtonRight},
-		{btnMask: tcell.ButtonNone, want: mouse.ButtonRelease},
-		{btnMask: tcell.WheelUp, want: mouse.ButtonWheelUp},
-		{btnMask: tcell.WheelDown, want: mouse.ButtonWheelDown},
+		{btnMask: -1, want: []mouse.Button{mouse.Button(-1)}, wantErr: true},
+		{btnMask: tcell.Button1, want: []mouse.Button{mouse.ButtonLeft}},
+		{btnMask: tcell.Button3, want: []mouse.Button{mouse.ButtonMiddle}},
+		{btnMask: tcell.Button2, want: []mouse.Button{mouse.ButtonRight}},
+		{btnMask: tcell.ButtonNone, want: []mouse.Button{mouse.ButtonRelease}},
+		{btnMask: tcell.WheelUp, want: []mouse.Button{mouse.ButtonWheelUp}},
+		{btnMask: tcell.WheelDown, want: []mouse.Button{mouse.ButtonWheelDown}},
+		{btnMask: tcell.Button1 | tcell.Button2, want: nil},
 	}
 
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("key:%v want:%v", tc.btnMask, tc.want), func(t *testing.T) {
 
 			evs := toTermdashEvents(tcell.NewEventMouse(0, 0, tc.btnMask, tcell.ModNone))
-			if got, want := len(evs), 1; got != want {
+			if got, want := len(evs), len(tc.want); got != want {
 				t.Fatalf("toTermdashEvents => got %d events, want %d", got, want)
+			}
+
+			// Events that may exist for the terminal implementation but are not valid for termdash will be nil
+			if len(tc.want) == 0 {
+				return
 			}
 
 			ev := evs[0]
@@ -142,7 +148,7 @@ func TestMouseButtons(t *testing.T) {
 
 			switch e := ev.(type) {
 			case *terminalapi.Mouse:
-				if got := e.Button; got != tc.want {
+				if got := e.Button; got != tc.want[0] {
 					t.Errorf("toTermdashEvents => got %v, want %v", got, tc.want)
 				}
 

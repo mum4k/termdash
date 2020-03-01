@@ -108,7 +108,7 @@ func convKey(event *tcell.EventKey) terminalapi.Event {
 
 // convMouse converts a tcell mouse event to the termdash format.
 // Since tcell supports many combinations of mouse events, such as multiple mouse buttons pressed at the same time,
-// this function returns a secondary bool that denotes whether the event is valid for termdash.
+// this function returns nil if the event is invalid for termdash.
 func convMouse(event *tcell.EventMouse) terminalapi.Event {
 	var button mouse.Button
 	x, y := event.Position()
@@ -170,6 +170,7 @@ func convResize(event *tcell.EventResize) terminalapi.Event {
 }
 
 // toTermdashEvents converts a tcell event to the termdash event format.
+// This function returns nil if the event is invalid for termdash.
 func toTermdashEvents(event tcell.Event) []terminalapi.Event {
 	switch event := event.(type) {
 	case *tcell.EventInterrupt:

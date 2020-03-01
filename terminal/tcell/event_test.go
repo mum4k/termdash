@@ -133,7 +133,15 @@ func TestMouseButtons(t *testing.T) {
 				t.Fatalf("toTermdashEvents => got %d events, want %d", got, want)
 			}
 
-			// Events that may exist for the terminal implementation but are not valid for termdash will be nil
+			switch count := len(tc.want); count {
+			case 0:
+				// Events that may exist for the terminal implementation but are not supported by termdash will be nil
+				return
+			case 1:
+				// Proceed with test
+			default:
+				t.Fatalf("toTermdashEvents test case specified %d expected events, only one is supported", count)
+			}
 			if len(tc.want) == 0 {
 				return
 			}

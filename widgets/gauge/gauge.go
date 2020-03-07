@@ -163,14 +163,10 @@ func (g *Gauge) progressText() string {
 		return ""
 	}
 
-	switch g.pt {
-	case progressTypePercent:
+	if g.pt == progressTypePercent {
 		return fmt.Sprintf("%d%%", g.current)
-	case progressTypeAbsolute:
-		return fmt.Sprintf("%d/%d", g.current, g.total)
-	default:
-		return ""
 	}
+	return fmt.Sprintf("%d/%d", g.current, g.total)
 }
 
 // gaugeText returns full text to be displayed within the gauge, i.e. the

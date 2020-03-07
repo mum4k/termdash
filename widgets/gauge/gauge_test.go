@@ -15,6 +15,7 @@
 package gauge
 
 import (
+	"fmt"
 	"image"
 	"testing"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/mum4k/termdash/internal/draw/testdraw"
 	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
 
@@ -68,6 +70,58 @@ func TestGauge(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc: "fails on negative height",
+			opts: []Option{
+				Height(-1),
+			},
+			canvas: image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
+			desc: "gauge without progress text",
+			opts: []Option{
+				Char('o'),
+				HideTextProgress(),
+			},
+			percent: &percentCall{p: 35},
+			canvas:  image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 3, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "sets gauge color",
+			opts: []Option{
+				Char('o'),
+				HideTextProgress(),
+				Color(cell.ColorBlue),
+			},
+			percent: &percentCall{p: 35},
+			canvas:  image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 3, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorBlue)),
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc: "gauge showing percentage",
 			opts: []Option{
 				Char('o'),
@@ -86,6 +140,24 @@ func TestGauge(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+		},
+		{
+			desc: "fails when Percent is less than zero",
+			opts: []Option{
+				Char('o'),
+			},
+			percent:       &percentCall{p: -1},
+			canvas:        image.Rect(0, 0, 10, 3),
+			wantUpdateErr: true,
+		},
+		{
+			desc: "fails when Percent is more than 100",
+			opts: []Option{
+				Char('o'),
+			},
+			percent:       &percentCall{p: 101},
+			canvas:        image.Rect(0, 0, 10, 3),
+			wantUpdateErr: true,
 		},
 		{
 			desc: "draws resize needed character when canvas is smaller than requested",
@@ -314,6 +386,33 @@ func TestGauge(t *testing.T) {
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
+		},
+		{
+			desc: "fails when Absolute done is negative",
+			opts: []Option{
+				Char('o'),
+			},
+			absolute:      &absoluteCall{done: -1, total: 100},
+			canvas:        image.Rect(0, 0, 10, 3),
+			wantUpdateErr: true,
+		},
+		{
+			desc: "fails when Absolute total is zero",
+			opts: []Option{
+				Char('o'),
+			},
+			absolute:      &absoluteCall{done: 0, total: 0},
+			canvas:        image.Rect(0, 0, 10, 3),
+			wantUpdateErr: true,
+		},
+		{
+			desc: "fails when Absolute total is less than done",
+			opts: []Option{
+				Char('o'),
+			},
+			absolute:      &absoluteCall{done: 10, total: 5},
+			canvas:        image.Rect(0, 0, 10, 3),
+			wantUpdateErr: true,
 		},
 		{
 			desc: "gauge without text progress",
@@ -799,6 +898,46 @@ func TestGauge(t *testing.T) {
 
 			if diff := faketerm.Diff(tc.want(c.Size()), got); diff != "" {
 				t.Errorf("Rectangle => %v", diff)
+			}
+		})
+	}
+}
+
+func TestKeyboard(t *testing.T) {
+	g, err := New()
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := g.Keyboard(&terminalapi.Keyboard{}); err == nil {
+		t.Errorf("Keyboard => got nil err, wanted one")
+	}
+}
+
+func TestMouse(t *testing.T) {
+	g, err := New()
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := g.Mouse(&terminalapi.Mouse{}); err == nil {
+		t.Errorf("Mouse => got nil err, wanted one")
+	}
+}
+
+func TestProgressTypeString(t *testing.T) {
+	tests := []struct {
+		pt   progressType
+		want string
+	}{
+		{progressType(-1), "progressTypeUnknown"},
+		{progressTypePercent, "progressTypePercent"},
+		{progressTypeAbsolute, "progressTypeAbsolute"},
+	}
+
+	for i, tc := range tests {
+		t.Run(fmt.Sprintf("case(%d)", i), func(t *testing.T) {
+			got := tc.pt.String()
+			if tc.want != got {
+				t.Errorf("String => %q, want %q", got, tc.want)
 			}
 		})
 	}

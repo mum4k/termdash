@@ -18,7 +18,9 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"sync"
@@ -31,6 +33,7 @@ import (
 	"github.com/mum4k/termdash/container/grid"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/barchart"
@@ -466,8 +469,30 @@ func contLayout(w *widgets) ([]container.Option, error) {
 // rootID is the ID assigned to the root container.
 const rootID = "root"
 
+// Terminal implementations
+const (
+	termboxTerminal = "termbox"
+	tcellTerminal   = "tcell"
+)
+
 func main() {
-	t, err := termbox.New(termbox.ColorMode(terminalapi.ColorMode256))
+	terminalPtr := flag.String("terminal",
+		"termbox",
+		"The terminal implementation to use. Available implementations are 'termbox' and 'tcell' (default = termbox).")
+	flag.Parse()
+
+	var t terminalapi.Terminal
+	var err error
+	switch terminal := *terminalPtr; terminal {
+	case termboxTerminal:
+		t, err = termbox.New(termbox.ColorMode(terminalapi.ColorMode256))
+	case tcellTerminal:
+		t, err = tcell.New(tcell.ColorMode(terminalapi.ColorMode256))
+	default:
+		log.Fatalf("Unknown terminal implementation '%s' specified. Please choose between 'termbox' and 'tcell'.", terminal)
+		return
+	}
+
 	if err != nil {
 		panic(err)
 	}

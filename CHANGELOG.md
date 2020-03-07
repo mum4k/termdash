@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      the screen (defaults to the global ColorDefault for both foreground and
      background)
 
+### Fixed
+
+- Improved test coverage of the `Gauge` widget.
+
 ## [0.10.0] - 5-Jun-2019
 
 ### Added

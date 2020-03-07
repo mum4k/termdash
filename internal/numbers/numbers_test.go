@@ -83,8 +83,7 @@ func TestZeroBeforeDecimal(t *testing.T) {
 	}
 }
 
-// Copied from the math package of Go 1.10 for backwards compatibility with Go
-// 1.8 where the math.Round function doesn't exist yet.
+// Copied from the Go's math package, file all_test.go.
 func tolerance(a, b, e float64) bool {
 	// Multiplying by e here can underflow denormal values to zero.
 	// Check a==b so that at least if a and b are small and identical
@@ -107,18 +106,7 @@ func tolerance(a, b, e float64) bool {
 	}
 	return d < e
 }
-func close(a, b float64) bool      { return tolerance(a, b, 1e-14) }
-func veryclose(a, b float64) bool  { return tolerance(a, b, 4e-16) }
-func soclose(a, b, e float64) bool { return tolerance(a, b, e) }
-func alike(a, b float64) bool {
-	switch {
-	case math.IsNaN(a) && math.IsNaN(b):
-		return true
-	case a == b:
-		return math.Signbit(a) == math.Signbit(b)
-	}
-	return false
-}
+func veryclose(a, b float64) bool { return tolerance(a, b, 4e-16) }
 
 func TestMinMax(t *testing.T) {
 	tests := []struct {

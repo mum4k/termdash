@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.11.0] - 7-Mar-2020
 
+#### Breaking API changes
+
+- Termdash now requires at least Go version 1.11.
+
 ### Added
 
 - New [`tcell`](https://github.com/gdamore/tcell) based terminal implementation

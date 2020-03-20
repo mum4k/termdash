@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Migrating to [Go modules](https://blog.golang.org/using-go-modules).
+
 ## [0.11.0] - 7-Mar-2020
 
 #### Breaking API changes

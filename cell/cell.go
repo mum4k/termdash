@@ -32,6 +32,12 @@ func (o *Options) Set(other *Options) {
 	*other = *o
 }
 
+// IsDefault asserts whether the options instance contains the default cell
+// options.
+func (o *Options) IsDefault() bool {
+	return o.FgColor == ColorDefault && o.BgColor == ColorDefault
+}
+
 // NewOptions returns a new Options instance after applying the provided options.
 func NewOptions(opts ...Option) *Options {
 	o := &Options{}

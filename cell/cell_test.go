@@ -22,13 +22,15 @@ import (
 
 func TestNewOptions(t *testing.T) {
 	tests := []struct {
-		desc string
-		opts []Option
-		want *Options
+		desc          string
+		opts          []Option
+		want          *Options
+		wantIsDefault bool
 	}{
 		{
-			desc: "no provided options",
-			want: &Options{},
+			desc:          "no provided options",
+			want:          &Options{},
+			wantIsDefault: true,
 		},
 		{
 			desc: "setting foreground color",
@@ -79,6 +81,10 @@ func TestNewOptions(t *testing.T) {
 			got := NewOptions(tc.opts...)
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("NewOptions => unexpected diff (-want, +got):\n%s", diff)
+			}
+
+			if gotIsDefault := got.IsDefault(); gotIsDefault != tc.wantIsDefault {
+				t.Errorf("IsDefault => %v, want %v", gotIsDefault, tc.wantIsDefault)
 			}
 		})
 	}

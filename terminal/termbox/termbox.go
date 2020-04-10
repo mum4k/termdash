@@ -20,7 +20,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/event/eventqueue"
+	"github.com/mum4k/termdash/private/event/eventqueue"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	tbx "github.com/nsf/termbox-go"
 )

@@ -21,11 +21,11 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/event"
-	"github.com/mum4k/termdash/internal/event/testevent"
-	"github.com/mum4k/termdash/internal/faketerm"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/private/event"
+	"github.com/mum4k/termdash/private/event/testevent"
+	"github.com/mum4k/termdash/private/faketerm"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 

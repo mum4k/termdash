@@ -27,7 +27,7 @@ for more details.
 The public API surface is documented in the
 [wiki](http://github.com/mum4k/termdash/wiki).
 
-Private packages can be identified by the presence of the **/internal/**
+Private packages can be identified by the presence of the **/private/**
 directory in their import path. Stability of the private packages isn't
 guaranteed and changes won't be backward compatible.
 

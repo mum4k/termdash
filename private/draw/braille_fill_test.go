@@ -19,10 +19,10 @@ import (
 	"testing"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
-	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/private/area"
+	"github.com/mum4k/termdash/private/canvas/braille"
+	"github.com/mum4k/termdash/private/canvas/braille/testbraille"
+	"github.com/mum4k/termdash/private/faketerm"
 )
 
 func TestBrailleFill(t *testing.T) {

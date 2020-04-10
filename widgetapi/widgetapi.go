@@ -18,7 +18,7 @@ package widgetapi
 import (
 	"image"
 
-	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/private/canvas"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 

@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/mum4k/termdash/align"
-	"github.com/mum4k/termdash/internal/runewidth"
-	"github.com/mum4k/termdash/internal/wrap"
+	"github.com/mum4k/termdash/private/runewidth"
+	"github.com/mum4k/termdash/private/wrap"
 )
 
 // hAlign aligns the given area in the rectangle horizontally.

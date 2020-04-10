@@ -22,7 +22,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/private/canvas"
 )
 
 // VerticalTextOption is used to provide options to Text().

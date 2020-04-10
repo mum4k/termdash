@@ -22,9 +22,9 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/alignfor"
-	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/private/alignfor"
+	"github.com/mum4k/termdash/private/canvas"
 )
 
 // BorderOption is used to provide options to Border().

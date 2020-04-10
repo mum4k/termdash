@@ -23,8 +23,8 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/private/area"
 	"github.com/mum4k/termdash/widgetapi"
 )
 

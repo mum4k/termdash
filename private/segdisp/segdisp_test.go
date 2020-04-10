@@ -19,9 +19,9 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/internal/canvas/braille/testbraille"
+	"github.com/mum4k/termdash/private/canvas"
+	"github.com/mum4k/termdash/private/canvas/braille"
+	"github.com/mum4k/termdash/private/canvas/braille/testbraille"
 )
 
 func TestRequired(t *testing.T) {

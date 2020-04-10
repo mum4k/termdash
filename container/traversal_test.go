@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/faketerm"
+	"github.com/mum4k/termdash/private/faketerm"
 )
 
 func TestRoot(t *testing.T) {

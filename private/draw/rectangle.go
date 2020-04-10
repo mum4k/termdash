@@ -21,7 +21,7 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas"
+	"github.com/mum4k/termdash/private/canvas"
 )
 
 // RectangleOption is used to provide options to the Rectangle function.

@@ -20,8 +20,8 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas/braille"
-	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/private/canvas/braille"
+	"github.com/mum4k/termdash/private/draw"
 )
 
 // Type identifies the type of the segment that is drawn.

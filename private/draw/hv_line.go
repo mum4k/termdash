@@ -21,8 +21,8 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/canvas"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/private/canvas"
 )
 
 // HVLineOption is used to provide options to HVLine().

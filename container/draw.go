@@ -22,9 +22,9 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/draw"
+	"github.com/mum4k/termdash/private/area"
+	"github.com/mum4k/termdash/private/canvas"
+	"github.com/mum4k/termdash/private/draw"
 	"github.com/mum4k/termdash/widgetapi"
 )
 

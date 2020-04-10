@@ -21,9 +21,9 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/runewidth"
-	"github.com/mum4k/termdash/internal/wrap"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/private/runewidth"
+	"github.com/mum4k/termdash/private/wrap"
 )
 
 // Option is used to provide options.

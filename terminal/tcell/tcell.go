@@ -21,7 +21,7 @@ import (
 	"github.com/gdamore/tcell"
 	"github.com/gdamore/tcell/encoding"
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/event/eventqueue"
+	"github.com/mum4k/termdash/private/event/eventqueue"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 

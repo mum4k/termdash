@@ -20,8 +20,8 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/runewidth"
+	"github.com/mum4k/termdash/private/area"
+	"github.com/mum4k/termdash/private/runewidth"
 )
 
 // NewCells breaks the provided text into cells and applies the options.

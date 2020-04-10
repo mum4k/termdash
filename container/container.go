@@ -27,10 +27,10 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/alignfor"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/event"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/private/alignfor"
+	"github.com/mum4k/termdash/private/area"
+	"github.com/mum4k/termdash/private/event"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )

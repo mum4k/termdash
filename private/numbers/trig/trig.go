@@ -21,7 +21,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/mum4k/termdash/internal/numbers"
+	"github.com/mum4k/termdash/private/numbers"
 )
 
 // CirclePointAtAngle given an angle in degrees and a circle midpoint and

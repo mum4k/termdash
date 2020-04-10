@@ -20,9 +20,9 @@ import (
 	"image"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/area"
-	"github.com/mum4k/termdash/internal/canvas/buffer"
-	"github.com/mum4k/termdash/internal/runewidth"
+	"github.com/mum4k/termdash/private/area"
+	"github.com/mum4k/termdash/private/canvas/buffer"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 

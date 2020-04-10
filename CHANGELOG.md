@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Migrating to [Go modules](https://blog.golang.org/using-go-modules).
+- Renamed directory `internal` to `private` so that external widget development
+  is possible. Noted in
+  [README.md](https://github.com/mum4k/termdash/README.md) that packages in the
+  `private` directory don't have any API stability guarantee.
 
 ## [0.11.0] - 7-Mar-2020
 

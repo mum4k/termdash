@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/internal/runewidth"
 	"github.com/mum4k/termdash/keyboard"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/widgetapi"
 )
 

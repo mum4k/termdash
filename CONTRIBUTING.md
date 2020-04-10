@@ -3,6 +3,16 @@
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
 
+## Fork and merge into the "devel" branch
+
+All development in termdash repository must happen in the [devel
+branch](https://github.com/mum4k/termdash/tree/devel). The devel branch is
+merged into the master branch during release of each new version.
+
+When you fork the termdash repository, be sure to checkout the devel branch.
+When you are creating a pull request, be sure to pull back into the devel
+branch.
+
 ## Contributor License Agreement
 
 Contributions to this project must be accompanied by a Contributor License

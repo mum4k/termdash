@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash/container"
-	"github.com/mum4k/termdash/internal/event"
+	"github.com/mum4k/termdash/private/event"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 

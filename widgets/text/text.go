@@ -20,9 +20,9 @@ import (
 	"image"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/canvas/buffer"
-	"github.com/mum4k/termdash/internal/wrap"
+	"github.com/mum4k/termdash/private/canvas"
+	"github.com/mum4k/termdash/private/canvas/buffer"
+	"github.com/mum4k/termdash/private/wrap"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )

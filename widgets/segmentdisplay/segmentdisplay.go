@@ -23,12 +23,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mum4k/termdash/internal/alignfor"
-	"github.com/mum4k/termdash/internal/attrrange"
-	"github.com/mum4k/termdash/internal/canvas"
-	"github.com/mum4k/termdash/internal/segdisp"
-	"github.com/mum4k/termdash/internal/segdisp/dotseg"
-	"github.com/mum4k/termdash/internal/segdisp/sixteen"
+	"github.com/mum4k/termdash/private/alignfor"
+	"github.com/mum4k/termdash/private/attrrange"
+	"github.com/mum4k/termdash/private/canvas"
+	"github.com/mum4k/termdash/private/segdisp"
+	"github.com/mum4k/termdash/private/segdisp/dotseg"
+	"github.com/mum4k/termdash/private/segdisp/sixteen"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )

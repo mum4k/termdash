@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 10-Apr-2020
+
+### Added
+
+- Migrating to [Go modules](https://blog.golang.org/using-go-modules).
+- Renamed directory `internal` to `private` so that external widget development
+  is possible. Noted in
+  [README.md](https://github.com/mum4k/termdash/blob/master/README.md) that packages in the
+  `private` directory don't have any API stability guarantee.
+
 ## [0.11.0] - 7-Mar-2020
 
 #### Breaking API changes
@@ -315,7 +325,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.11.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.12.0...devel
+[0.12.0]: https://github.com/mum4k/termdash/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/mum4k/termdash/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/mum4k/termdash/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/mum4k/termdash/compare/v0.9.0...v0.9.1

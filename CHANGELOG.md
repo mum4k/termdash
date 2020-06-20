@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.0] - 10-Apr-2020
 
+### Fixed
+
+- the `tcell` unit test can now pass in headless mode (when TERM="") which
+  happens under bazel.
+
 ### Added
 
 - Migrating to [Go modules](https://blog.golang.org/using-go-modules).

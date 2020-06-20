@@ -14,7 +14,7 @@ script:
         - diff -u <(echo -n) <(./internal/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
 after_success:
-        - ./internal/scripts/coverage.sh
+        - ./private/scripts/coverage.sh
 env:
   global:
         - CGO_ENABLED=0

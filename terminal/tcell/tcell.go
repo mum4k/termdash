@@ -16,6 +16,7 @@ package tcell
 
 import (
 	"context"
+	"fmt"
 	"image"
 
 	"github.com/gdamore/tcell"
@@ -79,11 +80,14 @@ type Terminal struct {
 	clearStyle *cell.Options
 }
 
+// tcellNewScreen can be overridden from tests.
+var tcellNewScreen = tcell.NewScreen
+
 // newTerminal creates the terminal and applies the options.
 func newTerminal(opts ...Option) (*Terminal, error) {
-	screen, err := tcell.NewScreen()
+	screen, err := tcellNewScreen()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("tcell.NewScreen => %v", err)
 	}
 
 	t := &Terminal{

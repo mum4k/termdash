@@ -17,6 +17,7 @@ package tcell
 import (
 	"testing"
 
+	"github.com/gdamore/tcell"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -45,11 +46,13 @@ func TestNewTerminalColorMode(t *testing.T) {
 		},
 	}
 
+	tcellNewScreen = func() (tcell.Screen, error) { return nil, nil }
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			got, err := newTerminal(tc.opts...)
 			if err != nil {
 				t.Errorf("newTerminal => unexpected error:\n%v", err)
+				return
 			}
 
 			// Ignore these fields.
@@ -96,11 +99,13 @@ func TestNewTerminalClearStyle(t *testing.T) {
 		},
 	}
 
+	tcellNewScreen = func() (tcell.Screen, error) { return nil, nil }
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			got, err := newTerminal(tc.opts...)
 			if err != nil {
 				t.Errorf("newTerminal => unexpected error:\n%v", err)
+				return
 			}
 
 			// Ignore these fields.

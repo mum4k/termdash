@@ -13,8 +13,6 @@ script:
         - diff -u <(echo -n) <(gofmt -d -s .)
         - diff -u <(echo -n) <(./internal/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
-after_success:
-        - ./private/scripts/coverage.sh
 env:
   global:
         - CGO_ENABLED=0

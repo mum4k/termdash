@@ -17,4 +17,4 @@ after_success:
         - ./internal/scripts/coverage.sh
 env:
   global:
-  - CGO_ENABLED=0
+        - CGO_ENABLED=0

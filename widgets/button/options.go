@@ -130,7 +130,7 @@ func WidthFor(text string) Option {
 }
 
 // Key configures the keyboard key that presses the button.
-// The widget responds to this key only if its container if focused.
+// The widget responds to this key only if its container is focused.
 // When not provided, the widget ignores all keyboard events.
 func Key(k keyboard.Key) Option {
 	return option(func(opts *options) {

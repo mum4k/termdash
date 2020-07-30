@@ -208,6 +208,7 @@ Termdash uses [this branching model](https://nvie.com/posts/a-successful-git-bra
 
 - [datadash](https://github.com/keithknott26/datadash): Visualize streaming or tabular data inside the terminal.
 - [grafterm](https://github.com/slok/grafterm): Metrics dashboards visualization on the terminal.
+- [perfstat](https://github.com/flaviostutz/perfstat): Analyze and show tips about possible bottlenecks in Linux systems.
 
 # Disclaimer
 

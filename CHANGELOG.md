@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.2] - 31-Aug-2020
+
+### Fixed
+
+- advanced the CI Go versions up to Go 1.15.
+- fixed the build status badge to correctly point to travis-ci.com instead of
+  travis-ci.org.
+
 ## [0.12.1] - 20-Jun-2020
 
 ### Fixed
@@ -333,7 +341,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.12.1...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.12.2...devel
+[0.12.2]: https://github.com/mum4k/termdash/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/mum4k/termdash/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/mum4k/termdash/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/mum4k/termdash/compare/v0.10.0...v0.11.0

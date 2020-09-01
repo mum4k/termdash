@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.2] - 31-Aug-2020
+
+### Fixed
+
+- advanced the CI Go versions up to Go 1.15.
+- fixed the build status badge to correctly point to travis-ci.com instead of
+  travis-ci.org.
+
 ## [0.12.1] - 20-Jun-2020
 
 ### Fixed

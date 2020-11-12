@@ -28,7 +28,16 @@ func cellColor(c cell.Color) tbx.Attribute {
 
 // cellOptsToFg converts the cell options to the termbox foreground attribute.
 func cellOptsToFg(opts *cell.Options) tbx.Attribute {
-	return cellColor(opts.FgColor)
+	a := cellColor(opts.FgColor)
+	if opts.Bold {
+		a |= tbx.AttrBold
+	}
+	// FIXME: Termbox doesn't have an italics attribute
+	if opts.Underline {
+		a |= tbx.AttrUnderline
+	}
+	// FIXME: Termbox doesn't have a strikethrough attribute
+	return a
 }
 
 // cellOptsToBg converts the cell options to the termbox background attribute.

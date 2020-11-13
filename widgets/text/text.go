@@ -125,7 +125,7 @@ const minLinesForMarkers = 3
 func (t *Text) drawScrollUp(cvs *canvas.Canvas, cur image.Point, fromLine int) (bool, error) {
 	height := cvs.Area().Dy()
 	if cur.Y == 0 && height >= minLinesForMarkers && fromLine > 0 {
-		cells, err := cvs.SetCell(cur, '⇧')
+		cells, err := cvs.SetCell(cur, t.opts.scrollUp)
 		if err != nil {
 			return false, err
 		}
@@ -144,7 +144,7 @@ func (t *Text) drawScrollDown(cvs *canvas.Canvas, cur image.Point, fromLine int)
 	height := cvs.Area().Dy()
 	lines := len(t.wrapped)
 	if cur.Y == height-1 && height >= minLinesForMarkers && height < lines-fromLine {
-		cells, err := cvs.SetCell(cur, '⇩')
+		cells, err := cvs.SetCell(cur, t.opts.scrollDown)
 		if err != nil {
 			return false, err
 		}

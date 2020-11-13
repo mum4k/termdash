@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- the `Text` widget now allows user to specify custom scroll marker runes.
+
 ### Fixed
 
 - coveralls again triggers and reports on PRs.

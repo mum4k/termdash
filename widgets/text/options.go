@@ -32,6 +32,8 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
+	scrollUp         rune
+	scrollDown       rune
 	wrapMode         wrap.Mode
 	rollContent      bool
 	disableScrolling bool
@@ -46,6 +48,8 @@ type options struct {
 // newOptions returns a new options instance.
 func newOptions(opts ...Option) *options {
 	opt := &options{
+		scrollUp:        DefaultScrollUpRune,
+		scrollDown:      DefaultScrollDownRune,
 		mouseUpButton:   DefaultScrollMouseButtonUp,
 		mouseDownButton: DefaultScrollMouseButtonDown,
 		keyUp:           DefaultScrollKeyUp,
@@ -83,6 +87,22 @@ type option func(*options)
 func (o option) set(opts *options) {
 	o(opts)
 }
+
+// ScrollRunes configures the text widgets scroll runes, shown at the top and
+// bottom of a scrollable text widget. If not provided, the default scroll
+// runes will be used.
+func ScrollRunes(up, down rune) Option {
+	return option(func(opts *options) {
+		opts.scrollUp = up
+		opts.scrollDown = down
+	})
+}
+
+// The default scroll runes for content scrolling
+const (
+	DefaultScrollUpRune   = '⇧'
+	DefaultScrollDownRune = '⇩'
+)
 
 // WrapAtWords configures the text widget so that it automatically wraps lines
 // that are longer than the width of the widget at word boundaries. If not

@@ -282,6 +282,26 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
+			desc:   "trims content when longer than canvas and draws a custom bottom scroll marker",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				ScrollRunes('^', '.'),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("line0\nline1\nline2\nline3")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "line0", image.Point{0, 0})
+				testdraw.MustText(c, "line1", image.Point{0, 1})
+				testdraw.MustText(c, ".", image.Point{0, 2})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "scrolls down on mouse wheel down a line at a time",
 			canvas: image.Rect(0, 0, 10, 3),
 			writes: func(widget *Text) error {
@@ -565,6 +585,27 @@ func TestTextDraws(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testdraw.MustText(c, "⇧", image.Point{0, 0})
+				testdraw.MustText(c, "line2", image.Point{0, 1})
+				testdraw.MustText(c, "line3", image.Point{0, 2})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "rolls content upwards and draws a custom up scroll marker",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				RollContent(),
+				ScrollRunes('^', '.'),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("line0\nline1\nline2\nline3")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "^", image.Point{0, 0})
 				testdraw.MustText(c, "line2", image.Point{0, 1})
 				testdraw.MustText(c, "line3", image.Point{0, 2})
 				testcanvas.MustApply(c, ft)

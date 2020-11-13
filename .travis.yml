@@ -3,6 +3,8 @@ go:
         - 1.14.x
         - 1.15.x
         - stable
+before_install:
+        - go get github.com/mattn/goveralls
 script:
         - go get -t ./...
         - go get -u golang.org/x/lint/golint
@@ -12,6 +14,7 @@ script:
         - diff -u <(echo -n) <(gofmt -d -s .)
         - diff -u <(echo -n) <(./internal/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
+        - $GOPATH/bin/goveralls -service=travis-ci
 env:
   global:
         - CGO_ENABLED=0

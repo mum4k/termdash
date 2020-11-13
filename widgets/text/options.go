@@ -32,8 +32,8 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	scrollUp	 rune
-	scrollDown	 rune
+	scrollUp         rune
+	scrollDown       rune
 	wrapMode         wrap.Mode
 	rollContent      bool
 	disableScrolling bool
@@ -48,8 +48,8 @@ type options struct {
 // newOptions returns a new options instance.
 func newOptions(opts ...Option) *options {
 	opt := &options{
-		scrollUp: 	 DefaultScrollUpRune,
-		scrollDown: 	 DefaultScrollDownRune,
+		scrollUp:        DefaultScrollUpRune,
+		scrollDown:      DefaultScrollDownRune,
 		mouseUpButton:   DefaultScrollMouseButtonUp,
 		mouseDownButton: DefaultScrollMouseButtonDown,
 		keyUp:           DefaultScrollKeyUp,
@@ -100,7 +100,7 @@ func ScrollRunes(up, down rune) Option {
 
 // The default scroll runes for content scrolling
 const (
-	DefaultScrollUpRune = '⇧'
+	DefaultScrollUpRune   = '⇧'
 	DefaultScrollDownRune = '⇩'
 )
 

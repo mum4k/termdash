@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- coveralls again triggers and reports on PRs.
+
 ## [0.12.2] - 31-Aug-2020
 
 ### Fixed

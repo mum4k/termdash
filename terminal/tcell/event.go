@@ -135,8 +135,6 @@ func convMouse(event *tcell.EventMouse) terminalapi.Event {
 		}
 	}
 
-	// Get only button events, not wheel events
-	tcellBtn &= tcell.ButtonMask(0xff)
 	switch tcellBtn = event.Buttons(); tcellBtn {
 	case tcell.ButtonNone:
 		button = mouse.ButtonRelease

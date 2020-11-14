@@ -477,8 +477,8 @@ const (
 
 func main() {
 	terminalPtr := flag.String("terminal",
-		"termbox",
-		"The terminal implementation to use. Available implementations are 'termbox' and 'tcell' (default = termbox).")
+		"tcell",
+		"The terminal implementation to use. Available implementations are 'termbox' and 'tcell' (default = tcell).")
 	flag.Parse()
 
 	var t terminalapi.Terminal

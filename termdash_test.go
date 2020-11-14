@@ -32,7 +32,7 @@ import (
 	"github.com/mum4k/termdash/private/event/testevent"
 	"github.com/mum4k/termdash/private/faketerm"
 	"github.com/mum4k/termdash/private/fakewidget"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/barchart"
@@ -42,7 +42,7 @@ import (
 // Example shows how to setup and run termdash with periodic redraw.
 func Example() {
 	// Create the terminal.
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
@@ -86,7 +86,7 @@ func Example() {
 // Example shows how to setup and run termdash with manually triggered redraw.
 func Example_triggered() {
 	// Create the terminal.
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}

@@ -30,7 +30,7 @@ import (
 	"github.com/mum4k/termdash/private/draw/testdraw"
 	"github.com/mum4k/termdash/private/faketerm"
 	"github.com/mum4k/termdash/private/fakewidget"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 )
@@ -38,11 +38,11 @@ import (
 // Shows how to create a simple 4x4 grid with four widgets.
 // All the cells in the grid contain the same widget in this example.
 func Example() {
-	tbx, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
-	defer tbx.Close()
+	defer t.Close()
 
 	bc, err := barchart.New()
 	if err != nil {
@@ -67,14 +67,14 @@ func Example() {
 		panic(err)
 	}
 
-	cont, err := container.New(tbx, gridOpts...)
+	cont, err := container.New(t, gridOpts...)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := termdash.Run(ctx, tbx, cont); err != nil {
+	if err := termdash.Run(ctx, t, cont); err != nil {
 		panic(err)
 	}
 }
@@ -82,11 +82,11 @@ func Example() {
 // Shows how to create rows iteratively. Each row contains two columns and each
 // column contains the same widget.
 func Example_iterative() {
-	tbx, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
-	defer tbx.Close()
+	defer t.Close()
 
 	bc, err := barchart.New()
 	if err != nil {
@@ -108,14 +108,14 @@ func Example_iterative() {
 		panic(err)
 	}
 
-	cont, err := container.New(tbx, gridOpts...)
+	cont, err := container.New(t, gridOpts...)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := termdash.Run(ctx, tbx, cont); err != nil {
+	if err := termdash.Run(ctx, t, cont); err != nil {
 		panic(err)
 	}
 }

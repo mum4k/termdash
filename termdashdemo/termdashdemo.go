@@ -477,8 +477,8 @@ const (
 
 func main() {
 	terminalPtr := flag.String("terminal",
-		"termbox",
-		"The terminal implementation to use. Available implementations are 'termbox' and 'tcell' (default = termbox).")
+		"tcell",
+		"The terminal implementation to use. Available implementations are 'termbox' and 'tcell' (default = tcell).")
 	flag.Parse()
 
 	var t terminalapi.Terminal
@@ -569,7 +569,7 @@ func textState(text string, capacity, step int) []rune {
 // SegmentDisplay.
 func newTextInput(updateText chan<- string) (*textinput.TextInput, error) {
 	input, err := textinput.New(
-		textinput.Label("Change text to: ", cell.FgColor(cell.ColorBlue)),
+		textinput.Label("Change text to: ", cell.FgColor(cell.ColorNumber(33))),
 		textinput.MaxWidthCells(20),
 		textinput.PlaceHolder("enter any text"),
 		textinput.OnSubmit(func(text string) error {
@@ -593,10 +593,10 @@ func newSegmentDisplay(ctx context.Context, updateText <-chan string) (*segmentd
 	}
 
 	colors := []cell.Color{
-		cell.ColorBlue,
+		cell.ColorNumber(33),
 		cell.ColorRed,
 		cell.ColorYellow,
-		cell.ColorBlue,
+		cell.ColorNumber(33),
 		cell.ColorGreen,
 		cell.ColorRed,
 		cell.ColorGreen,
@@ -854,7 +854,7 @@ func newSines(ctx context.Context) (left, right *button.Button, lc *linechart.Li
 	go periodic(ctx, redrawInterval/3, func() error {
 		step1 = (step1 + 1) % len(inputs)
 		if err := lc.Series("first", rotateFloats(inputs, step1),
-			linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
+			linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(33))),
 		); err != nil {
 			return err
 		}

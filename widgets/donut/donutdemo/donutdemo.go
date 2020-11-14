@@ -24,7 +24,7 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/donut"
 )
@@ -79,7 +79,7 @@ func playDonut(ctx context.Context, d *donut.Donut, start, step int, delay time.
 }
 
 func main() {
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
@@ -95,7 +95,7 @@ func main() {
 	}
 	go playDonut(ctx, green, 0, 1, 250*time.Millisecond, playTypePercent)
 
-	blue, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorBlue)))
+	blue, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorNumber(33))))
 	if err != nil {
 		panic(err)
 	}

@@ -24,7 +24,7 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/gauge"
 )
@@ -79,7 +79,7 @@ func playGauge(ctx context.Context, g *gauge.Gauge, step int, delay time.Duratio
 }
 
 func main() {
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +98,7 @@ func main() {
 
 	absolute, err := gauge.New(
 		gauge.Height(1),
-		gauge.Color(cell.ColorBlue),
+		gauge.Color(cell.ColorNumber(33)),
 		gauge.Border(linestyle.Light),
 		gauge.BorderTitle("Absolute progress"),
 	)

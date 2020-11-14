@@ -24,7 +24,7 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/segmentdisplay"
 )
@@ -46,7 +46,7 @@ func clock(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 				spacer = ":"
 			}
 			chunks := []*segmentdisplay.TextChunk{
-				segmentdisplay.NewChunk(parts[0], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorBlue))),
+				segmentdisplay.NewChunk(parts[0], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorNumber(33)))),
 				segmentdisplay.NewChunk(spacer),
 				segmentdisplay.NewChunk(parts[1], segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorRed))),
 			}
@@ -74,10 +74,10 @@ func rotate(inputs []rune, step int) []rune {
 func rollText(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 	const text = "Termdash"
 	colors := map[rune]cell.Color{
-		'T': cell.ColorBlue,
+		'T': cell.ColorNumber(33),
 		'e': cell.ColorRed,
 		'r': cell.ColorYellow,
-		'm': cell.ColorBlue,
+		'm': cell.ColorNumber(33),
 		'd': cell.ColorGreen,
 		'a': cell.ColorRed,
 		's': cell.ColorGreen,
@@ -113,7 +113,7 @@ func rollText(ctx context.Context, sd *segmentdisplay.SegmentDisplay) {
 }
 
 func main() {
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}

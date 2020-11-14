@@ -84,7 +84,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	green, err := sparkline.New(
-		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
+		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorNumber(33))),
 		sparkline.Color(cell.ColorGreen),
 	)
 	if err != nil {
@@ -92,7 +92,7 @@ func main() {
 	}
 	go playSparkLine(ctx, green, 250*time.Millisecond)
 	red, err := sparkline.New(
-		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
+		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorNumber(33))),
 		sparkline.Color(cell.ColorRed),
 	)
 	if err != nil {

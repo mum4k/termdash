@@ -98,7 +98,7 @@ func main() {
 
 	absolute, err := gauge.New(
 		gauge.Height(1),
-		gauge.Color(cell.ColorBlue),
+		gauge.Color(cell.ColorNumber(33)),
 		gauge.Border(linestyle.Light),
 		gauge.BorderTitle("Absolute progress"),
 	)

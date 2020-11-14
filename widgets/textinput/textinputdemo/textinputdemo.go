@@ -60,10 +60,10 @@ func textState(text string, capacity, step int) []rune {
 // Exists when the context expires.
 func rollText(ctx context.Context, sd *segmentdisplay.SegmentDisplay, updateText <-chan string) {
 	colors := []cell.Color{
-		cell.ColorBlue,
+		cell.ColorNumber(33),
 		cell.ColorRed,
 		cell.ColorYellow,
-		cell.ColorBlue,
+		cell.ColorNumber(33),
 		cell.ColorGreen,
 		cell.ColorRed,
 		cell.ColorGreen,
@@ -127,7 +127,7 @@ func main() {
 	go rollText(ctx, rollingSD, updateText)
 
 	input, err := textinput.New(
-		textinput.Label("New text:", cell.FgColor(cell.ColorBlue)),
+		textinput.Label("New text:", cell.FgColor(cell.ColorNumber(33))),
 		textinput.MaxWidthCells(20),
 		textinput.Border(linestyle.Light),
 		textinput.PlaceHolder("Enter any text"),

@@ -53,7 +53,7 @@ func playLineChart(ctx context.Context, lc *linechart.LineChart, delay time.Dura
 			i = (i + 1) % len(inputs)
 			rotated := append(inputs[i:], inputs[:i]...)
 			if err := lc.Series("first", rotated,
-				linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
+				linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(33))),
 				linechart.SeriesXLabels(map[int]string{
 					0: "zero",
 				}),

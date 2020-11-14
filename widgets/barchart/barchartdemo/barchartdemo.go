@@ -75,10 +75,10 @@ func main() {
 		barchart.ValueColors([]cell.Color{
 			cell.ColorRed,
 			cell.ColorYellow,
-			cell.ColorBlue,
+			cell.ColorNumber(33),
 			cell.ColorGreen,
 			cell.ColorRed,
-			cell.ColorBlue,
+			cell.ColorNumber(33),
 		}),
 		barchart.ShowValues(),
 		barchart.BarWidth(8),

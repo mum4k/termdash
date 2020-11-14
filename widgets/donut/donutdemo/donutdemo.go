@@ -95,7 +95,7 @@ func main() {
 	}
 	go playDonut(ctx, green, 0, 1, 250*time.Millisecond, playTypePercent)
 
-	blue, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorBlue)))
+	blue, err := donut.New(donut.CellOpts(cell.FgColor(cell.ColorNumber(33))))
 	if err != nil {
 		panic(err)
 	}

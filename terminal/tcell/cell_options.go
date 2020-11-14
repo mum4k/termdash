@@ -57,7 +57,7 @@ func cellOptsToStyle(opts *cell.Options, colorMode terminalapi.ColorMode) tcell.
 	fg = fixColor(fg, colorMode)
 	bg = fixColor(bg, colorMode)
 
-	// FIXME: tcell doesn't have a strikethrough style option
+	// FIXME: tcell doesn't have a strikethrough style option until #254 is resolved.
 	st = st.Foreground(fg).Background(bg).Bold(opts.Bold).Italic(opts.Italic).Underline(opts.Underline)
 	return st
 }

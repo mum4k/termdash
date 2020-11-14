@@ -128,7 +128,7 @@ func ValueFormatterSuffix(decimals int, suffix string) ValueFormatter {
 }
 
 // valueFormatterSuffixWithTransformer is a factory that returns a formatter
-// that will apply a tranform function to the received value before
+// that will apply a transform function to the received value before
 // returning the decimal with suffix representation.
 func valueFormatterSuffixWithTransformer(decimals int, suffix string, transformFunc func(float64) float64) ValueFormatter {
 	dFmt := suffixDecimalFormat(decimals, suffix)

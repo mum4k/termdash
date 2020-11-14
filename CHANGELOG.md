@@ -19,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- addressing some lint issues.
 - coveralls again triggers and reports on PRs.
+- improving test coverage in some modules.
 
 ## [0.12.2] - 31-Aug-2020
 

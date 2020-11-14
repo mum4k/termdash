@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - addressing some lint issues.
 - coveralls again triggers and reports on PRs.
 - improving test coverage in some modules.
+- fixed a bug where segment display text in `termdashdemo` appeared to be
+  jumping.
 
 ## [0.12.2] - 31-Aug-2020
 

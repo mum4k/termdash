@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   documentation.
 - upgrading versions on all dependencies.
 - terminal cells now support font modifier options (bold, italic,
-  underline, strikethrough)
+  underline, strikethrough).
 
 ### Fixed
 

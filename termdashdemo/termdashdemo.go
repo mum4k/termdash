@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"image"
 	"log"
 	"math"
 	"math/rand"
@@ -69,9 +70,9 @@ type widgets struct {
 }
 
 // newWidgets creates all widgets used by this demo.
-func newWidgets(ctx context.Context, c *container.Container) (*widgets, error) {
+func newWidgets(ctx context.Context, t terminalapi.Terminal, c *container.Container) (*widgets, error) {
 	updateText := make(chan string)
-	sd, err := newSegmentDisplay(ctx, updateText)
+	sd, err := newSegmentDisplay(ctx, t, updateText)
 	if err != nil {
 		return nil, err
 	}
@@ -504,7 +505,7 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	w, err := newWidgets(ctx, c)
+	w, err := newWidgets(ctx, t, c)
 	if err != nil {
 		panic(err)
 	}
@@ -562,7 +563,9 @@ func textState(text string, capacity, step int) []rune {
 	}
 	state = append(state, []rune(text)...)
 	step = step % len(state)
-	return rotateRunes(state, step)
+
+	res := rotateRunes(state, step)
+	return res
 }
 
 // newTextInput creates a new TextInput field that changes the text on the
@@ -586,7 +589,7 @@ func newTextInput(updateText chan<- string) (*textinput.TextInput, error) {
 
 // newSegmentDisplay creates a new SegmentDisplay that initially shows the
 // Termdash name. Shows any text that is sent over the channel.
-func newSegmentDisplay(ctx context.Context, updateText <-chan string) (*segmentdisplay.SegmentDisplay, error) {
+func newSegmentDisplay(ctx context.Context, t terminalapi.Terminal, updateText <-chan string) (*segmentdisplay.SegmentDisplay, error) {
 	sd, err := segmentdisplay.New()
 	if err != nil {
 		return nil, err
@@ -609,12 +612,33 @@ func newSegmentDisplay(ctx context.Context, updateText <-chan string) (*segmentd
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
+
+		capacity := 0
+		termSize := t.Size()
 		for {
 			select {
 			case <-ticker.C:
-				state := textState(text, sd.Capacity(), step)
+				if capacity == 0 {
+					// The segment display only knows its capacity after both
+					// text size and terminal size are known.
+					capacity = sd.Capacity()
+				}
+				if t.Size().Eq(image.ZP) || !t.Size().Eq(termSize) {
+					// Update the capacity initially the first time the
+					// terminal reports a non-zero size and then every time the
+					// terminal resizes.
+					//
+					// This is better than updating the capacity on every
+					// iteration since that leads to edge cases - segment
+					// display capacity depends on the length of text and here
+					// we are trying to adjust the text length to the capacity.
+					termSize = t.Size()
+					capacity = sd.Capacity()
+				}
+
+				state := textState(text, capacity, step)
 				var chunks []*segmentdisplay.TextChunk
-				for i := 0; i < sd.Capacity(); i++ {
+				for i := 0; i < capacity; i++ {
 					if i >= len(state) {
 						break
 					}

@@ -42,7 +42,7 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
-	defer tbx.Close()
+	defer t.Close()
 
 	bc, err := barchart.New()
 	if err != nil {
@@ -67,14 +67,14 @@ func Example() {
 		panic(err)
 	}
 
-	cont, err := container.New(tbx, gridOpts...)
+	cont, err := container.New(t, gridOpts...)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := termdash.Run(ctx, tbx, cont); err != nil {
+	if err := termdash.Run(ctx, t, cont); err != nil {
 		panic(err)
 	}
 }
@@ -86,7 +86,7 @@ func Example_iterative() {
 	if err != nil {
 		panic(err)
 	}
-	defer tbx.Close()
+	defer t.Close()
 
 	bc, err := barchart.New()
 	if err != nil {
@@ -108,14 +108,14 @@ func Example_iterative() {
 		panic(err)
 	}
 
-	cont, err := container.New(tbx, gridOpts...)
+	cont, err := container.New(t, gridOpts...)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := termdash.Run(ctx, tbx, cont); err != nil {
+	if err := termdash.Run(ctx, t, cont); err != nil {
 		panic(err)
 	}
 }

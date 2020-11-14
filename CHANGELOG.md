@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - the `Text` widget now allows user to specify custom scroll marker runes.
 
+### Changed
+
+- `tcell` dependency was upgraded 1.4.0.
+- terminal cells now support font modifier options (bold, italic,
+  underline, strikethrough)
+
 ### Fixed
 
 - coveralls again triggers and reports on PRs.

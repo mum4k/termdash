@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `tcell` dependency was upgraded 1.4.0.
+- upgrading versions on all dependencies.
 - terminal cells now support font modifier options (bold, italic,
   underline, strikethrough)
 

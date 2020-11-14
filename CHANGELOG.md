@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `tcell` dependency was upgraded 1.4.0.
+- made `tcell` terminal implementation the default in examples, demos and
+  documentation.
 - upgrading versions on all dependencies.
 - terminal cells now support font modifier options (bold, italic,
   underline, strikethrough)
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - addressing some lint issues.
 - coveralls again triggers and reports on PRs.
 - improving test coverage in some modules.
+- changing the Blue color in demos to a more readable shade.
 - fixed a bug where segment display text in `termdashdemo` appeared to be
   jumping.
 

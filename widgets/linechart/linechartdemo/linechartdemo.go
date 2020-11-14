@@ -25,7 +25,7 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/linechart"
 )
@@ -53,7 +53,7 @@ func playLineChart(ctx context.Context, lc *linechart.LineChart, delay time.Dura
 			i = (i + 1) % len(inputs)
 			rotated := append(inputs[i:], inputs[:i]...)
 			if err := lc.Series("first", rotated,
-				linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlue)),
+				linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(33))),
 				linechart.SeriesXLabels(map[int]string{
 					0: "zero",
 				}),
@@ -74,7 +74,7 @@ func playLineChart(ctx context.Context, lc *linechart.LineChart, delay time.Dura
 }
 
 func main() {
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}

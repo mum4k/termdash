@@ -13,6 +13,7 @@
 // limitations under the License.
 
 // Package termbox implements terminal using the nsf/termbox-go library.
+// Prefer to use tcell instead, nsf/termbox-go is no longer maintained.
 package termbox
 
 import (
@@ -52,6 +53,9 @@ func ColorMode(cm terminalapi.ColorMode) Option {
 
 // Terminal provides input and output to a real terminal. Wraps the
 // nsf/termbox-go terminal implementation. This object is not thread-safe.
+//
+// Prefer to use tcell instead, nsf/termbox-go is no longer maintained.
+//
 // Implements terminalapi.Terminal.
 type Terminal struct {
 	// events is a queue of input events.

@@ -106,7 +106,7 @@ func main() {
 	if err := wrapped.Write("Supports", text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 		panic(err)
 	}
-	if err := wrapped.Write(" colors", text.WriteCellOpts(cell.FgColor(cell.ColorBlue))); err != nil {
+	if err := wrapped.Write(" colors", text.WriteCellOpts(cell.FgColor(cell.ColorNumber(33)))); err != nil {
 		panic(err)
 	}
 	if err := wrapped.Write(" and"); err != nil {

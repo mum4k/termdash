@@ -27,6 +27,7 @@ func TestNewOptions(t *testing.T) {
 		want *Options
 	}{
 		{
+
 			desc: "no provided options",
 			want: &Options{},
 		},
@@ -70,6 +71,21 @@ func TestNewOptions(t *testing.T) {
 			want: &Options{
 				FgColor: ColorCyan,
 				BgColor: ColorMagenta,
+			},
+		},
+		{
+			desc: "setting font attributes",
+			opts: []Option{
+				Bold(),
+				Italic(),
+				Underline(),
+				Strikethrough(),
+			},
+			want: &Options{
+				Bold:          true,
+				Italic:        true,
+				Underline:     true,
+				Strikethrough: true,
 			},
 		},
 	}

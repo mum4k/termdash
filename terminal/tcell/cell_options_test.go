@@ -141,6 +141,21 @@ func TestCellOptsToStyle(t *testing.T) {
 			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
 			want:      tcell.StyleDefault.Foreground(tcell.Color23).Background(tcell.Color16),
 		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{Bold: true},
+			want:      tcell.StyleDefault.Bold(true),
+		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{Italic: true},
+			want:      tcell.StyleDefault.Italic(true),
+		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{Underline: true},
+			want:      tcell.StyleDefault.Underline(true),
+		},
 	}
 
 	for _, tc := range tests {

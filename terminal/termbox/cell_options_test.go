@@ -15,6 +15,7 @@
 package termbox
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mum4k/termdash/cell"
@@ -45,6 +46,28 @@ func TestCellColor(t *testing.T) {
 				t.Errorf("cellColor(%v) => got %v, want %v", tc.color, got, tc.want)
 			}
 
+		})
+	}
+}
+
+func TestCellFontModifier(t *testing.T) {
+	tests := []struct {
+		opt  cell.Options
+		want tbx.Attribute
+	}{
+		{cell.Options{Bold: true}, tbx.AttrBold},
+		{cell.Options{Underline: true}, tbx.AttrUnderline},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%v", tc.opt), func(t *testing.T) {
+			got, err := cellOptsToFg(&tc.opt)
+			if err != nil {
+				t.Errorf("cellOptsToFg(%v) failed: %s", tc.opt, err)
+			}
+			if got != tc.want {
+				t.Errorf("cellOptsToFg(%v) => got %v, want %v", tc.opt, got, tc.want)
+			}
 		})
 	}
 }

@@ -17,6 +17,8 @@ package termbox
 // cell_options.go converts termdash cell options to the termbox format.
 
 import (
+	"errors"
+
 	"github.com/mum4k/termdash/cell"
 	tbx "github.com/nsf/termbox-go"
 )
@@ -27,8 +29,24 @@ func cellColor(c cell.Color) tbx.Attribute {
 }
 
 // cellOptsToFg converts the cell options to the termbox foreground attribute.
-func cellOptsToFg(opts *cell.Options) tbx.Attribute {
-	return cellColor(opts.FgColor)
+func cellOptsToFg(opts *cell.Options) (tbx.Attribute, error) {
+	a := cellColor(opts.FgColor)
+	var err error
+	if opts.Bold {
+		a |= tbx.AttrBold
+	}
+	// FIXME: Termbox doesn't have an italics attribute
+	if opts.Italic {
+		err = errors.New("Termbox: Unsupported attribute: Italic")
+	}
+	if opts.Underline {
+		a |= tbx.AttrUnderline
+	}
+	// FIXME: Termbox doesn't have a strikethrough attribute
+	if opts.Strikethrough {
+		err = errors.New("Termbox: Unsupported attribute: Strikethrough")
+	}
+	return a, err
 }
 
 // cellOptsToBg converts the cell options to the termbox background attribute.

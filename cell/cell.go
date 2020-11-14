@@ -23,8 +23,12 @@ type Option interface {
 
 // Options stores the provided options.
 type Options struct {
-	FgColor Color
-	BgColor Color
+	FgColor       Color
+	BgColor       Color
+	Bold          bool
+	Italic        bool
+	Underline     bool
+	Strikethrough bool
 }
 
 // Set allows existing options to be passed as an option.
@@ -60,5 +64,33 @@ func FgColor(color Color) Option {
 func BgColor(color Color) Option {
 	return option(func(co *Options) {
 		co.BgColor = color
+	})
+}
+
+// Bold makes cell's text bold.
+func Bold() Option {
+	return option(func(co *Options) {
+		co.Bold = true
+	})
+}
+
+// Italic makes cell's text italic. Only works when using the tcell backend.
+func Italic() Option {
+	return option(func(co *Options) {
+		co.Italic = true
+	})
+}
+
+// Underline makes cell's text underlined.
+func Underline() Option {
+	return option(func(co *Options) {
+		co.Underline = true
+	})
+}
+
+// Strikethrough strikes through the cell's text. Currently a no-op until tcell is updated to >= v2.0.0
+func Strikethrough() Option {
+	return option(func(co *Options) {
+		co.Strikethrough = true
 	})
 }

@@ -563,9 +563,7 @@ func textState(text string, capacity, step int) []rune {
 	}
 	state = append(state, []rune(text)...)
 	step = step % len(state)
-
-	res := rotateRunes(state, step)
-	return res
+	return rotateRunes(state, step)
 }
 
 // newTextInput creates a new TextInput field that changes the text on the

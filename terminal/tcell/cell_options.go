@@ -22,28 +22,6 @@ import (
 
 // cellColor converts termdash cell color to the tcell format.
 func cellColor(c cell.Color) tcell.Color {
-	/*
-		switch c {
-		case cell.ColorDefault:
-			return tcell.ColorDefault
-		case cell.ColorBlack:
-			return tcell.ColorBlack
-		case cell.ColorRed:
-			return tcell.ColorRed
-		case cell.ColorGreen:
-			return tcell.ColorGreen
-		case cell.ColorYellow:
-			return tcell.ColorYellow
-		case cell.ColorBlue:
-			return tcell.ColorBlue
-		case cell.ColorMagenta:
-			return tcell.ColorFuchsia
-		case cell.ColorCyan:
-			return tcell.ColorAqua
-		case cell.ColorWhite:
-			return tcell.ColorWhite
-		}
-	*/
 	if c == cell.ColorDefault {
 		return tcell.ColorDefault
 	}

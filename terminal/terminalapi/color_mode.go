@@ -37,13 +37,13 @@ var colorModeNames = map[ColorMode]string{
 
 // Supported color modes.
 const (
-	// ColorModeNormal supports 8 "system" colors.
+	// ColorModeNormal supports 16 Xterm colors.
 	// These are defined as constants in the cell package.
 	ColorModeNormal ColorMode = iota
 
 	// ColorMode256 enables using any of the 256 terminal colors.
-	//     0-7: the 8 "system" colors accessible in ColorModeNormal.
-	//    8-15: the 8 "bright system" colors.
+	//     0-7: the 8 Xterm colors accessible in ColorModeNormal.
+	//    8-15: the 8 "bright" Xterm colors.
 	//  16-231: the 216 different terminal colors.
 	// 232-255: the 24 different shades of grey.
 	ColorMode256

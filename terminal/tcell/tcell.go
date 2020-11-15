@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/gdamore/tcell/v2"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2/encoding"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/private/event/eventqueue"

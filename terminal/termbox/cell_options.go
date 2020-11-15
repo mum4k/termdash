@@ -25,7 +25,22 @@ import (
 
 // cellColor converts termdash cell color to the termbox format.
 func cellColor(c cell.Color) tbx.Attribute {
-	return tbx.Attribute(c)
+	// Special cases for backward compatibility after we have aligned the
+	// definition of the first 16 colors with Xterm and tcell.
+	// This ensures that users that run with termbox-go don't experience any
+	// change in colors.
+	switch c {
+	case cell.ColorRed:
+		return tbx.Attribute(cell.ColorMaroon)
+	case cell.ColorYellow:
+		return tbx.Attribute(cell.ColorOlive)
+	case cell.ColorBlue:
+		return tbx.Attribute(cell.ColorNavy)
+	case cell.ColorWhite:
+		return tbx.Attribute(cell.ColorSilver)
+	default:
+		return tbx.Attribute(c)
+	}
 }
 
 // cellOptsToFg converts the cell options to the termbox foreground attribute.

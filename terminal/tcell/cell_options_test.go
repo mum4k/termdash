@@ -15,131 +15,285 @@
 package tcell
 
 import (
+	"reflect"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
+	tcell "github.com/gdamore/tcell/v2"
+	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
-func TestCellColor(t *testing.T) {
-	tests := []struct {
-		color cell.Color
-		want  tcell.Color
-	}{
-		{cell.ColorDefault, tcell.ColorDefault},
-		{cell.ColorBlack, tcell.ColorBlack},
-		{cell.ColorRed, tcell.ColorMaroon},
-		{cell.ColorGreen, tcell.ColorGreen},
-		{cell.ColorYellow, tcell.ColorOlive},
-		{cell.ColorBlue, tcell.ColorNavy},
-		{cell.ColorMagenta, tcell.ColorPurple},
-		{cell.ColorCyan, tcell.ColorTeal},
-		{cell.ColorWhite, tcell.ColorSilver},
-		{cell.ColorNumber(42), tcell.Color(42)},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.color.String(), func(t *testing.T) {
-			got := cellColor(tc.color)
-			if got != tc.want {
-				t.Errorf("cellColor(%v) => got %v, want %v", tc.color, got, tc.want)
-			}
-		})
-	}
-}
-
-func TestFixColor(t *testing.T) {
-	tests := []struct {
-		colorMode terminalapi.ColorMode
-		color     cell.Color
-		want      tcell.Color
-	}{
-		// See https://jonasjacek.github.io/colors/ for a good reference of all 256 xterm colors
-		// All 256 colors
-		{terminalapi.ColorMode256, cell.ColorDefault, tcell.ColorDefault},
-		{terminalapi.ColorMode256, cell.ColorBlack, tcell.ColorBlack},
-		{terminalapi.ColorMode256, cell.ColorRed, tcell.ColorMaroon},
-		{terminalapi.ColorMode256, cell.ColorGreen, tcell.ColorGreen},
-		{terminalapi.ColorMode256, cell.ColorYellow, tcell.ColorOlive},
-		{terminalapi.ColorMode256, cell.ColorBlue, tcell.ColorNavy},
-		{terminalapi.ColorMode256, cell.ColorMagenta, tcell.ColorPurple},
-		{terminalapi.ColorMode256, cell.ColorCyan, tcell.ColorTeal},
-		{terminalapi.ColorMode256, cell.ColorWhite, tcell.ColorSilver},
-		{terminalapi.ColorMode256, cell.ColorNumber(42), tcell.Color(42)},
-		// 8 system colors
-		{terminalapi.ColorModeNormal, cell.ColorDefault, tcell.ColorDefault},
-		{terminalapi.ColorModeNormal, cell.ColorBlack, tcell.ColorBlack},
-		{terminalapi.ColorModeNormal, cell.ColorRed, tcell.ColorMaroon},
-		{terminalapi.ColorModeNormal, cell.ColorGreen, tcell.ColorGreen},
-		{terminalapi.ColorModeNormal, cell.ColorYellow, tcell.ColorOlive},
-		{terminalapi.ColorModeNormal, cell.ColorBlue, tcell.ColorNavy},
-		{terminalapi.ColorModeNormal, cell.ColorMagenta, tcell.ColorPurple},
-		{terminalapi.ColorModeNormal, cell.ColorCyan, tcell.ColorTeal},
-		{terminalapi.ColorModeNormal, cell.ColorWhite, tcell.ColorSilver},
-		{terminalapi.ColorModeNormal, cell.ColorNumber(42), tcell.Color(10)},
-		// Grayscale colors (all the grey colours from 231 to 255)
-		{terminalapi.ColorModeGrayscale, cell.ColorDefault, tcell.ColorDefault},
-		{terminalapi.ColorModeGrayscale, cell.ColorBlack, tcell.Color232},
-		{terminalapi.ColorModeGrayscale, cell.ColorRed, tcell.Color233},
-		{terminalapi.ColorModeGrayscale, cell.ColorGreen, tcell.Color234},
-		{terminalapi.ColorModeGrayscale, cell.ColorYellow, tcell.Color235},
-		{terminalapi.ColorModeGrayscale, cell.ColorBlue, tcell.Color236},
-		{terminalapi.ColorModeGrayscale, cell.ColorMagenta, tcell.Color237},
-		{terminalapi.ColorModeGrayscale, cell.ColorCyan, tcell.Color238},
-		{terminalapi.ColorModeGrayscale, cell.ColorWhite, tcell.Color239},
-		{terminalapi.ColorModeGrayscale, cell.ColorNumber(42), tcell.Color(250)},
-		// 216 colors (16 to 231)
-		{terminalapi.ColorMode216, cell.ColorDefault, tcell.ColorDefault},
-		{terminalapi.ColorMode216, cell.ColorBlack, tcell.Color16},
-		{terminalapi.ColorMode216, cell.ColorRed, tcell.Color17},
-		{terminalapi.ColorMode216, cell.ColorGreen, tcell.Color18},
-		{terminalapi.ColorMode216, cell.ColorYellow, tcell.Color19},
-		{terminalapi.ColorMode216, cell.ColorBlue, tcell.Color20},
-		{terminalapi.ColorMode216, cell.ColorMagenta, tcell.Color21},
-		{terminalapi.ColorMode216, cell.ColorCyan, tcell.Color22},
-		{terminalapi.ColorMode216, cell.ColorWhite, tcell.Color23},
-		{terminalapi.ColorMode216, cell.ColorNumber(42), tcell.Color(58)},
-		// Unknown color mode
-		{-1, cell.ColorRed, tcell.ColorDefault},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.colorMode.String()+"_"+tc.color.String(), func(t *testing.T) {
-			color := cellColor(tc.color)
-			got := fixColor(color, tc.colorMode)
-			if got != tc.want {
-				t.Errorf("fixColor(%v_%v), => got %v, want %v", tc.colorMode, tc.color, got, tc.want)
-			}
-		})
-	}
-}
-
 func TestCellOptsToStyle(t *testing.T) {
 	tests := []struct {
+		desc      string
 		colorMode terminalapi.ColorMode
 		opts      cell.Options
 		want      tcell.Style
 	}{
 		{
+			desc:      "ColorMode256: ColorDefault and ColorBlack",
 			colorMode: terminalapi.ColorMode256,
-			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
-			want:      tcell.StyleDefault.Foreground(tcell.ColorSilver).Background(tcell.ColorBlack),
+			opts: cell.Options{
+				FgColor: cell.ColorDefault,
+				BgColor: cell.ColorBlack,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorDefault).
+				Background(tcell.ColorBlack),
 		},
 		{
+			desc:      "ColorMode256: ColorMaroon and ColorGreen",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorMaroon,
+				BgColor: cell.ColorGreen,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorMaroon).
+				Background(tcell.ColorGreen),
+		},
+		{
+			desc:      "ColorMode256: ColorOlive and ColorNavy",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorOlive,
+				BgColor: cell.ColorNavy,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorOlive).
+				Background(tcell.ColorNavy),
+		},
+		{
+			desc:      "ColorMode256: ColorPurple and ColorTeal",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorPurple,
+				BgColor: cell.ColorTeal,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorPurple).
+				Background(tcell.ColorTeal),
+		},
+		{
+			desc:      "ColorMode256: ColorSilver and ColorGray",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorSilver,
+				BgColor: cell.ColorGray,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorSilver).
+				Background(tcell.ColorGray),
+		},
+		{
+			desc:      "ColorMode256: ColorRed and ColorLime",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorRed,
+				BgColor: cell.ColorLime,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorRed).
+				Background(tcell.ColorLime),
+		},
+		{
+			desc:      "ColorMode256: ColorYellow and ColorBlue",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorYellow,
+				BgColor: cell.ColorBlue,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorYellow).
+				Background(tcell.ColorBlue),
+		},
+		{
+			desc:      "ColorMode256: ColorFuchsia and ColorAqua",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorFuchsia,
+				BgColor: cell.ColorAqua,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorFuchsia).
+				Background(tcell.ColorAqua),
+		},
+		{
+			desc:      "ColorMode256: ColorWhite and ColorDefault",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorWhite,
+				BgColor: cell.ColorDefault,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorWhite).
+				Background(tcell.ColorDefault),
+		},
+		{
+			desc:      "ColorMode256: termbox compatibility colors ColorMagenta and ColorCyan",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorMagenta,
+				BgColor: cell.ColorCyan,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorPurple).
+				Background(tcell.ColorTeal),
+		},
+		{
+			desc:      "ColorMode256: first(0) and last(255) numbered color",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(0),
+				BgColor: cell.ColorNumber(255),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorBlack).
+				Background(tcell.Color255),
+		},
+		{
+			desc:      "ColorMode256: two numbered colors",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(33),
+				BgColor: cell.ColorNumber(200),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color33).
+				Background(tcell.Color200),
+		},
+		{
+			desc:      "ColorMode256: first and last RGB6 color",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorRGB6(0, 0, 0),
+				BgColor: cell.ColorRGB6(5, 5, 5),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color16).
+				Background(tcell.Color231),
+		},
+		{
+			desc:      "ColorMode256: first and last RGB24 color",
+			colorMode: terminalapi.ColorMode256,
+			opts: cell.Options{
+				FgColor: cell.ColorRGB24(0, 0, 0),
+				BgColor: cell.ColorRGB24(255, 255, 255),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color16).
+				Background(tcell.Color231),
+		},
+		{
+			desc:      "ColorModeNormal: first and last color",
 			colorMode: terminalapi.ColorModeNormal,
-			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
-			want:      tcell.StyleDefault.Foreground(tcell.ColorSilver).Background(tcell.ColorBlack),
+			opts: cell.Options{
+				FgColor: cell.ColorBlack,
+				BgColor: cell.ColorWhite,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorBlack).
+				Background(tcell.ColorWhite),
 		},
 		{
-			colorMode: terminalapi.ColorModeGrayscale,
-			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
-			want:      tcell.StyleDefault.Foreground(tcell.Color239).Background(tcell.Color232),
+			desc:      "ColorModeNormal: colors in the middle",
+			colorMode: terminalapi.ColorModeNormal,
+			opts: cell.Options{
+				FgColor: cell.ColorGreen,
+				BgColor: cell.ColorOlive,
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorGreen).
+				Background(tcell.ColorOlive),
 		},
 		{
+			desc:      "ColorModeNormal: colors above the range rotate back",
+			colorMode: terminalapi.ColorModeNormal,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(17),
+				BgColor: cell.ColorNumber(18),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorBlack).
+				Background(tcell.ColorMaroon),
+		},
+		{
+			desc:      "ColorMode216: first and last color",
 			colorMode: terminalapi.ColorMode216,
-			opts:      cell.Options{FgColor: cell.ColorWhite, BgColor: cell.ColorBlack},
-			want:      tcell.StyleDefault.Foreground(tcell.Color23).Background(tcell.Color16),
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(0),
+				BgColor: cell.ColorNumber(215),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color16).
+				Background(tcell.Color231),
+		},
+		{
+			desc:      "ColorMode216: colors in the middle",
+			colorMode: terminalapi.ColorMode216,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(1),
+				BgColor: cell.ColorNumber(2),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color17).
+				Background(tcell.Color18),
+		},
+		{
+			desc:      "ColorMode216: colors above the range rotate back",
+			colorMode: terminalapi.ColorMode216,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(216),
+				BgColor: cell.ColorNumber(217),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color16).
+				Background(tcell.Color17),
+		},
+		{
+			desc:      "ColorModeGrayscale: first and last color",
+			colorMode: terminalapi.ColorModeGrayscale,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(0),
+				BgColor: cell.ColorNumber(23),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color232).
+				Background(tcell.Color255),
+		},
+		{
+			desc:      "ColorModeGrayscale: colors in the middle",
+			colorMode: terminalapi.ColorModeGrayscale,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(1),
+				BgColor: cell.ColorNumber(2),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color233).
+				Background(tcell.Color234),
+		},
+		{
+			desc:      "ColorModeGrayscale: colors above the range rotate back",
+			colorMode: terminalapi.ColorModeGrayscale,
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(24),
+				BgColor: cell.ColorNumber(25),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.Color232).
+				Background(tcell.Color233),
+		},
+		{
+			desc:      "Unknown color mode converts to default color",
+			colorMode: terminalapi.ColorMode(-1),
+			opts: cell.Options{
+				FgColor: cell.ColorNumber(24),
+				BgColor: cell.ColorNumber(25),
+			},
+			want: tcell.StyleDefault.
+				Foreground(tcell.ColorDefault).
+				Background(tcell.ColorDefault),
 		},
 		{
 			colorMode: terminalapi.ColorModeNormal,
@@ -159,13 +313,12 @@ func TestCellOptsToStyle(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.opts.FgColor.String()+"+"+tc.opts.BgColor.String(), func(t *testing.T) {
+		t.Run(tc.desc, func(t *testing.T) {
 			got := cellOptsToStyle(&tc.opts, tc.colorMode)
-			if got != tc.want {
-				fg, bg, _ := got.Decompose()
-				wantFg, wantBg, _ := tc.want.Decompose()
-				t.Errorf("cellOptsToStyle(%v, fg=%v, bg=%v) => got (fg=%X, bg=%X), want (fg=%X, bg=%X)",
-					tc.colorMode, tc.opts.FgColor, tc.opts.BgColor, fg, bg, wantFg, wantBg)
+			if !reflect.DeepEqual(got, tc.want) {
+				diff := pretty.Compare(tc.want, got)
+				t.Logf("opts: %+v\nstyle:%+v", tc.opts, got)
+				t.Errorf("cellOptsToStyle => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

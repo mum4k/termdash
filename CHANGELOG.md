@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `tcell` dependency was upgraded 1.4.0.
+- `tcell` dependency was upgraded v2.0.0.
+- aligned the definition of the first 16 colors with the definition used by
+  Xterm and `tcell`. Defined two non-standard colors `ColorMagenta` and
+  `ColorCyan` to make this change backward compatible for users that use
+  `termbox-go`.
 - made `tcell` terminal implementation the default in examples, demos and
   documentation.
 - upgrading versions on all dependencies.

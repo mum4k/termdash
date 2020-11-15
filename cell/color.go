@@ -48,15 +48,30 @@ var colorNames = map[Color]string{
 const (
 	ColorDefault Color = iota
 
-	// 8 "system" colors.
+	// The 16 Xterm colors.
+	// See https://jonasjacek.github.io/colors/
 	ColorBlack
-	ColorRed
+	ColorMaroon
 	ColorGreen
+	ColorOlive
+	ColorNavy
+	ColorPurple
+	ColorTeal
+	ColorSilver
+	ColorGray
+	ColorRed
+	ColorLime
 	ColorYellow
 	ColorBlue
-	ColorMagenta
-	ColorCyan
+	ColorFuchsia
+	ColorAqua
 	ColorWhite
+)
+
+// Colors defined for backward compatibility with termbox-go.
+const (
+	ColorMagenta Color = ColorPurple
+	ColorCyan    Color = ColorTeal
 )
 
 // ColorNumber sets a color using its number.
@@ -86,6 +101,8 @@ func ColorRGB6(r, g, b int) Color {
 			return ColorDefault
 		}
 	}
+	// Explanation:
+	// https://stackoverflow.com/questions/27159322/rgb-values-of-the-colors-in-the-ansi-extended-colors-index-17-255
 	return Color(0x10 + 36*r + 6*g + b + 1) // Colors are off-by-one due to ColorDefault being zero.
 }
 

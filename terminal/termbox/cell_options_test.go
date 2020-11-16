@@ -60,6 +60,8 @@ func TestCellFontModifier(t *testing.T) {
 		{cell.Options{Underline: true}, tbx.AttrUnderline, false},
 		{cell.Options{Italic: true}, 0, true},
 		{cell.Options{Strikethrough: true}, 0, true},
+		{cell.Options{Inverse: true}, tbx.AttrReverse, true},
+		{cell.Options{Blink: true}, 0, true},
 	}
 
 	for _, tc := range tests {

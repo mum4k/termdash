@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/gdamore/tcell"
-	"github.com/gdamore/tcell/encoding"
+	tcell "github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v2/encoding"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/private/event/eventqueue"
 	"github.com/mum4k/termdash/terminal/terminalapi"

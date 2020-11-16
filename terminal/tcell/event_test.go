@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"

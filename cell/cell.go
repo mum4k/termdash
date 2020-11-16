@@ -29,6 +29,8 @@ type Options struct {
 	Italic        bool
 	Underline     bool
 	Strikethrough bool
+	Inverse       bool
+	Blink         bool
 }
 
 // Set allows existing options to be passed as an option.
@@ -88,9 +90,23 @@ func Underline() Option {
 	})
 }
 
-// Strikethrough strikes through the cell's text. Currently a no-op until tcell is updated to >= v2.0.0
+// Strikethrough strikes through the cell's text. Only works when using the tcell backend.
 func Strikethrough() Option {
 	return option(func(co *Options) {
 		co.Strikethrough = true
+	})
+}
+
+// Inverse inverts the colors of the cell's text.
+func Inverse() Option {
+	return option(func(co *Options) {
+		co.Inverse = true
+	})
+}
+
+// Blink makes the cell's text blink. Only works when using the tcell backend.
+func Blink() Option {
+	return option(func(co *Options) {
+		co.Blink = true
 	})
 }

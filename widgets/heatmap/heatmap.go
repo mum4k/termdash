@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"image"
 	"math"
-	"sort"
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
@@ -89,36 +88,31 @@ func NewHeatMap(opts ...Option) (*HeatMap, error) {
 	}, nil
 }
 
-// SetColumns sets the HeatMap's values, min and max values.
-func (hp *HeatMap) SetColumns(values map[string][]int64) {
+// SetColumns sets the HeatMap's X-Labels, values, min and max values.
+func (hp *HeatMap) SetColumns(xLabels []string, values map[string][]int64) error {
 	hp.mu.Lock()
 	defer hp.mu.Unlock()
 
-	var minMaxValues []int64
-
-	// The iteration order of map is uncertain, so the keys must be sorted explicitly.
-	var names []string
-	for name := range values {
-		names = append(names, name)
+	if len(xLabels) != len(values) {
+		return errors.New("the number of x-axis labels does not match the amount of column data")
 	}
-	sort.Strings(names)
 
 	// Clear XLabels and columns.
-	if len(hp.XLabels) > 0 {
-		hp.XLabels = hp.XLabels[:0]
-	}
-	hp.columns = make(map[string]*columnValues)
+	hp.XLabels = hp.XLabels[:0]
+	hp.columns = make(map[string]*columnValues, len(xLabels))
+	hp.XLabels = append(hp.XLabels, xLabels...)
 
-	for _, name := range names {
-		cv := newColumnValues(values[name])
-		hp.columns[name] = cv
-		hp.XLabels = append(hp.XLabels, name)
-
+	var minMaxValues []int64
+	for _, label := range xLabels {
+		cv := newColumnValues(values[label])
+		hp.columns[label] = cv
 		minMaxValues = append(minMaxValues, cv.Min)
 		minMaxValues = append(minMaxValues, cv.Max)
 	}
 
 	hp.MinValue, hp.MaxValue = minMax(minMaxValues)
+
+	return nil
 }
 
 // SetYLabels sets HeatMap's Y-Labels.
@@ -127,10 +121,7 @@ func (hp *HeatMap) SetYLabels(labels []string) {
 	defer hp.mu.Unlock()
 
 	// Clear YLabels.
-	if len(hp.YLabels) > 0 {
-		hp.YLabels = hp.YLabels[:0]
-	}
-
+	hp.YLabels = hp.YLabels[:0]
 	hp.YLabels = append(hp.YLabels, labels...)
 
 	// Reverse the array.

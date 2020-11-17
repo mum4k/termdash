@@ -1,2 +1,5 @@
 # Exclude MacOS attribute files.
 .DS_Store
+
+# Exclude IDE files.
+.idea/

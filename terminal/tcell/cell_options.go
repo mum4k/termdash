@@ -63,6 +63,13 @@ func cellOptsToStyle(opts *cell.Options, colorMode terminalapi.ColorMode) tcell.
 	fg := cellColor(colorToMode(opts.FgColor, colorMode))
 	bg := cellColor(colorToMode(opts.BgColor, colorMode))
 
-	st = st.Foreground(fg).Background(bg).Bold(opts.Bold).Italic(opts.Italic).Underline(opts.Underline).StrikeThrough(opts.Strikethrough).Reverse(opts.Inverse).Blink(opts.Blink)
+	st = st.Foreground(fg).
+		Background(bg).
+		Bold(opts.Bold).
+		Italic(opts.Italic).
+		Underline(opts.Underline).
+		StrikeThrough(opts.Strikethrough).
+		Reverse(opts.Inverse).
+		Blink(opts.Blink)
 	return st
 }

@@ -80,12 +80,16 @@ func TestNewOptions(t *testing.T) {
 				Italic(),
 				Underline(),
 				Strikethrough(),
+				Inverse(),
+				Blink(),
 			},
 			want: &Options{
 				Bold:          true,
 				Italic:        true,
 				Underline:     true,
 				Strikethrough: true,
+				Inverse:       true,
+				Blink:         true,
 			},
 		},
 	}

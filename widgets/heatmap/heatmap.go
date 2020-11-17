@@ -17,57 +17,35 @@ package heatmap
 
 import (
 	"errors"
-	"fmt"
 	"image"
-	"math"
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/private/area"
 	"github.com/mum4k/termdash/private/canvas"
-	"github.com/mum4k/termdash/private/draw"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/heatmap/internal/axes"
 )
 
-// columnValues represent values stored in a column.
-type columnValues struct {
-	// values are the values in a column.
-	values []int64
-	// Min is the smallest value in the column, zero if values is empty.
-	Min int64
-	// Max is the largest value in the column, zero if values is empty.
-	Max int64
-}
-
-// newColumnValues returns a new columnValues instance.
-func newColumnValues(values []int64) *columnValues {
-	// Copy to avoid external modifications.
-	v := make([]int64, len(values))
-	copy(v, values)
-
-	min, max := minMax(values)
-
-	return &columnValues{
-		values: v,
-		Min:    min,
-		Max:    max,
-	}
-}
-
 // HeatMap draws heatmap charts.
+//
+// Heatmap consists of several cells. Each cell represents a value.
+// The larger the value, the darker the color of the cell (From white to black).
+//
+// The two dimensions of the values (cells) array are determined by the length of
+// the XLabels and YLabels arrays respectively.
+//
+// HeatMap does not support mouse based zoom.
+//
 // Implements widgetapi.Widget. This object is thread-safe.
 type HeatMap struct {
-	columns map[string]*columnValues
+	// values are the values in the heat map.
+	values [][]float64
 
 	// XLabels are the labels on the X axis in an increasing order.
 	XLabels []string
 	// YLabels are the labels on the Y axis in an increasing order.
 	YLabels []string
-
-	// MinValue and MaxValue are the Min and Max values in the columns.
-	MinValue, MaxValue int64
 
 	// opts are the provided options.
 	opts *options
@@ -76,173 +54,51 @@ type HeatMap struct {
 	mu sync.RWMutex
 }
 
-// NewHeatMap returns a new HeatMap widget.
-func NewHeatMap(opts ...Option) (*HeatMap, error) {
-	opt := newOptions(opts...)
-	if err := opt.validate(); err != nil {
-		return nil, err
-	}
-	return &HeatMap{
-		columns: map[string]*columnValues{},
-		opts:    opt,
-	}, nil
+// New returns a new HeatMap widget.
+func New(opts ...Option) (*HeatMap, error) {
+	return nil, errors.New("not implemented")
 }
 
-// SetColumns sets the HeatMap's X-Labels, values, min and max values.
-func (hp *HeatMap) SetColumns(xLabels []string, values map[string][]int64) error {
-	hp.mu.Lock()
-	defer hp.mu.Unlock()
-
-	if len(xLabels) != len(values) {
-		return errors.New("the number of x-axis labels does not match the amount of column data")
-	}
-
-	// Clear XLabels and columns.
-	hp.XLabels = hp.XLabels[:0]
-	hp.columns = make(map[string]*columnValues, len(xLabels))
-	hp.XLabels = append(hp.XLabels, xLabels...)
-
-	var minMaxValues []int64
-	for _, label := range xLabels {
-		cv := newColumnValues(values[label])
-		hp.columns[label] = cv
-		minMaxValues = append(minMaxValues, cv.Min)
-		minMaxValues = append(minMaxValues, cv.Max)
-	}
-
-	hp.MinValue, hp.MaxValue = minMax(minMaxValues)
-
-	return nil
-}
-
-// SetYLabels sets HeatMap's Y-Labels.
-func (hp *HeatMap) SetYLabels(labels []string) {
-	hp.mu.Lock()
-	defer hp.mu.Unlock()
-
-	// Clear YLabels.
-	hp.YLabels = hp.YLabels[:0]
-	hp.YLabels = append(hp.YLabels, labels...)
-
-	// Reverse the array.
-	for i, j := 0, len(hp.YLabels)-1; i < j; i, j = i+1, j-1 {
-		hp.YLabels[i], hp.YLabels[j] = hp.YLabels[j], hp.YLabels[i]
-	}
+// Values sets the values to be displayed by the HeatMap.
+// Each value in values has a xLabel and a yLabel, which means
+// len(xLabels) == len(values) and len(yLabels) == len(values[i]).
+// Provided options override values set when New() was called.
+func (hp *HeatMap) Values(xLabels []string, yLabels []string, values [][]float64, opts ...Option) error {
+	return errors.New("not implemented")
 }
 
 // axesDetails determines the details about the X and Y axes.
 func (hp *HeatMap) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetails, error) {
-	yd, err := axes.NewYDetails(hp.YLabels)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	xd, err := axes.NewXDetails(cvs.Area(), yd.End, hp.XLabels, hp.opts.cellWidth)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return xd, yd, nil
+	return nil, nil, errors.New("not implemented")
 }
 
 // Draw draws the values as HeatMap.
 // Implements widgetapi.Widget.Draw.
 func (hp *HeatMap) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
-	hp.mu.Lock()
-	defer hp.mu.Unlock()
-
-	// Check if the canvas has enough area to draw HeatMap.
-	needAr, err := area.FromSize(hp.minSize())
-	if err != nil {
-		return err
-	}
-	if !needAr.In(cvs.Area()) {
-		return draw.ResizeNeeded(cvs)
-	}
-
-	xd, yd, err := hp.axesDetails(cvs)
-	if err != nil {
-		return err
-	}
-
-	err = hp.drawColumns(cvs, xd, yd)
-	if err != nil {
-		return err
-	}
-
-	return hp.drawAxes(cvs, xd, yd)
+	return errors.New("not implemented")
 }
 
-// drawColumns draws the graph representing the stored series.
-// Returns XDetails that might be adjusted to not start at zero value if some
-// of the series didn't fit the graphs and XAxisUnscaled was provided.
-// If the series has NaN values they will be ignored and not draw on the graph.
-func (hp *HeatMap) drawColumns(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
-	for i, xl := range hp.XLabels {
-		cv := hp.columns[xl]
-
-		for j := 0; j < len(cv.values); j++ {
-			v := cv.values[j]
-
-			startX := xd.Start.X + 1 + i*hp.opts.cellWidth
-			startY := yd.Labels[j].Pos.Y
-
-			endX := startX + hp.opts.cellWidth
-			endY := startY + 1
-
-			rect := image.Rect(startX, startY, endX, endY)
-			color := hp.getBlockColor(v)
-
-			if err := cvs.SetAreaCells(rect, ' ', cell.BgColor(color)); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+// drawCells draws the graph representing the stored values.
+func (hp *HeatMap) drawCells(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
+	return errors.New("not implemented")
 }
 
 // drawAxes draws the X,Y axes and their labels.
 func (hp *HeatMap) drawAxes(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
-	for _, l := range yd.Labels {
-		if err := draw.Text(cvs, l.Text, l.Pos,
-			draw.TextMaxX(yd.Start.X),
-			draw.TextOverrunMode(draw.OverrunModeThreeDot),
-			draw.TextCellOpts(hp.opts.yLabelCellOpts...),
-		); err != nil {
-			return fmt.Errorf("failed to draw the Y labels: %v", err)
-		}
-	}
-
-	for _, l := range xd.Labels {
-		if err := draw.Text(cvs, l.Text, l.Pos, draw.TextCellOpts(hp.opts.xLabelCellOpts...)); err != nil {
-			return fmt.Errorf("failed to draw the X horizontal labels: %v", err)
-		}
-	}
-	return nil
+	return errors.New("not implemented")
 }
 
 // minSize determines the minimum required size to draw HeatMap.
 func (hp *HeatMap) minSize() image.Point {
-	// At the very least we need:
-	// - n cells width for the Y axis and its labels.
-	// - m cells width for the graph.
-	reqWidth := axes.LongestString(hp.YLabels) + axes.AxisWidth + hp.opts.cellWidth*len(hp.columns)
-
-	// For the height:
-	// - 1 cells height for labels on the X axis.
-	// - n cell height for the graph.
-	reqHeight := 1 + len(hp.YLabels)
-
-	return image.Point{X: reqWidth, Y: reqHeight}
+	return image.Point{}
 }
 
-// Keyboard input isn't supported on the SparkLine widget.
+// Keyboard input isn't supported on the HeatMap widget.
 func (*HeatMap) Keyboard(k *terminalapi.Keyboard) error {
 	return errors.New("the HeatMap widget doesn't support keyboard events")
 }
 
-// Mouse input isn't supported on the SparkLine widget.
+// Mouse input isn't supported on the HeatMap widget.
 func (*HeatMap) Mouse(m *terminalapi.Mouse) error {
 	return errors.New("the HeatMap widget doesn't support mouse events")
 }
@@ -254,27 +110,10 @@ func (hp *HeatMap) Options() widgetapi.Options {
 	return widgetapi.Options{}
 }
 
-// getBlockColor returns the color of the block according to the value.
+// getCellColor returns the color of the cell according to its value.
 // The larger the value, the darker the color.
-func (hp *HeatMap) getBlockColor(value int64) cell.Color {
-	const colorNum = 23
-	scale := float64(hp.MaxValue - hp.MinValue)
-	fv := float64(value)
-
-	// Refer to https://jonasjacek.github.io/colors/.
-	// The color range is in Xterm color [232, 255].
-	rgb := int(255 - (fv / scale * colorNum))
-	return cell.ColorNumber(rgb)
-}
-
-// minMax returns the min and max values in given integer array.
-func minMax(values []int64) (min, max int64) {
-	min = math.MaxInt64
-	max = math.MinInt64
-
-	for _, v := range values {
-		min = int64(math.Min(float64(min), float64(v)))
-		max = int64(math.Max(float64(max), float64(v)))
-	}
-	return
+// Refer to https://jonasjacek.github.io/colors/.
+// The color range is in Xterm color [232, 255].
+func (hp *HeatMap) getCellColor(value float64) cell.Color {
+	return cell.ColorDefault
 }

@@ -63,7 +63,13 @@ func cellOptsToStyle(opts *cell.Options, colorMode terminalapi.ColorMode) tcell.
 	fg := cellColor(colorToMode(opts.FgColor, colorMode))
 	bg := cellColor(colorToMode(opts.BgColor, colorMode))
 
-	// FIXME: tcell doesn't have a strikethrough style option until #254 is resolved.
-	st = st.Foreground(fg).Background(bg).Bold(opts.Bold).Italic(opts.Italic).Underline(opts.Underline)
+	st = st.Foreground(fg).
+		Background(bg).
+		Bold(opts.Bold).
+		Italic(opts.Italic).
+		Underline(opts.Underline).
+		StrikeThrough(opts.Strikethrough).
+		Reverse(opts.Inverse).
+		Blink(opts.Blink)
 	return st
 }

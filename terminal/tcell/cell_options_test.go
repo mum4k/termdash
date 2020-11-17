@@ -310,6 +310,21 @@ func TestCellOptsToStyle(t *testing.T) {
 			opts:      cell.Options{Underline: true},
 			want:      tcell.StyleDefault.Underline(true),
 		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{Strikethrough: true},
+			want:      tcell.StyleDefault.StrikeThrough(true),
+		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{Inverse: true},
+			want:      tcell.StyleDefault.Reverse(true),
+		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{Blink: true},
+			want:      tcell.StyleDefault.Blink(true),
+		},
 	}
 
 	for _, tc := range tests {

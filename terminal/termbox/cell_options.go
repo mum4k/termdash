@@ -49,16 +49,23 @@ func cellOptsToFg(opts *cell.Options) (tbx.Attribute, error) {
 	if opts.Bold {
 		a |= tbx.AttrBold
 	}
-	// FIXME: Termbox doesn't have an italics attribute
+	// Termbox doesn't have an italics attribute
 	if opts.Italic {
 		return 0, errors.New("Termbox: Unsupported attribute: Italic")
 	}
 	if opts.Underline {
 		a |= tbx.AttrUnderline
 	}
-	// FIXME: Termbox doesn't have a strikethrough attribute
+	// Termbox doesn't have a strikethrough attribute
 	if opts.Strikethrough {
 		return 0, errors.New("Termbox: Unsupported attribute: Strikethrough")
+	}
+	if opts.Inverse {
+		a |= tbx.AttrReverse
+	}
+	// Termbox doesn't have a blink attribute
+	if opts.Blink {
+		return 0, errors.New("Termbox: Unsupported attribute: Blink")
 	}
 	return a, nil
 }

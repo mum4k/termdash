@@ -47,6 +47,10 @@ type HeatMap struct {
 	// YLabels are the labels on the Y axis in an increasing order.
 	YLabels []string
 
+	// MinValue and MaxValue are the Min and Max values in the values,
+	// which will be used to calculate the color of each cell.
+	MinValue, MaxValue float64
+
 	// opts are the provided options.
 	opts *options
 
@@ -72,19 +76,20 @@ func (hp *HeatMap) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetai
 	return nil, nil, errors.New("not implemented")
 }
 
-// Draw draws the values as HeatMap.
+// Draw draws cells, X labels and Y labels as HeatMap.
 // Implements widgetapi.Widget.Draw.
 func (hp *HeatMap) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	return errors.New("not implemented")
 }
 
-// drawCells draws the graph representing the stored values.
+// drawCells draws m*n cells (rectangles) representing the stored values.
+// The height of each cell is 1 and the default width is 3.
 func (hp *HeatMap) drawCells(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
 	return errors.New("not implemented")
 }
 
-// drawAxes draws the X,Y axes and their labels.
-func (hp *HeatMap) drawAxes(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
+// drawAxes draws X labels (under the cells) and Y Labels (on the left side of the cell).
+func (hp *HeatMap) drawLabels(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
 	return errors.New("not implemented")
 }
 
@@ -112,8 +117,8 @@ func (hp *HeatMap) Options() widgetapi.Options {
 
 // getCellColor returns the color of the cell according to its value.
 // The larger the value, the darker the color.
+// The color range is in Xterm color, from 232 to 255.
 // Refer to https://jonasjacek.github.io/colors/.
-// The color range is in Xterm color [232, 255].
 func (hp *HeatMap) getCellColor(value float64) cell.Color {
 	return cell.ColorDefault
 }

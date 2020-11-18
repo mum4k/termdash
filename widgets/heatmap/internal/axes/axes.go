@@ -16,6 +16,7 @@
 package axes
 
 import (
+	"errors"
 	"image"
 
 	"github.com/mum4k/termdash/private/runewidth"
@@ -24,7 +25,7 @@ import (
 const AxisWidth = 1
 
 // YDetails contain information about the Y axis
-// that will be drawn onto the canvas.
+// that will NOT be drawn onto the canvas, but will take up space.
 type YDetails struct {
 	// Width in character cells of the Y axis and its character labels.
 	Width int
@@ -42,30 +43,15 @@ type YDetails struct {
 
 // RequiredWidth calculates the minimum width required
 // in order to draw the Y axis and its labels.
-func RequiredWidth(max string) int {
-	return runewidth.StringWidth(max) + AxisWidth
+// The parameter ls is the longest string in YLabels.
+func RequiredWidth(ls string) int {
+	return runewidth.StringWidth(ls) + AxisWidth
 }
 
 // NewYDetails retrieves details about the Y axis required
 // to draw it on a canvas of the provided area.
 func NewYDetails(stringLabels []string) (*YDetails, error) {
-	graphHeight := len(stringLabels)
-
-	// See how the labels would look like on the entire maxWidth.
-	maxLabelWidth := LongestString(stringLabels)
-	labels, err := yLabels(graphHeight, maxLabelWidth, stringLabels)
-	if err != nil {
-		return nil, err
-	}
-
-	width := maxLabelWidth + 1
-
-	return &YDetails{
-		Width:  width,
-		Start:  image.Point{X: width - 1, Y: 0},
-		End:    image.Point{X: width - 1, Y: graphHeight},
-		Labels: labels,
-	}, nil
+	return nil, errors.New("not implemented")
 }
 
 // LongestString returns the length of the longest string in the string array.
@@ -80,7 +66,7 @@ func LongestString(strings []string) int {
 }
 
 // XDetails contain information about the X axis
-// that will be drawn onto the canvas.
+// that will NOT be drawn onto the canvas.
 type XDetails struct {
 	// Start is the point where the X axis starts.
 	// Both coordinates of Start are less than End.
@@ -94,23 +80,6 @@ type XDetails struct {
 
 // NewXDetails retrieves details about the X axis required to draw it on a canvas
 // of the provided area. The yStart is the point where the Y axis starts.
-// The numPoints is the number of points in the largest series that will be
-// plotted.
-// customLabels are the desired labels for the X axis, these are preferred if
-// provided.
 func NewXDetails(cvsAr image.Rectangle, yEnd image.Point, stringLabels []string, cellWidth int) (*XDetails, error) {
-	// The space between the start of the axis and the end of the canvas.
-	// graphWidth := cvsAr.Dx() - yEnd.X - 1
-	graphWidth := len(stringLabels) * cellWidth
-
-	labels, err := xLabels(yEnd, graphWidth, stringLabels, cellWidth)
-	if err != nil {
-		return nil, err
-	}
-
-	return &XDetails{
-		Start:  image.Point{yEnd.X, yEnd.Y - 1},
-		End:    image.Point{yEnd.X + graphWidth, yEnd.Y - 1},
-		Labels: labels,
-	}, nil
+	return nil, errors.New("not implemented")
 }

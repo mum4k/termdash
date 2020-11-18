@@ -27,47 +27,18 @@ import (
 )
 
 func main() {
-	xLabels := []string{
-		"12:00",
-		"12:05",
-		"12:10",
-		"12:15",
-		"12:20",
-	}
-	yLabels := []string{
-		"10",
-		"20",
-		"30",
-		"40",
-		"50",
-		"60",
-		"70",
-		"80",
-		"90",
-		"100",
-	}
-	values := map[string][]int64{
-		"12:00": {10, 20, 30, 40, 50, 50, 40, 30, 20, 10},
-		"12:05": {50, 40, 30, 20, 10, 10, 20, 30, 40, 50},
-		"12:10": {10, 20, 30, 40, 50, 50, 40, 30, 20, 10},
-		"12:15": {50, 40, 30, 20, 10, 10, 20, 30, 40, 50},
-		"12:20": {10, 20, 30, 40, 50, 50, 40, 30, 0, 0},
-	}
-
 	t, err := termbox.New()
 	if err != nil {
 		panic(err)
 	}
 	defer t.Close()
 
-	hp, err := heatmap.NewHeatMap()
+	hp, err := heatmap.New()
 	if err != nil {
 		panic(err)
 	}
-	if err := hp.SetColumns(xLabels, values); err != nil {
-		panic(err)
-	}
-	hp.SetYLabels(yLabels)
+
+	// TODO: set heatmap's data
 
 	c, err := container.New(
 		t,

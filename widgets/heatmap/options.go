@@ -28,6 +28,7 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
+	// The default value is 3
 	cellWidth      int
 	xLabelCellOpts []cell.Option
 	yLabelCellOpts []cell.Option

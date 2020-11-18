@@ -15,6 +15,7 @@
 package heatmap
 
 import (
+	"errors"
 	"github.com/mum4k/termdash/cell"
 )
 
@@ -36,7 +37,7 @@ type options struct {
 
 // validate validates the provided options.
 func (o *options) validate() error {
-	return nil
+	return errors.New("not implemented")
 }
 
 // newOptions returns a new options instance.

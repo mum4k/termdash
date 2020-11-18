@@ -27,10 +27,10 @@ import (
 	"github.com/mum4k/termdash/widgets/heatmap/internal/axes"
 )
 
-// HeatMap draws heatmap charts.
+// HeatMap draws heat map charts.
 //
 // Heatmap consists of several cells. Each cell represents a value.
-// The larger the value, the darker the color of the cell (From white to black).
+// The larger the value, the darker the color of the cell (from white to black).
 //
 // The two dimensions of the values (cells) array are determined by the length of
 // the XLabels and YLabels arrays respectively.

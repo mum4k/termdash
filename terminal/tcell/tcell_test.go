@@ -17,7 +17,7 @@ package tcell
 import (
 	"testing"
 
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/terminalapi"

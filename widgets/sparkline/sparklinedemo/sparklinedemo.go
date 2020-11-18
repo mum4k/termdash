@@ -25,7 +25,7 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/sparkline"
 )
@@ -76,7 +76,7 @@ func fillSparkLine(ctx context.Context, sl *sparkline.SparkLine, delay time.Dura
 }
 
 func main() {
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +84,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	green, err := sparkline.New(
-		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorBlue)),
+		sparkline.Label("Green SparkLine", cell.FgColor(cell.ColorNumber(33))),
 		sparkline.Color(cell.ColorGreen),
 	)
 	if err != nil {
@@ -92,7 +92,7 @@ func main() {
 	}
 	go playSparkLine(ctx, green, 250*time.Millisecond)
 	red, err := sparkline.New(
-		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorBlue)),
+		sparkline.Label("Red SparkLine", cell.FgColor(cell.ColorNumber(33))),
 		sparkline.Color(cell.ColorRed),
 	)
 	if err != nil {

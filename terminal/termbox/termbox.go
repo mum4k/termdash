@@ -13,6 +13,7 @@
 // limitations under the License.
 
 // Package termbox implements terminal using the nsf/termbox-go library.
+// Prefer to use tcell instead, nsf/termbox-go is no longer maintained.
 package termbox
 
 import (
@@ -52,6 +53,9 @@ func ColorMode(cm terminalapi.ColorMode) Option {
 
 // Terminal provides input and output to a real terminal. Wraps the
 // nsf/termbox-go terminal implementation. This object is not thread-safe.
+//
+// Prefer to use tcell instead, nsf/termbox-go is no longer maintained.
+//
 // Implements terminalapi.Terminal.
 type Terminal struct {
 	// events is a queue of input events.
@@ -105,7 +109,11 @@ func (t *Terminal) Size() image.Point {
 // Clear implements terminalapi.Terminal.Clear.
 func (t *Terminal) Clear(opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
-	return tbx.Clear(cellOptsToFg(o), cellOptsToBg(o))
+	fg, err := cellOptsToFg(o)
+	if err != nil {
+		return err
+	}
+	return tbx.Clear(fg, cellOptsToBg(o))
 }
 
 // Flush implements terminalapi.Terminal.Flush.
@@ -126,7 +134,11 @@ func (t *Terminal) HideCursor() {
 // SetCell implements terminalapi.Terminal.SetCell.
 func (t *Terminal) SetCell(p image.Point, r rune, opts ...cell.Option) error {
 	o := cell.NewOptions(opts...)
-	tbx.SetCell(p.X, p.Y, r, cellOptsToFg(o), cellOptsToBg(o))
+	fg, err := cellOptsToFg(o)
+	if err != nil {
+		return err
+	}
+	tbx.SetCell(p.X, p.Y, r, fg, cellOptsToBg(o))
 	return nil
 }
 

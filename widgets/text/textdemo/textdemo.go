@@ -22,11 +22,12 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/mum4k/termdash/terminal/tcell"
+
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/text"
 )
@@ -67,7 +68,7 @@ func writeLines(ctx context.Context, t *text.Text, delay time.Duration) {
 }
 
 func main() {
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
@@ -105,7 +106,16 @@ func main() {
 	if err := wrapped.Write("Supports", text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 		panic(err)
 	}
-	if err := wrapped.Write(" colors", text.WriteCellOpts(cell.FgColor(cell.ColorBlue))); err != nil {
+	if err := wrapped.Write(" colors", text.WriteCellOpts(cell.FgColor(cell.ColorNumber(33)))); err != nil {
+		panic(err)
+	}
+	if err := wrapped.Write(" and"); err != nil {
+		panic(err)
+	}
+	if err := wrapped.Write(" font ", text.WriteCellOpts(cell.Bold(), cell.Italic())); err != nil {
+		panic(err)
+	}
+	if err := wrapped.Write("modifiers", text.WriteCellOpts(cell.Underline(), cell.Italic())); err != nil {
 		panic(err)
 	}
 	if err := wrapped.Write(". Wraps long lines at rune boundaries if the WrapAtRunes() option is provided.\nSupports newline character to\ncreate\nnewlines\nmanually.\nTrims the content if it is too long.\n\n\n\nToo long."); err != nil {

@@ -17,7 +17,7 @@ package tcell
 import (
 	"image"
 
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -135,8 +135,6 @@ func convMouse(event *tcell.EventMouse) terminalapi.Event {
 		}
 	}
 
-	// Get only button events, not wheel events
-	tcellBtn &= tcell.ButtonMask(0xff)
 	switch tcellBtn = event.Buttons(); tcellBtn {
 	case tcell.ButtonNone:
 		button = mouse.ButtonRelease

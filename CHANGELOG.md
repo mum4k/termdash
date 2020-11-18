@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 17-Nov-2020
+
+### Added
+
+- the `Text` widget now allows user to specify custom scroll marker runes.
+
+### Changed
+
+- terminal cells now support font modifier options (bold, italic,
+  underline, strike through).
+- `tcell` dependency was upgraded to v2.0.0.
+- upgraded versions of all other dependencies.
+- aligned the definition of the first 16 colors with the definition used by
+  Xterm and `tcell`. Defined two non-standard colors `ColorMagenta` and
+  `ColorCyan` to make this change backward compatible for users that use
+  `termbox-go`.
+- made `tcell` terminal implementation the default in examples, demos and
+  documentation.
+
+### Fixed
+
+- coveralls again triggers and reports on PRs.
+- addressed some lint issues.
+- improved test coverage in some modules.
+- changed the Blue color in demos to a more visible shade.
+- fixed a bug where segment display text in `termdashdemo` appeared to be
+  jumping.
+
 ## [0.12.2] - 31-Aug-2020
 
 ### Fixed
@@ -69,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `SegmentDisplay` can now display dots and colons ('.' and ':').
 - The `Donut` widget now guarantees spacing between the donut and its label.
 - The continuous build on Travis CI now builds with cgo explicitly disabled to
-  ensure both Termdash and its dependencies use pure Go. 
+  ensure both Termdash and its dependencies use pure Go.
 
 ### Fixed
 
@@ -341,7 +369,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.12.2...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.13.0...devel
+[0.13.0]: https://github.com/mum4k/termdash/compare/v0.12.2...v0.13.0
 [0.12.2]: https://github.com/mum4k/termdash/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/mum4k/termdash/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/mum4k/termdash/compare/v0.11.0...v0.12.0

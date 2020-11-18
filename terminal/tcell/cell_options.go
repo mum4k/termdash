@@ -15,34 +15,43 @@
 package tcell
 
 import (
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
 // cellColor converts termdash cell color to the tcell format.
 func cellColor(c cell.Color) tcell.Color {
-	return tcell.Color(c&0x1ff) - 1
+	if c == cell.ColorDefault {
+		return tcell.ColorDefault
+	}
+	// Subtract one, because cell.ColorBlack has value one instead of zero.
+	// Zero is used for cell.ColorDefault instead.
+	return tcell.Color(c-1) + tcell.ColorValid
 }
 
-// fixColor converts the target color for the current color mode
-func fixColor(c tcell.Color, colorMode terminalapi.ColorMode) tcell.Color {
-	if c == tcell.ColorDefault {
+// colorToMode adjusts the color to the color mode.
+func colorToMode(c cell.Color, colorMode terminalapi.ColorMode) cell.Color {
+	if c == cell.ColorDefault {
 		return c
 	}
 	switch colorMode {
 	case terminalapi.ColorModeNormal:
-		c %= tcell.Color(16)
+		c %= 16 + 1 // Add one for cell.ColorDefault.
 	case terminalapi.ColorMode256:
-		c %= tcell.Color(256)
+		c %= 256 + 1 // Add one for cell.ColorDefault.
 	case terminalapi.ColorMode216:
-		c %= tcell.Color(216)
-		c += tcell.Color(16)
+		if c <= 216 { // Add one for cell.ColorDefault.
+			return c + 16
+		}
+		c = c%216 + 16
 	case terminalapi.ColorModeGrayscale:
-		c %= tcell.Color(24)
-		c += tcell.Color(232)
+		if c <= 24 { // Add one for cell.ColorDefault.
+			return c + 232
+		}
+		c = c%24 + 232
 	default:
-		c = tcell.ColorDefault
+		c = cell.ColorDefault
 	}
 	return c
 }
@@ -51,12 +60,16 @@ func fixColor(c tcell.Color, colorMode terminalapi.ColorMode) tcell.Color {
 func cellOptsToStyle(opts *cell.Options, colorMode terminalapi.ColorMode) tcell.Style {
 	st := tcell.StyleDefault
 
-	fg := cellColor(opts.FgColor)
-	bg := cellColor(opts.BgColor)
+	fg := cellColor(colorToMode(opts.FgColor, colorMode))
+	bg := cellColor(colorToMode(opts.BgColor, colorMode))
 
-	fg = fixColor(fg, colorMode)
-	bg = fixColor(bg, colorMode)
-
-	st = st.Foreground(fg).Background(bg)
+	st = st.Foreground(fg).
+		Background(bg).
+		Bold(opts.Bold).
+		Italic(opts.Italic).
+		Underline(opts.Underline).
+		StrikeThrough(opts.Strikethrough).
+		Reverse(opts.Inverse).
+		Blink(opts.Blink)
 	return st
 }

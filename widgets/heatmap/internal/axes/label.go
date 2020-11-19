@@ -36,7 +36,7 @@ type Label struct {
 // the labels will be placed and aligned.
 // Labels are returned with Y coordinates in ascending order.
 // Y coordinates grow down.
-func yLabels(graphHeight, labelWidth int, stringLabels []string) ([]*Label, error) {
+func yLabels(graphHeight, labelWidth int, labels []string) ([]*Label, error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -49,7 +49,7 @@ func rowLabel(row int, label string, labelWidth int) (*Label, error) {
 // xLabels returns labels that should be placed under the cells.
 // Labels are returned with X coordinates in ascending order.
 // X coordinates grow right.
-func xLabels(yEnd image.Point, graphWidth int, stringLabels []string, cellWidth int) ([]*Label, error) {
+func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) ([]*Label, error) {
 	return nil, errors.New("not implemented")
 }
 

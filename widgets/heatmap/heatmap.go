@@ -33,7 +33,7 @@ import (
 // The larger the value, the darker the color of the cell (from white to black).
 //
 // The two dimensions of the values (cells) array are determined by the length of
-// the XLabels and YLabels arrays respectively.
+// the xLabels and yLabels arrays respectively.
 //
 // HeatMap does not support mouse based zoom.
 //
@@ -42,10 +42,10 @@ type HeatMap struct {
 	// values are the values in the heat map.
 	values [][]float64
 
-	// XLabels are the labels on the X axis in an increasing order.
-	XLabels []string
-	// YLabels are the labels on the Y axis in an increasing order.
-	YLabels []string
+	// xLabels are the labels on the X axis in an increasing order.
+	xLabels []string
+	// yLabels are the labels on the Y axis in an increasing order.
+	yLabels []string
 
 	// MinValue and MaxValue are the Min and Max values in the values,
 	// which will be used to calculate the color of each cell.

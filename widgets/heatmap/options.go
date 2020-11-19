@@ -59,6 +59,13 @@ func (o option) set(opts *options) {
 	o(opts)
 }
 
+// CellWidth set the width of each cell.
+func CellWidth(w int) Option {
+	return option(func(opts *options) {
+		opts.cellWidth = w
+	})
+}
+
 // XLabelCellOpts set the cell options for the labels on the X axis.
 func XLabelCellOpts(co ...cell.Option) Option {
 	return option(func(opts *options) {

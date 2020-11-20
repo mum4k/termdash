@@ -79,7 +79,8 @@ type XDetails struct {
 }
 
 // NewXDetails retrieves details about the X axis required to draw it on a canvas
-// of the provided area. The yEnd is the point where the Y axis ends.
+// of the provided area.
+// The yEnd is the point where the Y axis ends.
 func NewXDetails(cvsAr image.Rectangle, yEnd image.Point, labels []string, cellWidth int) (*XDetails, error) {
 	return nil, errors.New("not implemented")
 }

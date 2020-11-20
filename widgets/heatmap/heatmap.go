@@ -47,9 +47,9 @@ type HeatMap struct {
 	// yLabels are the labels on the Y axis in an increasing order.
 	yLabels []string
 
-	// MinValue and MaxValue are the Min and Max values in the values,
+	// minValue and maxValue are the Min and Max values in the values,
 	// which will be used to calculate the color of each cell.
-	MinValue, MaxValue float64
+	minValue, maxValue float64
 
 	// opts are the provided options.
 	opts *options
@@ -64,8 +64,11 @@ func New(opts ...Option) (*HeatMap, error) {
 }
 
 // Values sets the values to be displayed by the HeatMap.
+//
 // Each value in values has a xLabel and a yLabel, which means
 // len(xLabels) == len(values) and len(yLabels) == len(values[i]).
+//
+// Each call to Values overwrites any previously provided values.
 // Provided options override values set when New() was called.
 func (hp *HeatMap) Values(xLabels []string, yLabels []string, values [][]float64, opts ...Option) error {
 	return errors.New("not implemented")

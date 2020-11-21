@@ -55,6 +55,8 @@ type BarChart struct {
 
 	// opts are the provided options.
 	opts *options
+
+	drawCount int
 }
 
 // New returns a new BarChart.
@@ -76,6 +78,11 @@ func New(opts ...Option) (*BarChart, error) {
 func (bc *BarChart) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
+
+	if bc.drawCount > 10 {
+		panic("drawCount panic")
+	}
+	bc.drawCount++
 
 	bc.lastWidth = cvs.Area().Dx()
 	needAr, err := area.FromSize(bc.minSize())

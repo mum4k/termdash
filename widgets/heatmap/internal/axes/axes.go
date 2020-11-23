@@ -22,7 +22,8 @@ import (
 	"github.com/mum4k/termdash/private/runewidth"
 )
 
-const AxisWidth = 1
+// axisWidth is width of an axis.
+const axisWidth = 1
 
 // YDetails contain information about the Y axis
 // that will NOT be drawn onto the canvas, but will take up space.
@@ -45,7 +46,7 @@ type YDetails struct {
 // in order to draw the Y axis and its labels.
 // The parameter ls is the longest string in yLabels.
 func RequiredWidth(ls string) int {
-	return runewidth.StringWidth(ls) + AxisWidth
+	return runewidth.StringWidth(ls) + axisWidth
 }
 
 // NewYDetails retrieves details about the Y axis required

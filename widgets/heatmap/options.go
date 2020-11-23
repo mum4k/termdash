@@ -59,7 +59,8 @@ func (o option) set(opts *options) {
 	o(opts)
 }
 
-// CellWidth set the width of each cell.
+// CellWidth set the width of cells (or grids) in the heat map, not the terminal cell.
+// The default height of each cell (grid) is 1 and the width is 3.
 func CellWidth(w int) Option {
 	return option(func(opts *options) {
 		opts.cellWidth = w

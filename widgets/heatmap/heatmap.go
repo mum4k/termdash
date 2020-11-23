@@ -51,6 +51,9 @@ type HeatMap struct {
 	// which will be used to calculate the color of each cell.
 	minValue, maxValue float64
 
+	// lastWidth is the width of the canvas as of the last time when Draw was called.
+	lastWidth int
+
 	// opts are the provided options.
 	opts *options
 
@@ -66,12 +69,35 @@ func New(opts ...Option) (*HeatMap, error) {
 // Values sets the values to be displayed by the HeatMap.
 //
 // Each value in values has a xLabel and a yLabel, which means
-// len(xLabels) == len(values) and len(yLabels) == len(values[i]).
+// len(yLabels) == len(values) and len(xLabels) == len(values[i]).
+// But labels could be empty strings.
+// When no labels are provided, labels will be "0", "1", "2"...
 //
 // Each call to Values overwrites any previously provided values.
 // Provided options override values set when New() was called.
 func (hp *HeatMap) Values(xLabels []string, yLabels []string, values [][]float64, opts ...Option) error {
 	return errors.New("not implemented")
+}
+
+// ClearXLabels clear the X labels.
+func (hp *HeatMap) ClearXLabels() {
+	hp.xLabels = nil
+}
+
+// ClearYLabels clear the Y labels.
+func (hp *HeatMap) ClearYLabels() {
+	hp.yLabels = nil
+}
+
+// ValueCapacity returns the number of values that can fit into the canvas.
+// This is essentially the number of available cells on the canvas as observed
+// on the last call to draw. Returns zero if draw wasn't called.
+//
+// Note that this capacity changes each time the terminal resizes, so there is
+// no guarantee this remains the same next time Draw is called.
+// Should be used as a hint only.
+func (hp *HeatMap) ValueCapacity() int {
+	return 0
 }
 
 // axesDetails determines the details about the X and Y axes.

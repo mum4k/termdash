@@ -278,8 +278,11 @@ func (c *Container) updateFocusFromMouse(m *terminalapi.Mouse) {
 // changes the focused container.
 // Caller must hold c.mu.
 func (c *Container) updateFocusFromKeyboard(k *terminalapi.Keyboard) {
-	if c.opts.global.keyFocusNext != nil && *c.opts.global.keyFocusNext == k.Key {
+	switch {
+	case c.opts.global.keyFocusNext != nil && *c.opts.global.keyFocusNext == k.Key:
 		c.focusTracker.next()
+	case c.opts.global.keyFocusPrevious != nil && *c.opts.global.keyFocusPrevious == k.Key:
+		c.focusTracker.previous()
 	}
 }
 

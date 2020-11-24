@@ -82,20 +82,20 @@ func (ft *focusTracker) setActive(c *Container) {
 func (ft *focusTracker) next() {
 	var (
 		errStr    string
-		first     *Container
-		cont      *Container
+		firstCont *Container
+		nextCont  *Container
 		focusNext bool
 	)
-	postOrder(rootCont(ft.container), &errStr, visitFunc(func(c *Container) error {
-		if cont != nil {
+	preOrder(rootCont(ft.container), &errStr, visitFunc(func(c *Container) error {
+		if nextCont != nil {
 			// Already found the next container, nothing to do.
 			return nil
 		}
 
-		if c.isLeaf() && first == nil {
+		if c.isLeaf() && firstCont == nil {
 			// Remember the first eligible container in case we "wrap" over,
 			// i.e. finish the iteration before finding the next container.
-			first = c
+			firstCont = c
 		}
 
 		if ft.container == c {
@@ -106,18 +106,49 @@ func (ft *focusTracker) next() {
 		}
 
 		if c.isLeaf() && focusNext {
-			cont = c
+			nextCont = c
 		}
 		return nil
 	}))
 
-	if cont == nil && first != nil {
+	if nextCont == nil && firstCont != nil {
 		// If the traversal finishes without finding the next container, move
 		// focus back to the first container.
-		cont = first
+		nextCont = firstCont
 	}
-	if cont != nil {
-		ft.setActive(cont)
+	if nextCont != nil {
+		ft.setActive(nextCont)
+	}
+}
+
+// previous moves focus to the previous container.
+func (ft *focusTracker) previous() {
+	var (
+		errStr      string
+		prevCont    *Container
+		lastCont    *Container
+		visitedCurr bool
+	)
+	preOrder(rootCont(ft.container), &errStr, visitFunc(func(c *Container) error {
+		if ft.container == c {
+			visitedCurr = true
+		}
+
+		if c.isLeaf() {
+			if !visitedCurr {
+				// Remember the last eligible container closest to the one
+				// currently focused.
+				prevCont = c
+			}
+			lastCont = c
+		}
+		return nil
+	}))
+
+	if prevCont != nil {
+		ft.setActive(prevCont)
+	} else if lastCont != nil {
+		ft.setActive(lastCont)
 	}
 }
 

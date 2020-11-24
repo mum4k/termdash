@@ -624,6 +624,120 @@ func TestFocusTrackerNextAndPrevious(t *testing.T) {
 			wantFocused:   contLocLeft,
 			wantProcessed: 5,
 		},
+		{
+			desc: "keyPrevious does nothing when only root exists",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRoot,
+			wantProcessed: 1,
+		},
+		{
+			desc: "keyPrevious focuses the last container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 1,
+		},
+		{
+			desc: "two keyPrevious presses focuses the first container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocLeft,
+			wantProcessed: 2,
+		},
+		{
+			desc: "three keyPrevious presses focuses the second container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 3,
+		},
+		{
+			desc: "four keyPrevious presses focuses the first container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocLeft,
+			wantProcessed: 4,
+		},
+		{
+			desc: "five keyPrevious presses focuses the second container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 5,
+		},
 	}
 
 	for _, tc := range tests {

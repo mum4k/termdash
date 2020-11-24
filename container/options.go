@@ -842,13 +842,13 @@ func Bottom(opts ...Option) BottomOption {
 // container when pressed.
 //
 // Containers are organized in a binary tree, when the focus moves to the next
-// container, it targets the next leaf container in a DFS traversal that
-// contains a widget. Non-leaf containers and containers without widgets are
-// skipped. If the currently focused container is the last container, the focus
-// moves back to the first container.
+// container, it targets the next leaf container in a DFS traversal.
+// Non-leaf containers are skipped. If the currently focused container is the
+// last container, the focus moves back to the first container.
 //
 // This option is global and applies to all created containers.
-// If not specified, keyboard the focused container can only be changed by using the mouse.
+// If neither of (KeyFocusNext, KeyFocusPrevious) is specified, the keyboard
+// focus can only be changed by using the mouse.
 func KeyFocusNext(key keyboard.Key) Option {
 	return option(func(c *Container) error {
 		c.opts.global.keyFocusNext = &key
@@ -860,12 +860,13 @@ func KeyFocusNext(key keyboard.Key) Option {
 // previous container when pressed.
 //
 // Containers are organized in a binary tree, when the focus moves to the previous
-// container, it targets the previous leaf container in a DFS traversal that
-// contains a widget. Non-leaf containers and containers without widgets are
-// skipped. If the currently focused container is the first container, the focus
-// moves back to the last container.
+// container, it targets the previous leaf container in a DFS traversal.
+// Non-leaf containers are skipped. If the currently focused container is the
+// first container, the focus moves back to the last container.
 //
 // This option is global and applies to all created containers.
+// If neither of (KeyFocusNext, KeyFocusPrevious) is specified, the keyboard
+// focus can only be changed by using the mouse.
 func KeyFocusPrevious(key keyboard.Key) Option {
 	return option(func(c *Container) error {
 		c.opts.global.keyFocusPrevious = &key

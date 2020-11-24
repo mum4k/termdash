@@ -842,7 +842,7 @@ func Bottom(opts ...Option) BottomOption {
 // container when pressed.
 //
 // Containers are organized in a binary tree, when the focus moves to the next
-// container, it targets the next leaf container in a DFS traversal.
+// container, it targets the next leaf container in a DFS (Depth-first search) traversal.
 // Non-leaf containers are skipped. If the currently focused container is the
 // last container, the focus moves back to the first container.
 //
@@ -860,7 +860,7 @@ func KeyFocusNext(key keyboard.Key) Option {
 // previous container when pressed.
 //
 // Containers are organized in a binary tree, when the focus moves to the previous
-// container, it targets the previous leaf container in a DFS traversal.
+// container, it targets the previous leaf container in a DFS (Depth-first search) traversal.
 // Non-leaf containers are skipped. If the currently focused container is the
 // first container, the focus moves back to the last container.
 //

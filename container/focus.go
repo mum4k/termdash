@@ -78,6 +78,49 @@ func (ft *focusTracker) setActive(c *Container) {
 	ft.container = c
 }
 
+// next moves focus to the next container.
+func (ft *focusTracker) next() {
+	var (
+		errStr    string
+		first     *Container
+		cont      *Container
+		focusNext bool
+	)
+	postOrder(rootCont(ft.container), &errStr, visitFunc(func(c *Container) error {
+		if cont != nil {
+			// Already found the next container, nothing to do.
+			return nil
+		}
+
+		if c.isLeaf() && first == nil {
+			// Remember the first eligible container in case we "wrap" over,
+			// i.e. finish the iteration before finding the next container.
+			first = c
+		}
+
+		if ft.container == c {
+			// Visiting the currently focused container, going to focus the
+			// next one.
+			focusNext = true
+			return nil
+		}
+
+		if c.isLeaf() && focusNext {
+			cont = c
+		}
+		return nil
+	}))
+
+	if cont == nil && first != nil {
+		// If the traversal finishes without finding the next container, move
+		// focus back to the first container.
+		cont = first
+	}
+	if cont != nil {
+		ft.setActive(cont)
+	}
+}
+
 // mouse identifies mouse events that change the focused container and track
 // the focused container in the tree.
 // The argument c is the container onto which the mouse event landed.

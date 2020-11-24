@@ -23,6 +23,7 @@ import (
 
 	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/private/area"
 	"github.com/mum4k/termdash/widgetapi"
@@ -95,7 +96,15 @@ type options struct {
 	// id is the identifier provided by the user.
 	id string
 
+	// global are options that apply globally to all containers in the tree.
+	// There is only one instance of these options in the entire tree, if any
+	// of the child containers change their values, the new values apply to the
+	// entire container tree.
+	global *globalOptions
+
 	// inherited are options that are inherited by child containers.
+	// After inheriting these options, the child container can set them to
+	// different values.
 	inherited inherited
 
 	// split identifies how is this container split.
@@ -181,11 +190,23 @@ type inherited struct {
 	focusedColor cell.Color
 }
 
+// globalOptions are options that can only have a single value across the
+// entire tree of containers.
+// Regardless of which container they get set on, the new value will take
+// effect on all the containers in the tree.
+type globalOptions struct {
+	// keyFocusNext when set is the key that moves the focus to the next container.
+	keyFocusNext *keyboard.Key
+	// keyFocusPrevious when set is the key that moves the focus to the previous container.
+	keyFocusPrevious *keyboard.Key
+}
+
 // newOptions returns a new options instance with the default values.
 // Parent are the inherited options from the parent container or nil if these
 // options are for a container with no parent (the root).
 func newOptions(parent *options) *options {
 	opts := &options{
+		global: &globalOptions{},
 		inherited: inherited{
 			focusedColor: cell.ColorYellow,
 		},
@@ -195,6 +216,7 @@ func newOptions(parent *options) *options {
 		splitFixed:   DefaultSplitFixed,
 	}
 	if parent != nil {
+		opts.global = parent.global
 		opts.inherited = parent.inherited
 	}
 	return opts
@@ -813,5 +835,40 @@ func (lo bottomOption) bOpts() []Option {
 func Bottom(opts ...Option) BottomOption {
 	return bottomOption(func() []Option {
 		return opts
+	})
+}
+
+// KeyFocusNext configures a key that moves the keyboard focus to the next
+// container when pressed.
+//
+// Containers are organized in a binary tree, when the focus moves to the next
+// container, it targets the next leaf container in a DFS traversal that
+// contains a widget. Non-leaf containers and containers without widgets are
+// skipped. If the currently focused container is the last container, the focus
+// moves back to the first container.
+//
+// This option is global and applies to all created containers.
+// If not specified, keyboard the focused container can only be changed by using the mouse.
+func KeyFocusNext(key keyboard.Key) Option {
+	return option(func(c *Container) error {
+		c.opts.global.keyFocusNext = &key
+		return nil
+	})
+}
+
+// KeyFocusPrevious configures a key that moves the keyboard focus to the
+// previous container when pressed.
+//
+// Containers are organized in a binary tree, when the focus moves to the previous
+// container, it targets the previous leaf container in a DFS traversal that
+// contains a widget. Non-leaf containers and containers without widgets are
+// skipped. If the currently focused container is the first container, the focus
+// moves back to the last container.
+//
+// This option is global and applies to all created containers.
+func KeyFocusPrevious(key keyboard.Key) Option {
+	return option(func(c *Container) error {
+		c.opts.global.keyFocusPrevious = &key
+		return nil
 	})
 }

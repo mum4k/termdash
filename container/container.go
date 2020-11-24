@@ -122,6 +122,12 @@ func (c *Container) hasWidget() bool {
 	return c.opts.widget != nil
 }
 
+// isLeaf determines if this container is a leaf container in the binary tree of containers.
+// Only leaf containers are guaranteed to be "visible" on the screen.
+func (c *Container) isLeaf() bool {
+	return c.first == nil && c.second == nil
+}
+
 // usable returns the usable area in this container.
 // This depends on whether the container has a border, etc.
 func (c *Container) usable() image.Rectangle {
@@ -257,15 +263,24 @@ func (c *Container) Update(id string, opts ...Option) error {
 	return nil
 }
 
-// updateFocus processes the mouse event and determines if it changes the
-// focused container.
+// updateFocusFromMouse processes the mouse event and determines if it changes
+// the focused container.
 // Caller must hold c.mu.
-func (c *Container) updateFocus(m *terminalapi.Mouse) {
+func (c *Container) updateFocusFromMouse(m *terminalapi.Mouse) {
 	target := pointCont(c, m.Position)
 	if target == nil { // Ignore mouse clicks where no containers are.
 		return
 	}
 	c.focusTracker.mouse(target, m)
+}
+
+// updateFocusFromKeyboard processes the keyboard event and determines if it
+// changes the focused container.
+// Caller must hold c.mu.
+func (c *Container) updateFocusFromKeyboard(k *terminalapi.Keyboard) {
+	if c.opts.global.keyFocusNext != nil && *c.opts.global.keyFocusNext == k.Key {
+		c.focusTracker.next()
+	}
 }
 
 // processEvent processes events delivered to the container.
@@ -293,7 +308,7 @@ func (c *Container) processEvent(ev terminalapi.Event) error {
 func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error) {
 	switch e := ev.(type) {
 	case *terminalapi.Mouse:
-		c.updateFocus(ev.(*terminalapi.Mouse))
+		c.updateFocusFromMouse(ev.(*terminalapi.Mouse))
 
 		targets, err := c.mouseEvTargets(e)
 		if err != nil {
@@ -309,6 +324,8 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 		}, nil
 
 	case *terminalapi.Keyboard:
+		c.updateFocusFromKeyboard(ev.(*terminalapi.Keyboard))
+
 		targets := c.keyEvTargets()
 		return func() error {
 			for _, w := range targets {

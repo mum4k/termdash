@@ -327,9 +327,13 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 		}, nil
 
 	case *terminalapi.Keyboard:
-		c.updateFocusFromKeyboard(ev.(*terminalapi.Keyboard))
-
 		targets := c.keyEvTargets()
+
+		// Update the focused container based on the pressed key.
+		// Done after collecting "targets" above. If the key changes which
+		// widget is focused, they key press itself should go to the widget
+		// that was focused when the key was pressed.
+		c.updateFocusFromKeyboard(ev.(*terminalapi.Keyboard))
 		return func() error {
 			for _, w := range targets {
 				if err := w.Keyboard(e); err != nil {

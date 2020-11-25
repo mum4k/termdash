@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking API changes
+
+- The `widgetapi.Widget.Keyboard` and `widgetapi.Widget.Mouse` method now
+  accepts a second argument which provides widgets with additional metadata.
+  This affects all implemented widgets.
+
 ### Added
 
 - ability to configure keyboard keys that move focus to the next or the

@@ -116,6 +116,15 @@ func TestButton(t *testing.T) {
 			wantNewErr: true,
 		},
 		{
+			desc:     "New fails with negative textHorizontalPadding",
+			callback: &callbackTracker{},
+			opts: []Option{
+				TextHorizontalPadding(-1),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			wantNewErr: true,
+		},
+		{
 			desc:        "draw fails on canvas too small",
 			callback:    &callbackTracker{},
 			text:        "hello",
@@ -934,10 +943,24 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
-			desc: "custom width specified",
+			desc: "custom width specified with default padding",
 			text: "hello",
 			opts: []Option{
 				Width(10),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{13, 4},
+				MaximumSize:  image.Point{13, 4},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeGlobal,
+			},
+		},
+		{
+			desc: "custom width specified with custom padding",
+			text: "hello",
+			opts: []Option{
+				Width(10),
+				TextHorizontalPadding(0),
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{11, 4},
@@ -946,7 +969,21 @@ func TestOptions(t *testing.T) {
 				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
-
+		{
+			desc: "without shadow or padding",
+			text: "hello",
+			opts: []Option{
+				Width(10),
+				TextHorizontalPadding(0),
+				DisableShadow(),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{10, 3},
+				MaximumSize:  image.Point{10, 3},
+				WantKeyboard: widgetapi.KeyScopeNone,
+				WantMouse:    widgetapi.MouseScopeGlobal,
+			},
+		},
 		{
 			desc: "doesn't want keyboard by default",
 			text: "hello",

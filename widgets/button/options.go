@@ -42,19 +42,23 @@ func (o option) set(opts *options) {
 
 // options holds the provided options.
 type options struct {
-	fillColor     cell.Color
-	textColor     cell.Color
-	shadowColor   cell.Color
-	disableShadow bool
-	height        int
-	width         int
-	keys          map[keyboard.Key]bool
-	keyScope      widgetapi.KeyScope
-	keyUpDelay    time.Duration
+	fillColor             cell.Color
+	textColor             cell.Color
+	textHorizontalPadding int
+	shadowColor           cell.Color
+	disableShadow         bool
+	height                int
+	width                 int
+	keys                  map[keyboard.Key]bool
+	keyScope              widgetapi.KeyScope
+	keyUpDelay            time.Duration
 }
 
 // validate validates the provided options.
 func (o *options) validate() error {
+	if min := 0; o.textHorizontalPadding < min {
+		return fmt.Errorf("invalid textHorizontalPadding %d, must be %d <= textHorizontalPadding", o.textHorizontalPadding, min)
+	}
 	if min := 1; o.height < min {
 		return fmt.Errorf("invalid height %d, must be %d <= height", o.height, min)
 	}
@@ -76,13 +80,14 @@ type keyScope struct {
 // newOptions returns options with the default values set.
 func newOptions(text string) *options {
 	return &options{
-		fillColor:   cell.ColorNumber(117),
-		textColor:   cell.ColorBlack,
-		shadowColor: cell.ColorNumber(240),
-		height:      DefaultHeight,
-		width:       widthFor(text),
-		keyUpDelay:  DefaultKeyUpDelay,
-		keys:        map[keyboard.Key]bool{},
+		fillColor:             cell.ColorNumber(117),
+		textColor:             cell.ColorBlack,
+		textHorizontalPadding: DefaultTextHorizontalPadding,
+		shadowColor:           cell.ColorNumber(240),
+		height:                DefaultHeight,
+		width:                 widthFor(text),
+		keyUpDelay:            DefaultKeyUpDelay,
+		keys:                  map[keyboard.Key]bool{},
 	}
 }
 
@@ -122,6 +127,8 @@ func Height(cells int) Option {
 // Width sets the width of the button in cells.
 // Must be a positive non-zero integer.
 // Defaults to the auto-width based on the length of the text label.
+// Not all the width may be available to the text if TextHorizontalPadding is
+// set to a non-zero integer.
 func Width(cells int) Option {
 	return option(func(opts *options) {
 		opts.width = cells
@@ -211,7 +218,18 @@ func DisableShadow() Option {
 	})
 }
 
+// DefaultTextHorizontalPadding is the default value for the HorizontalPadding option.
+const DefaultTextHorizontalPadding = 1
+
+// TextHorizontalPadding sets padding on the left and right side of the
+// button's text as the amount of cells.
+func TextHorizontalPadding(p int) Option {
+	return option(func(opts *options) {
+		opts.textHorizontalPadding = p
+	})
+}
+
 // widthFor returns the required width for the specified text.
 func widthFor(text string) int {
-	return runewidth.StringWidth(text) + 2 // One empty cell at each side.
+	return runewidth.StringWidth(text)
 }

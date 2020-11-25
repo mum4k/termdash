@@ -60,6 +60,7 @@ func main() {
 		button.GlobalKeys('s', 'S'),
 		button.DisableShadow(),
 		button.Height(1),
+		button.TextHorizontalPadding(0),
 	)
 	if err != nil {
 		panic(err)
@@ -75,6 +76,7 @@ func main() {
 		button.GlobalKeys('c', 'C'),
 		button.DisableShadow(),
 		button.Height(1),
+		button.TextHorizontalPadding(0),
 	)
 	if err != nil {
 		panic(err)

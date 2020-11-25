@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the `button` widget allows users to specify multiple trigger keys.
 - the `button` widget can now be drawn without the shadow and the pressing the
   animation.
+- the `button` widget can now be drawn without horizontal padding around its
+  text.
 
 ## [0.13.0] - 17-Nov-2020
 

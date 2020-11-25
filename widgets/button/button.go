@@ -143,7 +143,8 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		return err
 	}
 
-	textAr := image.Rect(buttonAr.Min.X+1, buttonAr.Min.Y, buttonAr.Dx()-1, buttonAr.Max.Y)
+	pad := b.opts.textHorizontalPadding
+	textAr := image.Rect(buttonAr.Min.X+pad, buttonAr.Min.Y, buttonAr.Dx()-pad, buttonAr.Max.Y)
 	start, err := alignfor.Text(textAr, b.text, align.HorizontalCenter, align.VerticalMiddle)
 	if err != nil {
 		return err
@@ -223,7 +224,7 @@ func (b *Button) shadowWidth() int {
 func (b *Button) Options() widgetapi.Options {
 	// No need to lock, as the height and width get fixed when New is called.
 
-	width := b.opts.width + b.shadowWidth()
+	width := b.opts.width + b.shadowWidth() + 2*b.opts.textHorizontalPadding
 	height := b.opts.height + b.shadowWidth()
 	return widgetapi.Options{
 		MinimumSize:  image.Point{width, height},

@@ -51,14 +51,14 @@ type CallbackFn func() error
 // TextChunk is a part of or the full text displayed in the button.
 type TextChunk struct {
 	text  string
-	wOpts *writeOptions
+	tOpts *textOptions
 }
 
 // NewChunk creates a new text chunk. Each chunk of text can have its own cell options.
-func NewChunk(text string, wOpts ...WriteOption) *TextChunk {
+func NewChunk(text string, tOpts ...TextOption) *TextChunk {
 	return &TextChunk{
 		text:  text,
-		wOpts: newWriteOptions(wOpts...),
+		tOpts: newTextOptions(tOpts...),
 	}
 }
 
@@ -71,10 +71,10 @@ type Button struct {
 	// text in the text label displayed in the button.
 	text strings.Builder
 
-	// givenWOpts are write options given for the content of text.
-	givenWOpts []*writeOptions
-	// wOptsTracker tracks the positions in a text to which the givenWOpts apply.
-	wOptsTracker *attrrange.Tracker
+	// givenTOpts are text options given for the button's of text.
+	givenTOpts []*textOptions
+	// tOptsTracker tracks the positions in a text to which the givenTOpts apply.
+	tOptsTracker *attrrange.Tracker
 
 	// mouseFSM tracks left mouse clicks.
 	mouseFSM *button.FSM
@@ -116,18 +116,18 @@ func NewFromChunks(chunks []*TextChunk, cFn CallbackFn, opts ...Option) (*Button
 
 	var (
 		text       strings.Builder
-		givenWOpts []*writeOptions
+		givenTOpts []*textOptions
 	)
-	wOptsTracker := attrrange.NewTracker()
+	tOptsTracker := attrrange.NewTracker()
 	for i, tc := range chunks {
 		if tc.text == "" {
 			return nil, fmt.Errorf("text chunk[%d] is empty, all chunks must contains some text", i)
 		}
 
 		pos := text.Len()
-		givenWOpts = append(givenWOpts, tc.wOpts)
-		wOptsIdx := len(givenWOpts) - 1
-		if err := wOptsTracker.Add(pos, pos+len(tc.text), wOptsIdx); err != nil {
+		givenTOpts = append(givenTOpts, tc.tOpts)
+		tOptsIdx := len(givenTOpts) - 1
+		if err := tOptsTracker.Add(pos, pos+len(tc.text), tOptsIdx); err != nil {
 			return nil, err
 		}
 		text.WriteString(tc.text)
@@ -141,13 +141,13 @@ func NewFromChunks(chunks []*TextChunk, cFn CallbackFn, opts ...Option) (*Button
 		return nil, err
 	}
 
-	for _, wOpts := range givenWOpts {
-		wOpts.setDefaultFgColor(opt.textColor)
+	for _, tOpts := range givenTOpts {
+		tOpts.setDefaultFgColor(opt.textColor)
 	}
 	return &Button{
 		text:         text,
-		givenWOpts:   givenWOpts,
-		wOptsTracker: wOptsTracker,
+		givenTOpts:   givenTOpts,
+		tOptsTracker: tOptsTracker,
 		mouseFSM:     button.NewFSM(mouse.ButtonLeft, image.ZR),
 		callback:     cFn,
 		opts:         opt,
@@ -213,7 +213,7 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		return err
 	}
 
-	optRange, err := b.wOptsTracker.ForPosition(0) // Text options for the current byte.
+	optRange, err := b.tOptsTracker.ForPosition(0) // Text options for the current byte.
 	if err != nil {
 		return err
 	}
@@ -221,15 +221,15 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	cur := start
 	for i, r := range trimmed {
 		if i >= optRange.High { // Get the next write options.
-			or, err := b.wOptsTracker.ForPosition(i)
+			or, err := b.tOptsTracker.ForPosition(i)
 			if err != nil {
 				return err
 			}
 			optRange = or
 		}
 
-		wOpts := b.givenWOpts[optRange.AttrIdx]
-		cells, err := cvs.SetCell(cur, r, wOpts.cellOpts...)
+		tOpts := b.givenTOpts[optRange.AttrIdx]
+		cells, err := cvs.SetCell(cur, r, tOpts.cellOpts...)
 		if err != nil {
 			return err
 		}

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- ability to configure keyboard keys that move focus to the next or the
+  previous container.
+
 ## [0.13.0] - 17-Nov-2020
 
 ### Added

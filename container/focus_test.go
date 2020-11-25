@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/private/event"
@@ -418,6 +419,336 @@ func TestFocusTrackerMouse(t *testing.T) {
 			if err := root.Draw(); err != nil {
 				t.Fatalf("Draw => unexpected error: %v", err)
 			}
+			for _, ev := range tc.events {
+				eds.Event(ev)
+			}
+			if err := testevent.WaitFor(5*time.Second, func() error {
+				if got, want := eds.Processed(), tc.wantProcessed; got != want {
+					return fmt.Errorf("the event distribution system processed %d events, want %d", got, want)
+				}
+				return nil
+			}); err != nil {
+				t.Fatalf("testevent.WaitFor => %v", err)
+			}
+
+			var wantFocused *Container
+			switch wf := tc.wantFocused; wf {
+			case contLocRoot:
+				wantFocused = root
+			case contLocLeft:
+				wantFocused = root.first
+			case contLocRight:
+				wantFocused = root.second
+			default:
+				t.Fatalf("unsupported wantFocused value => %v", wf)
+			}
+
+			if !root.focusTracker.isActive(wantFocused) {
+				t.Errorf("isActive(%v) => false, want true, status: root(%v):%v, left(%v):%v, right(%v):%v",
+					tc.wantFocused,
+					contLocRoot, root.focusTracker.isActive(root),
+					contLocLeft, root.focusTracker.isActive(root.first),
+					contLocRight, root.focusTracker.isActive(root.second),
+				)
+			}
+		})
+	}
+}
+
+// contDir represents a direction in which we want to change container focus.
+type contDir int
+
+// String implements fmt.Stringer()
+func (cd contDir) String() string {
+	if n, ok := contDirNames[cd]; ok {
+		return n
+	}
+	return "contDirUnknown"
+}
+
+// contDirNames maps contDir values to human readable names.
+var contDirNames = map[contDir]string{
+	contDirNext:     "contDirNext",
+	contDirPrevious: "contDirPrevious",
+}
+
+const (
+	contDirUnknown contDir = iota
+	contDirNext
+	contDirPrevious
+)
+
+func TestFocusTrackerNextAndPrevious(t *testing.T) {
+	ft, err := faketerm.New(image.Point{10, 10})
+	if err != nil {
+		t.Fatalf("faketerm.New => unexpected error: %v", err)
+	}
+
+	const (
+		keyNext     keyboard.Key = keyboard.KeyTab
+		keyPrevious keyboard.Key = '~'
+	)
+
+	tests := []struct {
+		desc          string
+		container     func(ft *faketerm.Terminal) (*Container, error)
+		events        []*terminalapi.Keyboard
+		wantFocused   contLoc
+		wantProcessed int
+	}{
+		{
+			desc: "initially the root is focused",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			wantFocused: contLocRoot,
+		},
+		{
+			desc: "keyNext does nothing when only root exists",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+			},
+			wantFocused:   contLocRoot,
+			wantProcessed: 1,
+		},
+		{
+			desc: "keyNext focuses the first container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+			},
+			wantFocused:   contLocLeft,
+			wantProcessed: 1,
+		},
+		{
+			desc: "two keyNext presses focuses the second container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+				{Key: keyNext},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 2,
+		},
+		{
+			desc: "three keyNext presses focuses the first container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+				{Key: keyNext},
+				{Key: keyNext},
+			},
+			wantFocused:   contLocLeft,
+			wantProcessed: 3,
+		},
+		{
+			desc: "four keyNext presses focuses the second container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+				{Key: keyNext},
+				{Key: keyNext},
+				{Key: keyNext},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 4,
+		},
+		{
+			desc: "five keyNext presses focuses the first container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+				{Key: keyNext},
+				{Key: keyNext},
+				{Key: keyNext},
+				{Key: keyNext},
+			},
+			wantFocused:   contLocLeft,
+			wantProcessed: 5,
+		},
+		{
+			desc: "keyPrevious does nothing when only root exists",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRoot,
+			wantProcessed: 1,
+		},
+		{
+			desc: "keyPrevious focuses the last container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 1,
+		},
+		{
+			desc: "two keyPrevious presses focuses the first container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocLeft,
+			wantProcessed: 2,
+		},
+		{
+			desc: "three keyPrevious presses focuses the second container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 3,
+		},
+		{
+			desc: "four keyPrevious presses focuses the first container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocLeft,
+			wantProcessed: 4,
+		},
+		{
+			desc: "five keyPrevious presses focuses the second container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocRight,
+			wantProcessed: 5,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			root, err := tc.container(ft)
+			if err != nil {
+				t.Fatalf("tc.container => unexpected error: %v", err)
+			}
+
+			eds := event.NewDistributionSystem()
+			root.Subscribe(eds)
 			for _, ev := range tc.events {
 				eds.Event(ev)
 			}

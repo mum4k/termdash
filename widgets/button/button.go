@@ -159,7 +159,7 @@ func (b *Button) keyActivated(k *terminalapi.Keyboard) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if k.Key == b.opts.key {
+	if b.opts.keys[k.Key] {
 		b.state = button.Down
 		now := time.Now().UTC()
 		b.keyTriggerTime = &now
@@ -220,7 +220,7 @@ func (b *Button) Options() widgetapi.Options {
 	return widgetapi.Options{
 		MinimumSize:  image.Point{width, height},
 		MaximumSize:  image.Point{width, height},
-		WantKeyboard: widgetapi.KeyScopeGlobal,
+		WantKeyboard: b.opts.keyScope,
 		WantMouse:    widgetapi.MouseScopeGlobal,
 	}
 }

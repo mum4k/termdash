@@ -244,6 +244,105 @@ func TestButton(t *testing.T) {
 			},
 		},
 		{
+			desc:     "draws button in down state due to a keyboard event when multiple keys are specified",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				Keys(keyboard.KeyEnter, keyboard.KeyTab),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyTab},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{2, 2},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				called: true,
+				count:  1,
+			},
+		},
+		{
+			desc:     "draws button in down state due to a keyboard event when single global key is specified",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				GlobalKey(keyboard.KeyTab),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyTab},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{2, 2},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				called: true,
+				count:  1,
+			},
+		},
+		{
+			desc:     "draws button in down state due to a keyboard event when multiple global keys are specified",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				GlobalKeys(keyboard.KeyEnter, keyboard.KeyTab),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyTab},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{2, 2},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				called: true,
+				count:  1,
+			},
+		},
+		{
 			desc:     "keyboard event ignored when no key specified",
 			callback: &callbackTracker{},
 			text:     "hello",
@@ -815,10 +914,36 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
+			desc: "registers for focused keyboard events when multiple keys are specified",
+			text: "hello",
+			opts: []Option{
+				Keys(keyboard.KeyEnter, keyboard.KeyTab),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{8, 4},
+				MaximumSize:  image.Point{8, 4},
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeGlobal,
+			},
+		},
+		{
 			desc: "registers for global keyboard events",
 			text: "hello",
 			opts: []Option{
 				GlobalKey(keyboard.KeyEnter),
+			},
+			want: widgetapi.Options{
+				MinimumSize:  image.Point{8, 4},
+				MaximumSize:  image.Point{8, 4},
+				WantKeyboard: widgetapi.KeyScopeGlobal,
+				WantMouse:    widgetapi.MouseScopeGlobal,
+			},
+		},
+		{
+			desc: "registers for global keyboard events when multiple keys are specified",
+			text: "hello",
+			opts: []Option{
+				GlobalKeys(keyboard.KeyEnter, keyboard.KeyTab),
 			},
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{8, 4},

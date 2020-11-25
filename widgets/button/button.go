@@ -126,15 +126,16 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	cvsAr := cvs.Area()
 	b.mouseFSM.UpdateArea(cvsAr)
 
-	shadowAr := image.Rect(shadowWidth, shadowWidth, cvsAr.Dx(), cvsAr.Dy())
-	if err := cvs.SetAreaCells(shadowAr, shadowRune, cell.BgColor(b.opts.shadowColor)); err != nil {
-		return err
+	sw := b.shadowWidth()
+	shadowAr := image.Rect(sw, sw, cvsAr.Dx(), cvsAr.Dy())
+	if !b.opts.disableShadow {
+		if err := cvs.SetAreaCells(shadowAr, shadowRune, cell.BgColor(b.opts.shadowColor)); err != nil {
+			return err
+		}
 	}
 
-	var buttonAr image.Rectangle
-	if b.state == button.Up {
-		buttonAr = image.Rect(0, 0, cvsAr.Dx()-shadowWidth, cvsAr.Dy()-shadowWidth)
-	} else {
+	buttonAr := image.Rect(0, 0, cvsAr.Dx()-sw, cvsAr.Dy()-sw)
+	if b.state == button.Down && !b.opts.disableShadow {
 		buttonAr = shadowAr
 	}
 
@@ -208,15 +209,22 @@ func (b *Button) Mouse(m *terminalapi.Mouse) error {
 	return nil
 }
 
-// shadowWidth is the width of the shadow under the button in cell.
-const shadowWidth = 1
+// shadowWidth returns the width of the shadow under the button or zero if the
+// button shouldn't have any shadow.
+func (b *Button) shadowWidth() int {
+	if b.opts.disableShadow {
+		return 0
+	} else {
+		return 1
+	}
+}
 
 // Options implements widgetapi.Widget.Options.
 func (b *Button) Options() widgetapi.Options {
 	// No need to lock, as the height and width get fixed when New is called.
 
-	width := b.opts.width + shadowWidth
-	height := b.opts.height + shadowWidth
+	width := b.opts.width + b.shadowWidth()
+	height := b.opts.height + b.shadowWidth()
 	return widgetapi.Options{
 		MinimumSize:  image.Point{width, height},
 		MaximumSize:  image.Point{width, height},

@@ -57,7 +57,9 @@ func main() {
 			segmentdisplay.NewChunk(fmt.Sprintf("%d", val)),
 		})
 	},
-		button.GlobalKey('s'),
+		button.GlobalKeys('s', 'S'),
+		button.DisableShadow(),
+		button.Height(1),
 	)
 	if err != nil {
 		panic(err)
@@ -70,7 +72,9 @@ func main() {
 		})
 	},
 		button.FillColor(cell.ColorNumber(220)),
-		button.GlobalKey('c'),
+		button.GlobalKeys('c', 'C'),
+		button.DisableShadow(),
+		button.Height(1),
 	)
 	if err != nil {
 		panic(err)
@@ -89,10 +93,12 @@ func main() {
 					container.Left(
 						container.PlaceWidget(addB),
 						container.AlignHorizontal(align.HorizontalRight),
+						container.PaddingRight(5),
 					),
 					container.Right(
 						container.PlaceWidget(subB),
 						container.AlignHorizontal(align.HorizontalLeft),
+						container.PaddingLeft(5),
 					),
 				),
 			),

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `container` now allows users to configure keyboard keys that move focus to
   the next or the previous container.
 - the `button` widget allows users to specify multiple trigger keys.
+- the `button` widget can now be drawn without the shadow and the pressing the
+  animation.
 
 ## [0.13.0] - 17-Nov-2020
 

@@ -42,14 +42,15 @@ func (o option) set(opts *options) {
 
 // options holds the provided options.
 type options struct {
-	fillColor   cell.Color
-	textColor   cell.Color
-	shadowColor cell.Color
-	height      int
-	width       int
-	keys        map[keyboard.Key]bool
-	keyScope    widgetapi.KeyScope
-	keyUpDelay  time.Duration
+	fillColor     cell.Color
+	textColor     cell.Color
+	shadowColor   cell.Color
+	disableShadow bool
+	height        int
+	width         int
+	keys          map[keyboard.Key]bool
+	keyScope      widgetapi.KeyScope
+	keyUpDelay    time.Duration
 }
 
 // validate validates the provided options.
@@ -199,6 +200,14 @@ const DefaultKeyUpDelay = 250 * time.Millisecond
 func KeyUpDelay(d time.Duration) Option {
 	return option(func(opts *options) {
 		opts.keyUpDelay = d
+	})
+}
+
+// DisableShadow when provided the button will not have a shadow area and will
+// have no animation when pressed.
+func DisableShadow() Option {
+	return option(func(opts *options) {
+		opts.disableShadow = true
 	})
 }
 

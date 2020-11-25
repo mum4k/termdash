@@ -150,6 +150,33 @@ func TestButton(t *testing.T) {
 			wantCallback: &callbackTracker{},
 		},
 		{
+			desc:     "draws button without a shadow in up state",
+			callback: &callbackTracker{},
+			opts: []Option{
+				DisableShadow(),
+			},
+			text:   "hello",
+			canvas: image.Rect(0, 0, 8, 4),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
 			desc:     "draws button in down state due to a mouse event",
 			callback: &callbackTracker{},
 			text:     "hello",
@@ -166,6 +193,36 @@ func TestButton(t *testing.T) {
 
 				// Text.
 				testdraw.MustText(cvs, "hello", image.Point{2, 2},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "draws button in down state without a shadow",
+			callback: &callbackTracker{},
+			opts: []Option{
+				DisableShadow(),
+			},
+			text:   "hello",
+			canvas: image.Rect(0, 0, 8, 4),
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
 					draw.TextCellOpts(
 						cell.FgColor(cell.ColorBlack),
 						cell.BgColor(cell.ColorNumber(117))),

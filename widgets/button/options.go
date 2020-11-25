@@ -47,8 +47,7 @@ type options struct {
 	shadowColor cell.Color
 	height      int
 	width       int
-	key         keyboard.Key
-	keyScope    widgetapi.KeyScope
+	keyScopes   []*keyScope
 	keyUpDelay  time.Duration
 }
 
@@ -64,6 +63,12 @@ func (o *options) validate() error {
 		return fmt.Errorf("invalid keyUpDelay %v, must be %v <= keyUpDelay", o.keyUpDelay, min)
 	}
 	return nil
+}
+
+// keyScope stores a key and its scope.
+type keyScope struct {
+	key   keyboard.Key
+	scope widgetapi.KeyScope
 }
 
 // newOptions returns options with the default values set.
@@ -129,23 +134,31 @@ func WidthFor(text string) Option {
 	})
 }
 
-// Key configures the keyboard key that presses the button.
+// Key configures the keyboard keys that press the button.
+// Can be specified multiple times to provide multiple keys.
 // The widget responds to this key only if its container is focused.
 // When not provided, the widget ignores all keyboard events.
 func Key(k keyboard.Key) Option {
 	return option(func(opts *options) {
-		opts.key = k
-		opts.keyScope = widgetapi.KeyScopeFocused
+		ks := &keyScope{
+			key:   k,
+			scope: widgetapi.KeyScopeFocused,
+		}
+		opts.keyScopes = append(opts.keyScopes, ks)
 	})
 }
 
-// GlobalKey is like Key, but makes the widget respond to the key even if its
+// GlobalKey is like Key, but makes the widget respond to the keys even if its
 // container isn't focused.
+// Can be specified multiple times to provide multiple keys.
 // When not provided, the widget ignores all keyboard events.
 func GlobalKey(k keyboard.Key) Option {
 	return option(func(opts *options) {
-		opts.key = k
-		opts.keyScope = widgetapi.KeyScopeGlobal
+		ks := &keyScope{
+			key:   k,
+			scope: widgetapi.KeyScopeGlobal,
+		}
+		opts.keyScopes = append(opts.keyScopes, ks)
 	})
 }
 

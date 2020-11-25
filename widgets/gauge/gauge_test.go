@@ -908,7 +908,7 @@ func TestKeyboard(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New => unexpected error: %v", err)
 	}
-	if err := g.Keyboard(&terminalapi.Keyboard{}); err == nil {
+	if err := g.Keyboard(&terminalapi.Keyboard{}, &widgetapi.EventMeta{}); err == nil {
 		t.Errorf("Keyboard => got nil err, wanted one")
 	}
 }
@@ -918,7 +918,7 @@ func TestMouse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New => unexpected error: %v", err)
 	}
-	if err := g.Mouse(&terminalapi.Mouse{}); err == nil {
+	if err := g.Mouse(&terminalapi.Mouse{}, &widgetapi.EventMeta{}); err == nil {
 		t.Errorf("Mouse => got nil err, wanted one")
 	}
 }

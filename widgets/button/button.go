@@ -172,7 +172,7 @@ func (b *Button) keyActivated(k *terminalapi.Keyboard) bool {
 // Key.
 //
 // Implements widgetapi.Widget.Keyboard.
-func (b *Button) Keyboard(k *terminalapi.Keyboard) error {
+func (b *Button) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	if b.keyActivated(k) {
 		// Mutex must be released when calling the callback.
 		// Users might call container methods from the callback like the
@@ -198,7 +198,7 @@ func (b *Button) mouseActivated(m *terminalapi.Mouse) bool {
 // the release happen inside the button.
 //
 // Implements widgetapi.Widget.Mouse.
-func (b *Button) Mouse(m *terminalapi.Mouse) error {
+func (b *Button) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	if b.mouseActivated(m) {
 		// Mutex must be released when calling the callback.
 		// Users might call container methods from the callback like the

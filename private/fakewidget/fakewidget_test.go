@@ -276,14 +276,14 @@ func TestMirror(t *testing.T) {
 			}
 
 			for _, keyEv := range tc.keyEvents {
-				err := w.Keyboard(keyEv.k)
+				err := w.Keyboard(keyEv.k, &widgetapi.EventMeta{})
 				if (err != nil) != keyEv.wantErr {
 					t.Errorf("Keyboard => got error:%v, wantErr: %v", err, keyEv.wantErr)
 				}
 			}
 
 			for _, mouseEv := range tc.mouseEvents {
-				err := w.Mouse(mouseEv.m)
+				err := w.Mouse(mouseEv.m, &widgetapi.EventMeta{})
 				if (err != nil) != mouseEv.wantErr {
 					t.Errorf("Mouse => got error:%v, wantErr: %v", err, mouseEv.wantErr)
 				}
@@ -325,7 +325,7 @@ func TestDraw(t *testing.T) {
 		opts    widgetapi.Options
 		cvs     *canvas.Canvas
 		meta    *widgetapi.Meta
-		events  []terminalapi.Event
+		events  []*Event
 		want    func(size image.Point) *faketerm.Terminal
 		wantErr bool
 	}{
@@ -359,9 +359,15 @@ func TestDraw(t *testing.T) {
 			},
 			cvs:  testcanvas.MustNew(image.Rect(0, 0, 17, 5)),
 			meta: &widgetapi.Meta{},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
-				&terminalapi.Mouse{Button: mouse.ButtonLeft},
+			events: []*Event{
+				{
+					Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					Meta: &widgetapi.EventMeta{},
+				},
+				{
+					Ev:   &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					Meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

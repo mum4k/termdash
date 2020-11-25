@@ -253,7 +253,10 @@ func TestRun(t *testing.T) {
 					widgetapi.Options{
 						WantMouse: widgetapi.MouseScopeWidget,
 					},
-					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+						Meta: &widgetapi.EventMeta{},
+					},
 				)
 				return ft
 			},
@@ -281,7 +284,10 @@ func TestRun(t *testing.T) {
 						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    widgetapi.MouseScopeWidget,
 					},
-					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+						Meta: &widgetapi.EventMeta{},
+					},
 				)
 				return ft
 			},
@@ -347,7 +353,10 @@ func TestRun(t *testing.T) {
 					widgetapi.Options{
 						WantKeyboard: widgetapi.KeyScopeFocused,
 					},
-					&terminalapi.Keyboard{Key: keyboard.KeyF1},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyF1},
+						Meta: &widgetapi.EventMeta{},
+					},
 				)
 				return ft
 			},
@@ -382,7 +391,10 @@ func TestRun(t *testing.T) {
 					widgetapi.Options{
 						WantMouse: widgetapi.MouseScopeWidget,
 					},
-					&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
+						Meta: &widgetapi.EventMeta{},
+					},
 				)
 				return ft
 			},
@@ -491,7 +503,10 @@ func TestController(t *testing.T) {
 						WantKeyboard: widgetapi.KeyScopeFocused,
 						WantMouse:    widgetapi.MouseScopeWidget,
 					},
-					&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+						Meta: &widgetapi.EventMeta{},
+					},
 				)
 				return ft
 

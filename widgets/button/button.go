@@ -18,7 +18,9 @@ package button
 
 import (
 	"errors"
+	"fmt"
 	"image"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,6 +28,7 @@ import (
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/private/alignfor"
+	"github.com/mum4k/termdash/private/attrrange"
 	"github.com/mum4k/termdash/private/button"
 	"github.com/mum4k/termdash/private/canvas"
 	"github.com/mum4k/termdash/private/draw"
@@ -45,6 +48,20 @@ import (
 // termdash.ErrorHandler.
 type CallbackFn func() error
 
+// TextChunk is a part of or the full text displayed in the button.
+type TextChunk struct {
+	text  string
+	wOpts *writeOptions
+}
+
+// NewChunk creates a new text chunk. Each chunk of text can have its own cell options.
+func NewChunk(text string, wOpts ...WriteOption) *TextChunk {
+	return &TextChunk{
+		text:  text,
+		wOpts: newWriteOptions(wOpts...),
+	}
+}
+
 // Button can be pressed using a mouse click or a configured keyboard key.
 //
 // Upon each press, the button invokes a callback provided by the user.
@@ -52,7 +69,12 @@ type CallbackFn func() error
 // Implements widgetapi.Widget. This object is thread-safe.
 type Button struct {
 	// text in the text label displayed in the button.
-	text string
+	text strings.Builder
+
+	// givenWOpts are write options given for the content of text.
+	givenWOpts []*writeOptions
+	// wOptsTracker tracks the positions in a text to which the givenWOpts apply.
+	wOptsTracker *attrrange.Tracker
 
 	// mouseFSM tracks left mouse clicks.
 	mouseFSM *button.FSM
@@ -78,22 +100,57 @@ type Button struct {
 // New returns a new Button that will display the provided text.
 // Each press of the button will invoke the callback function.
 func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
+	return NewFromChunks([]*TextChunk{NewChunk(text)}, cFn, opts...)
+}
+
+// NewFromChunks is like New, but allows specifying write options for
+// individual chunks of text displayed in the button.
+func NewFromChunks(chunks []*TextChunk, cFn CallbackFn, opts ...Option) (*Button, error) {
 	if cFn == nil {
 		return nil, errors.New("the CallbackFn argument cannot be nil")
 	}
 
-	opt := newOptions(text)
+	if len(chunks) == 0 {
+		return nil, errors.New("at least one text chunk must be specified")
+	}
+
+	var (
+		text       strings.Builder
+		givenWOpts []*writeOptions
+	)
+	wOptsTracker := attrrange.NewTracker()
+	for i, tc := range chunks {
+		if tc.text == "" {
+			return nil, fmt.Errorf("text chunk[%d] is empty, all chunks must contains some text", i)
+		}
+
+		pos := text.Len()
+		givenWOpts = append(givenWOpts, tc.wOpts)
+		wOptsIdx := len(givenWOpts) - 1
+		if err := wOptsTracker.Add(pos, pos+len(tc.text), wOptsIdx); err != nil {
+			return nil, err
+		}
+		text.WriteString(tc.text)
+	}
+
+	opt := newOptions(text.String())
 	for _, o := range opts {
 		o.set(opt)
 	}
 	if err := opt.validate(); err != nil {
 		return nil, err
 	}
+
+	for _, wOpts := range givenWOpts {
+		wOpts.setDefaultFgColor(opt.textColor)
+	}
 	return &Button{
-		text:     text,
-		mouseFSM: button.NewFSM(mouse.ButtonLeft, image.ZR),
-		callback: cFn,
-		opts:     opt,
+		text:         text,
+		givenWOpts:   givenWOpts,
+		wOptsTracker: wOptsTracker,
+		mouseFSM:     button.NewFSM(mouse.ButtonLeft, image.ZR),
+		callback:     cFn,
+		opts:         opt,
 	}, nil
 }
 
@@ -145,15 +202,40 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 
 	pad := b.opts.textHorizontalPadding
 	textAr := image.Rect(buttonAr.Min.X+pad, buttonAr.Min.Y, buttonAr.Dx()-pad, buttonAr.Max.Y)
-	start, err := alignfor.Text(textAr, b.text, align.HorizontalCenter, align.VerticalMiddle)
+	start, err := alignfor.Text(textAr, b.text.String(), align.HorizontalCenter, align.VerticalMiddle)
 	if err != nil {
 		return err
 	}
-	return draw.Text(cvs, b.text, start,
-		draw.TextOverrunMode(draw.OverrunModeThreeDot),
-		draw.TextMaxX(buttonAr.Max.X),
-		draw.TextCellOpts(cell.FgColor(b.opts.textColor)),
-	)
+
+	maxCells := buttonAr.Max.X - start.X
+	trimmed, err := draw.TrimText(b.text.String(), maxCells, draw.OverrunModeThreeDot)
+	if err != nil {
+		return err
+	}
+
+	optRange, err := b.wOptsTracker.ForPosition(0) // Text options for the current byte.
+	if err != nil {
+		return err
+	}
+
+	cur := start
+	for i, r := range trimmed {
+		if i >= optRange.High { // Get the next write options.
+			or, err := b.wOptsTracker.ForPosition(i)
+			if err != nil {
+				return err
+			}
+			optRange = or
+		}
+
+		wOpts := b.givenWOpts[optRange.AttrIdx]
+		cells, err := cvs.SetCell(cur, r, wOpts.cellOpts...)
+		if err != nil {
+			return err
+		}
+		cur = image.Point{cur.X + cells, cur.Y}
+	}
+	return nil
 }
 
 // activated asserts whether the keyboard event activated the button.

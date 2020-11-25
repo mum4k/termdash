@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   animation.
 - the `button` widget can now be drawn without horizontal padding around its
   text.
+- the `button`widget now allows specifying cell options for each cell of the
+  displayed text.
 
 ## [0.13.0] - 17-Nov-2020
 

@@ -114,9 +114,8 @@ func (ft *focusTracker) next() {
 	if nextCont == nil && firstCont != nil {
 		// If the traversal finishes without finding the next container, move
 		// focus back to the first container.
-		nextCont = firstCont
-	}
-	if nextCont != nil {
+		ft.setActive(firstCont)
+	} else if nextCont != nil {
 		ft.setActive(nextCont)
 	}
 }

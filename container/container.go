@@ -123,7 +123,8 @@ func (c *Container) hasWidget() bool {
 }
 
 // isLeaf determines if this container is a leaf container in the binary tree of containers.
-// Only leaf containers are guaranteed to be "visible" on the screen.
+// Only leaf containers are guaranteed to be "visible" on the screen, because
+// they are on the top of other non-leaf containers.
 func (c *Container) isLeaf() bool {
 	return c.first == nil && c.second == nil
 }
@@ -331,7 +332,7 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 
 		// Update the focused container based on the pressed key.
 		// Done after collecting "targets" above. If the key changes which
-		// widget is focused, they key press itself should go to the widget
+		// container is focused, they key press itself should go to the widget
 		// that was focused when the key was pressed.
 		c.updateFocusFromKeyboard(ev.(*terminalapi.Keyboard))
 		return func() error {

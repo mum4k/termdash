@@ -1548,7 +1548,6 @@ func TestMouse(t *testing.T) {
 					testcanvas.MustNew(image.Rect(25, 0, 50, 20)),
 					&widgetapi.Meta{},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
-					&terminalapi.Keyboard{},
 				)
 				return ft
 			},
@@ -1592,7 +1591,6 @@ func TestMouse(t *testing.T) {
 					testcanvas.MustNew(image.Rect(25, 0, 50, 20)),
 					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
-					&terminalapi.Keyboard{},
 				)
 				return ft
 			},

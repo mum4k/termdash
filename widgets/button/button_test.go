@@ -65,8 +65,12 @@ func (ct *callbackTracker) callback() error {
 
 func TestButton(t *testing.T) {
 	tests := []struct {
-		desc     string
-		text     string
+		desc string
+
+		// Only one of these must be specified.
+		text       string       // Calls New() as the constructor.
+		textChunks []*TextChunk // Calls NewFromChunks() as the constructor.
+
 		callback *callbackTracker
 		opts     []Option
 		events   []terminalapi.Event
@@ -86,6 +90,7 @@ func TestButton(t *testing.T) {
 		{
 			desc:       "New fails with nil callback",
 			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
 		{
@@ -95,6 +100,7 @@ func TestButton(t *testing.T) {
 				KeyUpDelay(-1 * time.Second),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
 		{
@@ -104,6 +110,7 @@ func TestButton(t *testing.T) {
 				Height(0),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
 		{
@@ -113,6 +120,7 @@ func TestButton(t *testing.T) {
 				Width(0),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
 		{
@@ -122,6 +130,79 @@ func TestButton(t *testing.T) {
 				TextHorizontalPadding(-1),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc: "NewFromChunks fails with nil callback",
+			textChunks: []*TextChunk{
+				NewChunk("text"),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc: "NewFromChunks fails with negative keyUpDelay",
+			textChunks: []*TextChunk{
+				NewChunk("text"),
+			},
+			callback: &callbackTracker{},
+			opts: []Option{
+				KeyUpDelay(-1 * time.Second),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc: "NewFromChunks fails with zero Height",
+			textChunks: []*TextChunk{
+				NewChunk("text"),
+			},
+			callback: &callbackTracker{},
+			opts: []Option{
+				Height(0),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc: "NewFromChunks fails with zero Width",
+			textChunks: []*TextChunk{
+				NewChunk("text"),
+			},
+			callback: &callbackTracker{},
+			opts: []Option{
+				Width(0),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc: "NewFromChunks fails with negative textHorizontalPadding",
+			textChunks: []*TextChunk{
+				NewChunk("text"),
+			},
+			callback: &callbackTracker{},
+			opts: []Option{
+				TextHorizontalPadding(-1),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc:       "NewFromChunks fails with zero chunks",
+			textChunks: []*TextChunk{},
+			callback:   &callbackTracker{},
+			opts: []Option{
+				TextHorizontalPadding(-1),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
 		{
@@ -129,6 +210,7 @@ func TestButton(t *testing.T) {
 			callback:    &callbackTracker{},
 			text:        "hello",
 			canvas:      image.Rect(0, 0, 1, 1),
+			meta:        &widgetapi.Meta{Focused: false},
 			wantDrawErr: true,
 		},
 		{
@@ -136,6 +218,7 @@ func TestButton(t *testing.T) {
 			callback: &callbackTracker{},
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
+			meta:     &widgetapi.Meta{Focused: false},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -166,6 +249,7 @@ func TestButton(t *testing.T) {
 			},
 			text:   "hello",
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -190,6 +274,7 @@ func TestButton(t *testing.T) {
 			callback: &callbackTracker{},
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
+			meta:     &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 			},
@@ -220,6 +305,7 @@ func TestButton(t *testing.T) {
 			},
 			text:   "hello",
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 			},
@@ -247,6 +333,7 @@ func TestButton(t *testing.T) {
 			callback: &callbackTracker{},
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
+			meta:     &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
@@ -284,6 +371,7 @@ func TestButton(t *testing.T) {
 				Key(keyboard.KeyEnter),
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
@@ -317,6 +405,7 @@ func TestButton(t *testing.T) {
 				Keys(keyboard.KeyEnter, keyboard.KeyTab),
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyTab},
 			},
@@ -350,6 +439,7 @@ func TestButton(t *testing.T) {
 				GlobalKey(keyboard.KeyTab),
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyTab},
 			},
@@ -383,6 +473,7 @@ func TestButton(t *testing.T) {
 				GlobalKeys(keyboard.KeyEnter, keyboard.KeyTab),
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyTab},
 			},
@@ -413,6 +504,7 @@ func TestButton(t *testing.T) {
 			callback: &callbackTracker{},
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
+			meta:     &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
@@ -449,6 +541,7 @@ func TestButton(t *testing.T) {
 				return 200 * time.Millisecond
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
@@ -486,6 +579,7 @@ func TestButton(t *testing.T) {
 				return 200 * time.Millisecond
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
@@ -526,6 +620,7 @@ func TestButton(t *testing.T) {
 				return 200 * time.Millisecond
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
@@ -561,6 +656,7 @@ func TestButton(t *testing.T) {
 			callback: &callbackTracker{},
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
+			meta:     &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
@@ -599,6 +695,7 @@ func TestButton(t *testing.T) {
 			},
 			text:   "hello",
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
 				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
@@ -619,6 +716,7 @@ func TestButton(t *testing.T) {
 				return 200 * time.Millisecond
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			events: []terminalapi.Event{
 				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
 			},
@@ -629,6 +727,7 @@ func TestButton(t *testing.T) {
 			callback: &callbackTracker{},
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 2),
+			meta:     &widgetapi.Meta{Focused: false},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -656,6 +755,7 @@ func TestButton(t *testing.T) {
 			callback: &callbackTracker{},
 			text:     "h",
 			canvas:   image.Rect(0, 0, 4, 2),
+			meta:     &widgetapi.Meta{Focused: false},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -686,6 +786,7 @@ func TestButton(t *testing.T) {
 				TextColor(cell.ColorRed),
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -716,6 +817,7 @@ func TestButton(t *testing.T) {
 				FillColor(cell.ColorRed),
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -746,6 +848,7 @@ func TestButton(t *testing.T) {
 				ShadowColor(cell.ColorRed),
 			},
 			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				cvs := testcanvas.MustNew(ft.Area())
@@ -761,6 +864,303 @@ func TestButton(t *testing.T) {
 					draw.TextCellOpts(
 						cell.FgColor(cell.ColorBlack),
 						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "draws button with text chunks and custom fill color in up state",
+			callback: &callbackTracker{},
+			opts: []Option{
+				FillColor(cell.ColorBlue),
+				FocusedFillColor(cell.ColorYellow),
+				PressedFillColor(cell.ColorRed),
+				DisableShadow(),
+			},
+			textChunks: []*TextChunk{
+				NewChunk(
+					"h",
+					TextCellOpts(cell.FgColor(cell.ColorBlack)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorWhite)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorGreen)),
+				),
+				NewChunk(
+					"ello",
+					TextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+				),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorBlue))
+
+				// Text.
+				testdraw.MustText(cvs, "h", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorBlue)),
+				)
+				testdraw.MustText(cvs, "ello", image.Point{2, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorMagenta),
+						cell.BgColor(cell.ColorBlue)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "draws button with text chunks and custom fill color in focused up state",
+			callback: &callbackTracker{},
+			opts: []Option{
+				FillColor(cell.ColorBlue),
+				FocusedFillColor(cell.ColorYellow),
+				PressedFillColor(cell.ColorRed),
+				DisableShadow(),
+			},
+			textChunks: []*TextChunk{
+				NewChunk(
+					"h",
+					TextCellOpts(cell.FgColor(cell.ColorBlack)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorWhite)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorGreen)),
+				),
+				NewChunk(
+					"ello",
+					TextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+				),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: true},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorYellow))
+
+				// Text.
+				testdraw.MustText(cvs, "h", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorWhite),
+						cell.BgColor(cell.ColorYellow)),
+				)
+				testdraw.MustText(cvs, "ello", image.Point{2, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorMagenta),
+						cell.BgColor(cell.ColorYellow)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "draws button with text chunks in up state, focused colors default to regular colors",
+			callback: &callbackTracker{},
+			opts: []Option{
+				FillColor(cell.ColorBlue),
+				PressedFillColor(cell.ColorRed),
+				DisableShadow(),
+			},
+			textChunks: []*TextChunk{
+				NewChunk(
+					"h",
+					TextCellOpts(cell.FgColor(cell.ColorBlack)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorGreen)),
+				),
+				NewChunk(
+					"ello",
+					TextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+				),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: true},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorBlue))
+
+				// Text.
+				testdraw.MustText(cvs, "h", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorBlue)),
+				)
+				testdraw.MustText(cvs, "ello", image.Point{2, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorMagenta),
+						cell.BgColor(cell.ColorBlue)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc: "draws button with text chunks and custom fill color in down state",
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			callback: &callbackTracker{},
+			opts: []Option{
+				FillColor(cell.ColorBlue),
+				FocusedFillColor(cell.ColorYellow),
+				PressedFillColor(cell.ColorRed),
+				DisableShadow(),
+			},
+			textChunks: []*TextChunk{
+				NewChunk(
+					"h",
+					TextCellOpts(cell.FgColor(cell.ColorBlack)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorWhite)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorGreen)),
+				),
+				NewChunk(
+					"ello",
+					TextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+				),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorRed))
+
+				// Text.
+				testdraw.MustText(cvs, "h", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorGreen),
+						cell.BgColor(cell.ColorRed)),
+				)
+				testdraw.MustText(cvs, "ello", image.Point{2, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorMagenta),
+						cell.BgColor(cell.ColorRed)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc: "draws button with text chunks and custom fill color in down focused state (focus has no impact)",
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			callback: &callbackTracker{},
+			opts: []Option{
+				FillColor(cell.ColorBlue),
+				FocusedFillColor(cell.ColorYellow),
+				PressedFillColor(cell.ColorRed),
+				DisableShadow(),
+			},
+			textChunks: []*TextChunk{
+				NewChunk(
+					"h",
+					TextCellOpts(cell.FgColor(cell.ColorBlack)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorWhite)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorGreen)),
+				),
+				NewChunk(
+					"ello",
+					TextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					PressedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+				),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: true},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorRed))
+
+				// Text.
+				testdraw.MustText(cvs, "h", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorGreen),
+						cell.BgColor(cell.ColorRed)),
+				)
+				testdraw.MustText(cvs, "ello", image.Point{2, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorMagenta),
+						cell.BgColor(cell.ColorRed)),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{},
+		},
+		{
+			desc: "draws button with text chunks in down satte, pressed colors default to regular colors",
+			events: []terminalapi.Event{
+				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			},
+			callback: &callbackTracker{},
+			opts: []Option{
+				FillColor(cell.ColorBlue),
+				FocusedFillColor(cell.ColorYellow),
+				DisableShadow(),
+			},
+			textChunks: []*TextChunk{
+				NewChunk(
+					"h",
+					TextCellOpts(cell.FgColor(cell.ColorBlack)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorWhite)),
+				),
+				NewChunk(
+					"ello",
+					TextCellOpts(cell.FgColor(cell.ColorMagenta)),
+					FocusedTextCellOpts(cell.FgColor(cell.ColorMagenta)),
+				),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 8, 4), 'x', cell.BgColor(cell.ColorBlue))
+
+				// Text.
+				testdraw.MustText(cvs, "h", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorBlue)),
+				)
+				testdraw.MustText(cvs, "ello", image.Point{2, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorMagenta),
+						cell.BgColor(cell.ColorBlue)),
 				)
 
 				testcanvas.MustApply(cvs, ft)
@@ -787,12 +1187,30 @@ func TestButton(t *testing.T) {
 			} else {
 				cFn = gotCallback.callback
 			}
-			b, err := New(tc.text, cFn, tc.opts...)
-			if (err != nil) != tc.wantNewErr {
-				t.Errorf("New => unexpected error: %v, wantNewErr: %v", err, tc.wantNewErr)
+
+			if tc.text != "" && tc.textChunks != nil {
+				t.Fatalf("cannot specify both text and textChunks in the testdata")
 			}
-			if err != nil {
-				return
+
+			var btn *Button
+			if tc.textChunks != nil {
+				b, err := NewFromChunks(tc.textChunks, cFn, tc.opts...)
+				if (err != nil) != tc.wantNewErr {
+					t.Errorf("NewFromChunks => unexpected error: %v, wantNewErr: %v", err, tc.wantNewErr)
+				}
+				if err != nil {
+					return
+				}
+				btn = b
+			} else {
+				b, err := New(tc.text, cFn, tc.opts...)
+				if (err != nil) != tc.wantNewErr {
+					t.Errorf("New => unexpected error: %v, wantNewErr: %v", err, tc.wantNewErr)
+				}
+				if err != nil {
+					return
+				}
+				btn = b
 			}
 
 			{
@@ -801,7 +1219,7 @@ func TestButton(t *testing.T) {
 				if err != nil {
 					t.Fatalf("canvas.New => unexpected error: %v", err)
 				}
-				err = b.Draw(c, tc.meta)
+				err = btn.Draw(c, tc.meta)
 				if (err != nil) != tc.wantDrawErr {
 					t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 				}
@@ -813,7 +1231,7 @@ func TestButton(t *testing.T) {
 			for i, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Mouse:
-					err := b.Mouse(e)
+					err := btn.Mouse(e)
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantCallbackErr {
@@ -829,7 +1247,7 @@ func TestButton(t *testing.T) {
 					}
 
 				case *terminalapi.Keyboard:
-					err := b.Keyboard(e)
+					err := btn.Keyboard(e)
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantCallbackErr {
@@ -854,7 +1272,7 @@ func TestButton(t *testing.T) {
 				t.Fatalf("canvas.New => unexpected error: %v", err)
 			}
 
-			err = b.Draw(c, tc.meta)
+			err = btn.Draw(c, tc.meta)
 			if (err != nil) != tc.wantDrawErr {
 				t.Errorf("Draw => unexpected error: %v, wantDrawErr: %v", err, tc.wantDrawErr)
 			}

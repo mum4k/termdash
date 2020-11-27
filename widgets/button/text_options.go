@@ -26,7 +26,9 @@ type TextOption interface {
 
 // textOptions stores the provided options.
 type textOptions struct {
-	cellOpts []cell.Option
+	cellOpts        []cell.Option
+	focusedCellOpts []cell.Option
+	pressedCellOpts []cell.Option
 }
 
 // setDefaultFgColor configures a default color for text if one isn't specified
@@ -69,6 +71,15 @@ func TextCellOpts(opts ...cell.Option) TextOption {
 // If not specified, TextCellOpts will be used instead.
 func FocusedTextCellOpts(opts ...cell.Option) TextOption {
 	return textOption(func(tOpts *textOptions) {
-		tOpts.cellOpts = opts
+		tOpts.focusedCellOpts = opts
+	})
+}
+
+// PressedTextCellOpts sets options on the cells that contain the button text
+// when it is pressed.
+// If not specified, TextCellOpts will be used instead.
+func PressedTextCellOpts(opts ...cell.Option) TextOption {
+	return textOption(func(tOpts *textOptions) {
+		tOpts.pressedCellOpts = opts
 	})
 }

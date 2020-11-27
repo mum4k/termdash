@@ -43,6 +43,8 @@ func (o option) set(opts *options) {
 // options holds the provided options.
 type options struct {
 	fillColor             cell.Color
+	focusedFillColor      *cell.Color
+	pressedFillColor      *cell.Color
 	textColor             cell.Color
 	textHorizontalPadding int
 	shadowColor           cell.Color
@@ -95,6 +97,23 @@ func newOptions(text string) *options {
 func FillColor(c cell.Color) Option {
 	return option(func(opts *options) {
 		opts.fillColor = c
+	})
+}
+
+// FocusedFillColor sets the fill color of the button when the widget's
+// container is focused.
+// Defaults to FillColor.
+func FocusedFillColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.focusedFillColor = &c
+	})
+}
+
+// PressedFillColor sets the fill color of the button when it is pressed.
+// Defaults to FillColor.
+func PressedFillColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.pressedFillColor = &c
 	})
 }
 

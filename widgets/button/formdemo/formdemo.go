@@ -31,6 +31,40 @@ import (
 	"github.com/mum4k/termdash/widgets/segmentdisplay"
 )
 
+// buttonChunks creates the text chunks for a button from the provided text.
+func buttonChunks(text string) []*button.TextChunk {
+	if len(text) == 0 {
+		return nil
+	}
+	first := string(text[0])
+	rest := string(text[1:])
+
+	return []*button.TextChunk{
+		button.NewChunk(
+			"<",
+			button.TextCellOpts(cell.FgColor(cell.ColorWhite)),
+			button.FocusedTextCellOpts(cell.FgColor(cell.ColorBlack)),
+			button.PressedTextCellOpts(cell.FgColor(cell.ColorBlack)),
+		),
+		button.NewChunk(
+			first,
+			button.TextCellOpts(cell.FgColor(cell.ColorRed)),
+		),
+		button.NewChunk(
+			rest,
+			button.TextCellOpts(cell.FgColor(cell.ColorWhite)),
+			button.FocusedTextCellOpts(cell.FgColor(cell.ColorBlack)),
+			button.PressedTextCellOpts(cell.FgColor(cell.ColorBlack)),
+		),
+		button.NewChunk(
+			">",
+			button.TextCellOpts(cell.FgColor(cell.ColorWhite)),
+			button.FocusedTextCellOpts(cell.FgColor(cell.ColorBlack)),
+			button.PressedTextCellOpts(cell.FgColor(cell.ColorBlack)),
+		),
+	}
+}
+
 func main() {
 	t, err := tcell.New()
 	if err != nil {
@@ -51,7 +85,7 @@ func main() {
 		panic(err)
 	}
 
-	addB, err := button.New("<Submit>", func() error {
+	addB, err := button.NewFromChunks(buttonChunks("Submit"), func() error {
 		val++
 		return display.Write([]*segmentdisplay.TextChunk{
 			segmentdisplay.NewChunk(fmt.Sprintf("%d", val)),
@@ -61,12 +95,15 @@ func main() {
 		button.DisableShadow(),
 		button.Height(1),
 		button.TextHorizontalPadding(0),
+		button.FillColor(cell.ColorBlack),
+		button.FocusedFillColor(cell.ColorNumber(117)),
+		button.PressedFillColor(cell.ColorNumber(220)),
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	subB, err := button.New("<Cancel>", func() error {
+	subB, err := button.NewFromChunks(buttonChunks("Cancel"), func() error {
 		val--
 		return display.Write([]*segmentdisplay.TextChunk{
 			segmentdisplay.NewChunk(fmt.Sprintf("%d", val)),
@@ -77,6 +114,9 @@ func main() {
 		button.DisableShadow(),
 		button.Height(1),
 		button.TextHorizontalPadding(0),
+		button.FillColor(cell.ColorBlack),
+		button.FocusedFillColor(cell.ColorNumber(117)),
+		button.PressedFillColor(cell.ColorNumber(220)),
 	)
 	if err != nil {
 		panic(err)

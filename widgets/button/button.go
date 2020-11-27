@@ -196,7 +196,17 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		buttonAr = shadowAr
 	}
 
-	if err := cvs.SetAreaCells(buttonAr, buttonRune, cell.BgColor(b.opts.fillColor)); err != nil {
+	var fillColor cell.Color
+	switch {
+	case b.state == button.Down && b.opts.pressedFillColor != nil:
+		fillColor = *b.opts.pressedFillColor
+	case meta.Focused && b.opts.focusedFillColor != nil:
+		fillColor = *b.opts.focusedFillColor
+	default:
+		fillColor = b.opts.fillColor
+	}
+
+	if err := cvs.SetAreaCells(buttonAr, buttonRune, cell.BgColor(fillColor)); err != nil {
 		return err
 	}
 
@@ -229,7 +239,16 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		}
 
 		tOpts := b.givenTOpts[optRange.AttrIdx]
-		cells, err := cvs.SetCell(cur, r, tOpts.cellOpts...)
+		var cellOpts []cell.Option
+		switch {
+		case b.state == button.Down && len(tOpts.pressedCellOpts) > 0:
+			cellOpts = tOpts.pressedCellOpts
+		case meta.Focused && len(tOpts.focusedCellOpts) > 0:
+			cellOpts = tOpts.focusedCellOpts
+		default:
+			cellOpts = tOpts.cellOpts
+		}
+		cells, err := cvs.SetCell(cur, r, cellOpts...)
 		if err != nil {
 			return err
 		}

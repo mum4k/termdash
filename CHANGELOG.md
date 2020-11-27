@@ -12,12 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `container` now allows users to configure keyboard keys that move focus to
   the next or the previous container.
 - the `button` widget allows users to specify multiple trigger keys.
-- the `button` widget can now be drawn without the shadow and the pressing the
+- the `button` widget can now be drawn without the shadow and the press
   animation.
 - the `button` widget can now be drawn without horizontal padding around its
   text.
 - the `button`widget now allows specifying cell options for each cell of the
-  displayed text.
+  displayed text. Separate cell options can be specified for each of button's
+  main states (up, focused and up, down).
+- the `button` widget allows specifying separate fill color values for each of
+  its main states (up, focused and up, down).
+- added a new demo called `formdemo` under the `button` widget that
+  demonstrates the ability of `termdash` to display forms with editable content
+  and keyboard navigation.
 
 ## [0.13.0] - 17-Nov-2020
 

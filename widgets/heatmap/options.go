@@ -15,7 +15,6 @@
 package heatmap
 
 import (
-	"errors"
 	"github.com/mum4k/termdash/cell"
 )
 
@@ -31,13 +30,15 @@ type Option interface {
 type options struct {
 	// The default value is 3
 	cellWidth      int
+	hideXLabels    bool
+	hideYLabels    bool
 	xLabelCellOpts []cell.Option
 	yLabelCellOpts []cell.Option
 }
 
 // validate validates the provided options.
 func (o *options) validate() error {
-	return errors.New("not implemented")
+	return nil
 }
 
 // newOptions returns a new options instance.
@@ -64,6 +65,36 @@ func (o option) set(opts *options) {
 func CellWidth(w int) Option {
 	return option(func(opts *options) {
 		opts.cellWidth = w
+	})
+}
+
+// ShowXLabels configures the HeatMap so that it displays labels
+// on the X axis. This is the default behavior.
+func ShowXLabels() Option {
+	return option(func(opts *options) {
+		opts.hideXLabels = false
+	})
+}
+
+// ShowYLabels configures the HeatMap so that it displays labels
+// on the Y axis. This is the default behavior.
+func ShowYLabels() Option {
+	return option(func(opts *options) {
+		opts.hideYLabels = false
+	})
+}
+
+// HideXLabels disables the display of labels on the X axis.
+func HideXLabels() Option {
+	return option(func(opts *options) {
+		opts.hideXLabels = true
+	})
+}
+
+// HideYLabels disables the display of labels on the Y axis.
+func HideYLabels() Option {
+	return option(func(opts *options) {
+		opts.hideYLabels = true
 	})
 }
 

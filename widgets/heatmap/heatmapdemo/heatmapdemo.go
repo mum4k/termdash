@@ -26,6 +26,17 @@ import (
 	"github.com/mum4k/termdash/widgets/heatmap"
 )
 
+func getData() ([]string, []string, [][]float64) {
+	var values = [][]float64{
+		{1, 2, 3, 4, 5, 6},
+		{-1, -2, -3, -4, -5, -6},
+		{7, 8, 9, 10, 11, 12},
+		{12, 11, 10, 9, 8, 7},
+		{6, 5, 4, 3, 2, 1},
+	}
+	return nil, nil, values
+}
+
 func main() {
 	t, err := tcell.New()
 	if err != nil {
@@ -38,7 +49,9 @@ func main() {
 		panic(err)
 	}
 
-	// TODO: set heatmap's data
+	if err := hp.Values(getData()); err != nil {
+		panic(err)
+	}
 
 	c, err := container.New(
 		t,

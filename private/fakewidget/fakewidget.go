@@ -43,13 +43,25 @@ const (
 // MinimumSize is the minimum size required to draw this widget.
 var MinimumSize = image.Point{24, 5}
 
+// Event is an event that should be delivered to the fake widget.
+type Event struct {
+	// Ev is the event to deliver.
+	Ev terminalapi.Event
+	// Meta is metadata about the event.
+	Meta *widgetapi.EventMeta
+}
+
 // Mirror is a fake widget. The fake widget draws a border around its assigned
 // canvas and writes the size of its assigned canvas on the first line of the
-// canvas. It writes the last received keyboard event onto the second line. It
-// writes the last received mouse event onto the third line. If a non-empty
-// string is provided via the Text() method, that text will be written right
-// after the canvas size on the first line. If the widget's container is
-// focused it writes "focus" onto the fourth line.
+// canvas.
+//
+// It writes the last received keyboard event onto the second line. It
+// writes the last received mouse event onto the third line. If the widget was
+// focused at the time of the event, the event will be prepended with a "F:".
+//
+// If a non-empty string is provided via the Text() method, that text will be
+// written right after the canvas size on the first line. If the widget's
+// container is focused it writes "focus" onto the fourth line.
 //
 // The widget requests the same options that are provided to the constructor.
 // If the options or canvas size don't allow for the lines mentioned above, the
@@ -126,7 +138,7 @@ func (mi *Mirror) Text(txt string) {
 // Sending the keyboard.KeyEsc causes this widget to forget the last keyboard
 // event and return an error instead.
 // Keyboard implements widgetapi.Widget.Keyboard.
-func (mi *Mirror) Keyboard(k *terminalapi.Keyboard) error {
+func (mi *Mirror) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	mi.mu.Lock()
 	defer mi.mu.Unlock()
 
@@ -134,7 +146,11 @@ func (mi *Mirror) Keyboard(k *terminalapi.Keyboard) error {
 		mi.lines[keyboardLine] = ""
 		return fmt.Errorf("fakewidget received keyboard event: %v", k)
 	}
-	mi.lines[keyboardLine] = k.Key.String()
+	if meta.Focused {
+		mi.lines[keyboardLine] = fmt.Sprintf("F:%s", k.Key.String())
+	} else {
+		mi.lines[keyboardLine] = k.Key.String()
+	}
 	return nil
 }
 
@@ -143,7 +159,7 @@ func (mi *Mirror) Keyboard(k *terminalapi.Keyboard) error {
 // Sending the mouse.ButtonRight causes this widget to forget the last mouse
 // event and return an error instead.
 // Mouse implements widgetapi.Widget.Mouse.
-func (mi *Mirror) Mouse(m *terminalapi.Mouse) error {
+func (mi *Mirror) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	mi.mu.Lock()
 	defer mi.mu.Unlock()
 
@@ -151,7 +167,11 @@ func (mi *Mirror) Mouse(m *terminalapi.Mouse) error {
 		mi.lines[mouseLine] = ""
 		return fmt.Errorf("fakewidget received mouse event: %v", m)
 	}
-	mi.lines[mouseLine] = fmt.Sprintf("%v%v", m.Position, m.Button)
+	if meta.Focused {
+		mi.lines[mouseLine] = fmt.Sprintf("F:%v%v", m.Position, m.Button)
+	} else {
+		mi.lines[mouseLine] = fmt.Sprintf("%v%v", m.Position, m.Button)
+	}
 	return nil
 }
 
@@ -162,34 +182,34 @@ func (mi *Mirror) Options() widgetapi.Options {
 
 // Draw draws the content that would be expected after placing the Mirror
 // widget onto the provided canvas and forwarding the given events.
-func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, opts widgetapi.Options, events ...terminalapi.Event) error {
+func Draw(t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, opts widgetapi.Options, events ...*Event) error {
 	mirror := New(opts)
 	return DrawWithMirror(mirror, t, cvs, meta, events...)
 }
 
 // MustDraw is like Draw, but panics on all errors.
-func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, opts widgetapi.Options, events ...terminalapi.Event) {
+func MustDraw(t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, opts widgetapi.Options, events ...*Event) {
 	if err := Draw(t, cvs, meta, opts, events...); err != nil {
 		panic(fmt.Sprintf("Draw => %v", err))
 	}
 }
 
 // DrawWithMirror is like Draw, but uses the provided Mirror instead of creating one.
-func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, events ...terminalapi.Event) error {
+func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, events ...*Event) error {
 	for _, ev := range events {
-		switch e := ev.(type) {
+		switch e := ev.Ev.(type) {
 		case *terminalapi.Mouse:
 			if mirror.opts.WantMouse == widgetapi.MouseScopeNone {
 				continue
 			}
-			if err := mirror.Mouse(e); err != nil {
+			if err := mirror.Mouse(e, ev.Meta); err != nil {
 				return err
 			}
 		case *terminalapi.Keyboard:
 			if mirror.opts.WantKeyboard == widgetapi.KeyScopeNone {
 				continue
 			}
-			if err := mirror.Keyboard(e); err != nil {
+			if err := mirror.Keyboard(e, ev.Meta); err != nil {
 				return err
 			}
 		default:
@@ -204,7 +224,7 @@ func DrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, 
 }
 
 // MustDrawWithMirror is like DrawWithMirror, but panics on all errors.
-func MustDrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, events ...terminalapi.Event) {
+func MustDrawWithMirror(mirror *Mirror, t terminalapi.Terminal, cvs *canvas.Canvas, meta *widgetapi.Meta, events ...*Event) {
 	if err := DrawWithMirror(mirror, t, cvs, meta, events...); err != nil {
 		panic(fmt.Sprintf("DrawWithMirror => %v", err))
 	}

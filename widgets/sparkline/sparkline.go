@@ -183,12 +183,12 @@ func (sl *SparkLine) Clear() {
 }
 
 // Keyboard input isn't supported on the SparkLine widget.
-func (*SparkLine) Keyboard(k *terminalapi.Keyboard) error {
+func (*SparkLine) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	return errors.New("the SparkLine widget doesn't support keyboard events")
 }
 
 // Mouse input isn't supported on the SparkLine widget.
-func (*SparkLine) Mouse(m *terminalapi.Mouse) error {
+func (*SparkLine) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	return errors.New("the SparkLine widget doesn't support mouse events")
 }
 

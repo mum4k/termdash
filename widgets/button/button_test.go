@@ -1231,7 +1231,7 @@ func TestButton(t *testing.T) {
 			for i, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Mouse:
-					err := btn.Mouse(e)
+					err := btn.Mouse(e, &widgetapi.EventMeta{})
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantCallbackErr {
@@ -1247,7 +1247,7 @@ func TestButton(t *testing.T) {
 					}
 
 				case *terminalapi.Keyboard:
-					err := btn.Keyboard(e)
+					err := btn.Keyboard(e, &widgetapi.EventMeta{})
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantCallbackErr {

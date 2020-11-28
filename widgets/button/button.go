@@ -316,9 +316,8 @@ func (b *Button) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 func (b *Button) shadowWidth() int {
 	if b.opts.disableShadow {
 		return 0
-	} else {
-		return 1
 	}
+	return 1
 }
 
 // Options implements widgetapi.Widget.Options.

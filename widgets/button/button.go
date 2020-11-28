@@ -212,6 +212,7 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	return b.drawText(cvs, meta, buttonAr)
 }
 
+// drawText draws the text inside the button.
 func (b *Button) drawText(cvs *canvas.Canvas, meta *widgetapi.Meta, buttonAr image.Rectangle) error {
 	pad := b.opts.textHorizontalPadding
 	textAr := image.Rect(buttonAr.Min.X+pad, buttonAr.Min.Y, buttonAr.Dx()-pad, buttonAr.Max.Y)

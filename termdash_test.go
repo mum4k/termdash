@@ -255,7 +255,7 @@ func TestRun(t *testing.T) {
 					},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -286,7 +286,7 @@ func TestRun(t *testing.T) {
 					},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -355,7 +355,7 @@ func TestRun(t *testing.T) {
 					},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyF1},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -393,7 +393,7 @@ func TestRun(t *testing.T) {
 					},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonWheelUp},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -505,7 +505,7 @@ func TestController(t *testing.T) {
 					},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft

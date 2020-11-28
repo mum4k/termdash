@@ -30,9 +30,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Infrastructure changes
 - ability to configure keyboard keys that move focus to the next or the
   previous container.
-- widgets can not request keyboard events exclusively when focused.
+- widgets can now request keyboard events exclusively when focused.
+- ability to configure keyboard keys that move focus to the next or the
+  previous container.
+- `container` now allows users to configure keyboard keys that move focus to
+  the next or the previous container.
+
+#### Updates to the `button` widget
+- the `button` widget allows users to specify multiple trigger keys.
+- the `button` widget now supports different keys for the global and focused
+  scope.
+- the `button` widget can now be drawn without the shadow or the press
+  animation.
+- the `button` widget can now be drawn without horizontal padding around its
+  text.
+- the `button` widget now allows specifying cell options for each cell of the
+  displayed text. Separate cell options can be specified for each of button's
+  main states (up, focused and up, down).
+- the `button` widget allows specifying separate fill color values for each of
+  its main states (up, focused and up, down).
 
 ## [0.13.0] - 17-Nov-2020
 

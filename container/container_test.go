@@ -1145,7 +1145,7 @@ func TestKeyboard(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1213,7 +1213,7 @@ func TestKeyboard(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1435,7 +1435,7 @@ func TestMouse(t *testing.T) {
 					},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{24, 9}, Button: mouse.ButtonRelease},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1523,7 +1523,7 @@ func TestMouse(t *testing.T) {
 					},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{22, 7}, Button: mouse.ButtonRelease},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1563,7 +1563,7 @@ func TestMouse(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				fakewidget.MustDraw(
@@ -1616,7 +1616,7 @@ func TestMouse(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1656,7 +1656,7 @@ func TestMouse(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				fakewidget.MustDraw(
@@ -1709,8 +1709,9 @@ func TestMouse(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					// Also gets the key, since we are sending two events above.
 					&fakewidget.Event{
-						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
-						Meta: &widgetapi.EventMeta{},
+						Ev: &terminalapi.Keyboard{Key: keyboard.KeyTab},
+						// Also is focused at the time of the first event.
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				fakewidget.MustDraw(
@@ -1720,7 +1721,7 @@ func TestMouse(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1787,7 +1788,7 @@ func TestMouse(t *testing.T) {
 		},
 		{
 			desc:     "MouseScopeContainer, event forwarded if it falls on the container's border",
-			termSize: image.Point{21, 20},
+			termSize: image.Point{23, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -1813,12 +1814,12 @@ func TestMouse(t *testing.T) {
 
 				fakewidget.MustDraw(
 					ft,
-					testcanvas.MustNew(image.Rect(1, 1, 20, 19)),
+					testcanvas.MustNew(image.Rect(1, 1, 22, 19)),
 					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1826,7 +1827,7 @@ func TestMouse(t *testing.T) {
 		},
 		{
 			desc:     "MouseScopeGlobal, event forwarded if it falls on the container's border",
-			termSize: image.Point{21, 20},
+			termSize: image.Point{23, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -1852,12 +1853,12 @@ func TestMouse(t *testing.T) {
 
 				fakewidget.MustDraw(
 					ft,
-					testcanvas.MustNew(image.Rect(1, 1, 20, 19)),
+					testcanvas.MustNew(image.Rect(1, 1, 22, 19)),
 					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1896,7 +1897,7 @@ func TestMouse(t *testing.T) {
 		},
 		{
 			desc:     "MouseScopeContainer event forwarded if it falls outside of widget's canvas",
-			termSize: image.Point{20, 20},
+			termSize: image.Point{22, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -1918,12 +1919,12 @@ func TestMouse(t *testing.T) {
 
 				fakewidget.MustDraw(
 					ft,
-					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					testcanvas.MustNew(image.Rect(0, 4, 22, 15)),
 					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -1931,7 +1932,7 @@ func TestMouse(t *testing.T) {
 		},
 		{
 			desc:     "MouseScopeGlobal event forwarded if it falls outside of widget's canvas",
-			termSize: image.Point{20, 20},
+			termSize: image.Point{22, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -1953,12 +1954,12 @@ func TestMouse(t *testing.T) {
 
 				fakewidget.MustDraw(
 					ft,
-					testcanvas.MustNew(image.Rect(0, 5, 20, 15)),
+					testcanvas.MustNew(image.Rect(0, 4, 22, 15)),
 					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{-1, -1}, Button: mouse.ButtonLeft},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -2105,7 +2106,7 @@ func TestMouse(t *testing.T) {
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -2113,7 +2114,7 @@ func TestMouse(t *testing.T) {
 		},
 		{
 			desc:     "mouse position adjusted relative to widget's canvas, horizontal offset",
-			termSize: image.Point{30, 20},
+			termSize: image.Point{40, 30},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -2135,12 +2136,12 @@ func TestMouse(t *testing.T) {
 
 				fakewidget.MustDraw(
 					ft,
-					testcanvas.MustNew(image.Rect(6, 0, 24, 20)),
+					testcanvas.MustNew(image.Rect(6, 0, 33, 30)),
 					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				return ft
@@ -2544,7 +2545,7 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			desc:     "newly placed widget gets keyboard events",
-			termSize: image.Point{10, 10},
+			termSize: image.Point{12, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -2575,7 +2576,7 @@ func TestUpdate(t *testing.T) {
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				testcanvas.MustApply(cvs, ft)
@@ -2584,7 +2585,7 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			desc:     "newly placed widget gets mouse events",
-			termSize: image.Point{20, 10},
+			termSize: image.Point{22, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -2610,7 +2611,7 @@ func TestUpdate(t *testing.T) {
 					widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget},
 					&fakewidget.Event{
 						Ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
-						Meta: &widgetapi.EventMeta{},
+						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)
 				testcanvas.MustApply(cvs, ft)

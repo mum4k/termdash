@@ -53,11 +53,15 @@ type Event struct {
 
 // Mirror is a fake widget. The fake widget draws a border around its assigned
 // canvas and writes the size of its assigned canvas on the first line of the
-// canvas. It writes the last received keyboard event onto the second line. It
-// writes the last received mouse event onto the third line. If a non-empty
-// string is provided via the Text() method, that text will be written right
-// after the canvas size on the first line. If the widget's container is
-// focused it writes "focus" onto the fourth line.
+// canvas.
+//
+// It writes the last received keyboard event onto the second line. It
+// writes the last received mouse event onto the third line. If the widget was
+// focused at the time of the event, the event will be prepended with a "F:".
+//
+// If a non-empty string is provided via the Text() method, that text will be
+// written right after the canvas size on the first line. If the widget's
+// container is focused it writes "focus" onto the fourth line.
 //
 // The widget requests the same options that are provided to the constructor.
 // If the options or canvas size don't allow for the lines mentioned above, the
@@ -142,7 +146,11 @@ func (mi *Mirror) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) e
 		mi.lines[keyboardLine] = ""
 		return fmt.Errorf("fakewidget received keyboard event: %v", k)
 	}
-	mi.lines[keyboardLine] = k.Key.String()
+	if meta.Focused {
+		mi.lines[keyboardLine] = fmt.Sprintf("F:%s", k.Key.String())
+	} else {
+		mi.lines[keyboardLine] = k.Key.String()
+	}
 	return nil
 }
 
@@ -159,7 +167,11 @@ func (mi *Mirror) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 		mi.lines[mouseLine] = ""
 		return fmt.Errorf("fakewidget received mouse event: %v", m)
 	}
-	mi.lines[mouseLine] = fmt.Sprintf("%v%v", m.Position, m.Button)
+	if meta.Focused {
+		mi.lines[mouseLine] = fmt.Sprintf("F:%v%v", m.Position, m.Button)
+	} else {
+		mi.lines[mouseLine] = fmt.Sprintf("%v%v", m.Position, m.Button)
+	}
 	return nil
 }
 

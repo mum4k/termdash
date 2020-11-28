@@ -32,12 +32,14 @@ import (
 // keyEvents are keyboard events to send to the widget.
 type keyEvents struct {
 	k       *terminalapi.Keyboard
+	meta    *widgetapi.EventMeta
 	wantErr bool
 }
 
 // mouseEvents are mouse events to send to the widget.
 type mouseEvents struct {
 	m       *terminalapi.Mouse
+	meta    *widgetapi.EventMeta
 	wantErr bool
 }
 
@@ -131,10 +133,12 @@ func TestMirror(t *testing.T) {
 			desc: "draws the last keyboard event",
 			keyEvents: []keyEvents{
 				{
-					k: &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					k:    &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{},
 				},
 				{
-					k: &terminalapi.Keyboard{Key: keyboard.KeyEnd},
+					k:    &terminalapi.Keyboard{Key: keyboard.KeyEnd},
+					meta: &widgetapi.EventMeta{},
 				},
 			},
 			cvs:  testcanvas.MustNew(image.Rect(0, 0, 8, 4)),
@@ -150,10 +154,35 @@ func TestMirror(t *testing.T) {
 			},
 		},
 		{
+			desc: "draws the last keyboard event when focused",
+			keyEvents: []keyEvents{
+				{
+					k:    &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
+				{
+					k:    &terminalapi.Keyboard{Key: keyboard.KeyEnd},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
+			},
+			cvs:  testcanvas.MustNew(image.Rect(0, 0, 10, 4)),
+			meta: &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, cvs.Area())
+				testdraw.MustText(cvs, "(10,4)", image.Point{1, 1})
+				testdraw.MustText(cvs, "F:KeyEnd", image.Point{1, 2})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc: "skips the keyboard event if there isn't a line for it",
 			keyEvents: []keyEvents{
 				{
-					k: &terminalapi.Keyboard{Key: keyboard.KeyEnd},
+					k:    &terminalapi.Keyboard{Key: keyboard.KeyEnd},
+					meta: &widgetapi.EventMeta{},
 				},
 			},
 			cvs:  testcanvas.MustNew(image.Rect(0, 0, 8, 3)),
@@ -171,12 +200,15 @@ func TestMirror(t *testing.T) {
 			desc: "draws the last mouse event",
 			mouseEvents: []mouseEvents{
 				{
-					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					m:    &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
 				},
 				{
 					m: &terminalapi.Mouse{
 						Position: image.Point{1, 2},
-						Button:   mouse.ButtonMiddle},
+						Button:   mouse.ButtonMiddle,
+					},
+					meta: &widgetapi.EventMeta{},
 				},
 			},
 			cvs:  testcanvas.MustNew(image.Rect(0, 0, 19, 5)),
@@ -192,10 +224,38 @@ func TestMirror(t *testing.T) {
 			},
 		},
 		{
+			desc: "draws the last mouse event when focused",
+			mouseEvents: []mouseEvents{
+				{
+					m:    &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					m: &terminalapi.Mouse{
+						Position: image.Point{1, 2},
+						Button:   mouse.ButtonMiddle,
+					},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
+			},
+			cvs:  testcanvas.MustNew(image.Rect(0, 0, 21, 5)),
+			meta: &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, cvs.Area())
+				testdraw.MustText(cvs, "(21,5)", image.Point{1, 1})
+				testdraw.MustText(cvs, "F:(1,2)ButtonMiddle", image.Point{1, 3})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc: "skips the mouse event if there isn't a line for it",
 			mouseEvents: []mouseEvents{
 				{
-					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					m:    &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
 				},
 			},
 			cvs:  testcanvas.MustNew(image.Rect(0, 0, 13, 4)),
@@ -213,12 +273,14 @@ func TestMirror(t *testing.T) {
 			desc: "draws both keyboard and mouse events",
 			keyEvents: []keyEvents{
 				{
-					k: &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					k:    &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{},
 				},
 			},
 			mouseEvents: []mouseEvents{
 				{
-					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					m:    &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
 				},
 			},
 			cvs:  testcanvas.MustNew(image.Rect(0, 0, 17, 5)),
@@ -238,19 +300,23 @@ func TestMirror(t *testing.T) {
 			desc: "KeyEsc and ButtonRight reset the last event and return error",
 			keyEvents: []keyEvents{
 				{
-					k: &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					k:    &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{},
 				},
 				{
 					k:       &terminalapi.Keyboard{Key: keyboard.KeyEsc},
+					meta:    &widgetapi.EventMeta{},
 					wantErr: true,
 				},
 			},
 			mouseEvents: []mouseEvents{
 				{
-					m: &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					m:    &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
 				},
 				{
 					m:       &terminalapi.Mouse{Button: mouse.ButtonRight},
+					meta:    &widgetapi.EventMeta{},
 					wantErr: true,
 				},
 			},
@@ -276,14 +342,14 @@ func TestMirror(t *testing.T) {
 			}
 
 			for _, keyEv := range tc.keyEvents {
-				err := w.Keyboard(keyEv.k, &widgetapi.EventMeta{})
+				err := w.Keyboard(keyEv.k, keyEv.meta)
 				if (err != nil) != keyEv.wantErr {
 					t.Errorf("Keyboard => got error:%v, wantErr: %v", err, keyEv.wantErr)
 				}
 			}
 
 			for _, mouseEv := range tc.mouseEvents {
-				err := w.Mouse(mouseEv.m, &widgetapi.EventMeta{})
+				err := w.Mouse(mouseEv.m, mouseEv.meta)
 				if (err != nil) != mouseEv.wantErr {
 					t.Errorf("Mouse => got error:%v, wantErr: %v", err, mouseEv.wantErr)
 				}
@@ -376,6 +442,35 @@ func TestDraw(t *testing.T) {
 				testdraw.MustText(cvs, "(17,5)", image.Point{1, 1})
 				testdraw.MustText(cvs, "KeyEnter", image.Point{1, 2})
 				testdraw.MustText(cvs, "(0,0)ButtonLeft", image.Point{1, 3})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "draws both keyboard and mouse events while focused",
+			opts: widgetapi.Options{
+				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+			cvs:  testcanvas.MustNew(image.Rect(0, 0, 19, 5)),
+			meta: &widgetapi.Meta{},
+			events: []*Event{
+				{
+					Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					Meta: &widgetapi.EventMeta{Focused: true},
+				},
+				{
+					Ev:   &terminalapi.Mouse{Button: mouse.ButtonLeft},
+					Meta: &widgetapi.EventMeta{Focused: true},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, cvs.Area())
+				testdraw.MustText(cvs, "(19,5)", image.Point{1, 1})
+				testdraw.MustText(cvs, "F:KeyEnter", image.Point{1, 2})
+				testdraw.MustText(cvs, "F:(0,0)ButtonLeft", image.Point{1, 3})
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},

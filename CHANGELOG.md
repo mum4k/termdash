@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Updates to the `button` widget
 - the `button` widget allows users to specify multiple trigger keys.
+- the `button` widget now supports different keys for the global and focused
+  scope.
 - the `button` widget can now be drawn without the shadow and the press
   animation.
 - the `button` widget can now be drawn without horizontal padding around its

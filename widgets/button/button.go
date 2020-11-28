@@ -258,11 +258,11 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 }
 
 // activated asserts whether the keyboard event activated the button.
-func (b *Button) keyActivated(k *terminalapi.Keyboard) bool {
+func (b *Button) keyActivated(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if b.opts.keys[k.Key] {
+	if b.opts.globalKeys[k.Key] || (b.opts.focusedKeys[k.Key] && meta.Focused) {
 		b.state = button.Down
 		now := time.Now().UTC()
 		b.keyTriggerTime = &now
@@ -276,7 +276,7 @@ func (b *Button) keyActivated(k *terminalapi.Keyboard) bool {
 //
 // Implements widgetapi.Widget.Keyboard.
 func (b *Button) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
-	if b.keyActivated(k) {
+	if b.keyActivated(k, meta) {
 		// Mutex must be released when calling the callback.
 		// Users might call container methods from the callback like the
 		// Container.Update, see #205.
@@ -327,10 +327,17 @@ func (b *Button) Options() widgetapi.Options {
 
 	width := b.opts.width + b.shadowWidth() + 2*b.opts.textHorizontalPadding
 	height := b.opts.height + b.shadowWidth()
+
+	var keyScope widgetapi.KeyScope
+	if len(b.opts.focusedKeys) > 0 || len(b.opts.globalKeys) > 0 {
+		keyScope = widgetapi.KeyScopeGlobal
+	} else {
+		keyScope = widgetapi.KeyScopeNone
+	}
 	return widgetapi.Options{
 		MinimumSize:  image.Point{width, height},
 		MaximumSize:  image.Point{width, height},
-		WantKeyboard: b.opts.keyScope,
+		WantKeyboard: keyScope,
 		WantMouse:    widgetapi.MouseScopeGlobal,
 	}
 }

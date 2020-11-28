@@ -51,8 +51,8 @@ type options struct {
 	disableShadow         bool
 	height                int
 	width                 int
-	keys                  map[keyboard.Key]bool
-	keyScope              widgetapi.KeyScope
+	focusedKeys           map[keyboard.Key]bool
+	globalKeys            map[keyboard.Key]bool
 	keyUpDelay            time.Duration
 }
 
@@ -69,6 +69,12 @@ func (o *options) validate() error {
 	}
 	if min := time.Duration(0); o.keyUpDelay < min {
 		return fmt.Errorf("invalid keyUpDelay %v, must be %v <= keyUpDelay", o.keyUpDelay, min)
+	}
+
+	for k := range o.globalKeys {
+		if o.focusedKeys[k] {
+			return fmt.Errorf("key %q cannot be configured as both a focused key (options Key or Keys) and a global key (options GlobalKey or GlobalKeys)", k)
+		}
 	}
 	return nil
 }
@@ -89,7 +95,8 @@ func newOptions(text string) *options {
 		height:                DefaultHeight,
 		width:                 widthFor(text),
 		keyUpDelay:            DefaultKeyUpDelay,
-		keys:                  map[keyboard.Key]bool{},
+		focusedKeys:           map[keyboard.Key]bool{},
+		globalKeys:            map[keyboard.Key]bool{},
 	}
 }
 
@@ -165,51 +172,47 @@ func WidthFor(text string) Option {
 
 // Key configures the keyboard key that presses the button.
 // The widget responds to this key only if its container is focused.
-// When not provided, the widget ignores all keyboard events.
 //
-// Clears all keys set previously.
-// Mutually exclusive with GlobalKey() and GlobalKeys().
+// Clears all keys set by Key() or Keys() previously.
 func Key(k keyboard.Key) Option {
 	return option(func(opts *options) {
-		opts.keys = map[keyboard.Key]bool{}
-		opts.keys[k] = true
-		opts.keyScope = widgetapi.KeyScopeFocused
+		opts.focusedKeys = map[keyboard.Key]bool{}
+		opts.focusedKeys[k] = true
 	})
 }
 
 // GlobalKey is like Key, but makes the widget respond to the key even if its
 // container isn't focused.
-// When not provided, the widget ignores all keyboard events.
 //
-// Clears all keys set previously.
-// Mutually exclusive with Key() and Keys().
+// Clears all keys set by GlobalKey() or GlobalKeys() previously.
 func GlobalKey(k keyboard.Key) Option {
 	return option(func(opts *options) {
-		opts.keys = map[keyboard.Key]bool{}
-		opts.keys[k] = true
-		opts.keyScope = widgetapi.KeyScopeGlobal
+		opts.globalKeys = map[keyboard.Key]bool{}
+		opts.globalKeys[k] = true
 	})
 }
 
 // Keys is like Key, but allows to configure multiple keys.
+//
+// Clears all keys set by Key() or Keys() previously.
 func Keys(keys ...keyboard.Key) Option {
 	return option(func(opts *options) {
-		opts.keys = map[keyboard.Key]bool{}
+		opts.focusedKeys = map[keyboard.Key]bool{}
 		for _, k := range keys {
-			opts.keys[k] = true
+			opts.focusedKeys[k] = true
 		}
-		opts.keyScope = widgetapi.KeyScopeFocused
 	})
 }
 
 // GlobalKeys is like GlobalKey, but allows to configure multiple keys.
+//
+// Clears all keys set by GlobalKey() or GlobalKeys() previously.
 func GlobalKeys(keys ...keyboard.Key) Option {
 	return option(func(opts *options) {
-		opts.keys = map[keyboard.Key]bool{}
+		opts.globalKeys = map[keyboard.Key]bool{}
 		for _, k := range keys {
-			opts.keys[k] = true
+			opts.globalKeys[k] = true
 		}
-		opts.keyScope = widgetapi.KeyScopeGlobal
 	})
 }
 

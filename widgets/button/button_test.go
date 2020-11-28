@@ -63,6 +63,12 @@ func (ct *callbackTracker) callback() error {
 	return nil
 }
 
+// event represents a terminal event for tests.
+type event struct {
+	ev   terminalapi.Event
+	meta *widgetapi.EventMeta
+}
+
 func TestButton(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -73,7 +79,7 @@ func TestButton(t *testing.T) {
 
 		callback *callbackTracker
 		opts     []Option
-		events   []terminalapi.Event
+		events   []*event
 		canvas   image.Rectangle
 		meta     *widgetapi.Meta
 
@@ -90,6 +96,7 @@ func TestButton(t *testing.T) {
 		{
 			desc:       "New fails with nil callback",
 			canvas:     image.Rect(0, 0, 1, 1),
+			text:       "hello",
 			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
@@ -100,6 +107,7 @@ func TestButton(t *testing.T) {
 				KeyUpDelay(-1 * time.Second),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			text:       "hello",
 			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
@@ -110,6 +118,7 @@ func TestButton(t *testing.T) {
 				Height(0),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			text:       "hello",
 			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
@@ -120,6 +129,7 @@ func TestButton(t *testing.T) {
 				Width(0),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			text:       "hello",
 			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
@@ -130,6 +140,31 @@ func TestButton(t *testing.T) {
 				TextHorizontalPadding(-1),
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
+			text:       "hello",
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc:     "New fails when duplicate Key and GlobalKey are specified",
+			callback: &callbackTracker{},
+			opts: []Option{
+				Key('a'),
+				GlobalKey('a'),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			text:       "hello",
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc:     "New fails when duplicate Keys and GlobalKeys are specified",
+			callback: &callbackTracker{},
+			opts: []Option{
+				Keys('a'),
+				GlobalKeys('a'),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			text:       "hello",
 			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
@@ -195,9 +230,50 @@ func TestButton(t *testing.T) {
 			wantNewErr: true,
 		},
 		{
+			desc:     "NewFromChunks fails when duplicate Key and GlobalKey are specified",
+			callback: &callbackTracker{},
+			opts: []Option{
+				Key('a'),
+				GlobalKey('a'),
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			textChunks: []*TextChunk{
+				NewChunk("text"),
+			},
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc:     "NewFromChunks fails when duplicate Keys and GlobalKeys are specified",
+			callback: &callbackTracker{},
+			opts: []Option{
+				Keys('a'),
+				GlobalKeys('a'),
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			textChunks: []*TextChunk{
+				NewChunk("text"),
+			},
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
 			desc:       "NewFromChunks fails with zero chunks",
 			textChunks: []*TextChunk{},
 			callback:   &callbackTracker{},
+			opts: []Option{
+				TextHorizontalPadding(-1),
+			},
+			canvas:     image.Rect(0, 0, 1, 1),
+			meta:       &widgetapi.Meta{Focused: false},
+			wantNewErr: true,
+		},
+		{
+			desc: "NewFromChunks fails with an empty chunk",
+			textChunks: []*TextChunk{
+				NewChunk(""),
+			},
+			callback: &callbackTracker{},
 			opts: []Option{
 				TextHorizontalPadding(-1),
 			},
@@ -275,8 +351,11 @@ func TestButton(t *testing.T) {
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
 			meta:     &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -306,8 +385,11 @@ func TestButton(t *testing.T) {
 			text:   "hello",
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -334,9 +416,15 @@ func TestButton(t *testing.T) {
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
 			meta:     &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -372,8 +460,11 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -398,6 +489,47 @@ func TestButton(t *testing.T) {
 			},
 		},
 		{
+			desc:     "ignores keyboard event configured with Key when not focused",
+			callback: &callbackTracker{},
+			text:     "hello",
+			opts: []Option{
+				Key(keyboard.KeyEnter),
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: false},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				called: false,
+				count:  0,
+			},
+		},
+
+		{
 			desc:     "draws button in down state due to a keyboard event when multiple keys are specified",
 			callback: &callbackTracker{},
 			text:     "hello",
@@ -406,8 +538,11 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyTab},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -440,8 +575,11 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyTab},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -474,8 +612,11 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyTab},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -505,8 +646,11 @@ func TestButton(t *testing.T) {
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
 			meta:     &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -542,8 +686,11 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -580,8 +727,11 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -621,10 +771,19 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -657,11 +816,23 @@ func TestButton(t *testing.T) {
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
 			meta:     &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -696,9 +867,15 @@ func TestButton(t *testing.T) {
 			text:   "hello",
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			wantCallbackErr: true,
 		},
@@ -717,8 +894,11 @@ func TestButton(t *testing.T) {
 			},
 			canvas: image.Rect(0, 0, 8, 4),
 			meta:   &widgetapi.Meta{Focused: false},
-			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
 			},
 			wantCallbackErr: true,
 		},
@@ -1017,8 +1197,11 @@ func TestButton(t *testing.T) {
 		},
 		{
 			desc: "draws button with text chunks and custom fill color in down state",
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			callback: &callbackTracker{},
 			opts: []Option{
@@ -1069,8 +1252,11 @@ func TestButton(t *testing.T) {
 		},
 		{
 			desc: "draws button with text chunks and custom fill color in down focused state (focus has no impact)",
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			callback: &callbackTracker{},
 			opts: []Option{
@@ -1121,8 +1307,11 @@ func TestButton(t *testing.T) {
 		},
 		{
 			desc: "draws button with text chunks in down satte, pressed colors default to regular colors",
-			events: []terminalapi.Event{
-				&terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
 			},
 			callback: &callbackTracker{},
 			opts: []Option{
@@ -1228,10 +1417,10 @@ func TestButton(t *testing.T) {
 				}
 			}
 
-			for i, ev := range tc.events {
-				switch e := ev.(type) {
+			for i, event := range tc.events {
+				switch e := event.ev.(type) {
 				case *terminalapi.Mouse:
-					err := btn.Mouse(e, &widgetapi.EventMeta{})
+					err := btn.Mouse(e, event.meta)
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantCallbackErr {
@@ -1247,7 +1436,7 @@ func TestButton(t *testing.T) {
 					}
 
 				case *terminalapi.Keyboard:
-					err := btn.Keyboard(e, &widgetapi.EventMeta{})
+					err := btn.Keyboard(e, event.meta)
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantCallbackErr {
@@ -1263,7 +1452,7 @@ func TestButton(t *testing.T) {
 					}
 
 				default:
-					t.Fatalf("unsupported event type: %T", ev)
+					t.Fatalf("unsupported event type: %T", event.ev)
 				}
 			}
 
@@ -1403,7 +1592,7 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
-			desc: "doesn't want keyboard by default",
+			desc: "doesn't want keyboard by default without any keys",
 			text: "hello",
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{8, 4},
@@ -1413,7 +1602,7 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
-			desc: "registers for focused keyboard events",
+			desc: "registers for keyboard events when Key used",
 			text: "hello",
 			opts: []Option{
 				Key(keyboard.KeyEnter),
@@ -1421,12 +1610,12 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
-				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantKeyboard: widgetapi.KeyScopeGlobal,
 				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
-			desc: "registers for focused keyboard events when multiple keys are specified",
+			desc: "registers for keyboard events when Keys used",
 			text: "hello",
 			opts: []Option{
 				Keys(keyboard.KeyEnter, keyboard.KeyTab),
@@ -1434,12 +1623,12 @@ func TestOptions(t *testing.T) {
 			want: widgetapi.Options{
 				MinimumSize:  image.Point{8, 4},
 				MaximumSize:  image.Point{8, 4},
-				WantKeyboard: widgetapi.KeyScopeFocused,
+				WantKeyboard: widgetapi.KeyScopeGlobal,
 				WantMouse:    widgetapi.MouseScopeGlobal,
 			},
 		},
 		{
-			desc: "registers for global keyboard events",
+			desc: "registers for keyboard events when GlobalKey used",
 			text: "hello",
 			opts: []Option{
 				GlobalKey(keyboard.KeyEnter),
@@ -1452,7 +1641,7 @@ func TestOptions(t *testing.T) {
 			},
 		},
 		{
-			desc: "registers for global keyboard events when multiple keys are specified",
+			desc: "registers for keyboard events when GlobalKeys used",
 			text: "hello",
 			opts: []Option{
 				GlobalKeys(keyboard.KeyEnter, keyboard.KeyTab),

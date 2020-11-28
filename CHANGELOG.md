@@ -9,9 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking API changes
 
-- The `widgetapi.Widget.Keyboard` and `widgetapi.Widget.Mouse` method now
+- The `widgetapi.Widget.Keyboard` and `widgetapi.Widget.Mouse` methods now
   accepts a second argument which provides widgets with additional metadata.
-  This affects all implemented widgets.
+  All widgets implemented outside of the `termdash` repository will need to be
+  similarly to the `Barchart` example below. Change the original method
+  signatures:
+  ```go
+  func (*BarChart) Keyboard(k *terminalapi.Keyboard) error { ... }
+
+  func (*BarChart) Mouse(m *terminalapi.Mouse) error { ... }
+
+  ```
+
+  By adding the new `*widgetapi.EventMeta` argument as follows:
+  ```go
+  func (*BarChart) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error { ... }
+
+  func (*BarChart) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error { ... }
+  ```
 
 ### Added
 

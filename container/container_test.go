@@ -1220,6 +1220,152 @@ func TestKeyboard(t *testing.T) {
 			},
 		},
 		{
+			desc:     "keyboard event forwarded to exclusive widget only when focused",
+			termSize: image.Point{40, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeGlobal})),
+						),
+						Right(
+							SplitHorizontal(
+								Top(
+									PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
+								),
+								Bottom(
+									PlaceWidget(fakewidget.New(
+										widgetapi.Options{
+											WantKeyboard:             widgetapi.KeyScopeFocused,
+											ExclusiveKeyboardOnFocus: true,
+										},
+									)),
+								),
+							),
+						),
+					),
+				)
+			},
+			events: []terminalapi.Event{
+				// Move focus to the target container.
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonRelease},
+				// Send the keyboard event.
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				// Widget that isn't focused, but registered for global
+				// keyboard events.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 0, 20, 20)),
+					&widgetapi.Meta{},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeGlobal},
+				)
+
+				// Widget that isn't focused and only wants focused events.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(20, 0, 40, 10)),
+					&widgetapi.Meta{},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
+				)
+
+				// The focused widget receives the key.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(20, 10, 40, 20)),
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+						Meta: &widgetapi.EventMeta{Focused: true},
+					},
+				)
+				return ft
+			},
+		},
+		{
+			desc:     "the ExclusiveKeyboardOnFocus option has no effect when widget not focused",
+			termSize: image.Point{40, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeGlobal})),
+						),
+						Right(
+							SplitHorizontal(
+								Top(
+									PlaceWidget(fakewidget.New(
+										widgetapi.Options{
+											WantKeyboard:             widgetapi.KeyScopeFocused,
+											ExclusiveKeyboardOnFocus: true,
+										},
+									)),
+								),
+								Bottom(
+									PlaceWidget(fakewidget.New(
+										widgetapi.Options{
+											WantKeyboard: widgetapi.KeyScopeFocused,
+										},
+									)),
+								),
+							),
+						),
+					),
+				)
+			},
+			events: []terminalapi.Event{
+				// Move focus to the target container.
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonLeft},
+				&terminalapi.Mouse{Position: image.Point{39, 19}, Button: mouse.ButtonRelease},
+				// Send the keyboard event.
+				&terminalapi.Keyboard{Key: keyboard.KeyEnter},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+
+				// Widget that isn't focused, but registered for global
+				// keyboard events.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(0, 0, 20, 20)),
+					&widgetapi.Meta{},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeGlobal},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+						Meta: &widgetapi.EventMeta{Focused: false},
+					},
+				)
+
+				// Widget that isn't focused and only wants focused events.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(20, 0, 40, 10)),
+					&widgetapi.Meta{},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
+				)
+
+				// The focused widget receives the key.
+				fakewidget.MustDraw(
+					ft,
+					testcanvas.MustNew(image.Rect(20, 10, 40, 20)),
+					&widgetapi.Meta{Focused: true},
+					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
+					&fakewidget.Event{
+						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+						Meta: &widgetapi.EventMeta{Focused: true},
+					},
+				)
+				return ft
+			},
+		},
+		{
 			desc:     "event not forwarded if the widget didn't request it",
 			termSize: image.Point{40, 20},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

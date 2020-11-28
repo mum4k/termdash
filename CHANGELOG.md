@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ability to configure keyboard keys that move focus to the next or the
   previous container.
+- widgets can not request keyboard events exclusively when focused.
 
 ## [0.13.0] - 17-Nov-2020
 

@@ -209,7 +209,10 @@ func (b *Button) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	if err := cvs.SetAreaCells(buttonAr, buttonRune, cell.BgColor(fillColor)); err != nil {
 		return err
 	}
+	return b.drawText(cvs, meta, buttonAr)
+}
 
+func (b *Button) drawText(cvs *canvas.Canvas, meta *widgetapi.Meta, buttonAr image.Rectangle) error {
 	pad := b.opts.textHorizontalPadding
 	textAr := image.Rect(buttonAr.Min.X+pad, buttonAr.Min.Y, buttonAr.Dx()-pad, buttonAr.Max.Y)
 	start, err := alignfor.Text(textAr, b.text.String(), align.HorizontalCenter, align.VerticalMiddle)

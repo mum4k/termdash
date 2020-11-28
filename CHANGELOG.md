@@ -30,8 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Infrastructure changes
+- ability to configure keyboard keys that move focus to the next or the
+  previous container.
+- widgets can now request keyboard events exclusively when focused.
+- ability to configure keyboard keys that move focus to the next or the
+  previous container.
 - `container` now allows users to configure keyboard keys that move focus to
   the next or the previous container.
+
+#### Updates to the `button` widget
 - the `button` widget allows users to specify multiple trigger keys.
 - the `button` widget can now be drawn without the shadow and the press
   animation.

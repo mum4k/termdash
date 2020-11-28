@@ -369,6 +369,9 @@ func (c *Container) keyEvTargets() []*keyEvTarget {
 	var (
 		errStr  string
 		targets []*keyEvTarget
+		// If the currently focused widget set the ExclusiveKeyboardOnFocus
+		// option, this pointer is set to that widget.
+		exclusiveWidget widgetapi.Widget
 	)
 
 	// All the targets that should receive this event.
@@ -383,6 +386,10 @@ func (c *Container) keyEvTargets() []*keyEvTarget {
 			Focused: focused,
 		}
 		wOpt := cur.opts.widget.Options()
+		if focused && wOpt.ExclusiveKeyboardOnFocus {
+			exclusiveWidget = cur.opts.widget
+		}
+
 		switch wOpt.WantKeyboard {
 		case widgetapi.KeyScopeNone:
 			// Widget doesn't want any keyboard events.
@@ -398,6 +405,12 @@ func (c *Container) keyEvTargets() []*keyEvTarget {
 		}
 		return nil
 	}))
+
+	if exclusiveWidget != nil {
+		targets = []*keyEvTarget{
+			newKeyEvTarget(exclusiveWidget, &widgetapi.EventMeta{Focused: true}),
+		}
+	}
 	return targets
 }
 

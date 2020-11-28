@@ -1441,7 +1441,7 @@ func TestTextInput(t *testing.T) {
 			for i, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Mouse:
-					err := ti.Mouse(e)
+					err := ti.Mouse(e, &widgetapi.EventMeta{})
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantEventErr {
@@ -1457,7 +1457,7 @@ func TestTextInput(t *testing.T) {
 					}
 
 				case *terminalapi.Keyboard:
-					err := ti.Keyboard(e)
+					err := ti.Keyboard(e, &widgetapi.EventMeta{})
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantEventErr {
@@ -1551,7 +1551,7 @@ func TestTextInputRead(t *testing.T) {
 			for _, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Keyboard:
-					err := ti.Keyboard(e)
+					err := ti.Keyboard(e, &widgetapi.EventMeta{})
 					if err != nil {
 						t.Fatalf("Keyboard => unexpected error: %v", err)
 					}

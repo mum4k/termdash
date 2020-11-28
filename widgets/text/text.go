@@ -234,7 +234,7 @@ func (t *Text) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 }
 
 // Keyboard implements widgetapi.Widget.Keyboard.
-func (t *Text) Keyboard(k *terminalapi.Keyboard) error {
+func (t *Text) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -252,7 +252,7 @@ func (t *Text) Keyboard(k *terminalapi.Keyboard) error {
 }
 
 // Mouse implements widgetapi.Widget.Mouse.
-func (t *Text) Mouse(m *terminalapi.Mouse) error {
+func (t *Text) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 

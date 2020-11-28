@@ -320,7 +320,7 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 		}
 		return func() error {
 			for _, mt := range targets {
-				if err := mt.widget.Mouse(mt.ev); err != nil {
+				if err := mt.widget.Mouse(mt.ev, mt.meta); err != nil {
 					return err
 				}
 			}
@@ -328,16 +328,12 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 		}, nil
 
 	case *terminalapi.Keyboard:
-		targets := c.keyEvTargets()
-
-		// Update the focused container based on the pressed key.
-		// Done after collecting "targets" above. If the key changes which
-		// container is focused, they key press itself should go to the widget
-		// that was focused when the key was pressed.
 		c.updateFocusFromKeyboard(ev.(*terminalapi.Keyboard))
+
+		targets := c.keyEvTargets()
 		return func() error {
-			for _, w := range targets {
-				if err := w.Keyboard(e); err != nil {
+			for _, kt := range targets {
+				if err := kt.widget.Keyboard(e, kt.meta); err != nil {
 					return err
 				}
 			}
@@ -349,22 +345,43 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 	}
 }
 
+// keyEvTarget contains a widget that should receive an event and the metadata
+// for the event.
+type keyEvTarget struct {
+	// widget is the widget that should receive the keyboard event.
+	widget widgetapi.Widget
+	// meta is the metadata about the event.
+	meta *widgetapi.EventMeta
+}
+
+// newKeyEvTarget returns a new keyEvTarget.
+func newKeyEvTarget(w widgetapi.Widget, meta *widgetapi.EventMeta) *keyEvTarget {
+	return &keyEvTarget{
+		widget: w,
+		meta:   meta,
+	}
+}
+
 // keyEvTargets returns those widgets found in the container that should
 // receive this keyboard event.
 // Caller must hold c.mu.
-func (c *Container) keyEvTargets() []widgetapi.Widget {
+func (c *Container) keyEvTargets() []*keyEvTarget {
 	var (
 		errStr  string
-		widgets []widgetapi.Widget
+		targets []*keyEvTarget
 	)
 
-	// All the widgets that should receive this event.
+	// All the targets that should receive this event.
 	// For now stable ordering (preOrder).
 	preOrder(c, &errStr, visitFunc(func(cur *Container) error {
 		if !cur.hasWidget() {
 			return nil
 		}
 
+		focused := cur.focusTracker.isActive(cur)
+		meta := &widgetapi.EventMeta{
+			Focused: focused,
+		}
 		wOpt := cur.opts.widget.Options()
 		switch wOpt.WantKeyboard {
 		case widgetapi.KeyScopeNone:
@@ -372,32 +389,35 @@ func (c *Container) keyEvTargets() []widgetapi.Widget {
 			return nil
 
 		case widgetapi.KeyScopeFocused:
-			if cur.focusTracker.isActive(cur) {
-				widgets = append(widgets, cur.opts.widget)
+			if focused {
+				targets = append(targets, newKeyEvTarget(cur.opts.widget, meta))
 			}
 
 		case widgetapi.KeyScopeGlobal:
-			widgets = append(widgets, cur.opts.widget)
+			targets = append(targets, newKeyEvTarget(cur.opts.widget, meta))
 		}
 		return nil
 	}))
-	return widgets
+	return targets
 }
 
-// mouseEvTarget contains a mouse event adjusted relative to the widget's area
-// and the widget that should receive it.
+// mouseEvTarget contains a mouse event adjusted relative to the widget's area,
+// the widget that should receive it and metadata about the event.
 type mouseEvTarget struct {
 	// widget is the widget that should receive the mouse event.
 	widget widgetapi.Widget
 	// ev is the adjusted mouse event.
 	ev *terminalapi.Mouse
+	// meta is the metadata about the event.
+	meta *widgetapi.EventMeta
 }
 
-// newMouseEvTarget returns a new newMouseEvTarget.
-func newMouseEvTarget(w widgetapi.Widget, wArea image.Rectangle, ev *terminalapi.Mouse) *mouseEvTarget {
+// newMouseEvTarget returns a new mouseEvTarget.
+func newMouseEvTarget(w widgetapi.Widget, wArea image.Rectangle, ev *terminalapi.Mouse, meta *widgetapi.EventMeta) *mouseEvTarget {
 	return &mouseEvTarget{
 		widget: w,
 		ev:     adjustMouseEv(ev, wArea),
+		meta:   meta,
 	}
 }
 
@@ -423,6 +443,9 @@ func (c *Container) mouseEvTargets(m *terminalapi.Mouse) ([]*mouseEvTarget, erro
 			return err
 		}
 
+		meta := &widgetapi.EventMeta{
+			Focused: cur.focusTracker.isActive(cur),
+		}
 		switch wOpts.WantMouse {
 		case widgetapi.MouseScopeNone:
 			// Widget doesn't want any mouse events.
@@ -431,18 +454,18 @@ func (c *Container) mouseEvTargets(m *terminalapi.Mouse) ([]*mouseEvTarget, erro
 		case widgetapi.MouseScopeWidget:
 			// Only if the event falls inside of the widget's canvas.
 			if m.Position.In(wa) {
-				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m))
+				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m, meta))
 			}
 
 		case widgetapi.MouseScopeContainer:
 			// Only if the event falls inside the widget's parent container.
 			if m.Position.In(cur.area) {
-				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m))
+				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m, meta))
 			}
 
 		case widgetapi.MouseScopeGlobal:
 			// Widget wants all mouse events.
-			widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m))
+			widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m, meta))
 		}
 		return nil
 	}))

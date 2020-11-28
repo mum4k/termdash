@@ -130,6 +130,13 @@ type Options struct {
 	// forwarded to the widget.
 	WantKeyboard KeyScope
 
+	// ExclusiveKeyboardOnFocus allows a widget to request exclusive access to
+	// keyboard events when its container is focused. When set to true, no
+	// other widgets will receive any keyboard events that happen while the
+	// container of this widget is focused even if they registered for
+	// KeyScopeGlobal.
+	ExclusiveKeyboardOnFocus bool
+
 	// WantMouse allows a widget to request mouse events and specify their
 	// desired scope. If set to MouseScopeNone, no mouse events are forwarded
 	// to the widget.

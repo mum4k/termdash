@@ -92,7 +92,7 @@ func (ft *focusTracker) next() {
 			return nil
 		}
 
-		if c.isLeaf() && firstCont == nil {
+		if c.isLeaf() && !c.opts.keyFocusSkip && firstCont == nil {
 			// Remember the first eligible container in case we "wrap" over,
 			// i.e. finish the iteration before finding the next container.
 			firstCont = c
@@ -105,7 +105,7 @@ func (ft *focusTracker) next() {
 			return nil
 		}
 
-		if c.isLeaf() && focusNext {
+		if c.isLeaf() && !c.opts.keyFocusSkip && focusNext {
 			nextCont = c
 		}
 		return nil
@@ -133,7 +133,7 @@ func (ft *focusTracker) previous() {
 			visitedCurr = true
 		}
 
-		if c.isLeaf() {
+		if c.isLeaf() && !c.opts.keyFocusSkip {
 			if !visitedCurr {
 				// Remember the last eligible container closest to the one
 				// currently focused.

@@ -132,6 +132,10 @@ type options struct {
 
 	// margin is a space reserved on the outside of the container.
 	margin margin
+
+	// keyFocusSkip asserts whether this container should be skipped when focus
+	// is being moved using either of KeyFocusNext or KeyFocusPrevious.
+	keyFocusSkip bool
 }
 
 // margin stores the configured margin for the container.
@@ -870,6 +874,18 @@ func KeyFocusNext(key keyboard.Key) Option {
 func KeyFocusPrevious(key keyboard.Key) Option {
 	return option(func(c *Container) error {
 		c.opts.global.keyFocusPrevious = &key
+		return nil
+	})
+}
+
+// KeyFocusSkip indicates that this container should never receive the keyboard
+// focus when KeyFocusNext or KeyFocusPrevious is pressed.
+//
+// A container configured like this would still receive the keyboard focus when
+// directly clicked on with a mouse.
+func KeyFocusSkip() Option {
+	return option(func(c *Container) error {
+		c.opts.keyFocusSkip = true
 		return nil
 	})
 }

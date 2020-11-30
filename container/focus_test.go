@@ -265,7 +265,7 @@ func TestPointCont(t *testing.T) {
 // locations on test failures.
 func contLocIntro() string {
 	var s strings.Builder
-	s.WriteString("Container locations refer to containers in the following three, i.e. contLocA is the root container:\n")
+	s.WriteString("Container locations refer to containers in the following tree, i.e. contLocA is the root container:\n")
 	s.WriteString(`
     A
    / \
@@ -757,6 +757,132 @@ func TestFocusTrackerNextAndPrevious(t *testing.T) {
 			},
 			wantFocused:   contLocC,
 			wantProcessed: 5,
+		},
+		{
+			desc: "first container requests to be skipped on key based focus changes, using next",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							KeyFocusSkip(),
+						),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+			},
+			wantFocused:   contLocC,
+			wantProcessed: 1,
+		},
+		{
+			desc: "last container requests to be skipped on key based focus changes, using next",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(
+							KeyFocusSkip(),
+						),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+				{Key: keyNext},
+			},
+			wantFocused:   contLocB,
+			wantProcessed: 2,
+		},
+		{
+			desc: "all containers request to be skipped on key based focus changes, using next",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							KeyFocusSkip(),
+						),
+						Right(
+							KeyFocusSkip(),
+						),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyNext},
+			},
+			wantFocused:   contLocA,
+			wantProcessed: 1,
+		},
+		{
+			desc: "first container requests to be skipped on key based focus changes, using previous",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							KeyFocusSkip(),
+						),
+						Right(),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocC,
+			wantProcessed: 2,
+		},
+		{
+			desc: "last container requests to be skipped on key based focus changes, using previous",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(
+							KeyFocusSkip(),
+						),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocB,
+			wantProcessed: 1,
+		},
+		{
+			desc: "all containers request to be skipped on key based focus changes, using previous",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							KeyFocusSkip(),
+						),
+						Right(
+							KeyFocusSkip(),
+						),
+					),
+					KeyFocusPrevious(keyPrevious),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: keyPrevious},
+			},
+			wantFocused:   contLocA,
+			wantProcessed: 1,
 		},
 	}
 

@@ -940,7 +940,7 @@ func KeyFocusGroup(group int) Option {
 // This option is global and applies to all created containers.
 // Pressing either of (KeyFocusNext, KeyFocusPrevious) still moves the focus to
 // any container regardless of its focus group.
-func KeyFocusGroupNext(group int, keys []keyboard.Key) Option {
+func KeysFocusGroupNext(group int, keys []keyboard.Key) Option {
 	return option(func(c *Container) error {
 		if min := 0; group < min {
 			return fmt.Errorf("invalid group %d, must be 0 <= group", group)
@@ -978,7 +978,7 @@ func KeyFocusGroupNext(group int, keys []keyboard.Key) Option {
 // This option is global and applies to all created containers.
 // Pressing either of (KeyFocusNext, KeyFocusPrevious) still moves the focus to
 // any container regardless of its focus group.
-func KeyFocusGroupPrevious(group int, keys []keyboard.Key) Option {
+func KeysFocusGroupPrevious(group int, keys []keyboard.Key) Option {
 	return option(func(c *Container) error {
 		if min := 0; group < min {
 			return fmt.Errorf("invalid group %d, must be 0 <= group", group)

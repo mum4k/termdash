@@ -136,6 +136,8 @@ type options struct {
 	// keyFocusSkip asserts whether this container should be skipped when focus
 	// is being moved using either of KeyFocusNext or KeyFocusPrevious.
 	keyFocusSkip bool
+	// keyFocusGroup is the focus group this container belongs to.
+	keyFocusGroup int
 }
 
 // margin stores the configured margin for the container.
@@ -194,6 +196,10 @@ type inherited struct {
 	focusedColor cell.Color
 }
 
+// focusGroups maps focus group numbers that have the same key assigned.
+// The value is always true for all keys.
+type focusGroups map[int]bool
+
 // globalOptions are options that can only have a single value across the
 // entire tree of containers.
 // Regardless of which container they get set on, the new value will take
@@ -203,6 +209,12 @@ type globalOptions struct {
 	keyFocusNext *keyboard.Key
 	// keyFocusPrevious when set is the key that moves the focus to the previous container.
 	keyFocusPrevious *keyboard.Key
+	// keysFocusGroupNext maps keyboard keys that move to the next container
+	// within a focus group to the focus groups they should work on.
+	keysFocusGroupsNext map[keyboard.Key]focusGroups
+	// keysFocusGroupPrevious maps keyboard keys that move to the previous
+	// container within a focus group to the focus groups they should work on.
+	keysFocusGroupsPrevious map[keyboard.Key]focusGroups
 }
 
 // newOptions returns a new options instance with the default values.
@@ -210,7 +222,10 @@ type globalOptions struct {
 // options are for a container with no parent (the root).
 func newOptions(parent *options) *options {
 	opts := &options{
-		global: &globalOptions{},
+		global: &globalOptions{
+			keysFocusGroupsNext:     map[keyboard.Key]focusGroups{},
+			keysFocusGroupsPrevious: map[keyboard.Key]focusGroups{},
+		},
 		inherited: inherited{
 			focusedColor: cell.ColorYellow,
 		},
@@ -886,6 +901,101 @@ func KeyFocusPrevious(key keyboard.Key) Option {
 func KeyFocusSkip() Option {
 	return option(func(c *Container) error {
 		c.opts.keyFocusSkip = true
+		return nil
+	})
+}
+
+// KeyFocusGroup assigns this container to a focus group of the specified
+// number.
+//
+// See either of (KeysFocusGroupNext, KeysFocusGroupPrevious) for a description
+// of focus groups.
+//
+// If not specified, the container becomes part of the default focus group
+// zero.
+func KeyFocusGroup(group int) Option {
+	return option(func(c *Container) error {
+		if min := 0; group < min {
+			return fmt.Errorf("invalid group %d, must be 0 <= group", group)
+		}
+		c.opts.keyFocusGroup = group
+		return nil
+	})
+}
+
+// KeysFocusGroupNext configures keys that move the keyboard focus to the next
+// container within a focus group.
+//
+// Containers are assigned to focus groups using the KeyFocusGroup option.
+// The group parameter indicates which group are these keys attached to.
+//
+// A key configured using KeysFocusGroupNext only moves focus if the container
+// that is currently focused is part of the same focus group as the group
+// parameter in this call. The keyboard focus only gets moved to the next
+// container in the same focus group, other containers are ignored.
+//
+// The order in which the containers in the group are visited is the same as
+// with the KeyFocusNext option.
+//
+// This option is global and applies to all created containers.
+// Pressing either of (KeyFocusNext, KeyFocusPrevious) still moves the focus to
+// any container regardless of its focus group.
+func KeyFocusGroupNext(group int, keys []keyboard.Key) Option {
+	return option(func(c *Container) error {
+		if min := 0; group < min {
+			return fmt.Errorf("invalid group %d, must be 0 <= group", group)
+		}
+		for _, k := range keys {
+			if g := c.opts.global.keysFocusGroupsPrevious[k]; len(g) > 0 {
+				return fmt.Errorf("key %q is already assigned as a KeyFocusGroupPrevious for focus groups %v", k, g)
+			}
+
+			fg, ok := c.opts.global.keysFocusGroupsNext[k]
+			if !ok {
+				fg = focusGroups{}
+				c.opts.global.keysFocusGroupsNext[k] = fg
+			}
+			fg[group] = true
+		}
+		return nil
+	})
+}
+
+// KeysFocusGroupPrevious configures keys that move the keyboard focus to the
+// previous container within a focus group.
+//
+// Containers are assigned to focus groups using the KeyFocusGroup option.
+// The group parameter indicates which group are these keys attached to.
+//
+// A key configured using KeysFocusGroupPrevious only moves focus if the
+// container that is currently focused is part of the same focus group as the
+// group parameter in this call. The keyboard focus only gets moved to the
+// previous container in the same focus group, other containers are ignored.
+//
+// The order in which the containers in the group are visited is the same as
+// with the KeyFocusPrevious option.
+//
+// This option is global and applies to all created containers.
+// Pressing either of (KeyFocusNext, KeyFocusPrevious) still moves the focus to
+// any container regardless of its focus group.
+func KeyFocusGroupPrevious(group int, keys []keyboard.Key) Option {
+	return option(func(c *Container) error {
+		if min := 0; group < min {
+			return fmt.Errorf("invalid group %d, must be 0 <= group", group)
+		}
+
+		for _, k := range keys {
+			if g := c.opts.global.keysFocusGroupsNext[k]; len(g) > 0 {
+				return fmt.Errorf("key %q is already assigned as a KeyFocusGroupNext for focus groups %v", k, g)
+			}
+
+			fg, ok := c.opts.global.keysFocusGroupsPrevious[k]
+			if !ok {
+				fg = focusGroups{}
+				c.opts.global.keysFocusGroupsPrevious[k] = fg
+			}
+			fg[group] = true
+		}
 		return nil
 	})
 }

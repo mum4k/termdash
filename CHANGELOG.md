@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ability to configure keyboard keys that move focus to the next or the
   previous container.
 - containers can request to be skipped when focus is moved using keyboard keys.
+- containers can register into separate focus groups and specific keyboard keys
+  can be configured to move the focus within each focus group.
 - widgets can now request keyboard events exclusively when focused.
 - ability to configure keyboard keys that move focus to the next or the
   previous container.

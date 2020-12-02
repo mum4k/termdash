@@ -279,11 +279,18 @@ func (c *Container) updateFocusFromMouse(m *terminalapi.Mouse) {
 // changes the focused container.
 // Caller must hold c.mu.
 func (c *Container) updateFocusFromKeyboard(k *terminalapi.Keyboard) {
+	inNextFg, isGroupKeyForNext := c.opts.global.keysFocusGroupsNext[k.Key]
+	inPrevFg, isGroupKeyForPrev := c.opts.global.keysFocusGroupsPrevious[k.Key]
+
 	switch {
 	case c.opts.global.keyFocusNext != nil && *c.opts.global.keyFocusNext == k.Key:
-		c.focusTracker.next()
+		c.focusTracker.next( /* group = */ nil)
 	case c.opts.global.keyFocusPrevious != nil && *c.opts.global.keyFocusPrevious == k.Key:
-		c.focusTracker.previous()
+		c.focusTracker.previous( /* group = */ nil)
+	case isGroupKeyForNext && inNextFg[c.opts.keyFocusGroup]:
+		c.focusTracker.next(&c.opts.keyFocusGroup)
+	case isGroupKeyForPrev && inPrevFg[c.opts.keyFocusGroup]:
+		c.focusTracker.previous(&c.opts.keyFocusGroup)
 	}
 }
 

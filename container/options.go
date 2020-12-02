@@ -897,7 +897,8 @@ func KeyFocusPrevious(key keyboard.Key) Option {
 // focus when KeyFocusNext or KeyFocusPrevious is pressed.
 //
 // A container configured like this would still receive the keyboard focus when
-// directly clicked on with a mouse.
+// directly clicked on with a mouse or when via KeysFocusGroupNext or
+// KeysFocusGroupPrevious.
 func KeyFocusSkip() Option {
 	return option(func(c *Container) error {
 		c.opts.keyFocusSkip = true

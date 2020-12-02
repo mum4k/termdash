@@ -884,6 +884,120 @@ func TestFocusTrackerNextAndPrevious(t *testing.T) {
 			wantFocused:   contLocA,
 			wantProcessed: 1,
 		},
+		{
+			desc: "all containers are in focus group zero by default, pressing KeysFocusGroupNext once focuses the first container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeysFocusGroupNext(0, []keyboard.Key{'n'}),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: 'n'},
+			},
+			wantFocused:   contLocB,
+			wantProcessed: 1,
+		},
+		{
+			desc: "all containers are in focus group zero by default, pressing KeysFocusGroupNext twice focuses the second container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeysFocusGroupNext(0, []keyboard.Key{'n'}),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: 'n'},
+				{Key: 'n'},
+			},
+			wantFocused:   contLocC,
+			wantProcessed: 2,
+		},
+		{
+			desc: "all containers are in focus group zero by default, pressing KeysFocusGroupNext three times focuses the first container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeysFocusGroupNext(0, []keyboard.Key{'n'}),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: 'n'},
+				{Key: 'n'},
+				{Key: 'n'},
+			},
+			wantFocused:   contLocB,
+			wantProcessed: 3,
+		},
+		{
+			desc: "all containers are in focus group zero by default, pressing KeysFocusGroupPrevious once focuses the second container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeysFocusGroupPrevious(0, []keyboard.Key{'p'}),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: 'p'},
+			},
+			wantFocused:   contLocC,
+			wantProcessed: 1,
+		},
+		{
+			desc: "all containers are in focus group zero by default, pressing KeysFocusGroupPrevious twice focuses the first container",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeysFocusGroupPrevious(0, []keyboard.Key{'p'}),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: 'p'},
+				{Key: 'p'},
+			},
+			wantFocused:   contLocB,
+			wantProcessed: 2,
+		},
+		{
+			desc: "all containers are in focus group zero by default, pressing KeysFocusGroupPrevious three times focuses the second container again",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeysFocusGroupPrevious(0, []keyboard.Key{'p'}),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: 'p'},
+				{Key: 'p'},
+				{Key: 'p'},
+			},
+			wantFocused:   contLocC,
+			wantProcessed: 3,
+		},
 	}
 
 	for _, tc := range tests {

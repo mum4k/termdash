@@ -81,22 +81,39 @@ func rowLabel(row int, label string, labelWidth int) (*Label, error) {
 // X coordinates grow right.
 func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) ([]*Label, error) {
 	var ret []*Label
+	ls := LongestString(labels)
 
-	length, index := paddedLabelLength(graphWidth, LongestString(labels), cellWidth)
+	if ls > cellWidth {
+		length, index := paddedLabelLength(graphWidth, ls, cellWidth)
+		for x := yEnd.X + 1; x <= graphWidth && index < len(labels); x += length {
+			ar := image.Rect(x, yEnd.Y, x+length, yEnd.Y+1)
+			pos, err := alignfor.Text(ar, labels[index], align.HorizontalCenter, align.VerticalMiddle)
+			if err != nil {
+				return nil, fmt.Errorf("unable to align the label value: %v", err)
+			}
 
-	for x := yEnd.X + 1; x <= graphWidth && index < len(labels); x += length {
-		ar := image.Rect(x, yEnd.Y, x+length, yEnd.Y+1)
-		pos, err := alignfor.Text(ar, labels[index], align.HorizontalCenter, align.VerticalMiddle)
-		if err != nil {
-			return nil, fmt.Errorf("unable to align the label value: %v", err)
+			l := &Label{
+				Text: labels[index],
+				Pos:  pos,
+			}
+			index += length / cellWidth
+			ret = append(ret, l)
 		}
+	} else {
+		for x := 0; x < len(labels); x++ {
+			startX := yEnd.X + 1 + x*cellWidth
+			ar := image.Rect(startX, yEnd.Y, startX+cellWidth, yEnd.Y+1)
+			pos, err := alignfor.Text(ar, labels[x], align.HorizontalCenter, align.VerticalMiddle)
+			if err != nil {
+				return nil, fmt.Errorf("unable to align the label value: %v", err)
+			}
 
-		l := &Label{
-			Text: labels[index],
-			Pos:  pos,
+			l := &Label{
+				Text: labels[x],
+				Pos:  pos,
+			}
+			ret = append(ret, l)
 		}
-		index += length / cellWidth
-		ret = append(ret, l)
 	}
 
 	return ret, nil

@@ -28,7 +28,6 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	// The default value is 3
 	cellWidth      int
 	hideXLabels    bool
 	hideYLabels    bool
@@ -38,13 +37,16 @@ type options struct {
 
 // validate validates the provided options.
 func (o *options) validate() error {
+	//if got, min := o.cellWidth, DefaultCellWidth; got < min {
+	//	return fmt.Errorf("invalid CellWidth %d, must be %d <= CellWidth", got, min)
+	//}
 	return nil
 }
 
 // newOptions returns a new options instance.
 func newOptions(opts ...Option) *options {
 	opt := &options{
-		cellWidth: 3,
+		//cellWidth: DefaultCellWidth,
 	}
 	for _, o := range opts {
 		o.set(opt)
@@ -59,6 +61,8 @@ type option func(*options)
 func (o option) set(opts *options) {
 	o(opts)
 }
+
+//const DefaultCellWidth = 3
 
 // CellWidth set the width of cells (or grids) in the heat map, not the terminal cell.
 // The default height of each cell (grid) is 1 and the width is 3.

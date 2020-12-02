@@ -27,6 +27,21 @@ import (
 )
 
 func getData() ([]string, []string, [][]float64) {
+	var xl = []string{
+		"one",
+		"two",
+		"three",
+		"four",
+		"five",
+		"six",
+	}
+	var yl = []string{
+		"one",
+		"two",
+		"three",
+		"four",
+		"five",
+	}
 	var values = [][]float64{
 		{1, 2, 3, 4, 5, 6},
 		{-1, -2, -3, -4, -5, -6},
@@ -34,7 +49,7 @@ func getData() ([]string, []string, [][]float64) {
 		{12, 11, 10, 9, 8, 7},
 		{6, 5, 4, 3, 2, 1},
 	}
-	return nil, nil, values
+	return xl, yl, values
 }
 
 func main() {

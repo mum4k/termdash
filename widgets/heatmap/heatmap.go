@@ -155,6 +155,8 @@ func (hp *HeatMap) ValueCapacity() int {
 
 // axesDetails determines the details about the X and Y axes.
 func (hp *HeatMap) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetails, error) {
+	hp.cellWidthAdaptive(cvs)
+
 	yd, err := axes.NewYDetails(hp.yLabels)
 	if err != nil {
 		return nil, nil, err
@@ -188,7 +190,7 @@ func (hp *HeatMap) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		return err
 	}
 
-	err = hp.drawCells(cvs, xd, yd)
+	err = hp.drawCells(cvs, yd)
 	if err != nil {
 		return err
 	}
@@ -198,10 +200,10 @@ func (hp *HeatMap) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 
 // drawCells draws m*n cells (rectangles) representing the stored values.
 // The height of each cell is 1 and the default width is 3.
-func (hp *HeatMap) drawCells(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
+func (hp *HeatMap) drawCells(cvs *canvas.Canvas, yd *axes.YDetails) error {
 	for i := 0; i < len(hp.values); i++ {
-		for j := 0; j < len(hp.values[i]); j++ {
-			startX := xd.Labels[j].Pos.X
+		for j := 0; j < len(hp.values[0]); j++ {
+			startX := yd.Start.X + axes.AxisWidth + j*hp.opts.cellWidth
 			startY := yd.Labels[i].Pos.Y
 
 			endX := startX + hp.opts.cellWidth
@@ -223,8 +225,6 @@ func (hp *HeatMap) drawCells(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDe
 func (hp *HeatMap) drawLabels(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
 	for _, l := range yd.Labels {
 		if err := draw.Text(cvs, l.Text, l.Pos,
-			draw.TextMaxX(yd.Start.X),
-			draw.TextOverrunMode(draw.OverrunModeThreeDot),
 			draw.TextCellOpts(hp.opts.yLabelCellOpts...),
 		); err != nil {
 			return fmt.Errorf("failed to draw the Y labels: %v", err)
@@ -233,10 +233,26 @@ func (hp *HeatMap) drawLabels(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YD
 
 	for _, l := range xd.Labels {
 		if err := draw.Text(cvs, l.Text, l.Pos, draw.TextCellOpts(hp.opts.xLabelCellOpts...)); err != nil {
-			return fmt.Errorf("failed to draw the X horizontal labels: %v", err)
+			return fmt.Errorf("failed to draw the X labels: %v", err)
 		}
 	}
 	return nil
+}
+
+const minCellWidth = 3
+
+// cellWidth determines the width of a single cell (grid) based on options and the canvas.
+func (hp *HeatMap) cellWidthAdaptive(cvs *canvas.Canvas) {
+	if hp.opts.cellWidth < minCellWidth {
+
+		rem := cvs.Area().Dx() - axes.LongestString(hp.yLabels)
+		cw := rem / len(hp.values[0])
+		if cw >= minCellWidth {
+			hp.opts.cellWidth = cw
+		} else {
+			hp.opts.cellWidth = minCellWidth
+		}
+	}
 }
 
 // minSize determines the minimum required size to draw HeatMap.
@@ -244,7 +260,7 @@ func (hp *HeatMap) minSize() image.Point {
 	// At the very least we need:
 	// - n unit width for the Y axis and its labels.
 	// - m unit width for the graph.
-	reqWidth := axes.LongestString(hp.yLabels) + axes.AxisWidth + hp.opts.cellWidth*len(hp.values[0])
+	reqWidth := axes.LongestString(hp.yLabels) + axes.AxisWidth + minCellWidth*len(hp.values[0])
 
 	// For the height:
 	// - 1 unit height for labels on the X axis.

@@ -24,7 +24,41 @@ import (
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/heatmap"
+	"math/rand"
+	"time"
 )
+
+// playHeatMap continuously changes the displayed values on the heat map once every delay.
+// Exits when the context expires.
+func playHeatMap(ctx context.Context, hp *heatmap.HeatMap, delay time.Duration) {
+	const max = 100
+
+	ticker := time.NewTicker(delay)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			maxRows, maxCols := hp.ValueCapacity()
+			rows := rand.Intn(maxRows) + 1
+			cols := rand.Intn(maxCols) + 1
+
+			var values [][]float64
+			for i := 0; i < rows; i++ {
+				rv := make([]float64, cols)
+				for j := 0; j < cols; j++ {
+					rv = append(rv, float64(rand.Int31n(max+1)))
+				}
+				values = append(values, rv)
+			}
+
+			if err := hp.Values(nil, nil, values); err != nil {
+				panic(err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
 
 func getData() ([]string, []string, [][]float64) {
 	var xl = []string{
@@ -68,6 +102,9 @@ func main() {
 		panic(err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	go playHeatMap(ctx, hp, 1*time.Second)
+
 	c, err := container.New(
 		t,
 		container.Border(linestyle.Light),
@@ -77,8 +114,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {

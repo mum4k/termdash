@@ -57,6 +57,8 @@ type HeatMap struct {
 
 	// lastWidth is the width of the canvas as of the last time when Draw was called.
 	lastWidth int
+	// lastWidth is the height of the canvas as of the last time when Draw was called.
+	lastHeight int
 
 	// opts are the provided options.
 	opts *options
@@ -142,15 +144,26 @@ func (hp *HeatMap) ClearYLabels() {
 	hp.yLabels = nil
 }
 
-// ValueCapacity returns the number of values that can fit into the canvas.
+// ValueCapacity returns the number of rows and columns of the heat map
+// that can fit into the canvas.
+//
 // This is essentially the number of available cells on the canvas as observed
 // on the last call to draw. Returns zero if draw wasn't called.
 //
 // Note that this capacity changes each time the terminal resizes, so there is
 // no guarantee this remains the same next time Draw is called.
 // Should be used as a hint only.
-func (hp *HeatMap) ValueCapacity() int {
-	return 0
+func (hp *HeatMap) ValueCapacity() (rows, cols int) {
+	hp.mu.Lock()
+	defer hp.mu.Unlock()
+
+	if hp.lastWidth == 0 || hp.lastHeight == 0 {
+		return 0, 0
+	}
+
+	rows = hp.lastHeight / 2
+	cols = int(math.Floor(float64(hp.lastWidth-axes.LongestString(hp.yLabels)) / minCellWidth))
+	return
 }
 
 // axesDetails determines the details about the X and Y axes.
@@ -162,7 +175,7 @@ func (hp *HeatMap) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetai
 		return nil, nil, err
 	}
 
-	xd, err := axes.NewXDetails(cvs.Area(), yd.End, hp.xLabels, hp.opts.cellWidth)
+	xd, err := axes.NewXDetails(yd.End, hp.xLabels, hp.opts.cellWidth)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -176,6 +189,8 @@ func (hp *HeatMap) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	hp.mu.Lock()
 	defer hp.mu.Unlock()
 
+	hp.lastWidth = cvs.Area().Dx()
+	hp.lastHeight = cvs.Area().Dy()
 	// Check if the canvas has enough area to draw HeatMap.
 	needAr, err := area.FromSize(hp.minSize())
 	if err != nil {

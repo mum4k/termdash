@@ -204,7 +204,6 @@ func (hp *HeatMap) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	if err != nil {
 		return err
 	}
-
 	err = hp.drawCells(cvs, yd)
 	if err != nil {
 		return err
@@ -238,17 +237,21 @@ func (hp *HeatMap) drawCells(cvs *canvas.Canvas, yd *axes.YDetails) error {
 
 // drawAxes draws X labels (under the cells) and Y Labels (on the left side of the cell).
 func (hp *HeatMap) drawLabels(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
-	for _, l := range yd.Labels {
-		if err := draw.Text(cvs, l.Text, l.Pos,
-			draw.TextCellOpts(hp.opts.yLabelCellOpts...),
-		); err != nil {
-			return fmt.Errorf("failed to draw the Y labels: %v", err)
+	if !hp.opts.hideYLabels {
+		for _, l := range yd.Labels {
+			if err := draw.Text(cvs, l.Text, l.Pos,
+				draw.TextCellOpts(hp.opts.yLabelCellOpts...),
+			); err != nil {
+				return fmt.Errorf("failed to draw the Y labels: %v", err)
+			}
 		}
 	}
 
-	for _, l := range xd.Labels {
-		if err := draw.Text(cvs, l.Text, l.Pos, draw.TextCellOpts(hp.opts.xLabelCellOpts...)); err != nil {
-			return fmt.Errorf("failed to draw the X labels: %v", err)
+	if !hp.opts.hideXLabels {
+		for _, l := range xd.Labels {
+			if err := draw.Text(cvs, l.Text, l.Pos, draw.TextCellOpts(hp.opts.xLabelCellOpts...)); err != nil {
+				return fmt.Errorf("failed to draw the X labels: %v", err)
+			}
 		}
 	}
 	return nil
@@ -256,10 +259,9 @@ func (hp *HeatMap) drawLabels(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YD
 
 const minCellWidth = 3
 
-// cellWidth determines the width of a single cell (grid) based on options and the canvas.
+// cellWidthAdaptive determines the width of a single cell (grid) based on options and the canvas.
 func (hp *HeatMap) cellWidthAdaptive(cvs *canvas.Canvas) {
 	if hp.opts.cellWidth < minCellWidth {
-
 		rem := cvs.Area().Dx() - axes.LongestString(hp.yLabels)
 		cw := rem / len(hp.values[0])
 		if cw >= minCellWidth {

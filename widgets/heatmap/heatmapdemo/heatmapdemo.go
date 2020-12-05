@@ -93,7 +93,7 @@ func main() {
 	}
 	defer t.Close()
 
-	hp, err := heatmap.New()
+	hp, err := heatmap.New(heatmap.HideXLabels(), heatmap.HideYLabels())
 	if err != nil {
 		panic(err)
 	}
@@ -103,7 +103,7 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go playHeatMap(ctx, hp, 1*time.Second)
+	//go playHeatMap(ctx, hp, 1*time.Second)
 
 	c, err := container.New(
 		t,

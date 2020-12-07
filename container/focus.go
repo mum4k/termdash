@@ -81,7 +81,7 @@ func (ft *focusTracker) setActive(c *Container) {
 // next moves focus to the next container.
 // If group is not nil, focus will only move between containers with a matching
 // focus group number.
-func (ft *focusTracker) next(group *int) {
+func (ft *focusTracker) next(group *FocusGroup) {
 	var (
 		errStr    string
 		firstCont *Container
@@ -100,7 +100,7 @@ func (ft *focusTracker) next(group *int) {
 			switch {
 			case group == nil && !c.opts.keyFocusSkip:
 				fallthrough
-			case group != nil && c.opts.keyFocusGroup == *group:
+			case group != nil && c.inFocusGroup(*group):
 				firstCont = c
 			}
 		}
@@ -116,7 +116,7 @@ func (ft *focusTracker) next(group *int) {
 			switch {
 			case group == nil && !c.opts.keyFocusSkip:
 				fallthrough
-			case group != nil && c.opts.keyFocusGroup == *group:
+			case group != nil && c.inFocusGroup(*group):
 				nextCont = c
 			}
 		}
@@ -135,7 +135,7 @@ func (ft *focusTracker) next(group *int) {
 // previous moves focus to the previous container.
 // If group is not nil, focus will only move between containers with a matching
 // focus group number.
-func (ft *focusTracker) previous(group *int) {
+func (ft *focusTracker) previous(group *FocusGroup) {
 	var (
 		errStr      string
 		prevCont    *Container
@@ -151,7 +151,7 @@ func (ft *focusTracker) previous(group *int) {
 			switch {
 			case group == nil && !c.opts.keyFocusSkip:
 				fallthrough
-			case group != nil && c.opts.keyFocusGroup == *group:
+			case group != nil && c.inFocusGroup(*group):
 				if !visitedCurr {
 					// Remember the last eligible container closest to the one
 					// currently focused.

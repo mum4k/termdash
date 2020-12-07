@@ -93,7 +93,7 @@ func main() {
 	}
 	defer t.Close()
 
-	hp, err := heatmap.New(heatmap.HideXLabels(), heatmap.HideYLabels())
+	hp, err := heatmap.New()
 	if err != nil {
 		panic(err)
 	}

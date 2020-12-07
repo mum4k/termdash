@@ -43,7 +43,7 @@ func yLabels(graphHeight, labelWidth int, labels []string) ([]*Label, error) {
 		return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", graphHeight, min)
 	}
 	if min := 0; labelWidth < min {
-		return nil, fmt.Errorf("cannot place labels in label area width %d, minimum is %d", labelWidth, min)
+		return nil, fmt.Errorf("cannot place labels on a canvas with width %d, minimum is %d", labelWidth, min)
 	}
 
 	var ret []*Label
@@ -52,17 +52,16 @@ func yLabels(graphHeight, labelWidth int, labels []string) ([]*Label, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		ret = append(ret, label)
 	}
 
 	return ret, nil
 }
 
-// rowLabel returns one label for the specified row.
+// rowLabel returns one Y label for the specified row.
 // The row is the Y coordinate of the row, Y coordinates grow down.
 func rowLabel(row int, label string, labelWidth int) (*Label, error) {
-	// The area available for the label
+	// The area available for the Y label
 	ar := image.Rect(0, row, labelWidth, row+1)
 
 	pos, err := alignfor.Text(ar, label, align.HorizontalRight, align.VerticalMiddle)
@@ -81,9 +80,13 @@ func rowLabel(row int, label string, labelWidth int) (*Label, error) {
 // X coordinates grow right.
 func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) ([]*Label, error) {
 	var ret []*Label
+
+	// The length of the longest X labels.
 	ls := LongestString(labels)
 
 	if ls > cellWidth {
+		// If the length of the longest X label exceeds the cellWidth,
+		// then only some labels will be displayed.
 		length, index := paddedLabelLength(graphWidth, ls, cellWidth)
 		for x := yEnd.X + 1; x <= graphWidth && index < len(labels); x += length {
 			ar := image.Rect(x, yEnd.Y, x+length, yEnd.Y+1)

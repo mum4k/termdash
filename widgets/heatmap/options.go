@@ -15,7 +15,9 @@
 package heatmap
 
 import (
+	"fmt"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/private/draw"
 )
 
 // options.go contains configurable options for HeatMap.
@@ -28,6 +30,7 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
+	cellChar       rune
 	cellWidth      int
 	hideXLabels    bool
 	hideYLabels    bool
@@ -37,22 +40,25 @@ type options struct {
 
 // validate validates the provided options.
 func (o *options) validate() error {
-	//if got, min := o.cellWidth, DefaultCellWidth; got < min {
-	//	return fmt.Errorf("invalid CellWidth %d, must be %d <= CellWidth", got, min)
-	//}
+	if got, min := o.cellWidth, 0; got < min {
+		return fmt.Errorf("invalid CellWidth %d, must be %d <= CellWidth", got, min)
+	}
 	return nil
 }
 
 // newOptions returns a new options instance.
 func newOptions(opts ...Option) *options {
 	opt := &options{
-		//cellWidth: DefaultCellWidth,
+		cellChar: DefaultChar,
 	}
 	for _, o := range opts {
 		o.set(opt)
 	}
 	return opt
 }
+
+// DefaultChar is the default value for the Char option.
+const DefaultChar = draw.DefaultRectChar
 
 // option implements Option.
 type option func(*options)
@@ -62,10 +68,7 @@ func (o option) set(opts *options) {
 	o(opts)
 }
 
-//const DefaultCellWidth = 3
-
 // CellWidth set the width of cells (or grids) in the heat map, not the terminal cell.
-// The default height of each cell (grid) is 1 and the width is 3.
 func CellWidth(w int) Option {
 	return option(func(opts *options) {
 		opts.cellWidth = w

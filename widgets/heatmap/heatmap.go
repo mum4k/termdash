@@ -226,7 +226,7 @@ func (hp *HeatMap) drawCells(cvs *canvas.Canvas, yd *axes.YDetails) error {
 			rect := image.Rect(startX, startY, endX, endY)
 			color := hp.getCellColor(hp.values[i][j])
 
-			if err := cvs.SetAreaCells(rect, ' ', cell.BgColor(color)); err != nil {
+			if err := cvs.SetAreaCells(rect, hp.opts.cellChar, cell.BgColor(color)); err != nil {
 				return err
 			}
 		}
@@ -259,16 +259,14 @@ func (hp *HeatMap) drawLabels(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YD
 
 const minCellWidth = 3
 
-// cellWidthAdaptive determines the width of a single cell (grid) based on options and the canvas.
+// cellWidthAdaptive determines the width of a single cell (grid) based the canvas.
 func (hp *HeatMap) cellWidthAdaptive(cvs *canvas.Canvas) {
-	if hp.opts.cellWidth < minCellWidth {
-		rem := cvs.Area().Dx() - axes.LongestString(hp.yLabels)
-		cw := rem / len(hp.values[0])
-		if cw >= minCellWidth {
-			hp.opts.cellWidth = cw
-		} else {
-			hp.opts.cellWidth = minCellWidth
-		}
+	rem := cvs.Area().Dx() - axes.LongestString(hp.yLabels) - axes.AxisWidth
+	cw := rem / len(hp.values[0])
+	if cw >= minCellWidth {
+		hp.opts.cellWidth = cw
+	} else {
+		hp.opts.cellWidth = minCellWidth
 	}
 }
 

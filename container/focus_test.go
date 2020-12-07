@@ -998,6 +998,28 @@ func TestFocusTrackerNextAndPrevious(t *testing.T) {
 			wantFocused:   contLocC,
 			wantProcessed: 3,
 		},
+		{
+			desc: "configuring container with KeyFocusSkip has no effect on a closed focus group",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							KeyFocusSkip(),
+						),
+						Right(
+							KeyFocusSkip(),
+						),
+					),
+					KeysFocusGroupNext(0, []keyboard.Key{'n'}),
+				)
+			},
+			events: []*terminalapi.Keyboard{
+				{Key: 'n'},
+			},
+			wantFocused:   contLocB,
+			wantProcessed: 1,
+		},
 	}
 
 	for _, tc := range tests {

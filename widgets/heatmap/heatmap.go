@@ -161,8 +161,15 @@ func (hp *HeatMap) ValueCapacity() (rows, cols int) {
 		return 0, 0
 	}
 
-	rows = hp.lastHeight / 2
-	cols = int(math.Floor(float64(hp.lastWidth-axes.LongestString(hp.yLabels)) / minCellWidth))
+	rows = hp.lastHeight - 1
+	var cw int
+
+	if hp.opts.cellWidth > minCellWidth {
+		cw = hp.opts.cellWidth
+	} else {
+		cw = minCellWidth
+	}
+	cols = int(math.Floor(float64(hp.lastWidth-axes.LongestString(hp.yLabels)) / float64(cw)))
 	return
 }
 
@@ -262,7 +269,10 @@ const minCellWidth = 3
 // cellWidthAdaptive determines the width of a single cell (grid) based the canvas.
 func (hp *HeatMap) cellWidthAdaptive(cvs *canvas.Canvas) {
 	rem := cvs.Area().Dx() - axes.LongestString(hp.yLabels) - axes.AxisWidth
-	cw := rem / len(hp.values[0])
+	var cw int
+	if len(hp.values) != 0 {
+		cw = rem / len(hp.values[0])
+	}
 	if cw >= minCellWidth {
 		hp.opts.cellWidth = cw
 	} else {
@@ -275,12 +285,17 @@ func (hp *HeatMap) minSize() image.Point {
 	// At the very least we need:
 	// - n unit width for the Y axis and its labels.
 	// - m unit width for the graph.
-	reqWidth := axes.LongestString(hp.yLabels) + axes.AxisWidth + minCellWidth*len(hp.values[0])
+	// cells is the number of cells in a row.
+	var cells int
+	if len(hp.values) != 0 {
+		cells = len(hp.values[0])
+	}
+	reqWidth := axes.LongestString(hp.yLabels) + axes.AxisWidth + minCellWidth*cells
 
 	// For the height:
 	// - 1 unit height for labels on the X axis.
 	// - n unit height for the graph.
-	reqHeight := 1 + len(hp.yLabels)
+	reqHeight := 1 + len(hp.values)
 
 	return image.Point{X: reqWidth, Y: reqHeight}
 }

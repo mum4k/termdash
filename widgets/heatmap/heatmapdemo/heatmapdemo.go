@@ -38,13 +38,11 @@ func playHeatMap(ctx context.Context, hp *heatmap.HeatMap, delay time.Duration) 
 	for {
 		select {
 		case <-ticker.C:
-			maxRows, maxCols := hp.ValueCapacity()
-			rows := rand.Intn(maxRows) + 1
-			cols := rand.Intn(maxCols) + 1
+			rows, cols := hp.ValueCapacity()
 
 			var values [][]float64
 			for i := 0; i < rows; i++ {
-				rv := make([]float64, cols)
+				var rv []float64
 				for j := 0; j < cols; j++ {
 					rv = append(rv, float64(rand.Int31n(max+1)))
 				}
@@ -60,31 +58,43 @@ func playHeatMap(ctx context.Context, hp *heatmap.HeatMap, delay time.Duration) 
 	}
 }
 
-func getData() ([]string, []string, [][]float64) {
-	var xl = []string{
-		"one",
-		"two",
-		"three",
-		"four",
-		"five",
-		"six",
-	}
-	var yl = []string{
-		"one",
-		"two",
-		"three",
-		"four",
-		"five",
-	}
-	var values = [][]float64{
-		{1, 2, 3, 4, 5, 6},
-		{-1, -2, -3, -4, -5, -6},
-		{7, 8, 9, 10, 11, 12},
-		{12, 11, 10, 9, 8, 7},
-		{6, 5, 4, 3, 2, 1},
-	}
-	return xl, yl, values
-}
+//func getData() ([]string, []string, [][]float64) {
+//	var xl = []string{
+//		"one",
+//		"two",
+//		"three",
+//		"four",
+//		"five",
+//		"six",
+//	}
+//	var yl = []string{
+//		"one",
+//		"two",
+//		"three",
+//		"four",
+//		"five",
+//		"five",
+//		"five",
+//		"five",
+//		"five",
+//		"five",
+//		"five",
+//	}
+//	var values = [][]float64{
+//		{1, 2, 3, 4, 5, 6},
+//		{1, 2, 3, 4, 5, 6},
+//		{-1, -2, -3, -4, -5, -6},
+//		{-1, -2, -3, -4, -5, -6},
+//		{7, 8, 9, 10, 11, 12},
+//		{7, 8, 9, 10, 11, 12},
+//		{12, 11, 10, 9, 8, 7},
+//		{12, 11, 10, 9, 8, 7},
+//		{12, 11, 10, 9, 8, 7},
+//		{6, 5, 4, 3, 2, 1},
+//		{6, 5, 4, 3, 2, 1},
+//	}
+//	return xl, yl, values
+//}
 
 func main() {
 	t, err := tcell.New()
@@ -93,17 +103,20 @@ func main() {
 	}
 	defer t.Close()
 
-	hp, err := heatmap.New()
+	ctx, cancel := context.WithCancel(context.Background())
+	hp, err := heatmap.New(
+		heatmap.CellWidth(3),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := hp.Values(getData()); err != nil {
-		panic(err)
-	}
+	go playHeatMap(ctx, hp, 1*time.Second)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	//go playHeatMap(ctx, hp, 1*time.Second)
+	// Used to debug
+	//if err := hp.Values(getData()); err != nil {
+	//	panic(err)
+	//}
 
 	c, err := container.New(
 		t,

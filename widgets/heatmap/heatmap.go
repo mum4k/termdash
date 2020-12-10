@@ -271,7 +271,7 @@ const minCellWidth = 3
 func (hp *HeatMap) cellWidthAdaptive(cvs *canvas.Canvas) {
 	rem := cvs.Area().Dx() - axes.LongestString(hp.yLabels) - axes.AxisWidth
 	var cw int
-	if len(hp.values) != 0 {
+	if len(hp.values) != 0 && len(hp.values[0]) != 0 {
 		cw = rem / len(hp.values[0])
 	}
 	if cw >= minCellWidth {

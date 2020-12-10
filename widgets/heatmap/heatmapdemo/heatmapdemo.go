@@ -58,44 +58,6 @@ func playHeatMap(ctx context.Context, hp *heatmap.HeatMap, delay time.Duration) 
 	}
 }
 
-//func getData() ([]string, []string, [][]float64) {
-//	var xl = []string{
-//		"one",
-//		"two",
-//		"three",
-//		"four",
-//		"five",
-//		"six",
-//	}
-//	var yl = []string{
-//		"one",
-//		"two",
-//		"three",
-//		"four",
-//		"five",
-//		"five",
-//		"five",
-//		"five",
-//		"five",
-//		"five",
-//		"five",
-//	}
-//	var values = [][]float64{
-//		{1, 2, 3, 4, 5, 6},
-//		{1, 2, 3, 4, 5, 6},
-//		{-1, -2, -3, -4, -5, -6},
-//		{-1, -2, -3, -4, -5, -6},
-//		{7, 8, 9, 10, 11, 12},
-//		{7, 8, 9, 10, 11, 12},
-//		{12, 11, 10, 9, 8, 7},
-//		{12, 11, 10, 9, 8, 7},
-//		{12, 11, 10, 9, 8, 7},
-//		{6, 5, 4, 3, 2, 1},
-//		{6, 5, 4, 3, 2, 1},
-//	}
-//	return xl, yl, values
-//}
-
 func main() {
 	t, err := tcell.New()
 	if err != nil {
@@ -110,13 +72,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	go playHeatMap(ctx, hp, 1*time.Second)
-
-	// Used to debug
-	//if err := hp.Values(getData()); err != nil {
-	//	panic(err)
-	//}
 
 	c, err := container.New(
 		t,

@@ -169,7 +169,7 @@ func (hp *HeatMap) ValueCapacity() (rows, cols int) {
 	} else {
 		cw = minCellWidth
 	}
-	cols = int(math.Floor(float64(hp.lastWidth-axes.LongestString(hp.yLabels)) / float64(cw)))
+	cols = int(math.Floor(float64(hp.lastWidth-axes.LongestString(hp.yLabels)-axes.AxisWidth) / float64(cw)))
 	return
 }
 
@@ -264,6 +264,7 @@ func (hp *HeatMap) drawLabels(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YD
 	return nil
 }
 
+// minCellWidth is the minimum width of each cell in the heat map.
 const minCellWidth = 3
 
 // cellWidthAdaptive determines the width of a single cell (grid) based the canvas.

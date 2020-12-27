@@ -25,7 +25,7 @@ import (
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
-	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/textinput"
 )
@@ -65,7 +65,7 @@ func buttonChunks(text string) []*button.TextChunk {
 }
 
 func main() {
-	t, err := termbox.New()
+	t, err := tcell.New()
 	if err != nil {
 		panic(err)
 	}
@@ -142,6 +142,7 @@ func main() {
 					container.Top(
 						container.SplitHorizontal(
 							container.Top(
+								container.Focused(),
 								container.KeyFocusGroups(1),
 								container.PlaceWidget(userInput),
 							),

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `widgetapi.Widget.Keyboard` and `widgetapi.Widget.Mouse` methods now
   accepts a second argument which provides widgets with additional metadata.
   All widgets implemented outside of the `termdash` repository will need to be
-  similarly to the `Barchart` example below. Change the original method
+  updated similarly to the `Barchart` example below. Change the original method
   signatures:
   ```go
   func (*BarChart) Keyboard(k *terminalapi.Keyboard) error { ... }
@@ -32,16 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Infrastructure changes
 
-- ability to configure keyboard keys that move focus to the next or the
-  previous container.
+- `container` now allows users to configure keyboard keys that move focus to
+  the next or the previous container.
 - containers can request to be skipped when focus is moved using keyboard keys.
 - containers can register into separate focus groups and specific keyboard keys
   can be configured to move the focus within each focus group.
 - widgets can now request keyboard events exclusively when focused.
-- ability to configure keyboard keys that move focus to the next or the
-  previous container.
-- `container` now allows users to configure keyboard keys that move focus to
-  the next or the previous container.
 
 #### Updates to the `button` widget
 

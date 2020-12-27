@@ -197,7 +197,7 @@ type inherited struct {
 }
 
 // focusGroups maps focus group numbers that have the same key assigned.
-// The value is always true for all keys.
+// The value is always true for all the keys.
 type focusGroups map[FocusGroup]bool
 
 // firstMatching examines the focus groups the container is assigned to and
@@ -920,7 +920,7 @@ func KeyFocusSkip() Option {
 	})
 }
 
-// FocusGroup represents a group of containers that can the keyboard focus
+// FocusGroup represents a group of containers that can have the keyboard focus
 // moved between them sharing the same keyboard key.
 type FocusGroup int
 
@@ -936,6 +936,8 @@ type FocusGroup int
 // matters.
 //
 // If not specified, the container doesn't belong to any focus groups.
+// If called with zero groups, the container will be removed from all focus
+// groups.
 func KeyFocusGroups(groups ...FocusGroup) Option {
 	return option(func(c *Container) error {
 		if len(groups) == 0 {

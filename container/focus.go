@@ -68,6 +68,11 @@ func newFocusTracker(c *Container) *focusTracker {
 	}
 }
 
+// active returns container that is currently active.
+func (ft *focusTracker) active() *Container {
+	return ft.container
+}
+
 // isActive determines if the provided container is the currently active container.
 func (ft *focusTracker) isActive(c *Container) bool {
 	return ft.container == c

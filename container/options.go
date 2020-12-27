@@ -924,7 +924,7 @@ func KeyFocusSkip() Option {
 // moved between them sharing the same keyboard key.
 type FocusGroup int
 
-// KeyFocusGroups assigns this container to focus groups of with the specified
+// KeyFocusGroups assigns this container to focus groups with the specified
 // numbers.
 //
 // See either of (KeysFocusGroupNext, KeysFocusGroupPrevious) for a description

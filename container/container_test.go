@@ -530,6 +530,63 @@ func TestNew(t *testing.T) {
 			wantContainerErr: true,
 		},
 		{
+			desc:     "fails on KeyFocusGroups with a negative group",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusGroups(0, -1),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on KeyFocusGroupsNext with a negative group",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusGroupsNext('n', 0, -1),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on KeyFocusGroupsPrevious with a negative group",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusGroupsPrevious('p', 0, -1),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on KeyFocusGroupsNext with a key already assigned as KeyFocusGroupsPrevious",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusGroupsPrevious('n', 0),
+					KeyFocusGroupsNext('n', 0),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
+			desc:     "fails on KeyFocusGroupsPrevious with a key already assigned as KeyFocusGroupsNext",
+			termSize: image.Point{10, 20},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					KeyFocusGroupsNext('n', 0),
+					KeyFocusGroupsPrevious('n', 0),
+				)
+			},
+			wantContainerErr: true,
+		},
+		{
 			desc:     "empty container",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

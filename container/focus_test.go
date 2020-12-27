@@ -541,7 +541,7 @@ func TestFocusTrackerNextAndPrevious(t *testing.T) {
 		wantProcessed int
 	}{
 		{
-			desc: "initially the root is focused",
+			desc: "initially the root is focused by default",
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(
 					ft,
@@ -553,6 +553,49 @@ func TestFocusTrackerNextAndPrevious(t *testing.T) {
 				)
 			},
 			wantFocused: contLocA,
+		},
+		{
+			desc: "focus root explicitly",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Focused(),
+					SplitVertical(
+						Left(),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			wantFocused: contLocA,
+		},
+		{
+			desc: "focus can be set to a container other than root",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(Focused()),
+						Right(),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			wantFocused: contLocB,
+		},
+		{
+			desc: "option Focused used on multiple containers, the last one takes effect",
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(Focused()),
+						Right(Focused()),
+					),
+					KeyFocusNext(keyNext),
+				)
+			},
+			wantFocused: contLocC,
 		},
 		{
 			desc: "keyNext does nothing when only root exists",

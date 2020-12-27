@@ -326,8 +326,9 @@ func (ti *TextInput) Options() widgetapi.Options {
 			maxWidth,
 			needHeight,
 		},
-		WantKeyboard: widgetapi.KeyScopeFocused,
-		WantMouse:    widgetapi.MouseScopeWidget,
+		WantKeyboard:             widgetapi.KeyScopeFocused,
+		WantMouse:                widgetapi.MouseScopeWidget,
+		ExclusiveKeyboardOnFocus: ti.opts.exclusiveKeyboardOnFocus,
 	}
 }
 

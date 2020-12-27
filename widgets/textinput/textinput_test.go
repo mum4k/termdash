@@ -1704,6 +1704,19 @@ func TestOptions(t *testing.T) {
 				WantMouse:    widgetapi.MouseScopeWidget,
 			},
 		},
+		{
+			desc: "requests ExclusiveKeyboardOnFocus",
+			opts: []Option{
+				ExclusiveKeyboardOnFocus(),
+			},
+			want: widgetapi.Options{
+				MinimumSize:              image.Point{4, 1},
+				MaximumSize:              image.Point{0, 1},
+				WantKeyboard:             widgetapi.KeyScopeFocused,
+				WantMouse:                widgetapi.MouseScopeWidget,
+				ExclusiveKeyboardOnFocus: true,
+			},
+		},
 	}
 
 	for _, tc := range tests {

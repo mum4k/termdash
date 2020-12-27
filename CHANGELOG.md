@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - containers can register into separate focus groups and specific keyboard keys
   can be configured to move the focus within each focus group.
 - widgets can now request keyboard events exclusively when focused.
+- users can now set a `container` as focused using a new `container.Focused`
+  option.
 
 #### Updates to the `button` widget
 

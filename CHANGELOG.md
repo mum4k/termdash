@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   func (*BarChart) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error { ... }
   ```
 
+### Fixed
+
+- `termdash` no longer crashes when `tcell` is used and the terminal window
+  downsizes while content is being drawn.
+
 ### Added
 
 #### Infrastructure changes

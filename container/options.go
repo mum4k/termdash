@@ -1033,3 +1033,14 @@ func KeyFocusGroupsPrevious(key keyboard.Key, groups ...FocusGroup) Option {
 		return nil
 	})
 }
+
+// Focused moves the keyboard focus to this container.
+// If not specified, termdash will start with the root container focused.
+// If specified on multiple containers, the last container with this option
+// will be focused.
+func Focused() Option {
+	return option(func(c *Container) error {
+		c.focusTracker.setActive(c)
+		return nil
+	})
+}

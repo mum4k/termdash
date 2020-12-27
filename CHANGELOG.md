@@ -54,6 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the `button` widget allows specifying separate fill color values for each of
   its main states (up, focused and up, down).
 
+#### Updates to the `textinput` widget
+
+- the `textinput` widget can now be configured to request keyboard events
+  exclusively when focused.
+
 ## [0.13.0] - 17-Nov-2020
 
 ### Added

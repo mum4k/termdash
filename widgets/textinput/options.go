@@ -59,9 +59,10 @@ type options struct {
 	placeHolder  string
 	hideTextWith rune
 
-	filter        FilterFn
-	onSubmit      SubmitFn
-	clearOnSubmit bool
+	filter                   FilterFn
+	onSubmit                 SubmitFn
+	clearOnSubmit            bool
+	exclusiveKeyboardOnFocus bool
 }
 
 // validate validates the provided options.
@@ -261,5 +262,13 @@ func OnSubmit(fn SubmitFn) Option {
 func ClearOnSubmit() Option {
 	return option(func(opts *options) {
 		opts.clearOnSubmit = true
+	})
+}
+
+// ExclusiveKeyboardOnFocus when set ensures that when this widget is focused,
+// no other widget receives any keyboard events.
+func ExclusiveKeyboardOnFocus() Option {
+	return option(func(opts *options) {
+		opts.exclusiveKeyboardOnFocus = true
 	})
 }

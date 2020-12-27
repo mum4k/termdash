@@ -68,6 +68,11 @@ func newFocusTracker(c *Container) *focusTracker {
 	}
 }
 
+// active returns container that is currently active.
+func (ft *focusTracker) active() *Container {
+	return ft.container
+}
+
 // isActive determines if the provided container is the currently active container.
 func (ft *focusTracker) isActive(c *Container) bool {
 	return ft.container == c
@@ -79,7 +84,9 @@ func (ft *focusTracker) setActive(c *Container) {
 }
 
 // next moves focus to the next container.
-func (ft *focusTracker) next() {
+// If group is not nil, focus will only move between containers with a matching
+// focus group number.
+func (ft *focusTracker) next(group *FocusGroup) {
 	var (
 		errStr    string
 		firstCont *Container
@@ -92,10 +99,15 @@ func (ft *focusTracker) next() {
 			return nil
 		}
 
-		if c.isLeaf() && !c.opts.keyFocusSkip && firstCont == nil {
+		if firstCont == nil && c.isLeaf() {
 			// Remember the first eligible container in case we "wrap" over,
 			// i.e. finish the iteration before finding the next container.
-			firstCont = c
+			switch {
+			case group == nil && !c.opts.keyFocusSkip:
+				fallthrough
+			case group != nil && c.inFocusGroup(*group):
+				firstCont = c
+			}
 		}
 
 		if ft.container == c {
@@ -105,8 +117,13 @@ func (ft *focusTracker) next() {
 			return nil
 		}
 
-		if c.isLeaf() && !c.opts.keyFocusSkip && focusNext {
-			nextCont = c
+		if focusNext && c.isLeaf() {
+			switch {
+			case group == nil && !c.opts.keyFocusSkip:
+				fallthrough
+			case group != nil && c.inFocusGroup(*group):
+				nextCont = c
+			}
 		}
 		return nil
 	}))
@@ -121,7 +138,9 @@ func (ft *focusTracker) next() {
 }
 
 // previous moves focus to the previous container.
-func (ft *focusTracker) previous() {
+// If group is not nil, focus will only move between containers with a matching
+// focus group number.
+func (ft *focusTracker) previous(group *FocusGroup) {
 	var (
 		errStr      string
 		prevCont    *Container
@@ -133,13 +152,18 @@ func (ft *focusTracker) previous() {
 			visitedCurr = true
 		}
 
-		if c.isLeaf() && !c.opts.keyFocusSkip {
-			if !visitedCurr {
-				// Remember the last eligible container closest to the one
-				// currently focused.
-				prevCont = c
+		if c.isLeaf() {
+			switch {
+			case group == nil && !c.opts.keyFocusSkip:
+				fallthrough
+			case group != nil && c.inFocusGroup(*group):
+				if !visitedCurr {
+					// Remember the last eligible container closest to the one
+					// currently focused.
+					prevCont = c
+				}
+				lastCont = c
 			}
-			lastCont = c
 		}
 		return nil
 	}))

@@ -275,15 +275,36 @@ func (c *Container) updateFocusFromMouse(m *terminalapi.Mouse) {
 	c.focusTracker.mouse(target, m)
 }
 
+// inFocusGroup returns true if this container is in the specified focus group.
+func (c *Container) inFocusGroup(fg FocusGroup) bool {
+	for _, cg := range c.opts.keyFocusGroups {
+		if cg == fg {
+			return true
+		}
+	}
+	return false
+}
+
 // updateFocusFromKeyboard processes the keyboard event and determines if it
 // changes the focused container.
 // Caller must hold c.mu.
 func (c *Container) updateFocusFromKeyboard(k *terminalapi.Keyboard) {
+	active := c.focusTracker.active()
+	nextGroupsForKey, isGroupKeyForNext := active.opts.global.keyFocusGroupsNext[k.Key]
+	prevGroupsForKey, isGroupKeyForPrev := active.opts.global.keyFocusGroupsPrevious[k.Key]
+
+	nextMatchesContGroup, nextG := nextGroupsForKey.firstMatching(active.opts.keyFocusGroups)
+	prevMatchesContGroup, prevG := prevGroupsForKey.firstMatching(active.opts.keyFocusGroups)
+
 	switch {
-	case c.opts.global.keyFocusNext != nil && *c.opts.global.keyFocusNext == k.Key:
-		c.focusTracker.next()
-	case c.opts.global.keyFocusPrevious != nil && *c.opts.global.keyFocusPrevious == k.Key:
-		c.focusTracker.previous()
+	case active.opts.global.keyFocusNext != nil && *active.opts.global.keyFocusNext == k.Key:
+		c.focusTracker.next( /* group = */ nil)
+	case active.opts.global.keyFocusPrevious != nil && *active.opts.global.keyFocusPrevious == k.Key:
+		c.focusTracker.previous( /* group = */ nil)
+	case isGroupKeyForNext && nextMatchesContGroup:
+		c.focusTracker.next(&nextG)
+	case isGroupKeyForPrev && prevMatchesContGroup:
+		c.focusTracker.previous(&prevG)
 	}
 }
 

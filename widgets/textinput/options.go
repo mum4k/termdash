@@ -17,6 +17,7 @@ package textinput
 // options.go contains configurable options for TextInput.
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/mum4k/termdash/align"
@@ -58,6 +59,7 @@ type options struct {
 
 	placeHolder  string
 	hideTextWith rune
+	defaultText  string
 
 	filter                   FilterFn
 	onSubmit                 SubmitFn
@@ -79,6 +81,16 @@ func (o *options) validate() error {
 		}
 		if got, want := runewidth.RuneWidth(r), 1; got != want {
 			return fmt.Errorf("invalid HideTextWidth rune %c(%d), has rune width of %d cells, only runes with width of %d are accepted", r, r, got, want)
+		}
+	}
+	if o.defaultText != "" {
+		if err := wrap.ValidText(o.defaultText); err != nil {
+			return fmt.Errorf("invalid DefaultText: %v", err)
+		}
+		for _, r := range o.defaultText {
+			if r == '\n' {
+				return errors.New("invalid DefaultText: newline characters aren't allowed")
+			}
 		}
 	}
 	return nil
@@ -270,5 +282,14 @@ func ClearOnSubmit() Option {
 func ExclusiveKeyboardOnFocus() Option {
 	return option(func(opts *options) {
 		opts.exclusiveKeyboardOnFocus = true
+	})
+}
+
+// DefaultText sets the text to be present in a newly created input field.
+// The text must not contain any control or space characters other than ' '.
+// The user can edit this text as normal.
+func DefaultText(text string) Option {
+	return option(func(opts *options) {
+		opts.defaultText = text
 	})
 }

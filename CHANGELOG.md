@@ -65,6 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - the `textinput` widget can now be configured to request keyboard events
   exclusively when focused.
+- the `textinput` widget can now be initialized with a default text in the
+  input box.
 
 ## [0.13.0] - 17-Nov-2020
 

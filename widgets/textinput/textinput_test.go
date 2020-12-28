@@ -118,6 +118,20 @@ func TestTextInput(t *testing.T) {
 			wantNewErr: true,
 		},
 		{
+			desc: "fails on invalid DefaultText which has control characters",
+			opts: []Option{
+				DefaultText("\r"),
+			},
+			wantNewErr: true,
+		},
+		{
+			desc: "fails on invalid DefaultText which has newline",
+			opts: []Option{
+				DefaultText("\n"),
+			},
+			wantNewErr: true,
+		},
+		{
 			desc:   "takes all space without label",
 			canvas: image.Rect(0, 0, 10, 1),
 			meta:   &widgetapi.Meta{},
@@ -554,6 +568,62 @@ func TestTextInput(t *testing.T) {
 					image.Rect(3, 0, 10, 1),
 					textFieldRune,
 					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "displays default text",
+			opts: []Option{
+				DefaultText("text"),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"text",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "default text can be edited",
+			opts: []Option{
+				DefaultText("text"),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyBackspace},
+				&terminalapi.Keyboard{Key: 'a'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"texa",
+					image.Point{0, 0},
 				)
 				testcanvas.MustApply(cvs, ft)
 				return ft

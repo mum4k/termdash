@@ -69,10 +69,15 @@ func New(opts ...Option) (*TextInput, error) {
 	if err := opt.validate(); err != nil {
 		return nil, err
 	}
-	return &TextInput{
+	ti := &TextInput{
 		editor: newFieldEditor(),
 		opts:   opt,
-	}, nil
+	}
+
+	for _, r := range ti.opts.defaultText {
+		ti.editor.insert(r)
+	}
+	return ti, nil
 }
 
 // Vars to be replaced from tests.

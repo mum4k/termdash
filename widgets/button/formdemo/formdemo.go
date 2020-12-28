@@ -17,6 +17,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os/user"
 	"time"
 
 	"github.com/mum4k/termdash"
@@ -73,23 +75,35 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	var username string
+	u, err := user.Current()
+	if err != nil {
+		username = "mum4k"
+	} else {
+		username = u.Username
+	}
+
 	userInput, err := textinput.New(
 		textinput.Label("Username: ", cell.FgColor(cell.ColorNumber(33))),
+		textinput.DefaultText(username),
 		textinput.MaxWidthCells(20),
 		textinput.ExclusiveKeyboardOnFocus(),
 	)
 	uidInput, err := textinput.New(
 		textinput.Label("UID:      ", cell.FgColor(cell.ColorNumber(33))),
+		textinput.DefaultText("1000"),
 		textinput.MaxWidthCells(20),
 		textinput.ExclusiveKeyboardOnFocus(),
 	)
 	gidInput, err := textinput.New(
 		textinput.Label("GID:      ", cell.FgColor(cell.ColorNumber(33))),
+		textinput.DefaultText("1000"),
 		textinput.MaxWidthCells(20),
 		textinput.ExclusiveKeyboardOnFocus(),
 	)
 	homeInput, err := textinput.New(
 		textinput.Label("Home:     ", cell.FgColor(cell.ColorNumber(33))),
+		textinput.DefaultText(fmt.Sprintf("/home/%s", username)),
 		textinput.MaxWidthCells(20),
 		textinput.ExclusiveKeyboardOnFocus(),
 	)

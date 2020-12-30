@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Binary buttondemo shows the functionality of a button widget.
+// Binary formdemo creates a form that accepts text inputs and supports
+// keyboard navigation.
 package main
 
 import (
@@ -66,15 +67,19 @@ func buttonChunks(text string) []*button.TextChunk {
 	}
 }
 
-func main() {
-	t, err := tcell.New()
-	if err != nil {
-		panic(err)
-	}
-	defer t.Close()
+// form contains the elements of a text input form
+type form struct {
+	userInput *textinput.TextInput
+	uidInput  *textinput.TextInput
+	gidInput  *textinput.TextInput
+	homeInput *textinput.TextInput
+	submitB   *button.Button
+	cancelB   *button.Button
+}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
+// newForm returns a new form instance.
+// The cancel argument is a function that terminates Termdash when called.
+func newForm(cancel context.CancelFunc) (*form, error) {
 	var username string
 	u, err := user.Current()
 	if err != nil {
@@ -142,8 +147,19 @@ func main() {
 		panic(err)
 	}
 
-	c, err := container.New(
-		t,
+	return &form{
+		userInput: userInput,
+		uidInput:  uidInput,
+		gidInput:  gidInput,
+		homeInput: homeInput,
+		submitB:   submitB,
+		cancelB:   cancelB,
+	}, nil
+}
+
+// formLayout updates the container into a layout with text inputs and buttons.
+func formLayout(c *container.Container, f *form) error {
+	return c.Update("root",
 		container.KeyFocusNext(keyboard.KeyTab),
 		container.KeyFocusGroupsNext(keyboard.KeyArrowDown, 1),
 		container.KeyFocusGroupsPrevious(keyboard.KeyArrowUp, 1),
@@ -158,12 +174,12 @@ func main() {
 							container.Top(
 								container.Focused(),
 								container.KeyFocusGroups(1),
-								container.PlaceWidget(userInput),
+								container.PlaceWidget(f.userInput),
 							),
 							container.Bottom(
 								container.KeyFocusGroups(1),
 								container.KeyFocusSkip(),
-								container.PlaceWidget(uidInput),
+								container.PlaceWidget(f.uidInput),
 							),
 						),
 					),
@@ -172,12 +188,12 @@ func main() {
 							container.Top(
 								container.KeyFocusGroups(1),
 								container.KeyFocusSkip(),
-								container.PlaceWidget(gidInput),
+								container.PlaceWidget(f.gidInput),
 							),
 							container.Bottom(
 								container.KeyFocusGroups(1),
 								container.KeyFocusSkip(),
-								container.PlaceWidget(homeInput),
+								container.PlaceWidget(f.homeInput),
 							),
 						),
 					),
@@ -189,13 +205,13 @@ func main() {
 						container.SplitVertical(
 							container.Left(
 								container.KeyFocusGroups(1, 2),
-								container.PlaceWidget(submitB),
+								container.PlaceWidget(f.submitB),
 								container.AlignHorizontal(align.HorizontalRight),
 								container.PaddingRight(5),
 							),
 							container.Right(
 								container.KeyFocusGroups(1, 2),
-								container.PlaceWidget(cancelB),
+								container.PlaceWidget(f.cancelB),
 								container.AlignHorizontal(align.HorizontalLeft),
 								container.PaddingLeft(5),
 							),
@@ -210,7 +226,26 @@ func main() {
 			container.SplitFixed(6),
 		),
 	)
+}
+
+func main() {
+	t, err := tcell.New()
 	if err != nil {
+		panic(err)
+	}
+	defer t.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c, err := container.New(t, container.ID("root"))
+	if err != nil {
+		panic(err)
+	}
+
+	f, err := newForm(cancel)
+	if err != nil {
+		panic(err)
+	}
+	if err := formLayout(c, f); err != nil {
 		panic(err)
 	}
 

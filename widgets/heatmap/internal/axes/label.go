@@ -38,10 +38,7 @@ type Label struct {
 // the labels will be placed and aligned.
 // Labels are returned with Y coordinates in ascending order.
 // Y coordinates grow down.
-func yLabels(graphHeight, labelWidth int, labels []string) ([]*Label, error) {
-	//if min := 2; graphHeight < min {
-	//	return nil, fmt.Errorf("cannot place labels on a canvas with height %d, minimum is %d", graphHeight, min)
-	//}
+func yLabels(labelWidth int, labels []string) ([]*Label, error) {
 	if min := 0; labelWidth < min {
 		return nil, fmt.Errorf("cannot place labels on a canvas with width %d, minimum is %d", labelWidth, min)
 	}

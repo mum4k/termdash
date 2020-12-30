@@ -44,16 +44,15 @@ type YDetails struct {
 // NewYDetails retrieves details about the Y axis required
 // to draw it on a canvas of the provided area.
 func NewYDetails(labels []string) (*YDetails, error) {
-	graphHeight := len(labels)
-
 	// See how the labels would look like on the entire maxWidth.
 	maxLabelWidth := LongestString(labels)
-	ls, err := yLabels(graphHeight, maxLabelWidth, labels)
+	ls, err := yLabels(maxLabelWidth, labels)
 	if err != nil {
 		return nil, err
 	}
 
-	width := maxLabelWidth + 1
+	width := maxLabelWidth + AxisWidth
+	graphHeight := len(labels)
 
 	return &YDetails{
 		Width:  width,

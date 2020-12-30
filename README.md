@@ -103,7 +103,7 @@ Can be used to create text input forms that support keyboard navigation:
 go run github.com/mum4k/termdash/widgets/textinput/formdemo/formdemo.go
 ```
 
-[<img src="./doc/images/formdemo.gif" alt="formdemo" type="image/gif" width="80%">](widgets/textinput/formdemo/formdemo.go)
+[<img src="./doc/images/formdemo.gif" alt="formdemo" type="image/gif" width="50%">](widgets/textinput/formdemo/formdemo.go)
 
 ## The Gauge
 

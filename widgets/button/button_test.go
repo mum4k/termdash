@@ -45,6 +45,10 @@ type callbackTracker struct {
 	// count is the number of times the callback was called.
 	count int
 
+	// useSetCallback when set to true instructs the test to set the callback
+	// via button.SetCallback instead of button.New or button.NewFromChunks.
+	useSetCallback bool
+
 	// mu protects the tracker.
 	mu sync.Mutex
 }
@@ -411,7 +415,7 @@ func TestButton(t *testing.T) {
 			wantCallback: &callbackTracker{},
 		},
 		{
-			desc:     "mouse triggered the callback",
+			desc:     "mouse triggered a callback set via the constructor",
 			callback: &callbackTracker{},
 			text:     "hello",
 			canvas:   image.Rect(0, 0, 8, 4),
@@ -449,6 +453,50 @@ func TestButton(t *testing.T) {
 			wantCallback: &callbackTracker{
 				called: true,
 				count:  1,
+			},
+		},
+		{
+			desc: "mouse triggered a callback set via SetCallback",
+			callback: &callbackTracker{
+				useSetCallback: true,
+			},
+			text:   "hello",
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					meta: &widgetapi.EventMeta{},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+			wantCallback: &callbackTracker{
+				called:         true,
+				count:          1,
+				useSetCallback: true,
 			},
 		},
 		{
@@ -1373,6 +1421,10 @@ func TestButton(t *testing.T) {
 			var cFn CallbackFn
 			if gotCallback == nil {
 				cFn = nil
+			} else if gotCallback.useSetCallback {
+				// Set an no-op callback via the constructor.
+				// It will be updated to the real one via SetCallback.
+				cFn = func() error { return nil }
 			} else {
 				cFn = gotCallback.callback
 			}
@@ -1400,6 +1452,10 @@ func TestButton(t *testing.T) {
 					return
 				}
 				btn = b
+			}
+
+			if gotCallback.useSetCallback {
+				btn.SetCallback(gotCallback.callback)
 			}
 
 			{

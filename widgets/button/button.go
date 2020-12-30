@@ -154,6 +154,13 @@ func NewFromChunks(chunks []*TextChunk, cFn CallbackFn, opts ...Option) (*Button
 	}, nil
 }
 
+// SetCallback replaces the callback function of the button with the one provided.
+func (b *Button) SetCallback(cFn CallbackFn) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.callback = cFn
+}
+
 // Vars to be replaced from tests.
 var (
 	// Runes to use in cells that contain the button.

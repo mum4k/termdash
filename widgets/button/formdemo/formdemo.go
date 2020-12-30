@@ -30,6 +30,7 @@ import (
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/widgets/button"
+	"github.com/mum4k/termdash/widgets/text"
 	"github.com/mum4k/termdash/widgets/textinput"
 )
 
@@ -113,9 +114,7 @@ func newForm(cancel context.CancelFunc) (*form, error) {
 		textinput.ExclusiveKeyboardOnFocus(),
 	)
 
-	submitB, err := button.NewFromChunks(buttonChunks("Submit"), func() error {
-		return nil
-	},
+	submitB, err := button.NewFromChunks(buttonChunks("Submit"), nil,
 		button.Key(keyboard.KeyEnter),
 		button.GlobalKeys('s', 'S'),
 		button.DisableShadow(),
@@ -228,6 +227,68 @@ func formLayout(c *container.Container, f *form) error {
 	)
 }
 
+// submitLayout updates the container into a layout that displays the submitted data.
+// The cancel argument is a function that terminates Termdash when called.
+func submitLayout(c *container.Container, f *form, cancel context.CancelFunc) error {
+	t, err := text.New()
+	if err != nil {
+		return err
+	}
+
+	if err := t.Write("Submitted data:\n\n"); err != nil {
+		return err
+	}
+	if err := t.Write(fmt.Sprintf("Username: %s\n", f.userInput.Read())); err != nil {
+		return err
+	}
+	if err := t.Write(fmt.Sprintf("UID: %s\n", f.uidInput.Read())); err != nil {
+		return err
+	}
+	if err := t.Write(fmt.Sprintf("GID: %s\n", f.gidInput.Read())); err != nil {
+		return err
+	}
+	if err := t.Write(fmt.Sprintf("Home: %s\n", f.homeInput.Read())); err != nil {
+		return err
+	}
+
+	okB, err := button.NewFromChunks(buttonChunks("OK"), func() error {
+		cancel()
+		return nil
+	},
+		button.FillColor(cell.ColorNumber(220)),
+		button.Key(keyboard.KeyEnter),
+		button.GlobalKeys('o', 'O'),
+		button.DisableShadow(),
+		button.Height(1),
+		button.TextHorizontalPadding(0),
+		button.FillColor(cell.ColorBlack),
+		button.FocusedFillColor(cell.ColorNumber(117)),
+		button.PressedFillColor(cell.ColorNumber(220)),
+	)
+	if err != nil {
+		return err
+	}
+
+	return c.Update("root",
+		container.SplitHorizontal(
+			container.Top(
+				container.SplitVertical(
+					container.Left(),
+					container.Right(
+						container.PlaceWidget(t),
+					),
+					container.SplitPercent(33),
+				),
+			),
+			container.Bottom(
+				container.Focused(),
+				container.PlaceWidget(okB),
+			),
+			container.SplitFixed(7),
+		),
+	)
+}
+
 func main() {
 	t, err := tcell.New()
 	if err != nil {
@@ -245,6 +306,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	f.submitB.SetCallback(func() error {
+		return submitLayout(c, f, cancel)
+	})
 	if err := formLayout(c, f); err != nil {
 		panic(err)
 	}

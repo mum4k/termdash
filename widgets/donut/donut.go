@@ -273,12 +273,12 @@ func (d *Donut) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 }
 
 // Keyboard input isn't supported on the Donut widget.
-func (*Donut) Keyboard(k *terminalapi.Keyboard) error {
+func (*Donut) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	return errors.New("the Donut widget doesn't support keyboard events")
 }
 
 // Mouse input isn't supported on the Donut widget.
-func (*Donut) Mouse(m *terminalapi.Mouse) error {
+func (*Donut) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	return errors.New("the Donut widget doesn't support mouse events")
 }
 

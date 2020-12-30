@@ -7,6 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 30-Dec-2020
+
+### Breaking API changes
+
+- The `widgetapi.Widget.Keyboard` and `widgetapi.Widget.Mouse` methods now
+  accepts a second argument which provides widgets with additional metadata.
+  All widgets implemented outside of the `termdash` repository will need to be
+  updated similarly to the `Barchart` example below. Change the original method
+  signatures:
+  ```go
+  func (*BarChart) Keyboard(k *terminalapi.Keyboard) error { ... }
+
+  func (*BarChart) Mouse(m *terminalapi.Mouse) error { ... }
+
+  ```
+
+  By adding the new `*widgetapi.EventMeta` argument as follows:
+  ```go
+  func (*BarChart) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error { ... }
+
+  func (*BarChart) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error { ... }
+  ```
+
+### Fixed
+
+- `termdash` no longer crashes when `tcell` is used and the terminal window
+  downsizes while content is being drawn.
+
+### Added
+
+#### Text input form functionality with keyboard navigation
+
+- added a new `formdemo` that demonstrates a text input form with keyboard
+  navigation.
+
+#### Infrastructure changes
+
+- `container` now allows users to configure keyboard keys that move focus to
+  the next or the previous container.
+- containers can request to be skipped when focus is moved using keyboard keys.
+- containers can register into separate focus groups and specific keyboard keys
+  can be configured to move the focus within each focus group.
+- widgets can now request keyboard events exclusively when focused.
+- users can now set a `container` as focused using the new `container.Focused`
+  option.
+
+#### Updates to the `button` widget
+
+- the `button` widget allows users to specify multiple trigger keys.
+- the `button` widget now supports different keys for the global and focused
+  scope.
+- the `button` widget can now be drawn without the shadow or the press
+  animation.
+- the `button` widget can now be drawn without horizontal padding around its
+  text.
+- the `button` widget now allows specifying cell options for each cell of the
+  displayed text. Separate cell options can be specified for each of button's
+  main states (up, focused and up, down).
+- the `button` widget allows specifying separate fill color values for each of
+  its main states (up, focused and up, down).
+- the `button` widget now has a method `SetCallback` that allows updating the
+  callback function on an existing `button` instance.
+
+#### Updates to the `textinput` widget
+
+- the `textinput` widget can now be configured to request keyboard events
+  exclusively when focused.
+- the `textinput` widget can now be initialized with a default text in the
+  input box.
+
 ## [0.13.0] - 17-Nov-2020
 
 ### Added
@@ -369,7 +439,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.13.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.14.0...devel
+[0.14.0]: https://github.com/mum4k/termdash/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/mum4k/termdash/compare/v0.12.2...v0.13.0
 [0.12.2]: https://github.com/mum4k/termdash/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/mum4k/termdash/compare/v0.12.0...v0.12.1

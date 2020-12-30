@@ -280,12 +280,12 @@ func (bc *BarChart) Values(values []int, max int, opts ...Option) error {
 }
 
 // Keyboard input isn't supported on the BarChart widget.
-func (*BarChart) Keyboard(k *terminalapi.Keyboard) error {
+func (*BarChart) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	return errors.New("the BarChart widget doesn't support keyboard events")
 }
 
 // Mouse input isn't supported on the BarChart widget.
-func (*BarChart) Mouse(m *terminalapi.Mouse) error {
+func (*BarChart) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	return errors.New("the BarChart widget doesn't support mouse events")
 }
 

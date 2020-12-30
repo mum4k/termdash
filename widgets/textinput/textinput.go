@@ -69,10 +69,15 @@ func New(opts ...Option) (*TextInput, error) {
 	if err := opt.validate(); err != nil {
 		return nil, err
 	}
-	return &TextInput{
+	ti := &TextInput{
 		editor: newFieldEditor(),
 		opts:   opt,
-	}, nil
+	}
+
+	for _, r := range ti.opts.defaultText {
+		ti.editor.insert(r)
+	}
+	return ti, nil
 }
 
 // Vars to be replaced from tests.
@@ -267,7 +272,7 @@ func (ti *TextInput) keyboard(k *terminalapi.Keyboard) (bool, string) {
 
 // Keyboard processes keyboard events.
 // Implements widgetapi.Widget.Keyboard.
-func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
+func (ti *TextInput) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	if submitted, text := ti.keyboard(k); submitted {
 		// Mutex must be released when calling the callback.
 		// Users might call container methods from the callback like the
@@ -279,7 +284,7 @@ func (ti *TextInput) Keyboard(k *terminalapi.Keyboard) error {
 
 // Mouse processes mouse events.
 // Implements widgetapi.Widget.Mouse.
-func (ti *TextInput) Mouse(m *terminalapi.Mouse) error {
+func (ti *TextInput) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 
@@ -326,8 +331,9 @@ func (ti *TextInput) Options() widgetapi.Options {
 			maxWidth,
 			needHeight,
 		},
-		WantKeyboard: widgetapi.KeyScopeFocused,
-		WantMouse:    widgetapi.MouseScopeWidget,
+		WantKeyboard:             widgetapi.KeyScopeFocused,
+		WantMouse:                widgetapi.MouseScopeWidget,
+		ExclusiveKeyboardOnFocus: ti.opts.exclusiveKeyboardOnFocus,
 	}
 }
 

@@ -302,12 +302,12 @@ func (hp *HeatMap) minSize() image.Point {
 }
 
 // Keyboard input isn't supported on the HeatMap widget.
-func (*HeatMap) Keyboard(k *terminalapi.Keyboard) error {
+func (*HeatMap) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	return errors.New("the HeatMap widget doesn't support keyboard events")
 }
 
 // Mouse input isn't supported on the HeatMap widget.
-func (*HeatMap) Mouse(m *terminalapi.Mouse) error {
+func (*HeatMap) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	return errors.New("the HeatMap widget doesn't support mouse events")
 }
 

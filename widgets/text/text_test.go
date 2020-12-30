@@ -310,7 +310,7 @@ func TestTextDraws(t *testing.T) {
 			events: func(widget *Text) {
 				widget.Mouse(&terminalapi.Mouse{
 					Button: mouse.ButtonWheelDown,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -332,7 +332,7 @@ func TestTextDraws(t *testing.T) {
 			events: func(widget *Text) {
 				widget.Mouse(&terminalapi.Mouse{
 					Button: mouse.ButtonWheelDown,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -353,7 +353,7 @@ func TestTextDraws(t *testing.T) {
 			events: func(widget *Text) {
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: keyboard.KeyArrowDown,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -375,7 +375,7 @@ func TestTextDraws(t *testing.T) {
 			events: func(widget *Text) {
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: keyboard.KeyPgDn,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -400,7 +400,7 @@ func TestTextDraws(t *testing.T) {
 			events: func(widget *Text) {
 				widget.Mouse(&terminalapi.Mouse{
 					Button: mouse.ButtonRight,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -425,7 +425,7 @@ func TestTextDraws(t *testing.T) {
 			events: func(widget *Text) {
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: 'd',
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -450,7 +450,7 @@ func TestTextDraws(t *testing.T) {
 			events: func(widget *Text) {
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: 'l',
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -648,7 +648,7 @@ func TestTextDraws(t *testing.T) {
 				}
 				widget.Mouse(&terminalapi.Mouse{
 					Button: mouse.ButtonWheelUp,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -677,7 +677,7 @@ func TestTextDraws(t *testing.T) {
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: keyboard.KeyArrowUp,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -706,7 +706,7 @@ func TestTextDraws(t *testing.T) {
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: keyboard.KeyPgUp,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -736,7 +736,7 @@ func TestTextDraws(t *testing.T) {
 				}
 				widget.Mouse(&terminalapi.Mouse{
 					Button: mouse.ButtonLeft,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -766,7 +766,7 @@ func TestTextDraws(t *testing.T) {
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: 'u',
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -796,7 +796,7 @@ func TestTextDraws(t *testing.T) {
 				}
 				widget.Keyboard(&terminalapi.Keyboard{
 					Key: 'k',
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

@@ -60,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   main states (up, focused and up, down).
 - the `button` widget allows specifying separate fill color values for each of
   its main states (up, focused and up, down).
+- the `button` widget now has a method `SetCallback` that allows updating the
+  callback function on an existing `button` instance.
 
 #### Updates to the `textinput` widget
 

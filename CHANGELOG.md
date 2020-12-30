@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Text input form functionality with keyboard navigation
 
-- added a new `formdemo` that demonstrates the text input form with keyboard
+- added a new `formdemo` that demonstrates a text input form with keyboard
   navigation.
 
 #### Infrastructure changes

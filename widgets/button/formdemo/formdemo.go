@@ -1,4 +1,4 @@
-// Copyright 2019 Google Inc.
+// Copyright 2020 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,18 +68,25 @@ func buttonChunks(text string) []*button.TextChunk {
 	}
 }
 
-// form contains the elements of a text input form
+// form contains the elements of a text input form.
 type form struct {
+	// userInput is a text input that accepts user name.
 	userInput *textinput.TextInput
-	uidInput  *textinput.TextInput
-	gidInput  *textinput.TextInput
+	// uidInput is a text input that accepts UID.
+	uidInput *textinput.TextInput
+	// gidInput is a text input that accepts GID.
+	gidInput *textinput.TextInput
+	// homeInput is a text input that accepts path to the home folder.
 	homeInput *textinput.TextInput
-	submitB   *button.Button
-	cancelB   *button.Button
+
+	// submitB is a button that submits the form.
+	submitB *button.Button
+	// cancelB is a button that exist the application.
+	cancelB *button.Button
 }
 
 // newForm returns a new form instance.
-// The cancel argument is a function that terminates Termdash when called.
+// The cancel argument is a function that terminates the application when called.
 func newForm(cancel context.CancelFunc) (*form, error) {
 	var username string
 	u, err := user.Current()

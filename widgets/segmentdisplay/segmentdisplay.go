@@ -292,12 +292,12 @@ func (sd *SegmentDisplay) drawChar(dCvs *canvas.Canvas, c rune, wOpts *writeOpti
 }
 
 // Keyboard input isn't supported on the SegmentDisplay widget.
-func (*SegmentDisplay) Keyboard(k *terminalapi.Keyboard) error {
+func (*SegmentDisplay) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	return errors.New("the SegmentDisplay widget doesn't support keyboard events")
 }
 
 // Mouse input isn't supported on the SegmentDisplay widget.
-func (*SegmentDisplay) Mouse(m *terminalapi.Mouse) error {
+func (*SegmentDisplay) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	return errors.New("the SegmentDisplay widget doesn't support mouse events")
 }
 

@@ -122,6 +122,13 @@ func (c *Container) hasWidget() bool {
 	return c.opts.widget != nil
 }
 
+// isLeaf determines if this container is a leaf container in the binary tree of containers.
+// Only leaf containers are guaranteed to be "visible" on the screen, because
+// they are on the top of other non-leaf containers.
+func (c *Container) isLeaf() bool {
+	return c.first == nil && c.second == nil
+}
+
 // usable returns the usable area in this container.
 // This depends on whether the container has a border, etc.
 func (c *Container) usable() image.Rectangle {
@@ -257,15 +264,48 @@ func (c *Container) Update(id string, opts ...Option) error {
 	return nil
 }
 
-// updateFocus processes the mouse event and determines if it changes the
-// focused container.
+// updateFocusFromMouse processes the mouse event and determines if it changes
+// the focused container.
 // Caller must hold c.mu.
-func (c *Container) updateFocus(m *terminalapi.Mouse) {
+func (c *Container) updateFocusFromMouse(m *terminalapi.Mouse) {
 	target := pointCont(c, m.Position)
 	if target == nil { // Ignore mouse clicks where no containers are.
 		return
 	}
 	c.focusTracker.mouse(target, m)
+}
+
+// inFocusGroup returns true if this container is in the specified focus group.
+func (c *Container) inFocusGroup(fg FocusGroup) bool {
+	for _, cg := range c.opts.keyFocusGroups {
+		if cg == fg {
+			return true
+		}
+	}
+	return false
+}
+
+// updateFocusFromKeyboard processes the keyboard event and determines if it
+// changes the focused container.
+// Caller must hold c.mu.
+func (c *Container) updateFocusFromKeyboard(k *terminalapi.Keyboard) {
+	active := c.focusTracker.active()
+	nextGroupsForKey, isGroupKeyForNext := active.opts.global.keyFocusGroupsNext[k.Key]
+	prevGroupsForKey, isGroupKeyForPrev := active.opts.global.keyFocusGroupsPrevious[k.Key]
+
+	nextMatchesContGroup, nextG := nextGroupsForKey.firstMatching(active.opts.keyFocusGroups)
+	prevMatchesContGroup, prevG := prevGroupsForKey.firstMatching(active.opts.keyFocusGroups)
+
+	switch {
+	case active.opts.global.keyFocusNext != nil && *active.opts.global.keyFocusNext == k.Key:
+		c.focusTracker.next( /* group = */ nil)
+	case active.opts.global.keyFocusPrevious != nil && *active.opts.global.keyFocusPrevious == k.Key:
+		c.focusTracker.previous( /* group = */ nil)
+	case isGroupKeyForNext && nextMatchesContGroup:
+		c.focusTracker.next(&nextG)
+	case isGroupKeyForPrev && prevMatchesContGroup:
+		c.focusTracker.previous(&prevG)
+	}
 }
 
 // processEvent processes events delivered to the container.
@@ -293,7 +333,7 @@ func (c *Container) processEvent(ev terminalapi.Event) error {
 func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error) {
 	switch e := ev.(type) {
 	case *terminalapi.Mouse:
-		c.updateFocus(ev.(*terminalapi.Mouse))
+		c.updateFocusFromMouse(ev.(*terminalapi.Mouse))
 
 		targets, err := c.mouseEvTargets(e)
 		if err != nil {
@@ -301,7 +341,7 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 		}
 		return func() error {
 			for _, mt := range targets {
-				if err := mt.widget.Mouse(mt.ev); err != nil {
+				if err := mt.widget.Mouse(mt.ev, mt.meta); err != nil {
 					return err
 				}
 			}
@@ -309,10 +349,12 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 		}, nil
 
 	case *terminalapi.Keyboard:
+		c.updateFocusFromKeyboard(ev.(*terminalapi.Keyboard))
+
 		targets := c.keyEvTargets()
 		return func() error {
-			for _, w := range targets {
-				if err := w.Keyboard(e); err != nil {
+			for _, kt := range targets {
+				if err := kt.widget.Keyboard(e, kt.meta); err != nil {
 					return err
 				}
 			}
@@ -324,55 +366,92 @@ func (c *Container) prepareEvTargets(ev terminalapi.Event) (func() error, error)
 	}
 }
 
+// keyEvTarget contains a widget that should receive an event and the metadata
+// for the event.
+type keyEvTarget struct {
+	// widget is the widget that should receive the keyboard event.
+	widget widgetapi.Widget
+	// meta is the metadata about the event.
+	meta *widgetapi.EventMeta
+}
+
+// newKeyEvTarget returns a new keyEvTarget.
+func newKeyEvTarget(w widgetapi.Widget, meta *widgetapi.EventMeta) *keyEvTarget {
+	return &keyEvTarget{
+		widget: w,
+		meta:   meta,
+	}
+}
+
 // keyEvTargets returns those widgets found in the container that should
 // receive this keyboard event.
 // Caller must hold c.mu.
-func (c *Container) keyEvTargets() []widgetapi.Widget {
+func (c *Container) keyEvTargets() []*keyEvTarget {
 	var (
 		errStr  string
-		widgets []widgetapi.Widget
+		targets []*keyEvTarget
+		// If the currently focused widget set the ExclusiveKeyboardOnFocus
+		// option, this pointer is set to that widget.
+		exclusiveWidget widgetapi.Widget
 	)
 
-	// All the widgets that should receive this event.
+	// All the targets that should receive this event.
 	// For now stable ordering (preOrder).
 	preOrder(c, &errStr, visitFunc(func(cur *Container) error {
 		if !cur.hasWidget() {
 			return nil
 		}
 
+		focused := cur.focusTracker.isActive(cur)
+		meta := &widgetapi.EventMeta{
+			Focused: focused,
+		}
 		wOpt := cur.opts.widget.Options()
+		if focused && wOpt.ExclusiveKeyboardOnFocus {
+			exclusiveWidget = cur.opts.widget
+		}
+
 		switch wOpt.WantKeyboard {
 		case widgetapi.KeyScopeNone:
 			// Widget doesn't want any keyboard events.
 			return nil
 
 		case widgetapi.KeyScopeFocused:
-			if cur.focusTracker.isActive(cur) {
-				widgets = append(widgets, cur.opts.widget)
+			if focused {
+				targets = append(targets, newKeyEvTarget(cur.opts.widget, meta))
 			}
 
 		case widgetapi.KeyScopeGlobal:
-			widgets = append(widgets, cur.opts.widget)
+			targets = append(targets, newKeyEvTarget(cur.opts.widget, meta))
 		}
 		return nil
 	}))
-	return widgets
+
+	if exclusiveWidget != nil {
+		targets = []*keyEvTarget{
+			newKeyEvTarget(exclusiveWidget, &widgetapi.EventMeta{Focused: true}),
+		}
+	}
+	return targets
 }
 
-// mouseEvTarget contains a mouse event adjusted relative to the widget's area
-// and the widget that should receive it.
+// mouseEvTarget contains a mouse event adjusted relative to the widget's area,
+// the widget that should receive it and metadata about the event.
 type mouseEvTarget struct {
 	// widget is the widget that should receive the mouse event.
 	widget widgetapi.Widget
 	// ev is the adjusted mouse event.
 	ev *terminalapi.Mouse
+	// meta is the metadata about the event.
+	meta *widgetapi.EventMeta
 }
 
-// newMouseEvTarget returns a new newMouseEvTarget.
-func newMouseEvTarget(w widgetapi.Widget, wArea image.Rectangle, ev *terminalapi.Mouse) *mouseEvTarget {
+// newMouseEvTarget returns a new mouseEvTarget.
+func newMouseEvTarget(w widgetapi.Widget, wArea image.Rectangle, ev *terminalapi.Mouse, meta *widgetapi.EventMeta) *mouseEvTarget {
 	return &mouseEvTarget{
 		widget: w,
 		ev:     adjustMouseEv(ev, wArea),
+		meta:   meta,
 	}
 }
 
@@ -398,6 +477,9 @@ func (c *Container) mouseEvTargets(m *terminalapi.Mouse) ([]*mouseEvTarget, erro
 			return err
 		}
 
+		meta := &widgetapi.EventMeta{
+			Focused: cur.focusTracker.isActive(cur),
+		}
 		switch wOpts.WantMouse {
 		case widgetapi.MouseScopeNone:
 			// Widget doesn't want any mouse events.
@@ -406,18 +488,18 @@ func (c *Container) mouseEvTargets(m *terminalapi.Mouse) ([]*mouseEvTarget, erro
 		case widgetapi.MouseScopeWidget:
 			// Only if the event falls inside of the widget's canvas.
 			if m.Position.In(wa) {
-				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m))
+				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m, meta))
 			}
 
 		case widgetapi.MouseScopeContainer:
 			// Only if the event falls inside the widget's parent container.
 			if m.Position.In(cur.area) {
-				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m))
+				widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m, meta))
 			}
 
 		case widgetapi.MouseScopeGlobal:
 			// Widget wants all mouse events.
-			widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m))
+			widgets = append(widgets, newMouseEvTarget(cur.opts.widget, wa, m, meta))
 		}
 		return nil
 	}))

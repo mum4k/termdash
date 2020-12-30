@@ -1171,7 +1171,7 @@ func TestLineChartDraws(t *testing.T) {
 				return lc.Mouse(&terminalapi.Mouse{
 					Position: image.Point{6, 5},
 					Button:   mouse.ButtonLeft,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
@@ -1222,7 +1222,7 @@ func TestLineChartDraws(t *testing.T) {
 				return lc.Mouse(&terminalapi.Mouse{
 					Position: image.Point{6, 5},
 					Button:   mouse.ButtonLeft,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
@@ -1273,7 +1273,7 @@ func TestLineChartDraws(t *testing.T) {
 				return lc.Mouse(&terminalapi.Mouse{
 					Position: image.Point{8, 5},
 					Button:   mouse.ButtonWheelUp,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
@@ -1331,7 +1331,7 @@ func TestLineChartDraws(t *testing.T) {
 				return lc.Mouse(&terminalapi.Mouse{
 					Position: image.Point{6, 7},
 					Button:   mouse.ButtonLeft,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			wantCapacity: 28,
 			want: func(size image.Point) *faketerm.Terminal {
@@ -1388,7 +1388,7 @@ func TestLineChartDraws(t *testing.T) {
 				return lc.Mouse(&terminalapi.Mouse{
 					Position: image.Point{5, 0},
 					Button:   mouse.ButtonWheelUp,
-				})
+				}, &widgetapi.EventMeta{})
 			},
 			wantCapacity: 10,
 			want: func(size image.Point) *faketerm.Terminal {
@@ -1443,7 +1443,7 @@ func TestLineChartDraws(t *testing.T) {
 				if err := lc.Mouse(&terminalapi.Mouse{
 					Position: image.Point{5, 0},
 					Button:   mouse.ButtonWheelUp,
-				}); err != nil {
+				}, &widgetapi.EventMeta{}); err != nil {
 					return err
 				}
 
@@ -1901,7 +1901,7 @@ func TestKeyboard(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New => unexpected error: %v", err)
 	}
-	if err := lc.Keyboard(&terminalapi.Keyboard{}); err == nil {
+	if err := lc.Keyboard(&terminalapi.Keyboard{}, &widgetapi.EventMeta{}); err == nil {
 		t.Errorf("Keyboard => got nil err, wanted one")
 	}
 }
@@ -1911,7 +1911,7 @@ func TestMouseDoesNothingWithoutZoomTracker(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New => unexpected error: %v", err)
 	}
-	if err := lc.Mouse(&terminalapi.Mouse{}); err != nil {
+	if err := lc.Mouse(&terminalapi.Mouse{}, &widgetapi.EventMeta{}); err != nil {
 		t.Errorf("Mouse => unexpected error: %v", err)
 	}
 }

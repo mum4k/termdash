@@ -55,6 +55,7 @@ To install this library, run the following:
 
 ```go
 go get -u github.com/mum4k/termdash
+cd github.com/mum4k/termdash
 ```
 
 # Usage
@@ -63,7 +64,7 @@ The usage of most of these elements is demonstrated in
 [termdashdemo.go](termdashdemo/termdashdemo.go). To execute the demo:
 
 ```go
-go run github.com/mum4k/termdash/termdashdemo/termdashdemo.go
+go run termdashdemo/termdashdemo.go
 ```
 
 # Documentation
@@ -80,7 +81,7 @@ Run the
 [buttondemo](widgets/button/buttondemo/buttondemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/button/buttondemo/buttondemo.go
+go run widgets/button/buttondemo/buttondemo.go
 ```
 
 [<img src="./doc/images/buttondemo.gif" alt="buttondemo" type="image/gif" width="50%">](widgets/button/buttondemo/buttondemo.go)
@@ -92,10 +93,18 @@ submitting text data. Run the
 [textinputdemo](widgets/textinput/textinputdemo/textinputdemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/textinput/textinputdemo/textinputdemo.go
+go run widgets/textinput/textinputdemo/textinputdemo.go
 ```
 
 [<img src="./doc/images/textinputdemo.gif" alt="textinputdemo" type="image/gif" width="80%">](widgets/textinput/textinputdemo/textinputdemo.go)
+
+Can be used to create text input forms that support keyboard navigation:
+
+```go
+go run widgets/textinput/formdemo/formdemo.go
+```
+
+[<img src="./doc/images/formdemo.gif" alt="formdemo" type="image/gif" width="50%">](widgets/textinput/formdemo/formdemo.go)
 
 ## The Gauge
 
@@ -103,7 +112,7 @@ Displays the progress of an operation. Run the
 [gaugedemo](widgets/gauge/gaugedemo/gaugedemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/gauge/gaugedemo/gaugedemo.go
+go run widgets/gauge/gaugedemo/gaugedemo.go
 ```
 
 [<img src="./doc/images/gaugedemo.gif" alt="gaugedemo" type="image/gif">](widgets/gauge/gaugedemo/gaugedemo.go)
@@ -114,7 +123,7 @@ Visualizes progress of an operation as a partial or a complete donut. Run the
 [donutdemo](widgets/donut/donutdemo/donutdemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/donut/donutdemo/donutdemo.go
+go run widgets/donut/donutdemo/donutdemo.go
 ```
 
 [<img src="./doc/images/donutdemo.gif" alt="donutdemo" type="image/gif">](widgets/donut/donutdemo/donutdemo.go)
@@ -125,7 +134,7 @@ Displays text content, supports trimming and scrolling of content. Run the
 [textdemo](widgets/text/textdemo/textdemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/text/textdemo/textdemo.go
+go run widgets/text/textdemo/textdemo.go
 ```
 
 [<img src="./doc/images/textdemo.gif" alt="textdemo" type="image/gif">](widgets/text/textdemo/textdemo.go)
@@ -137,7 +146,7 @@ sub-cell height. Run the
 [sparklinedemo](widgets/sparkline/sparklinedemo/sparklinedemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/sparkline/sparklinedemo/sparklinedemo.go
+go run widgets/sparkline/sparklinedemo/sparklinedemo.go
 ```
 
 [<img src="./doc/images/sparklinedemo.gif" alt="sparklinedemo" type="image/gif" width="50%">](widgets/sparkline/sparklinedemo/sparklinedemo.go)
@@ -148,7 +157,7 @@ Displays multiple bars showing relative ratios of values. Run the
 [barchartdemo](widgets/barchart/barchartdemo/barchartdemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/barchart/barchartdemo/barchartdemo.go
+go run widgets/barchart/barchartdemo/barchartdemo.go
 ```
 
 [<img src="./doc/images/barchartdemo.gif" alt="barchartdemo" type="image/gif" width="50%">](widgets/barchart/barchartdemo/barchartdemo.go)
@@ -160,7 +169,7 @@ events. Run the
 [linechartdemo](widgets/linechart/linechartdemo/linechartdemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/linechart/linechartdemo/linechartdemo.go
+go run widgets/linechart/linechartdemo/linechartdemo.go
 ```
 
 [<img src="./doc/images/linechartdemo.gif" alt="linechartdemo" type="image/gif" width="70%">](widgets/linechart/linechartdemo/linechartdemo.go)
@@ -171,7 +180,7 @@ Displays text by simulating a 16-segment display. Run the
 [segmentdisplaydemo](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go).
 
 ```go
-go run github.com/mum4k/termdash/widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go
+go run widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go
 ```
 
 [<img src="./doc/images/segmentdisplaydemo.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)

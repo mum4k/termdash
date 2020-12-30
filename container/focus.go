@@ -68,6 +68,11 @@ func newFocusTracker(c *Container) *focusTracker {
 	}
 }
 
+// active returns container that is currently active.
+func (ft *focusTracker) active() *Container {
+	return ft.container
+}
+
 // isActive determines if the provided container is the currently active container.
 func (ft *focusTracker) isActive(c *Container) bool {
 	return ft.container == c
@@ -76,6 +81,98 @@ func (ft *focusTracker) isActive(c *Container) bool {
 // setActive sets the currently active container to the one provided.
 func (ft *focusTracker) setActive(c *Container) {
 	ft.container = c
+}
+
+// next moves focus to the next container.
+// If group is not nil, focus will only move between containers with a matching
+// focus group number.
+func (ft *focusTracker) next(group *FocusGroup) {
+	var (
+		errStr    string
+		firstCont *Container
+		nextCont  *Container
+		focusNext bool
+	)
+	preOrder(rootCont(ft.container), &errStr, visitFunc(func(c *Container) error {
+		if nextCont != nil {
+			// Already found the next container, nothing to do.
+			return nil
+		}
+
+		if firstCont == nil && c.isLeaf() {
+			// Remember the first eligible container in case we "wrap" over,
+			// i.e. finish the iteration before finding the next container.
+			switch {
+			case group == nil && !c.opts.keyFocusSkip:
+				fallthrough
+			case group != nil && c.inFocusGroup(*group):
+				firstCont = c
+			}
+		}
+
+		if ft.container == c {
+			// Visiting the currently focused container, going to focus the
+			// next one.
+			focusNext = true
+			return nil
+		}
+
+		if focusNext && c.isLeaf() {
+			switch {
+			case group == nil && !c.opts.keyFocusSkip:
+				fallthrough
+			case group != nil && c.inFocusGroup(*group):
+				nextCont = c
+			}
+		}
+		return nil
+	}))
+
+	if nextCont == nil && firstCont != nil {
+		// If the traversal finishes without finding the next container, move
+		// focus back to the first container.
+		ft.setActive(firstCont)
+	} else if nextCont != nil {
+		ft.setActive(nextCont)
+	}
+}
+
+// previous moves focus to the previous container.
+// If group is not nil, focus will only move between containers with a matching
+// focus group number.
+func (ft *focusTracker) previous(group *FocusGroup) {
+	var (
+		errStr      string
+		prevCont    *Container
+		lastCont    *Container
+		visitedCurr bool
+	)
+	preOrder(rootCont(ft.container), &errStr, visitFunc(func(c *Container) error {
+		if ft.container == c {
+			visitedCurr = true
+		}
+
+		if c.isLeaf() {
+			switch {
+			case group == nil && !c.opts.keyFocusSkip:
+				fallthrough
+			case group != nil && c.inFocusGroup(*group):
+				if !visitedCurr {
+					// Remember the last eligible container closest to the one
+					// currently focused.
+					prevCont = c
+				}
+				lastCont = c
+			}
+		}
+		return nil
+	}))
+
+	if prevCont != nil {
+		ft.setActive(prevCont)
+	} else if lastCont != nil {
+		ft.setActive(lastCont)
+	}
 }
 
 // mouse identifies mouse events that change the focused container and track

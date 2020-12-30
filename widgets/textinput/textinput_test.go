@@ -118,6 +118,20 @@ func TestTextInput(t *testing.T) {
 			wantNewErr: true,
 		},
 		{
+			desc: "fails on invalid DefaultText which has control characters",
+			opts: []Option{
+				DefaultText("\r"),
+			},
+			wantNewErr: true,
+		},
+		{
+			desc: "fails on invalid DefaultText which has newline",
+			opts: []Option{
+				DefaultText("\n"),
+			},
+			wantNewErr: true,
+		},
+		{
 			desc:   "takes all space without label",
 			canvas: image.Rect(0, 0, 10, 1),
 			meta:   &widgetapi.Meta{},
@@ -554,6 +568,62 @@ func TestTextInput(t *testing.T) {
 					image.Rect(3, 0, 10, 1),
 					textFieldRune,
 					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "displays default text",
+			opts: []Option{
+				DefaultText("text"),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"text",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc: "default text can be edited",
+			opts: []Option{
+				DefaultText("text"),
+			},
+			canvas: image.Rect(0, 0, 10, 1),
+			meta:   &widgetapi.Meta{},
+			events: []terminalapi.Event{
+				&terminalapi.Keyboard{Key: keyboard.KeyBackspace},
+				&terminalapi.Keyboard{Key: 'a'},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetAreaCells(
+					cvs,
+					image.Rect(0, 0, 10, 1),
+					textFieldRune,
+					cell.BgColor(cell.ColorNumber(DefaultFillColorNumber)),
+				)
+				testdraw.MustText(
+					cvs,
+					"texa",
+					image.Point{0, 0},
 				)
 				testcanvas.MustApply(cvs, ft)
 				return ft
@@ -1441,7 +1511,7 @@ func TestTextInput(t *testing.T) {
 			for i, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Mouse:
-					err := ti.Mouse(e)
+					err := ti.Mouse(e, &widgetapi.EventMeta{})
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantEventErr {
@@ -1457,7 +1527,7 @@ func TestTextInput(t *testing.T) {
 					}
 
 				case *terminalapi.Keyboard:
-					err := ti.Keyboard(e)
+					err := ti.Keyboard(e, &widgetapi.EventMeta{})
 					// Only the last event in test cases is the one that triggers the callback.
 					if i == len(tc.events)-1 {
 						if (err != nil) != tc.wantEventErr {
@@ -1551,7 +1621,7 @@ func TestTextInputRead(t *testing.T) {
 			for _, ev := range tc.events {
 				switch e := ev.(type) {
 				case *terminalapi.Keyboard:
-					err := ti.Keyboard(e)
+					err := ti.Keyboard(e, &widgetapi.EventMeta{})
 					if err != nil {
 						t.Fatalf("Keyboard => unexpected error: %v", err)
 					}
@@ -1702,6 +1772,19 @@ func TestOptions(t *testing.T) {
 				MaximumSize:  image.Point{12, 3},
 				WantKeyboard: widgetapi.KeyScopeFocused,
 				WantMouse:    widgetapi.MouseScopeWidget,
+			},
+		},
+		{
+			desc: "requests ExclusiveKeyboardOnFocus",
+			opts: []Option{
+				ExclusiveKeyboardOnFocus(),
+			},
+			want: widgetapi.Options{
+				MinimumSize:              image.Point{4, 1},
+				MaximumSize:              image.Point{0, 1},
+				WantKeyboard:             widgetapi.KeyScopeFocused,
+				WantMouse:                widgetapi.MouseScopeWidget,
+				ExclusiveKeyboardOnFocus: true,
 			},
 		},
 	}

@@ -195,21 +195,14 @@ func (c *Canvas) copyTo(offset image.Point, dstSetCell setCellFunc) error {
 }
 
 // Apply applies the canvas to the corresponding area of the terminal.
-// Guarantees to stay within limits of the area the canvas was created with.
 func (c *Canvas) Apply(t terminalapi.Terminal) error {
-	termArea, err := area.FromSize(t.Size())
-	if err != nil {
-		return err
-	}
-
-	bufArea, err := area.FromSize(c.buffer.Size())
-	if err != nil {
-		return err
-	}
-
-	if !bufArea.In(termArea) {
-		return fmt.Errorf("the canvas area %+v doesn't fit onto the terminal %+v", bufArea, termArea)
-	}
+	// Note - the size of the terminal might have changed since we started
+	// drawing, since terminal windows are inherently racy (the user can resize
+	// them at any time).
+	//
+	// This is ok, since the underlying terminal layer will just ignore cells
+	// that are out of bounds and termdash will redraw again once it receives
+	// the resize event. Regression for #281.
 
 	// The image.Point{0, 0} of this canvas isn't always exactly at
 	// image.Point{0, 0} on the terminal.

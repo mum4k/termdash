@@ -478,12 +478,12 @@ func (lc *LineChart) highlightRange(bc *braille.Canvas, hRange *zoom.Range) erro
 }
 
 // Keyboard implements widgetapi.Widget.Keyboard.
-func (lc *LineChart) Keyboard(k *terminalapi.Keyboard) error {
+func (lc *LineChart) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	return errors.New("the LineChart widget doesn't support keyboard events")
 }
 
 // Mouse implements widgetapi.Widget.Mouse.
-func (lc *LineChart) Mouse(m *terminalapi.Mouse) error {
+func (lc *LineChart) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
 

@@ -130,6 +130,13 @@ type Options struct {
 	// forwarded to the widget.
 	WantKeyboard KeyScope
 
+	// ExclusiveKeyboardOnFocus allows a widget to request exclusive access to
+	// keyboard events when its container is focused. When set to true, no
+	// other widgets will receive any keyboard events that happen while the
+	// container of this widget is focused even if they registered for
+	// KeyScopeGlobal.
+	ExclusiveKeyboardOnFocus bool
+
 	// WantMouse allows a widget to request mouse events and specify their
 	// desired scope. If set to MouseScopeNone, no mouse events are forwarded
 	// to the widget.
@@ -142,6 +149,14 @@ type Options struct {
 // Meta provide additional metadata to widgets.
 type Meta struct {
 	// Focused asserts whether the widget's container is focused.
+	Focused bool
+}
+
+// EventMeta provides additional metadata about events to widgets.
+type EventMeta struct {
+	// Focused asserts whether the widget's container is focused at the time of the event.
+	// If the event itself changes focus, the value here reflects the state of
+	// the focus after the change.
 	Focused bool
 }
 
@@ -159,15 +174,17 @@ type Widget interface {
 	// The argument meta is guaranteed to be valid (i.e. non-nil).
 	Draw(cvs *canvas.Canvas, meta *Meta) error
 
-	// Keyboard is called when the widget is focused on the dashboard and a key
-	// shortcut the widget registered for was pressed. Only called if the widget
-	// registered for keyboard events.
-	Keyboard(k *terminalapi.Keyboard) error
+	// Keyboard is called with every keyboard event whose scope the widget
+	// registered for.
+	//
+	// The argument meta is guaranteed to be valid (i.e. non-nil).
+	Keyboard(k *terminalapi.Keyboard, meta *EventMeta) error
 
-	// Mouse is called when the widget is focused on the dashboard and a mouse
-	// event happens on its canvas. Only called if the widget registered for mouse
-	// events.
-	Mouse(m *terminalapi.Mouse) error
+	// Mouse is called with every mouse event whose scope the widget registered
+	// for.
+	//
+	// The argument meta is guaranteed to be valid (i.e. non-nil).
+	Mouse(m *terminalapi.Mouse, meta *EventMeta) error
 
 	// Options returns registration options for the widget.
 	// This is how the widget indicates to the infrastructure whether it is

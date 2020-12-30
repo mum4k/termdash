@@ -99,6 +99,8 @@ type Button struct {
 
 // New returns a new Button that will display the provided text.
 // Each press of the button will invoke the callback function.
+// The callback function can be nil in which case pressing the button is a
+// no-op.
 func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
 	return NewFromChunks([]*TextChunk{NewChunk(text)}, cFn, opts...)
 }
@@ -106,10 +108,6 @@ func New(text string, cFn CallbackFn, opts ...Option) (*Button, error) {
 // NewFromChunks is like New, but allows specifying write options for
 // individual chunks of text displayed in the button.
 func NewFromChunks(chunks []*TextChunk, cFn CallbackFn, opts ...Option) (*Button, error) {
-	if cFn == nil {
-		return nil, errors.New("the CallbackFn argument cannot be nil")
-	}
-
 	if len(chunks) == 0 {
 		return nil, errors.New("at least one text chunk must be specified")
 	}
@@ -152,6 +150,13 @@ func NewFromChunks(chunks []*TextChunk, cFn CallbackFn, opts ...Option) (*Button
 		callback:     cFn,
 		opts:         opt,
 	}, nil
+}
+
+// SetCallback replaces the callback function of the button with the one provided.
+func (b *Button) SetCallback(cFn CallbackFn) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.callback = cFn
 }
 
 // Vars to be replaced from tests.
@@ -281,10 +286,12 @@ func (b *Button) keyActivated(k *terminalapi.Keyboard, meta *widgetapi.EventMeta
 // Implements widgetapi.Widget.Keyboard.
 func (b *Button) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	if b.keyActivated(k, meta) {
-		// Mutex must be released when calling the callback.
-		// Users might call container methods from the callback like the
-		// Container.Update, see #205.
-		return b.callback()
+		if b.callback != nil {
+			// Mutex must be released when calling the callback.
+			// Users might call container methods from the callback like the
+			// Container.Update, see #205.
+			return b.callback()
+		}
 	}
 	return nil
 }
@@ -307,10 +314,12 @@ func (b *Button) mouseActivated(m *terminalapi.Mouse) bool {
 // Implements widgetapi.Widget.Mouse.
 func (b *Button) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	if b.mouseActivated(m) {
-		// Mutex must be released when calling the callback.
-		// Users might call container methods from the callback like the
-		// Container.Update, see #205.
-		return b.callback()
+		if b.callback != nil {
+			// Mutex must be released when calling the callback.
+			// Users might call container methods from the callback like the
+			// Container.Update, see #205.
+			return b.callback()
+		}
 	}
 	return nil
 }

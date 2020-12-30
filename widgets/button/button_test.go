@@ -98,13 +98,6 @@ func TestButton(t *testing.T) {
 		wantCallbackErr bool
 	}{
 		{
-			desc:       "New fails with nil callback",
-			canvas:     image.Rect(0, 0, 1, 1),
-			text:       "hello",
-			meta:       &widgetapi.Meta{Focused: false},
-			wantNewErr: true,
-		},
-		{
 			desc:     "New fails with negative keyUpDelay",
 			callback: &callbackTracker{},
 			opts: []Option{
@@ -169,15 +162,6 @@ func TestButton(t *testing.T) {
 			},
 			canvas:     image.Rect(0, 0, 1, 1),
 			text:       "hello",
-			meta:       &widgetapi.Meta{Focused: false},
-			wantNewErr: true,
-		},
-		{
-			desc: "NewFromChunks fails with nil callback",
-			textChunks: []*TextChunk{
-				NewChunk("text"),
-			},
-			canvas:     image.Rect(0, 0, 1, 1),
 			meta:       &widgetapi.Meta{Focused: false},
 			wantNewErr: true,
 		},
@@ -413,6 +397,43 @@ func TestButton(t *testing.T) {
 				return ft
 			},
 			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "mouse triggered a button with nil callback",
+			callback: nil,
+			text:     "hello",
+			canvas:   image.Rect(0, 0, 8, 4),
+			meta:     &widgetapi.Meta{Focused: false},
+			events: []*event{
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonLeft},
+					meta: &widgetapi.EventMeta{},
+				},
+				{
+					ev:   &terminalapi.Mouse{Position: image.Point{0, 0}, Button: mouse.ButtonRelease},
+					meta: &widgetapi.EventMeta{},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Shadow.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 's', cell.BgColor(cell.ColorNumber(240)))
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(0, 0, 7, 3), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{1, 1},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
 		},
 		{
 			desc:     "mouse triggered a callback set via the constructor",
@@ -721,6 +742,42 @@ func TestButton(t *testing.T) {
 				return ft
 			},
 			wantCallback: &callbackTracker{},
+		},
+		{
+			desc:     "keyboard event triggers a button with nil callback",
+			callback: nil,
+			text:     "hello",
+			opts: []Option{
+				Key(keyboard.KeyEnter),
+			},
+			timeSince: func(time.Time) time.Duration {
+				return 200 * time.Millisecond
+			},
+			canvas: image.Rect(0, 0, 8, 4),
+			meta:   &widgetapi.Meta{Focused: false},
+			events: []*event{
+				{
+					ev:   &terminalapi.Keyboard{Key: keyboard.KeyEnter},
+					meta: &widgetapi.EventMeta{Focused: true},
+				},
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+
+				// Button.
+				testcanvas.MustSetAreaCells(cvs, image.Rect(1, 1, 8, 4), 'x', cell.BgColor(cell.ColorNumber(117)))
+
+				// Text.
+				testdraw.MustText(cvs, "hello", image.Point{2, 2},
+					draw.TextCellOpts(
+						cell.FgColor(cell.ColorBlack),
+						cell.BgColor(cell.ColorNumber(117))),
+				)
+
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
 		},
 		{
 			desc:     "keyboard event triggers the button, trigger time didn't expire so button is down",
@@ -1454,7 +1511,7 @@ func TestButton(t *testing.T) {
 				btn = b
 			}
 
-			if gotCallback.useSetCallback {
+			if gotCallback != nil && gotCallback.useSetCallback {
 				btn.SetCallback(gotCallback.callback)
 			}
 

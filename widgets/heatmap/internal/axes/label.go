@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc.
+// Copyright 2021 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ func rowLabel(row int, label string, labelWidth int) (*Label, error) {
 
 	pos, err := alignfor.Text(ar, label, align.HorizontalRight, align.VerticalMiddle)
 	if err != nil {
-		return nil, fmt.Errorf("unable to align the label value: %v", err)
+		return nil, fmt.Errorf("unable to align the Y label value: %v", err)
 	}
 
 	return &Label{
@@ -75,8 +75,11 @@ func rowLabel(row int, label string, labelWidth int) (*Label, error) {
 // xLabels returns labels that should be placed under the cells.
 // Labels are returned with X coordinates in ascending order.
 // X coordinates grow right.
+// yEnd is the point where the Y axis ends, although it will not be drawn.
+// graphWidth is the total width of all cells of the heatmap.
 func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) ([]*Label, error) {
 	var ret []*Label
+	var err error
 
 	// The length of the longest X labels.
 	ls := LongestString(labels)
@@ -84,36 +87,53 @@ func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) (
 	if ls > cellWidth {
 		// If the length of the longest X label exceeds the cellWidth,
 		// then only some labels will be displayed.
-		length, index := paddedLabelLength(graphWidth, ls, cellWidth)
-		for x := yEnd.X + 1; x <= graphWidth && index < len(labels); x += length {
-			ar := image.Rect(x, yEnd.Y, x+length, yEnd.Y+1)
-			pos, err := alignfor.Text(ar, labels[index], align.HorizontalCenter, align.VerticalMiddle)
-			if err != nil {
-				return nil, fmt.Errorf("unable to align the label value: %v", err)
-			}
-
-			l := &Label{
-				Text: labels[index],
-				Pos:  pos,
-			}
-			index += length / cellWidth
-			ret = append(ret, l)
-		}
+		ret, err = alignSomeLabels(yEnd, graphWidth, labels, ls, cellWidth)
 	} else {
-		for x := 0; x < len(labels); x++ {
-			startX := yEnd.X + 1 + x*cellWidth
-			ar := image.Rect(startX, yEnd.Y, startX+cellWidth, yEnd.Y+1)
-			pos, err := alignfor.Text(ar, labels[x], align.HorizontalCenter, align.VerticalMiddle)
-			if err != nil {
-				return nil, fmt.Errorf("unable to align the label value: %v", err)
-			}
+		ret, err = alignAllLabels(yEnd, labels, cellWidth)
+	}
 
-			l := &Label{
-				Text: labels[x],
-				Pos:  pos,
-			}
-			ret = append(ret, l)
+	return ret, err
+}
+
+func alignSomeLabels(yEnd image.Point, graphWidth int, labels []string, ls int, cellWidth int) ([]*Label, error) {
+	var ret []*Label
+
+	length, index := paddedLabelLength(graphWidth, ls, cellWidth)
+
+	for x := yEnd.X + 1; x <= graphWidth && index < len(labels); x += length {
+		ar := image.Rect(x, yEnd.Y, x+length, yEnd.Y+1)
+		pos, err := alignfor.Text(ar, labels[index], align.HorizontalCenter, align.VerticalMiddle)
+		if err != nil {
+			return nil, fmt.Errorf("unable to align the X label value: %v", err)
 		}
+
+		l := &Label{
+			Text: labels[index],
+			Pos:  pos,
+		}
+		index += length / cellWidth
+		ret = append(ret, l)
+	}
+
+	return ret, nil
+}
+
+func alignAllLabels(yEnd image.Point, labels []string, cellWidth int) ([]*Label, error) {
+	var ret []*Label
+
+	for x := 0; x < len(labels); x++ {
+		startX := yEnd.X + 1 + x*cellWidth
+		ar := image.Rect(startX, yEnd.Y, startX+cellWidth, yEnd.Y+1)
+		pos, err := alignfor.Text(ar, labels[x], align.HorizontalCenter, align.VerticalMiddle)
+		if err != nil {
+			return nil, fmt.Errorf("unable to align the X label value: %v", err)
+		}
+
+		l := &Label{
+			Text: labels[x],
+			Pos:  pos,
+		}
+		ret = append(ret, l)
 	}
 
 	return ret, nil
@@ -125,11 +145,11 @@ func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) (
 // So in order to better display, every three columns of cells will display a X label,
 // the X label belongs to the middle column of the three columns,
 // and the padded length is 3*3 (cellWidth multiplies the number of columns), which is 9.
-func paddedLabelLength(graphWidth, longest, cellWidth int) (l, index int) {
-	l, index = 0, 0
+func paddedLabelLength(graphWidth, longest, cellWidth int) (length, index int) {
+	length, index = 0, 0
 	for i := longest/cellWidth + 1; i < graphWidth/cellWidth; i++ {
 		if (i*cellWidth-longest)%2 == 0 {
-			l = i * cellWidth
+			length = i * cellWidth
 			index = i / 2
 			break
 		}

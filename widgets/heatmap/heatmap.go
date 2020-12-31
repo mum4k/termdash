@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc.
+// Copyright 2021 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ func New(opts ...Option) (*HeatMap, error) {
 // Provided options override values set when New() was called.
 func (hp *HeatMap) Values(xLabels []string, yLabels []string, values [][]float64, opts ...Option) error {
 	if len(values) == 0 {
-		return errors.New("")
+		return errors.New("the values cannot be empty")
 	}
 
 	hp.mu.Lock()

@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc.
+// Copyright 2021 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,8 +49,10 @@ func playHeatMap(ctx context.Context, hp *heatmap.HeatMap, delay time.Duration) 
 				values = append(values, rv)
 			}
 
-			if err := hp.Values(nil, nil, values); err != nil {
-				panic(err)
+			if len(values) > 0 {
+				if err := hp.Values(nil, nil, values); err != nil {
+					panic(err)
+				}
 			}
 		case <-ctx.Done():
 			return

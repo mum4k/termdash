@@ -1003,7 +1003,7 @@ func TestNew(t *testing.T) {
 				return ft
 			},
 		},
-     	{
+		{
 			desc:     "sets border title on root container of different color",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
@@ -1065,9 +1065,9 @@ func TestNew(t *testing.T) {
 					SplitVertical(
 						Left(
 							Border(linestyle.Light),
-					        BorderTitle("Ab"),
-					        TitleColor(cell.ColorMagenta),
-					        TitleFocusedColor(cell.ColorCyan),
+							BorderTitle("Ab"),
+							TitleColor(cell.ColorMagenta),
+							TitleFocusedColor(cell.ColorCyan),
 						),
 						Right(
 							Border(linestyle.Light),
@@ -1103,7 +1103,6 @@ func TestNew(t *testing.T) {
 				return ft
 			},
 		},
-
 		{
 			desc:     "inherits title color on left child container",
 			termSize: image.Point{10, 10},
@@ -1116,7 +1115,7 @@ func TestNew(t *testing.T) {
 					SplitVertical(
 						Left(
 							Border(linestyle.Light),
-					        BorderTitle("Ab"),
+							BorderTitle("Ab"),
 						),
 						Right(
 							Border(linestyle.Light),

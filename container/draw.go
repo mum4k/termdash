@@ -87,19 +87,19 @@ func drawBorder(c *Container) error {
 	var cOpts, titleCOpts []cell.Option
 	if c.focusTracker.isActive(c) {
 		cOpts = append(cOpts, cell.FgColor(c.opts.inherited.focusedColor))
-	    if c.opts.inherited.titleFocusedColor != nil {
+		if c.opts.inherited.titleFocusedColor != nil {
 			titleCOpts = append(titleCOpts, cell.FgColor(*c.opts.inherited.titleFocusedColor))
-	    } else {
+		} else {
 			titleCOpts = cOpts
 		}
-    } else {
+	} else {
 		cOpts = append(cOpts, cell.FgColor(c.opts.inherited.borderColor))
-	    if c.opts.inherited.titleColor != nil {
+		if c.opts.inherited.titleColor != nil {
 			titleCOpts = append(titleCOpts, cell.FgColor(*c.opts.inherited.titleColor))
-	    } else {
+		} else {
 			titleCOpts = cOpts
 		}
-    }
+	}
 
 	if err := draw.Border(cvs, ar,
 		draw.BorderLineStyle(c.opts.border),

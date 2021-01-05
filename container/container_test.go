@@ -1104,7 +1104,7 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			desc:     "inherits title color on left child container",
+			desc:     "inherits the border color for the title on left child container when TitleColor is not set",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
 				return New(

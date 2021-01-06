@@ -1004,6 +1004,154 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "sets border title on root container of different color",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					BorderTitle("Ab"),
+					BorderColor(cell.ColorRed),
+					FocusedColor(cell.ColorBlue),
+					TitleColor(cell.ColorMagenta),
+					TitleFocusedColor(cell.ColorCyan),
+					SplitVertical(
+						Left(
+							Border(linestyle.Light),
+						),
+						Right(
+							Border(linestyle.Light),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(0, 0, 10, 10),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorBlue)),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(1, 1, 5, 9),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(5, 1, 9, 9),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testdraw.MustText(
+					cvs,
+					"Ab",
+					image.Point{1, 0},
+					draw.TextCellOpts(cell.FgColor(cell.ColorCyan)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "sets different color title on left child container",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					BorderColor(cell.ColorRed),
+					FocusedColor(cell.ColorBlue),
+					SplitVertical(
+						Left(
+							Border(linestyle.Light),
+							BorderTitle("Ab"),
+							TitleColor(cell.ColorMagenta),
+							TitleFocusedColor(cell.ColorCyan),
+						),
+						Right(
+							Border(linestyle.Light),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(0, 0, 10, 10),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorBlue)),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(1, 1, 5, 9),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(5, 1, 9, 9),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testdraw.MustText(
+					cvs,
+					"Ab",
+					image.Point{2, 1},
+					draw.TextCellOpts(cell.FgColor(cell.ColorMagenta)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "inherits the border color for the title on left child container when TitleColor is not set",
+			termSize: image.Point{10, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					BorderColor(cell.ColorRed),
+					FocusedColor(cell.ColorBlue),
+					SplitVertical(
+						Left(
+							Border(linestyle.Light),
+							BorderTitle("Ab"),
+						),
+						Right(
+							Border(linestyle.Light),
+						),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(0, 0, 10, 10),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorBlue)),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(1, 1, 5, 9),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testdraw.MustBorder(
+					cvs,
+					image.Rect(5, 1, 9, 9),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testdraw.MustText(
+					cvs,
+					"Ab",
+					image.Point{2, 1},
+					draw.TextCellOpts(cell.FgColor(cell.ColorRed)),
+				)
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "splitting a container removes the widget",
 			termSize: image.Point{10, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

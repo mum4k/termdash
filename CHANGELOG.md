@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump github.com/gdamore/tcell/v2 from 2.0.0 to 2.1.0.
 
+### Added
+
+- TitleColor and TitleFocusedColor options for border title which enables the
+  setting of separate colors for border and title on a container.
+
+
 ## [0.14.0] - 30-Dec-2020
 
 ### Breaking API changes

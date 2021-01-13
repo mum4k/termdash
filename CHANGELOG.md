@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bump github.com/gdamore/tcell/v2 from 2.0.0 to 2.1.0.
+- Bump github.com/mattn/go-runewidth from 0.0.9 to 0.0.10.
 
 ### Added
 

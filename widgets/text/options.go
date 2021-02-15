@@ -36,6 +36,7 @@ type options struct {
 	scrollDown       rune
 	wrapMode         wrap.Mode
 	rollContent      bool
+	maxContent       int
 	disableScrolling bool
 	mouseUpButton    mouse.Button
 	mouseDownButton  mouse.Button
@@ -56,6 +57,7 @@ func newOptions(opts ...Option) *options {
 		keyDown:         DefaultScrollKeyDown,
 		keyPgUp:         DefaultScrollKeyPageUp,
 		keyPgDown:       DefaultScrollKeyPageDown,
+		maxContent:      DefaultMaxContent,
 	}
 	for _, o := range opts {
 		o.set(opt)
@@ -172,5 +174,18 @@ func ScrollKeys(up, down, pageUp, pageDown keyboard.Key) Option {
 		opts.keyDown = down
 		opts.keyPgUp = pageUp
 		opts.keyPgDown = pageDown
+	})
+}
+
+// The default for the maximum buffer length within a content area
+// -1 sets as no limit
+const (
+	DefaultMaxContent = -1
+)
+
+// MaxContent - Limits the maximum content within text widget buffer
+func MaxContent(max int) Option {
+	return option(func(opts *options) {
+		opts.maxContent = max
 	})
 }

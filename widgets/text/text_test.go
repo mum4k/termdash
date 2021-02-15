@@ -819,12 +819,6 @@ func TestTextDraws(t *testing.T) {
 			writes: func(widget *Text) error {
 				return widget.Write("line0\nline1\nline2\nline3\nline4")
 			},
-			events: func(widget *Text) {
-				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
-					panic(err)
-				}
-			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
@@ -837,18 +831,12 @@ func TestTextDraws(t *testing.T) {
 		},
 		{
 			desc:   "tests maxContent length not being limited",
-			canvas: image.Rect(0, 0, 10, 3),
+			canvas: image.Rect(0, 0, 72, 1),
 			opts: []Option{
 				RollContent(),
 			},
 			writes: func(widget *Text) error {
 				return widget.Write("1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz")
-			},
-			events: func(widget *Text) {
-				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
-					panic(err)
-				}
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -857,7 +845,7 @@ func TestTextDraws(t *testing.T) {
 				testdraw.MustText(
 					c,
 					"1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz",
-					image.Point{0, 1},
+					image.Point{0, 0},
 				)
 				testcanvas.MustApply(c, ft)
 				return ft
@@ -872,12 +860,6 @@ func TestTextDraws(t *testing.T) {
 			},
 			writes: func(widget *Text) error {
 				return widget.Write("1234567890abcdefghijklmnopqrstuvwxyz")
-			},
-			events: func(widget *Text) {
-				// Draw once to roll the content all the way down before we scroll.
-				if err := widget.Draw(testcanvas.MustNew(image.Rect(0, 0, 10, 3)), &widgetapi.Meta{}); err != nil {
-					panic(err)
-				}
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

@@ -108,18 +108,24 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	if opts.replace {
 		t.reset()
 	}
-	for _, r := range text {
-		// Implement basic buffer limit to avoid excess memory issues
-		if len(t.content) > 1 && len(t.content) >= t.opts.maxContent && t.opts.maxContent > 0 {
-			// If the new content is longer than all existing, simply reset
-			if len(string(r)) >= len(t.content) {
-				t.reset()
-			} else {
-				// Truncate by the space required for the new entry
-				t.content = t.content[1:]
-			}
-		}
 
+	// If set, limit the buffer (if maxContent has been set)
+	if len(t.content) >= t.opts.maxContent && t.opts.maxContent > 0 {
+		// If the new content is longer than all existing, simply reset
+		if len(text) >= len(t.content) {
+			t.reset()
+		} else {
+			// Truncate by the space required for the new entry
+			t.content = t.content[len(text):]
+		}
+	}
+
+	// Truncate text as well if it's greater than the maxContent size (if maxContent has been set)
+	if len(text) > t.opts.maxContent && t.opts.maxContent > 0 {
+		text = text[len(text)-t.opts.maxContent:]
+	}
+
+	for _, r := range text {
 		t.content = append(t.content, buffer.NewCell(r, opts.cellOpts))
 	}
 	t.contentChanged = true

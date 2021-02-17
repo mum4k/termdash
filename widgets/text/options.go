@@ -178,12 +178,14 @@ func ScrollKeys(up, down, pageUp, pageDown keyboard.Key) Option {
 }
 
 // The default for the maximum buffer length within a content area
-// -1 sets as no limit
+// -1 sets as no limit, for logs you may wish to try 10,000 or higher
 const (
 	DefaultMaxContent = -1
 )
 
-// MaxContent - Limits the maximum content within text widget buffer
+// MaxContent - Limits the maximum content within text widget buffer.
+// This is useful when sending large amounts of text to the Text widget, eg
+// when tailing logs as it will limit the memory usage.
 func MaxContent(max int) Option {
 	return option(func(opts *options) {
 		opts.maxContent = max

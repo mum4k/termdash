@@ -22,6 +22,7 @@ import (
 
 	"github.com/mum4k/termdash/private/canvas"
 	"github.com/mum4k/termdash/private/canvas/buffer"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/private/wrap"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -111,18 +112,20 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 
 	// If set, limit the buffer (if maxContent has been set)
 	if len(t.content) >= t.opts.maxContent && t.opts.maxContent > 0 {
+		fmt.Printf("len: %d strlen: %d", len(t.content), len(t.content))
 		// If the new content is longer than all existing, simply reset
 		if len(text) >= len(t.content) {
 			t.reset()
 		} else {
 			// Truncate by the space required for the new entry
-			t.content = t.content[len(text):]
+			t.content = t.content[runewidth.StringWidth(text):]
 		}
 	}
 
 	// Truncate text as well if it's greater than the maxContent size (if maxContent has been set)
-	if len(text) > t.opts.maxContent && t.opts.maxContent > 0 {
-		text = text[len(text)-t.opts.maxContent:]
+	if runewidth.StringWidth(text) > t.opts.maxContent && t.opts.maxContent > 0 {
+		textrunes := []rune(text)
+		text = string(textrunes[len(textrunes)-t.opts.maxContent:])
 	}
 
 	for _, r := range text {

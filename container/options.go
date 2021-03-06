@@ -194,6 +194,10 @@ type inherited struct {
 	borderColor cell.Color
 	// focusedColor is the color used for the border when focused.
 	focusedColor cell.Color
+	// titleColor is the color used for the title.
+	titleColor *cell.Color
+	// titleFocusedColor is the color used for the title when focused.
+	titleFocusedColor *cell.Color
 }
 
 // focusGroups maps focus group numbers that have the same key assigned.
@@ -745,6 +749,25 @@ func BorderColor(color cell.Color) Option {
 func FocusedColor(color cell.Color) Option {
 	return option(func(c *Container) error {
 		c.opts.inherited.focusedColor = color
+		return nil
+	})
+}
+
+// TitleColor sets the color of the title around the container.
+// This option is inherited to sub containers created by container splits.
+func TitleColor(color cell.Color) Option {
+	return option(func(c *Container) error {
+		c.opts.inherited.titleColor = &color
+		return nil
+	})
+}
+
+// TitleFocusedColor sets the color of the container title when it has
+// keyboard focus.
+// This option is inherited to sub containers created by container splits.
+func TitleFocusedColor(color cell.Color) Option {
+	return option(func(c *Container) error {
+		c.opts.inherited.titleFocusedColor = &color
 		return nil
 	})
 }

@@ -503,6 +503,44 @@ func TestDrawWidget(t *testing.T) {
 			},
 		},
 		{
+			desc:     "draws widget with container border and title with different color and focus color",
+			termSize: image.Point{9, 5},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					Border(linestyle.Light),
+					BorderTitle("ab"),
+					TitleColor(cell.ColorBlue),
+					// The created container is in focus so we must set the focus color
+					// in order to see the difference.
+					TitleFocusedColor(cell.ColorBlue),
+					BorderTitleAlignLeft(),
+					PlaceWidget(fakewidget.New(widgetapi.Options{})),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				// Container border.
+				testdraw.MustBorder(
+					cvs,
+					cvs.Area(),
+					draw.BorderCellOpts(cell.FgColor(cell.ColorYellow)),
+					draw.BorderTitle(
+						"ab",
+						draw.OverrunModeThreeDot,
+						cell.FgColor(cell.ColorBlue),
+					),
+				)
+
+				// Fake widget border.
+				testdraw.MustBorder(cvs, image.Rect(1, 1, 8, 4))
+				testdraw.MustText(cvs, "(7,3)", image.Point{2, 2})
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "draws widget without container border",
 			termSize: image.Point{9, 5},
 			container: func(ft *faketerm.Terminal) (*Container, error) {

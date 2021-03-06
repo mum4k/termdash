@@ -84,16 +84,26 @@ func drawBorder(c *Container) error {
 		return err
 	}
 
-	var cOpts []cell.Option
+	var cOpts, titleCOpts []cell.Option
 	if c.focusTracker.isActive(c) {
 		cOpts = append(cOpts, cell.FgColor(c.opts.inherited.focusedColor))
+		if c.opts.inherited.titleFocusedColor != nil {
+			titleCOpts = append(titleCOpts, cell.FgColor(*c.opts.inherited.titleFocusedColor))
+		} else {
+			titleCOpts = cOpts
+		}
 	} else {
 		cOpts = append(cOpts, cell.FgColor(c.opts.inherited.borderColor))
+		if c.opts.inherited.titleColor != nil {
+			titleCOpts = append(titleCOpts, cell.FgColor(*c.opts.inherited.titleColor))
+		} else {
+			titleCOpts = cOpts
+		}
 	}
 
 	if err := draw.Border(cvs, ar,
 		draw.BorderLineStyle(c.opts.border),
-		draw.BorderTitle(c.opts.borderTitle, draw.OverrunModeThreeDot, cOpts...),
+		draw.BorderTitle(c.opts.borderTitle, draw.OverrunModeThreeDot, titleCOpts...),
 		draw.BorderTitleAlign(c.opts.borderTitleHAlign),
 		draw.BorderCellOpts(cOpts...),
 	); err != nil {

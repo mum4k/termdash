@@ -6,6 +6,7 @@ go:
 before_install:
         - go get github.com/mattn/goveralls
 script:
+        - go get -t .
         - go get -t ./...
         - go mod tidy
         - go get -u golang.org/x/lint/golint

@@ -7,17 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 06-Mar-2021
+
 ### Changed
 
 - Bump github.com/gdamore/tcell/v2 from 2.0.0 to 2.2.0.
 - Bump github.com/mattn/go-runewidth from 0.0.9 to 0.0.10.
 - Allowing CI to modify go.mod and go.sum when necessary.
+- Executed `go mod tidy`.
 
 ### Added
 
 - TitleColor and TitleFocusedColor options for border title which enables the
   setting of separate colors for border and title on a container.
-
 
 ## [0.14.0] - 30-Dec-2020
 
@@ -451,7 +453,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.14.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.15.0...devel
+[0.15.0]: https://github.com/mum4k/termdash/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/mum4k/termdash/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/mum4k/termdash/compare/v0.12.2...v0.13.0
 [0.12.2]: https://github.com/mum4k/termdash/compare/v0.12.1...v0.12.2

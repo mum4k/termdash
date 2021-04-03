@@ -110,25 +110,13 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 		t.reset()
 	}
 
-	// If set, limit the buffer (if maxContent has been set)
-	if len(t.content) >= t.opts.maxTextCells && t.opts.maxTextCells > 0 {
-		fmt.Printf("len: %d strlen: %d", len(t.content), len(t.content))
-		// If the new content is longer than all existing, simply reset
-		if len(text) >= len(t.content) {
-			t.reset()
-		} else {
-			// Truncate by the space required for the new entry
-			t.content = t.content[runewidth.StringWidth(text):]
-		}
+	textRunes := truncateToCells(text, t.opts.maxTextCells)
+	// If MaxTextCells has been set, limit the content if needed.
+	if t.opts.maxTextCells > 0 && len(t.content)+len(textRunes) > t.opts.maxTextCells {
+		t.content = t.content[len(t.content)-len(textRunes):]
 	}
 
-	// Truncate text as well if it's greater than the maxContent size (if maxContent has been set)
-	if runewidth.StringWidth(text) > t.opts.maxTextCells && t.opts.maxTextCells > 0 {
-		textrunes := []rune(text)
-		text = string(textrunes[len(textrunes)-t.opts.maxTextCells:])
-	}
-
-	for _, r := range text {
+	for _, r := range textRunes {
 		t.content = append(t.content, buffer.NewCell(r, opts.cellOpts))
 	}
 	t.contentChanged = true
@@ -303,4 +291,15 @@ func (t *Text) Options() widgetapi.Options {
 		WantMouse:    ms,
 		WantKeyboard: ks,
 	}
+}
+
+// truncateToCells truncates the beginning of text, so that it can be displayed
+// in at most maxCells. Setting maxCells to zero disables truncating.
+func truncateToCells(text string, maxCells int) []rune {
+	textCells := runewidth.StringWidth(text)
+	textRunes := []rune(text)
+	if maxCells == 0 || textCells <= maxCells {
+		return textRunes
+	}
+	return textRunes[len(textRunes)-maxCells:]
 }

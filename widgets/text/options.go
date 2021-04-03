@@ -79,6 +79,9 @@ func (o *options) validate() error {
 	if o.mouseUpButton == o.mouseDownButton {
 		return fmt.Errorf("invalid ScrollMouseButtons(up:%v, down:%v), the buttons must be unique", o.mouseUpButton, o.mouseDownButton)
 	}
+	if o.maxTextCells < 0 {
+		return fmt.Errorf("invalid MaxTextCells(%d), must be zero or a positive integer", o.maxTextCells)
+	}
 	return nil
 }
 
@@ -178,9 +181,9 @@ func ScrollKeys(up, down, pageUp, pageDown keyboard.Key) Option {
 }
 
 // The default value for the MaxTextCells option.
-// Use -1 as no limit, for logs you may wish to try 10,000 or higher.
+// Use zero as no limit, for logs you may wish to try 10,000 or higher.
 const (
-	DefaultMaxTextCells = -1
+	DefaultMaxTextCells = 0
 )
 
 // MaxTextCells limits the text content to this number of terminal cells.

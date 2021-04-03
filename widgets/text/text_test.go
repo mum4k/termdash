@@ -1007,3 +1007,52 @@ func TestOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestTruncateToCells(t *testing.T) {
+	tests := []struct {
+		desc     string
+		text     string
+		maxCells int
+		want     []rune
+	}{
+		{
+			desc:     "returns empty on empty text",
+			text:     "",
+			maxCells: 0,
+			want:     []rune{},
+		},
+		{
+			desc:     "no need to truncate, length matches max",
+			text:     "a",
+			maxCells: 1,
+			want:     []rune{'a'},
+		},
+		{
+			desc:     "no need to truncate, shorter than max",
+			text:     "a",
+			maxCells: 2,
+			want:     []rune{'a'},
+		},
+		{
+			desc:     "no need to truncate, maxCells set to zero",
+			text:     "a",
+			maxCells: 0,
+			want:     []rune{'a'},
+		},
+		{
+			desc:     "truncates to max cells",
+			text:     "abc",
+			maxCells: 2,
+			want:     []rune{'b', 'c'},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := truncateToCells(tc.text, tc.maxCells)
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("truncateToCells => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}

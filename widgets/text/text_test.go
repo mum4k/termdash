@@ -810,7 +810,7 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "tests maxContent length being applied - multiline",
+			desc:   "tests maxTextCells length being applied - multiline",
 			canvas: image.Rect(0, 0, 10, 3),
 			opts: []Option{
 				MaxTextCells(10),
@@ -830,7 +830,74 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "tests maxContent exact length of 5",
+			desc:   "tests maxTextCells - multiple writes - first one fits",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(10),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				if err := widget.Write("line0\nline"); err != nil {
+					return err
+				}
+				return widget.Write("1\nline2\nline3\nline4")
+				return nil
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// \n still counts as a chacter in the string length
+				testdraw.MustText(c, "ine3", image.Point{0, 0})
+				testdraw.MustText(c, "line4", image.Point{0, 1})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells - multiple writes - first one does not fit",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(10),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				if err := widget.Write("line0\nline123"); err != nil {
+					return err
+				}
+				return widget.Write("1\nline2\nline3\nline4")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(c, "ine3", image.Point{0, 0})
+				testdraw.MustText(c, "line4", image.Point{0, 1})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells - accounts for pre-existing full-width runes on the content",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(3),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				if err := widget.Write("界"); err != nil {
+					return err
+				}
+				return widget.Write("ab")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(c, "ab", image.Point{0, 0})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells exact length of 5",
 			canvas: image.Rect(0, 0, 10, 1),
 			opts: []Option{
 				RollContent(),
@@ -853,7 +920,7 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "tests maxContent partial bufffer replacement",
+			desc:   "tests maxTextCells partial bufffer replacement",
 			canvas: image.Rect(0, 0, 10, 1),
 			opts: []Option{
 				RollContent(),
@@ -875,7 +942,7 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "tests maxContent length not being limited",
+			desc:   "tests maxTextCells length not being limited",
 			canvas: image.Rect(0, 0, 72, 1),
 			opts: []Option{
 				RollContent(),
@@ -896,7 +963,7 @@ func TestTextDraws(t *testing.T) {
 			},
 		},
 		{
-			desc:   "tests maxContent length being applied - single line",
+			desc:   "tests maxTextCells length being applied - single line",
 			canvas: image.Rect(0, 0, 10, 3),
 			opts: []Option{
 				MaxTextCells(5),

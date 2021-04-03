@@ -92,6 +92,16 @@ func (t *Text) reset() {
 	t.contentChanged = true
 }
 
+// contentCells calculates the number of cells the content takes to display on
+// terminal.
+func (t *Text) contentCells() int {
+	cells := 0
+	for _, c := range t.content {
+		cells += runeWidth(c.Rune)
+	}
+	return cells
+}
+
 // Write writes text for the widget to display. Multiple calls append
 // additional text. The text contain cannot control characters
 // (unicode.IsControl) or space character (unicode.IsSpace) other than:
@@ -112,10 +122,12 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	}
 
 	truncated := truncateToCells(text, t.opts.maxTextCells)
-	textCells := runewidth.StringWidth(truncated)
+	textCells := stringWidth(truncated)
+	contentCells := t.contentCells()
 	// If MaxTextCells has been set, limit the content if needed.
-	if t.opts.maxTextCells > 0 && len(t.content)+textCells > t.opts.maxTextCells {
-		t.content = t.content[len(t.content)-textCells:]
+	if t.opts.maxTextCells > 0 && contentCells+textCells > t.opts.maxTextCells {
+		diff := contentCells + textCells - t.opts.maxTextCells
+		t.content = t.content[diff:]
 	}
 
 	for _, r := range truncated {

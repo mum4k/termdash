@@ -55,6 +55,17 @@ func TestTextDraws(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc: "fails when MaxTextCells is negative",
+			opts: []Option{
+				MaxTextCells(-1),
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
 			desc: "fails when scroll mouse buttons aren't unique",
 			opts: []Option{
 				ScrollMouseButtons(mouse.ButtonLeft, mouse.ButtonLeft),

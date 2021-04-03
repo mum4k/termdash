@@ -111,7 +111,7 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	}
 
 	// If set, limit the buffer (if maxContent has been set)
-	if len(t.content) >= t.opts.maxContent && t.opts.maxContent > 0 {
+	if len(t.content) >= t.opts.maxTextCells && t.opts.maxTextCells > 0 {
 		fmt.Printf("len: %d strlen: %d", len(t.content), len(t.content))
 		// If the new content is longer than all existing, simply reset
 		if len(text) >= len(t.content) {
@@ -123,9 +123,9 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	}
 
 	// Truncate text as well if it's greater than the maxContent size (if maxContent has been set)
-	if runewidth.StringWidth(text) > t.opts.maxContent && t.opts.maxContent > 0 {
+	if runewidth.StringWidth(text) > t.opts.maxTextCells && t.opts.maxTextCells > 0 {
 		textrunes := []rune(text)
-		text = string(textrunes[len(textrunes)-t.opts.maxContent:])
+		text = string(textrunes[len(textrunes)-t.opts.maxTextCells:])
 	}
 
 	for _, r := range text {

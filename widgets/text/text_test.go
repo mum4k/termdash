@@ -813,7 +813,7 @@ func TestTextDraws(t *testing.T) {
 			desc:   "tests maxContent length being applied - multiline",
 			canvas: image.Rect(0, 0, 10, 3),
 			opts: []Option{
-				MaxContent(10),
+				MaxTextCells(10),
 				RollContent(),
 			},
 			writes: func(widget *Text) error {
@@ -834,7 +834,7 @@ func TestTextDraws(t *testing.T) {
 			canvas: image.Rect(0, 0, 10, 1),
 			opts: []Option{
 				RollContent(),
-				MaxContent(5),
+				MaxTextCells(5),
 			},
 			writes: func(widget *Text) error {
 				return widget.Write("12345")
@@ -857,7 +857,7 @@ func TestTextDraws(t *testing.T) {
 			canvas: image.Rect(0, 0, 10, 1),
 			opts: []Option{
 				RollContent(),
-				MaxContent(9),
+				MaxTextCells(9),
 			},
 			writes: func(widget *Text) error {
 				return widget.Write("hello wor你12345678")
@@ -901,7 +901,7 @@ func TestTextDraws(t *testing.T) {
 			desc:   "tests maxContent length being applied - single line",
 			canvas: image.Rect(0, 0, 10, 3),
 			opts: []Option{
-				MaxContent(5),
+				MaxTextCells(5),
 				RollContent(),
 			},
 			writes: func(widget *Text) error {

@@ -809,6 +809,112 @@ func TestTextDraws(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "tests maxContent length being applied - multiline",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxContent(10),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("line0\nline1\nline2\nline3\nline4")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// \n still counts as a chacter in the string length
+				testdraw.MustText(c, "ine3", image.Point{0, 0})
+				testdraw.MustText(c, "line4", image.Point{0, 1})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxContent exact length of 5",
+			canvas: image.Rect(0, 0, 10, 1),
+			opts: []Option{
+				RollContent(),
+				MaxContent(5),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("12345")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// Line return (\n) counts as one character
+				testdraw.MustText(
+					c,
+					"12345",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxContent partial bufffer replacement",
+			canvas: image.Rect(0, 0, 10, 1),
+			opts: []Option{
+				RollContent(),
+				MaxContent(9),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("hello wor你12345678")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// Line return (\n) counts as one character
+				testdraw.MustText(
+					c,
+					"你12345678",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxContent length not being limited",
+			canvas: image.Rect(0, 0, 72, 1),
+			opts: []Option{
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("1234567890abcdefghijklmnopqrstuvwxyz")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// Line return (\n) counts as one character
+				testdraw.MustText(
+					c,
+					"1234567890abcdefghijklmnopqrstuvwxyz",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxContent length being applied - single line",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxContent(5),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("1234567890abcdefghijklmnopqrstuvwxyz")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(c, "vwxyz", image.Point{0, 0})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bump github.com/mattn/go-runewidth from 0.0.10 to 0.0.12.
+
 ## [0.15.0] - 06-Mar-2021
 
 ### Changed

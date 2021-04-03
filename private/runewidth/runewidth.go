@@ -18,6 +18,41 @@ package runewidth
 
 import runewidth "github.com/mattn/go-runewidth"
 
+// Option is used to provide options.
+type Option interface {
+	// set sets the provided option.
+	set(*options)
+}
+
+// options stores the provided options.
+type options struct {
+	runeWidths map[rune]int
+}
+
+// newOptions create a new instance of options.
+func newOptions() *options {
+	return &options{
+		runeWidths: map[rune]int{},
+	}
+}
+
+// option implements Option.
+type option func(*options)
+
+// set implements Option.set.
+func (o option) set(opts *options) {
+	o(opts)
+}
+
+// CountAsWidth overrides the default behavior, counting the specified runes as
+// the specified width. Can be provided multiple times to specify an override
+// for multiple runes.
+func CountAsWidth(r rune, width int) Option {
+	return option(func(opts *options) {
+		opts.runeWidths[r] = width
+	})
+}
+
 // RuneWidth returns the number of cells needed to draw r.
 // Background in http://www.unicode.org/reports/tr11/.
 //
@@ -29,7 +64,16 @@ import runewidth "github.com/mattn/go-runewidth"
 // This should be safe, since even in locales where these runes have ambiguous
 // width, we still place all the character content around them so they should
 // have be half-width.
-func RuneWidth(r rune) int {
+func RuneWidth(r rune, opts ...Option) int {
+	o := newOptions()
+	for _, opt := range opts {
+		opt.set(o)
+	}
+
+	if w, ok := o.runeWidths[r]; ok {
+		return w
+	}
+
 	if inTable(r, exceptions) {
 		return 1
 	}
@@ -38,10 +82,10 @@ func RuneWidth(r rune) int {
 
 // StringWidth is like RuneWidth, but returns the number of cells occupied by
 // all the runes in the string.
-func StringWidth(s string) int {
+func StringWidth(s string, opts ...Option) int {
 	var width int
 	for _, r := range []rune(s) {
-		width += RuneWidth(r)
+		width += RuneWidth(r, opts...)
 	}
 	return width
 }

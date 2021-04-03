@@ -18,10 +18,12 @@ package text
 import (
 	"fmt"
 	"image"
+	"strings"
 	"sync"
 
 	"github.com/mum4k/termdash/private/canvas"
 	"github.com/mum4k/termdash/private/canvas/buffer"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/private/wrap"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
@@ -90,6 +92,16 @@ func (t *Text) reset() {
 	t.contentChanged = true
 }
 
+// contentCells calculates the number of cells the content takes to display on
+// terminal.
+func (t *Text) contentCells() int {
+	cells := 0
+	for _, c := range t.content {
+		cells += runewidth.RuneWidth(c.Rune, runewidth.CountAsWidth('\n', 1))
+	}
+	return cells
+}
+
 // Write writes text for the widget to display. Multiple calls append
 // additional text. The text contain cannot control characters
 // (unicode.IsControl) or space character (unicode.IsSpace) other than:
@@ -108,7 +120,17 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	if opts.replace {
 		t.reset()
 	}
-	for _, r := range text {
+
+	truncated := truncateToCells(text, t.opts.maxTextCells)
+	textCells := runewidth.StringWidth(truncated, runewidth.CountAsWidth('\n', 1))
+	contentCells := t.contentCells()
+	// If MaxTextCells has been set, limit the content if needed.
+	if t.opts.maxTextCells > 0 && contentCells+textCells > t.opts.maxTextCells {
+		diff := contentCells + textCells - t.opts.maxTextCells
+		t.content = t.content[diff:]
+	}
+
+	for _, r := range truncated {
 		t.content = append(t.content, buffer.NewCell(r, opts.cellOpts))
 	}
 	t.contentChanged = true
@@ -283,4 +305,29 @@ func (t *Text) Options() widgetapi.Options {
 		WantMouse:    ms,
 		WantKeyboard: ks,
 	}
+}
+
+// truncateToCells truncates the beginning of text, so that it can be displayed
+// in at most maxCells. Setting maxCells to zero disables truncating.
+func truncateToCells(text string, maxCells int) string {
+	textCells := runewidth.StringWidth(text, runewidth.CountAsWidth('\n', 1))
+	if maxCells == 0 || textCells <= maxCells {
+		return text
+	}
+
+	haveCells := 0
+	textRunes := []rune(text)
+	i := len(textRunes) - 1
+	for ; i >= 0; i-- {
+		haveCells += runewidth.RuneWidth(textRunes[i], runewidth.CountAsWidth('\n', 1))
+		if haveCells > maxCells {
+			break
+		}
+	}
+
+	var b strings.Builder
+	for j := i + 1; j < len(textRunes); j++ {
+		b.WriteRune(textRunes[j])
+	}
+	return b.String()
 }

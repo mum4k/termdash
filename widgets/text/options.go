@@ -36,6 +36,7 @@ type options struct {
 	scrollDown       rune
 	wrapMode         wrap.Mode
 	rollContent      bool
+	maxTextCells     int
 	disableScrolling bool
 	mouseUpButton    mouse.Button
 	mouseDownButton  mouse.Button
@@ -56,6 +57,7 @@ func newOptions(opts ...Option) *options {
 		keyDown:         DefaultScrollKeyDown,
 		keyPgUp:         DefaultScrollKeyPageUp,
 		keyPgDown:       DefaultScrollKeyPageDown,
+		maxTextCells:    DefaultMaxTextCells,
 	}
 	for _, o := range opts {
 		o.set(opt)
@@ -76,6 +78,9 @@ func (o *options) validate() error {
 	}
 	if o.mouseUpButton == o.mouseDownButton {
 		return fmt.Errorf("invalid ScrollMouseButtons(up:%v, down:%v), the buttons must be unique", o.mouseUpButton, o.mouseDownButton)
+	}
+	if o.maxTextCells < 0 {
+		return fmt.Errorf("invalid MaxTextCells(%d), must be zero or a positive integer", o.maxTextCells)
 	}
 	return nil
 }
@@ -172,5 +177,25 @@ func ScrollKeys(up, down, pageUp, pageDown keyboard.Key) Option {
 		opts.keyDown = down
 		opts.keyPgUp = pageUp
 		opts.keyPgDown = pageDown
+	})
+}
+
+// The default value for the MaxTextCells option.
+// Use zero as no limit, for logs you may wish to try 10,000 or higher.
+const (
+	DefaultMaxTextCells = 0
+)
+
+// MaxTextCells limits the text content to this number of terminal cells.
+// This is useful when sending large amounts of text to the Text widget, e.g.
+// when tailing logs as it will limit the memory usage.
+// When the newly added content goes over this number of cells, the Text widget
+// behaves as a circular buffer and drops earlier content to accommodate the
+// new one.
+// Note the count is in cells, not runes, some wide runes can take multiple
+// terminal cells.
+func MaxTextCells(max int) Option {
+	return option(func(opts *options) {
+		opts.maxTextCells = max
 	})
 }

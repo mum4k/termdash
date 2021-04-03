@@ -809,6 +809,176 @@ func TestTextDraws(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc:   "tests maxTextCells length being applied - multiline",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(10),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("line0\nline1\nline2\nline3\nline4")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// \n still counts as a chacter in the string length
+				testdraw.MustText(c, "ine3", image.Point{0, 0})
+				testdraw.MustText(c, "line4", image.Point{0, 1})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells - multiple writes - first one fits",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(10),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				if err := widget.Write("line0\nline"); err != nil {
+					return err
+				}
+				return widget.Write("1\nline2\nline3\nline4")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// \n still counts as a chacter in the string length
+				testdraw.MustText(c, "ine3", image.Point{0, 0})
+				testdraw.MustText(c, "line4", image.Point{0, 1})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells - multiple writes - first one does not fit",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(10),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				if err := widget.Write("line0\nline123"); err != nil {
+					return err
+				}
+				return widget.Write("1\nline2\nline3\nline4")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(c, "ine3", image.Point{0, 0})
+				testdraw.MustText(c, "line4", image.Point{0, 1})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells - accounts for pre-existing full-width runes on the content",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(3),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				if err := widget.Write("界"); err != nil {
+					return err
+				}
+				return widget.Write("ab")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(c, "ab", image.Point{0, 0})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells exact length of 5",
+			canvas: image.Rect(0, 0, 10, 1),
+			opts: []Option{
+				RollContent(),
+				MaxTextCells(5),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("12345")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				// Line return (\n) counts as one character
+				testdraw.MustText(
+					c,
+					"12345",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells partial bufffer replacement",
+			canvas: image.Rect(0, 0, 10, 1),
+			opts: []Option{
+				RollContent(),
+				MaxTextCells(10),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("hello wor你12345678")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(
+					c,
+					"你12345678",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells length not being limited",
+			canvas: image.Rect(0, 0, 72, 1),
+			opts: []Option{
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("1234567890abcdefghijklmnopqrstuvwxyz")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(
+					c,
+					"1234567890abcdefghijklmnopqrstuvwxyz",
+					image.Point{0, 0},
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc:   "tests maxTextCells length being applied - single line",
+			canvas: image.Rect(0, 0, 10, 3),
+			opts: []Option{
+				MaxTextCells(5),
+				RollContent(),
+			},
+			writes: func(widget *Text) error {
+				return widget.Write("1234567890abcdefghijklmnopqrstuvwxyz")
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+				testdraw.MustText(c, "vwxyz", image.Point{0, 0})
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -897,6 +1067,85 @@ func TestOptions(t *testing.T) {
 			got := text.Options()
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("Options => unexpected diff (-want, +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestTruncateToCells(t *testing.T) {
+	tests := []struct {
+		desc     string
+		text     string
+		maxCells int
+		want     string
+	}{
+		{
+			desc:     "returns empty on empty text",
+			text:     "",
+			maxCells: 0,
+			want:     "",
+		},
+		{
+			desc:     "no need to truncate, length matches max",
+			text:     "a",
+			maxCells: 1,
+			want:     "a",
+		},
+		{
+			desc:     "no need to truncate, shorter than max",
+			text:     "a",
+			maxCells: 2,
+			want:     "a",
+		},
+		{
+			desc:     "no need to truncate, maxCells set to zero",
+			text:     "a",
+			maxCells: 0,
+			want:     "a",
+		},
+		{
+			desc:     "truncates single rune to enforce max cells",
+			text:     "abc",
+			maxCells: 2,
+			want:     "bc",
+		},
+		{
+			desc:     "truncates multiple runes to enforce max cells",
+			text:     "abcde",
+			maxCells: 3,
+			want:     "cde",
+		},
+		{
+			desc:     "accounts for cells taken by newline characters",
+			text:     "a\ncde",
+			maxCells: 3,
+			want:     "cde",
+		},
+		{
+			desc:     "truncates full-width rune on its edge",
+			text:     "世界",
+			maxCells: 2,
+			want:     "界",
+		},
+		{
+			desc:     "truncates full-width rune because only half of it fits",
+			text:     "世界",
+			maxCells: 3,
+			want:     "界",
+		},
+		{
+			desc:     "full-width runes - truncating not needed",
+			text:     "世界",
+			maxCells: 4,
+			want:     "世界",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := truncateToCells(tc.text, tc.maxCells)
+			if diff := pretty.Compare(tc.want, got); diff != "" {
+				t.Errorf("truncateToCells => unexpected diff (-want, +got):\n%s", diff)
 			}
 		})
 	}

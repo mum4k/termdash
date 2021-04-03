@@ -97,7 +97,7 @@ func (t *Text) reset() {
 func (t *Text) contentCells() int {
 	cells := 0
 	for _, c := range t.content {
-		cells += runeWidth(c.Rune)
+		cells += runewidth.RuneWidth(c.Rune, runewidth.CountAsWidth('\n', 1))
 	}
 	return cells
 }
@@ -122,7 +122,7 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 	}
 
 	truncated := truncateToCells(text, t.opts.maxTextCells)
-	textCells := stringWidth(truncated)
+	textCells := runewidth.StringWidth(truncated, runewidth.CountAsWidth('\n', 1))
 	contentCells := t.contentCells()
 	// If MaxTextCells has been set, limit the content if needed.
 	if t.opts.maxTextCells > 0 && contentCells+textCells > t.opts.maxTextCells {
@@ -307,29 +307,10 @@ func (t *Text) Options() widgetapi.Options {
 	}
 }
 
-// runeWidth is line runewidth.RuneWidth, but assumes newline characters take 1
-// cell.
-func runeWidth(r rune) int {
-	if r == '\n' {
-		return 1
-	}
-	return runewidth.RuneWidth(r)
-}
-
-// stringWidth is like runewidth.StringWidth, but assumes newline characters
-// take 1 cell.
-func stringWidth(s string) int {
-	var width int
-	for _, r := range []rune(s) {
-		width += runeWidth(r)
-	}
-	return width
-}
-
 // truncateToCells truncates the beginning of text, so that it can be displayed
 // in at most maxCells. Setting maxCells to zero disables truncating.
 func truncateToCells(text string, maxCells int) string {
-	textCells := stringWidth(text)
+	textCells := runewidth.StringWidth(text, runewidth.CountAsWidth('\n', 1))
 	if maxCells == 0 || textCells <= maxCells {
 		return text
 	}
@@ -338,7 +319,7 @@ func truncateToCells(text string, maxCells int) string {
 	textRunes := []rune(text)
 	i := len(textRunes) - 1
 	for ; i >= 0; i-- {
-		haveCells += runeWidth(textRunes[i])
+		haveCells += runewidth.RuneWidth(textRunes[i], runewidth.CountAsWidth('\n', 1))
 		if haveCells > maxCells {
 			break
 		}

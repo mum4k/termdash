@@ -122,7 +122,7 @@ func main() {
 		panic(err)
 	}
 
-	rolled, err := text.New(text.RollContent(), text.WrapAtWords())
+	rolled, err := text.New(text.RollContent(), text.WrapAtWords(), text.MaxTextCells(4))
 	if err != nil {
 		panic(err)
 	}

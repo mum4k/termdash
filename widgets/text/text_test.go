@@ -822,8 +822,9 @@ func TestTextDraws(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
-				testdraw.MustText(c, "line3", image.Point{0, 1})
-				testdraw.MustText(c, "line4", image.Point{0, 2})
+				// \n still counts as a chacter in the string length
+				testdraw.MustText(c, "ine3", image.Point{0, 0})
+				testdraw.MustText(c, "line4", image.Point{0, 1})
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -885,7 +886,6 @@ func TestTextDraws(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
-				// Line return (\n) counts as one character
 				testdraw.MustText(
 					c,
 					"1234567890abcdefghijklmnopqrstuvwxyz",
@@ -1046,6 +1046,12 @@ func TestTruncateToCells(t *testing.T) {
 		{
 			desc:     "truncates multiple runes to enforce max cells",
 			text:     "abcde",
+			maxCells: 3,
+			want:     "cde",
+		},
+		{
+			desc:     "accounts for cells taken by newline characters",
+			text:     "a\ncde",
 			maxCells: 3,
 			want:     "cde",
 		},

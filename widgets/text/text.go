@@ -295,10 +295,29 @@ func (t *Text) Options() widgetapi.Options {
 	}
 }
 
+// runeWidth is line runewidth.RuneWidth, but assumes newline characters take 1
+// cell.
+func runeWidth(r rune) int {
+	if r == '\n' {
+		return 1
+	}
+	return runewidth.RuneWidth(r)
+}
+
+// stringWidth is like runewidth.StringWidth, but assumes newline characters
+// take 1 cell.
+func stringWidth(s string) int {
+	var width int
+	for _, r := range []rune(s) {
+		width += runeWidth(r)
+	}
+	return width
+}
+
 // truncateToCells truncates the beginning of text, so that it can be displayed
 // in at most maxCells. Setting maxCells to zero disables truncating.
 func truncateToCells(text string, maxCells int) string {
-	textCells := runewidth.StringWidth(text)
+	textCells := stringWidth(text)
 	if maxCells == 0 || textCells <= maxCells {
 		return text
 	}
@@ -307,7 +326,7 @@ func truncateToCells(text string, maxCells int) string {
 	textRunes := []rune(text)
 	i := len(textRunes) - 1
 	for ; i >= 0; i-- {
-		haveCells += runewidth.RuneWidth(textRunes[i])
+		haveCells += runeWidth(textRunes[i])
 		if haveCells > maxCells {
 			break
 		}

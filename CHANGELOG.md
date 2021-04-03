@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The `Text` widget has a new option `MaxTextCells` which can be used to limit
+  the maximum number of cells the widget keeps in memory.
+
 ### Changed
 
 - Bump github.com/mattn/go-runewidth from 0.0.10 to 0.0.12.

@@ -841,7 +841,6 @@ func TestTextDraws(t *testing.T) {
 					return err
 				}
 				return widget.Write("1\nline2\nline3\nline4")
-				return nil
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)

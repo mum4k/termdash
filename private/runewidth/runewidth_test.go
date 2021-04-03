@@ -24,6 +24,7 @@ func TestRuneWidth(t *testing.T) {
 	tests := []struct {
 		desc      string
 		runes     []rune
+		opts      []Option
 		eastAsian bool
 		want      int
 	}{
@@ -36,6 +37,14 @@ func TestRuneWidth(t *testing.T) {
 			desc:  "non-printable characters from mattn/runewidth/runewidth_test",
 			runes: []rune{'\x00', '\x01', '\u0300', '\u2028', '\u2029', '\n'},
 			want:  0,
+		},
+		{
+			desc:  "override rune width with an option",
+			runes: []rune{'\n'},
+			opts: []Option{
+				CountAsWidth('\n', 3),
+			},
+			want: 3,
 		},
 		{
 			desc:  "half-width runes from mattn/runewidth/runewidth_test",
@@ -107,7 +116,7 @@ func TestRuneWidth(t *testing.T) {
 			}()
 
 			for _, r := range tc.runes {
-				if got := RuneWidth(r); got != tc.want {
+				if got := RuneWidth(r, tc.opts...); got != tc.want {
 					t.Errorf("RuneWidth(%c, %#x) => %v, want %v", r, r, got, tc.want)
 				}
 			}
@@ -119,6 +128,7 @@ func TestStringWidth(t *testing.T) {
 	tests := []struct {
 		desc      string
 		str       string
+		opts      []Option
 		eastAsian bool
 		want      int
 	}{
@@ -126,6 +136,15 @@ func TestStringWidth(t *testing.T) {
 			desc: "ascii characters",
 			str:  "hello",
 			want: 5,
+		},
+		{
+			desc: "override rune widths with an option",
+			str:  "hello",
+			opts: []Option{
+				CountAsWidth('h', 5),
+				CountAsWidth('e', 5),
+			},
+			want: 13,
 		},
 		{
 			desc: "string from mattn/runewidth/runewidth_test",
@@ -158,7 +177,7 @@ func TestStringWidth(t *testing.T) {
 				runewidth.DefaultCondition.EastAsianWidth = false
 			}()
 
-			if got := StringWidth(tc.str); got != tc.want {
+			if got := StringWidth(tc.str, tc.opts...); got != tc.want {
 				t.Errorf("StringWidth(%q) => %v, want %v", tc.str, got, tc.want)
 			}
 		})

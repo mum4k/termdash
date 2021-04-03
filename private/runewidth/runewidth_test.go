@@ -34,7 +34,7 @@ func TestRuneWidth(t *testing.T) {
 		},
 		{
 			desc:  "non-printable characters from mattn/runewidth/runewidth_test",
-			runes: []rune{'\x00', '\x01', '\u0300', '\u2028', '\u2029'},
+			runes: []rune{'\x00', '\x01', '\u0300', '\u2028', '\u2029', '\n'},
 			want:  0,
 		},
 		{

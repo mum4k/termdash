@@ -822,9 +822,8 @@ func TestTextDraws(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
-				// \n still counts as a chacter in the string length
-				testdraw.MustText(c, "ine3", image.Point{0, 0})
-				testdraw.MustText(c, "line4", image.Point{0, 1})
+				testdraw.MustText(c, "line3", image.Point{0, 1})
+				testdraw.MustText(c, "line4", image.Point{0, 2})
 				testcanvas.MustApply(c, ft)
 				return ft
 			},
@@ -857,7 +856,7 @@ func TestTextDraws(t *testing.T) {
 			canvas: image.Rect(0, 0, 10, 1),
 			opts: []Option{
 				RollContent(),
-				MaxTextCells(9),
+				MaxTextCells(10),
 			},
 			writes: func(widget *Text) error {
 				return widget.Write("hello wor你12345678")
@@ -865,7 +864,6 @@ func TestTextDraws(t *testing.T) {
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
 				c := testcanvas.MustNew(ft.Area())
-				// Line return (\n) counts as one character
 				testdraw.MustText(
 					c,
 					"你12345678",
@@ -1013,37 +1011,61 @@ func TestTruncateToCells(t *testing.T) {
 		desc     string
 		text     string
 		maxCells int
-		want     []rune
+		want     string
 	}{
 		{
 			desc:     "returns empty on empty text",
 			text:     "",
 			maxCells: 0,
-			want:     []rune{},
+			want:     "",
 		},
 		{
 			desc:     "no need to truncate, length matches max",
 			text:     "a",
 			maxCells: 1,
-			want:     []rune{'a'},
+			want:     "a",
 		},
 		{
 			desc:     "no need to truncate, shorter than max",
 			text:     "a",
 			maxCells: 2,
-			want:     []rune{'a'},
+			want:     "a",
 		},
 		{
 			desc:     "no need to truncate, maxCells set to zero",
 			text:     "a",
 			maxCells: 0,
-			want:     []rune{'a'},
+			want:     "a",
 		},
 		{
-			desc:     "truncates to max cells",
+			desc:     "truncates single rune to enforce max cells",
 			text:     "abc",
 			maxCells: 2,
-			want:     []rune{'b', 'c'},
+			want:     "bc",
+		},
+		{
+			desc:     "truncates multiple runes to enforce max cells",
+			text:     "abcde",
+			maxCells: 3,
+			want:     "cde",
+		},
+		{
+			desc:     "truncates full-width rune on its edge",
+			text:     "世界",
+			maxCells: 2,
+			want:     "界",
+		},
+		{
+			desc:     "truncates full-width rune because only half of it fits",
+			text:     "世界",
+			maxCells: 3,
+			want:     "界",
+		},
+		{
+			desc:     "full-width runes - truncating not needed",
+			text:     "世界",
+			maxCells: 4,
+			want:     "世界",
 		},
 	}
 

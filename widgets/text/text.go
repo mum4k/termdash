@@ -18,6 +18,7 @@ package text
 import (
 	"fmt"
 	"image"
+	"strings"
 	"sync"
 
 	"github.com/mum4k/termdash/private/canvas"
@@ -110,13 +111,14 @@ func (t *Text) Write(text string, wOpts ...WriteOption) error {
 		t.reset()
 	}
 
-	textRunes := truncateToCells(text, t.opts.maxTextCells)
+	truncated := truncateToCells(text, t.opts.maxTextCells)
+	textCells := runewidth.StringWidth(truncated)
 	// If MaxTextCells has been set, limit the content if needed.
-	if t.opts.maxTextCells > 0 && len(t.content)+len(textRunes) > t.opts.maxTextCells {
-		t.content = t.content[len(t.content)-len(textRunes):]
+	if t.opts.maxTextCells > 0 && len(t.content)+textCells > t.opts.maxTextCells {
+		t.content = t.content[len(t.content)-textCells:]
 	}
 
-	for _, r := range textRunes {
+	for _, r := range truncated {
 		t.content = append(t.content, buffer.NewCell(r, opts.cellOpts))
 	}
 	t.contentChanged = true
@@ -295,11 +297,25 @@ func (t *Text) Options() widgetapi.Options {
 
 // truncateToCells truncates the beginning of text, so that it can be displayed
 // in at most maxCells. Setting maxCells to zero disables truncating.
-func truncateToCells(text string, maxCells int) []rune {
+func truncateToCells(text string, maxCells int) string {
 	textCells := runewidth.StringWidth(text)
-	textRunes := []rune(text)
 	if maxCells == 0 || textCells <= maxCells {
-		return textRunes
+		return text
 	}
-	return textRunes[len(textRunes)-maxCells:]
+
+	haveCells := 0
+	textRunes := []rune(text)
+	i := len(textRunes) - 1
+	for ; i >= 0; i-- {
+		haveCells += runewidth.RuneWidth(textRunes[i])
+		if haveCells > maxCells {
+			break
+		}
+	}
+
+	var b strings.Builder
+	for j := i + 1; j < len(textRunes); j++ {
+		b.WriteRune(textRunes[j])
+	}
+	return b.String()
 }

@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc.
+// Copyright 2021 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 package heatmap
 
 import (
-	"errors"
+	"fmt"
 	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/private/draw"
 )
 
 // options.go contains configurable options for HeatMap.
@@ -29,27 +30,35 @@ type Option interface {
 
 // options stores the provided options.
 type options struct {
-	// The default value is 3
+	cellChar       rune
 	cellWidth      int
+	hideXLabels    bool
+	hideYLabels    bool
 	xLabelCellOpts []cell.Option
 	yLabelCellOpts []cell.Option
 }
 
 // validate validates the provided options.
 func (o *options) validate() error {
-	return errors.New("not implemented")
+	if got, min := o.cellWidth, 0; got < min {
+		return fmt.Errorf("invalid CellWidth %d, must be %d <= CellWidth", got, min)
+	}
+	return nil
 }
 
 // newOptions returns a new options instance.
 func newOptions(opts ...Option) *options {
 	opt := &options{
-		cellWidth: 3,
+		cellChar: DefaultChar,
 	}
 	for _, o := range opts {
 		o.set(opt)
 	}
 	return opt
 }
+
+// DefaultChar is the default value for the Char option.
+const DefaultChar = draw.DefaultRectChar
 
 // option implements Option.
 type option func(*options)
@@ -60,10 +69,39 @@ func (o option) set(opts *options) {
 }
 
 // CellWidth set the width of cells (or grids) in the heat map, not the terminal cell.
-// The default height of each cell (grid) is 1 and the width is 3.
 func CellWidth(w int) Option {
 	return option(func(opts *options) {
 		opts.cellWidth = w
+	})
+}
+
+// ShowXLabels configures the HeatMap so that it displays labels
+// on the X axis. This is the default behavior.
+func ShowXLabels() Option {
+	return option(func(opts *options) {
+		opts.hideXLabels = false
+	})
+}
+
+// ShowYLabels configures the HeatMap so that it displays labels
+// on the Y axis. This is the default behavior.
+func ShowYLabels() Option {
+	return option(func(opts *options) {
+		opts.hideYLabels = false
+	})
+}
+
+// HideXLabels disables the display of labels on the X axis.
+func HideXLabels() Option {
+	return option(func(opts *options) {
+		opts.hideXLabels = true
+	})
+}
+
+// HideYLabels disables the display of labels on the Y axis.
+func HideYLabels() Option {
+	return option(func(opts *options) {
+		opts.hideYLabels = true
 	})
 }
 

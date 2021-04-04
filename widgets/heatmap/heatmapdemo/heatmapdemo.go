@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc.
+// Copyright 2021 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,41 @@ import (
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/heatmap"
+	"math/rand"
+	"time"
 )
+
+// playHeatMap continuously changes the displayed values on the heat map once every delay.
+// Exits when the context expires.
+func playHeatMap(ctx context.Context, hp *heatmap.HeatMap, delay time.Duration) {
+	const max = 100
+
+	ticker := time.NewTicker(delay)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			rows, cols := hp.ValueCapacity()
+
+			var values [][]float64
+			for i := 0; i < rows; i++ {
+				var rv []float64
+				for j := 0; j < cols; j++ {
+					rv = append(rv, float64(rand.Int31n(max+1)))
+				}
+				values = append(values, rv)
+			}
+
+			if len(values) > 0 {
+				if err := hp.Values(nil, nil, values); err != nil {
+					panic(err)
+				}
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
 
 func main() {
 	t, err := tcell.New()
@@ -33,12 +67,14 @@ func main() {
 	}
 	defer t.Close()
 
-	hp, err := heatmap.New()
+	ctx, cancel := context.WithCancel(context.Background())
+	hp, err := heatmap.New(
+		heatmap.CellWidth(3),
+	)
 	if err != nil {
 		panic(err)
 	}
-
-	// TODO: set heatmap's data
+	go playHeatMap(ctx, hp, 1*time.Second)
 
 	c, err := container.New(
 		t,
@@ -49,8 +85,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {

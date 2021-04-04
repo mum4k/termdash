@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc.
+// Copyright 2021 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 package axes
 
 import (
-	"errors"
 	"image"
 
 	"github.com/mum4k/termdash/private/runewidth"
 )
 
-// axisWidth is width of an axis.
-const axisWidth = 1
+// AxisWidth is width of an axis.
+const AxisWidth = 1
 
 // YDetails contain information about the Y axis
 // that will NOT be drawn onto the canvas, but will take up space.
@@ -42,17 +41,25 @@ type YDetails struct {
 	Labels []*Label
 }
 
-// RequiredWidth calculates the minimum width required
-// in order to draw the Y axis and its labels.
-// The parameter ls is the longest string in yLabels.
-func RequiredWidth(ls string) int {
-	return runewidth.StringWidth(ls) + axisWidth
-}
-
 // NewYDetails retrieves details about the Y axis required
 // to draw it on a canvas of the provided area.
 func NewYDetails(labels []string) (*YDetails, error) {
-	return nil, errors.New("not implemented")
+	// See how the labels would look like on the entire maxWidth.
+	maxLabelWidth := LongestString(labels)
+	ls, err := yLabels(maxLabelWidth, labels)
+	if err != nil {
+		return nil, err
+	}
+
+	width := maxLabelWidth + AxisWidth
+	graphHeight := len(labels)
+
+	return &YDetails{
+		Width:  width,
+		Start:  image.Point{X: width - 1, Y: 0},
+		End:    image.Point{X: width - 1, Y: graphHeight},
+		Labels: ls,
+	}, nil
 }
 
 // LongestString returns the length of the longest string in the string array.
@@ -82,6 +89,19 @@ type XDetails struct {
 // NewXDetails retrieves details about the X axis required to draw it on a canvas
 // of the provided area.
 // The yEnd is the point where the Y axis ends.
-func NewXDetails(cvsAr image.Rectangle, yEnd image.Point, labels []string, cellWidth int) (*XDetails, error) {
-	return nil, errors.New("not implemented")
+func NewXDetails(yEnd image.Point, labels []string, cellWidth int) (*XDetails, error) {
+	// The space between the start of the axis and the end of the canvas.
+	// graphWidth := cvsAr.Dx() - yEnd.X - 1
+	graphWidth := len(labels) * cellWidth
+
+	ls, err := xLabels(yEnd, graphWidth, labels, cellWidth)
+	if err != nil {
+		return nil, err
+	}
+
+	return &XDetails{
+		Start:  image.Point{X: yEnd.X, Y: yEnd.Y - 1},
+		End:    image.Point{X: yEnd.X + graphWidth, Y: yEnd.Y - 1},
+		Labels: ls,
+	}, nil
 }

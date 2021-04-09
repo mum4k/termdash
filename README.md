@@ -220,6 +220,7 @@ Termdash uses [this branching model](https://nvie.com/posts/a-successful-git-bra
 - [perfstat](https://github.com/flaviostutz/perfstat): Analyze and show tips about possible bottlenecks in Linux systems.
 - [gex](https://github.com/Tosch110/gex): Cosmos SDK explorer in-terminal.
 - [ali](https://github.com/nakabonne/ali): ALI HTTP load testing tool with realtime analysis.
+- [inntop go](https://github.com/lefred/innotopgo): MySQL 8 processlist console.
 
 # Disclaimer
 

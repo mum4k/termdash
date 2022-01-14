@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1] - 13-Jan-2022
+
+### Changed
+
+- Change the Go versions the CI builds with up to 1.17.
+- Bump github.com/gdamore/tcell from 2.2.0 to 2.4.0.
+- Bump github.com/mattn/go-runewidth from 0.0.12 to 0.0.13.
+
 ## [0.16.0] - 03-Apr-2021
 
 ### Added
@@ -464,7 +472,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.16.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.16.1...devel
+[0.16.1]: https://github.com/mum4k/termdash/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/mum4k/termdash/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/mum4k/termdash/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/mum4k/termdash/compare/v0.13.0...v0.14.0

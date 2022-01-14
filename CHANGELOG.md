@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump github.com/gdamore/tcell from 2.2.0 to 2.4.0.
 - Bump github.com/mattn/go-runewidth from 0.0.12 to 0.0.13.
+- Change the Go versions the CI builds with up to 1.17.
 
 ## [0.16.0] - 03-Apr-2021
 

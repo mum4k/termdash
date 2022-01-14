@@ -4,6 +4,7 @@ go:
         - 1.17.x
         - stable
 before_install:
+        - go get golang.org/x/tools/cmd/cover
         - go get github.com/mattn/goveralls
 script:
         - go get -t ./...
@@ -11,13 +12,13 @@ script:
         # Temporarily set -mod=mod to allow modification of go.mod and go.sum.
         # This seems to be caused by a sum missing in the tcell dependency and
         # should be removed when no longer needed.
-        - go test -mod=mod ./...
+        - go test -v -covermode=count -coverprofile=coverage.out -mod=mod ./...
         - CGO_ENABLED=1 go test -mod=mod -race ./...
         - go vet ./...
         - diff -u <(echo -n) <(gofmt -d -s .)
         - diff -u <(echo -n) <(./internal/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
-        - $GOPATH/bin/goveralls -service=travis-pro
+        - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 env:
   global:
         - CGO_ENABLED=0

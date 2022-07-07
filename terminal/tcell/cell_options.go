@@ -70,6 +70,7 @@ func cellOptsToStyle(opts *cell.Options, colorMode terminalapi.ColorMode) tcell.
 		Underline(opts.Underline).
 		StrikeThrough(opts.Strikethrough).
 		Reverse(opts.Inverse).
-		Blink(opts.Blink)
+		Blink(opts.Blink).
+		Dim(opts.Dim)
 	return st
 }

@@ -325,6 +325,11 @@ func TestCellOptsToStyle(t *testing.T) {
 			opts:      cell.Options{Blink: true},
 			want:      tcell.StyleDefault.Blink(true),
 		},
+		{
+			colorMode: terminalapi.ColorModeNormal,
+			opts:      cell.Options{Dim: true},
+			want:      tcell.StyleDefault.Dim(true),
+		},
 	}
 
 	for _, tc := range tests {

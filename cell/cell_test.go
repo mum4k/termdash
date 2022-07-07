@@ -82,6 +82,7 @@ func TestNewOptions(t *testing.T) {
 				Strikethrough(),
 				Inverse(),
 				Blink(),
+				Dim(),
 			},
 			want: &Options{
 				Bold:          true,
@@ -90,6 +91,7 @@ func TestNewOptions(t *testing.T) {
 				Strikethrough: true,
 				Inverse:       true,
 				Blink:         true,
+				Dim:           true,
 			},
 		},
 	}

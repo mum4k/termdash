@@ -4,11 +4,11 @@ go:
         - 1.17.x
         - stable
 before_install:
-        - go get golang.org/x/tools/cmd/cover
-        - go get github.com/mattn/goveralls
+        - go install golang.org/x/tools/cmd/cover@latest
+        - go install github.com/mattn/goveralls@latest
+        - go install golang.org/x/lint/golint@latest
 script:
         - go get -t ./...
-        - go get -u golang.org/x/lint/golint
         # Temporarily set -mod=mod to allow modification of go.mod and go.sum.
         # This seems to be caused by a sum missing in the tcell dependency and
         # should be removed when no longer needed.

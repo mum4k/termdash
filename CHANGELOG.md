@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump github.com/gdamore/tcell from 2.4.0 to 2.5.1.
 - Bump github.com/nsf/termbox-go to v1.1.1.
 - Change the Go version in `go.mod` to 1.17.
+- Executed `go mod tidy`.
 
 ### Fixed
 

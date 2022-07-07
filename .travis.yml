@@ -16,7 +16,7 @@ script:
         - CGO_ENABLED=1 go test -mod=mod -race ./...
         - go vet ./...
         - diff -u <(echo -n) <(gofmt -d -s .)
-        - diff -u <(echo -n) <(./internal/scripts/autogen_licences.sh .)
+        - diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
         - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 env:

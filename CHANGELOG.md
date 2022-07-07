@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for `tcell`'s `Dim` text style.
+
+### Changed
+
+- Bump github.com/gdamore/tcell from 2.4.0 to 2.5.1.
+- Bump github.com/nsf/termbox-go to v1.1.1.
+- Change the Go version in `go.mod` to 1.17.
+
+### Fixed
+
+- Fixed invalid path to the `autogen_licences.sh` script in `.travis.ci`.
+
 ## [0.16.1] - 13-Jan-2022
 
 ### Changed

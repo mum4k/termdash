@@ -67,6 +67,11 @@ func cellOptsToFg(opts *cell.Options) (tbx.Attribute, error) {
 	if opts.Blink {
 		return 0, errors.New("Termbox: Unsupported attribute: Blink")
 	}
+
+	if opts.Dim {
+		return 0, errors.New("Termbox: Unsupported attribute: Dim")
+	}
+
 	return a, nil
 }
 

@@ -31,6 +31,7 @@ type Options struct {
 	Strikethrough bool
 	Inverse       bool
 	Blink         bool
+	Dim           bool
 }
 
 // Set allows existing options to be passed as an option.
@@ -108,5 +109,12 @@ func Inverse() Option {
 func Blink() Option {
 	return option(func(co *Options) {
 		co.Blink = true
+	})
+}
+
+// Dim makes the cell foreground color dim. Only works when using the tcell backend.
+func Dim() Option {
+	return option(func(co *Options) {
+		co.Dim = true
 	})
 }

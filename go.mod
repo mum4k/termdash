@@ -3,7 +3,7 @@ module github.com/mum4k/termdash
 go 1.17
 
 require (
-	github.com/gdamore/tcell/v2 v2.5.1
+	github.com/gdamore/tcell/v2 v2.5.3
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/nsf/termbox-go v1.1.1

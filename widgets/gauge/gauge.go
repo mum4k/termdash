@@ -136,10 +136,12 @@ func (g *Gauge) Percent(p int, opts ...Option) error {
 	return nil
 }
 
-// width determines the required width of the gauge drawn on the provided area
-// in order to represent the current progress.
-func (g *Gauge) width(ar image.Rectangle) int {
-	mult := float32(g.current) / float32(g.total)
+// width determines the X coordinate that represents point w in rectangle ar.
+// This is used to calculate the width of the gauge drawn on the provided area
+// in order to represent the current progress or to figure out the coordinate
+// for the threshold line.
+func (g *Gauge) width(ar image.Rectangle, w int) int {
+	mult := float32(w) / float32(g.total)
 	width := float32(ar.Dx()) * mult
 	return int(width)
 }
@@ -273,7 +275,7 @@ func (g *Gauge) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	progress := image.Rect(
 		usable.Min.X,
 		usable.Min.Y,
-		usable.Min.X+g.width(usable),
+		usable.Min.X+g.width(usable, g.current),
 		usable.Max.Y,
 	)
 	if progress.Dx() > 0 {
@@ -284,6 +286,25 @@ func (g *Gauge) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 			return err
 		}
 	}
+	if g.opts.threshold > 0 && g.opts.threshold < g.total {
+		line := draw.HVLine{
+			Start: image.Point{
+				X: usable.Min.X + g.width(usable, g.opts.threshold),
+				Y: cvs.Area().Min.Y,
+			},
+			End: image.Point{
+				X: usable.Min.X + g.width(usable, g.opts.threshold),
+				Y: cvs.Area().Max.Y - 1,
+			},
+		}
+		if err := draw.HVLines(cvs, []draw.HVLine{line},
+			draw.HVLineStyle(g.opts.thresholdLineStyle),
+			draw.HVLineCellOpts(g.opts.thresholdCellOpts...),
+		); err != nil {
+			return err
+		}
+	}
+
 	return g.drawText(cvs, progress)
 }
 

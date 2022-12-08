@@ -47,6 +47,10 @@ type options struct {
 	borderCellOpts    []cell.Option
 	borderTitle       string
 	borderTitleHAlign align.Horizontal
+	// If set draws a vertical line representing the threshold.
+	threshold          int
+	thresholdCellOpts  []cell.Option
+	thresholdLineStyle linestyle.LineStyle
 }
 
 // newOptions returns options with the default values set.
@@ -199,5 +203,19 @@ func BorderTitle(title string) Option {
 func BorderTitleAlign(h align.Horizontal) Option {
 	return option(func(opts *options) {
 		opts.borderTitleHAlign = h
+	})
+}
+
+// Threshold configures the Gauge to display a vertical threshold line at value
+// t. If the progress is set by a call to Percent(), t represents a percentage,
+// e.g. "40" means line is displayed at 40%. If the progress is set by a call to
+// Absolute(), the threshold is also considered an absolute number.
+// Threshold needs to be configured inside the valid values of a gauge to be
+// displayed, if it's set to <=0 or >=total it won't have any effect.
+func Threshold(t int, ls linestyle.LineStyle, cOpts ...cell.Option) Option {
+	return option(func(opts *options) {
+		opts.threshold = t
+		opts.thresholdLineStyle = ls
+		opts.thresholdCellOpts = cOpts
 	})
 }

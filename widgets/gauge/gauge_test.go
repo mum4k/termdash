@@ -70,9 +70,9 @@ func TestGauge(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "fails on negative height",
+			desc: "fails on negative threshold",
 			opts: []Option{
-				Height(-1),
+				Threshold(-1, linestyle.Light),
 			},
 			canvas: image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -889,27 +889,6 @@ func TestGauge(t *testing.T) {
 					End:   image.Point{X: 3, Y: 2},
 				}}, draw.HVLineStyle(linestyle.Light),
 					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
-				testcanvas.MustApply(c, ft)
-				return ft
-			},
-		},
-		{
-			desc: "threshold outside of bounds (negative)",
-			opts: []Option{
-				Char('o'),
-				HideTextProgress(),
-				Threshold(-1, linestyle.Light), // ignored
-			},
-			percent: &percentCall{p: 35},
-			canvas:  image.Rect(0, 0, 10, 3),
-			want: func(size image.Point) *faketerm.Terminal {
-				ft := faketerm.MustNew(size)
-				c := testcanvas.MustNew(ft.Area())
-
-				testdraw.MustRectangle(c, image.Rect(0, 0, 3, 3),
-					draw.RectChar('o'),
-					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
-				)
 				testcanvas.MustApply(c, ft)
 				return ft
 			},

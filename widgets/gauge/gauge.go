@@ -159,6 +159,11 @@ func (g *Gauge) usable(cvs *canvas.Canvas) image.Rectangle {
 	return cvs.Area()
 }
 
+// thresholdVisible determines if the threshold line should be drawn.
+func (g *Gauge) thresholdVisible() bool {
+	return g.opts.threshold > 0 && g.opts.threshold < g.total
+}
+
 // progressText returns the textual representation of the current progress.
 func (g *Gauge) progressText() string {
 	if g.opts.hideTextProgress {
@@ -246,6 +251,26 @@ func (g *Gauge) drawText(cvs *canvas.Canvas, progress image.Rectangle) error {
 	return nil
 }
 
+// drawThreshold draws the threshold line.
+func (g *Gauge) drawThreshold(cvs *canvas.Canvas) error {
+	ar := g.usable(cvs)
+
+	line := draw.HVLine{
+		Start: image.Point{
+			X: ar.Min.X + g.width(ar, g.opts.threshold),
+			Y: cvs.Area().Min.Y,
+		},
+		End: image.Point{
+			X: ar.Min.X + g.width(ar, g.opts.threshold),
+			Y: cvs.Area().Max.Y - 1,
+		},
+	}
+	return draw.HVLines(cvs, []draw.HVLine{line},
+		draw.HVLineStyle(g.opts.thresholdLineStyle),
+		draw.HVLineCellOpts(g.opts.thresholdCellOpts...),
+	)
+}
+
 // Draw draws the Gauge widget onto the canvas.
 // Implements widgetapi.Widget.Draw.
 func (g *Gauge) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
@@ -286,21 +311,8 @@ func (g *Gauge) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 			return err
 		}
 	}
-	if g.opts.threshold > 0 && g.opts.threshold < g.total {
-		line := draw.HVLine{
-			Start: image.Point{
-				X: usable.Min.X + g.width(usable, g.opts.threshold),
-				Y: cvs.Area().Min.Y,
-			},
-			End: image.Point{
-				X: usable.Min.X + g.width(usable, g.opts.threshold),
-				Y: cvs.Area().Max.Y - 1,
-			},
-		}
-		if err := draw.HVLines(cvs, []draw.HVLine{line},
-			draw.HVLineStyle(g.opts.thresholdLineStyle),
-			draw.HVLineCellOpts(g.opts.thresholdCellOpts...),
-		); err != nil {
+	if g.thresholdVisible() {
+		if err := g.drawThreshold(cvs); err != nil {
 			return err
 		}
 	}

@@ -914,6 +914,84 @@ func TestGauge(t *testing.T) {
 				return ft
 			},
 		},
+		{
+			desc: "progress below threshold",
+			opts: []Option{
+				Char('o'),
+				Threshold(5, linestyle.Light, cell.BgColor(cell.ColorRed)),
+				HideTextProgress(),
+			},
+			absolute: &absoluteCall{done: 4, total: 10},
+			canvas:   image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 4, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 5, Y: 0},
+					End:   image.Point{X: 5, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Light),
+					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "progress exactly at threshold",
+			opts: []Option{
+				Char('o'),
+				Threshold(5, linestyle.Light, cell.BgColor(cell.ColorRed)),
+				HideTextProgress(),
+			},
+			absolute: &absoluteCall{done: 5, total: 10},
+			canvas:   image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 5, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 5, Y: 0},
+					End:   image.Point{X: 5, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Light),
+					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "progress after threshold",
+			opts: []Option{
+				Char('o'),
+				Threshold(5, linestyle.Light, cell.BgColor(cell.ColorRed)),
+				HideTextProgress(),
+			},
+			absolute: &absoluteCall{done: 6, total: 10},
+			canvas:   image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 6, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 5, Y: 0},
+					End:   image.Point{X: 5, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Light),
+					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
 	}
 
 	for _, tc := range tests {

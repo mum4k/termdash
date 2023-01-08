@@ -70,9 +70,9 @@ func TestGauge(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "fails on negative height",
+			desc: "fails on negative threshold",
 			opts: []Option{
-				Height(-1),
+				Threshold(-1, linestyle.Light),
 			},
 			canvas: image.Rect(0, 0, 10, 3),
 			want: func(size image.Point) *faketerm.Terminal {
@@ -837,6 +837,157 @@ func TestGauge(t *testing.T) {
 				testdraw.MustText(c, "(lo…", image.Point{5, 1},
 					draw.TextCellOpts(cell.FgColor(cell.ColorDefault)),
 				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "threshold with border percentage",
+			opts: []Option{
+				Char('o'),
+				Threshold(20, linestyle.Double),
+			},
+			percent: &percentCall{p: 35},
+			canvas:  image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 3, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustText(c, "35%", image.Point{3, 1})
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 2, Y: 0},
+					End:   image.Point{X: 2, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Double))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "threshold without border absolute",
+			opts: []Option{
+				Char('o'),
+				Threshold(3, linestyle.Light, cell.BgColor(cell.ColorRed)),
+				Border(linestyle.None),
+				HideTextProgress(),
+			},
+			absolute: &absoluteCall{done: 4, total: 10},
+			canvas:   image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 3, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 3, Y: 0},
+					End:   image.Point{X: 3, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Light),
+					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "threshold outside of bounds (>=max)",
+			opts: []Option{
+				Char('o'),
+				HideTextProgress(),
+				Threshold(100, linestyle.Light), // ignored
+			},
+			percent: &percentCall{p: 35},
+			canvas:  image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 3, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "progress below threshold",
+			opts: []Option{
+				Char('o'),
+				Threshold(5, linestyle.Light, cell.BgColor(cell.ColorRed)),
+				HideTextProgress(),
+			},
+			absolute: &absoluteCall{done: 4, total: 10},
+			canvas:   image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 4, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 5, Y: 0},
+					End:   image.Point{X: 5, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Light),
+					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "progress exactly at threshold",
+			opts: []Option{
+				Char('o'),
+				Threshold(5, linestyle.Light, cell.BgColor(cell.ColorRed)),
+				HideTextProgress(),
+			},
+			absolute: &absoluteCall{done: 5, total: 10},
+			canvas:   image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 5, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 5, Y: 0},
+					End:   image.Point{X: 5, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Light),
+					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
+			desc: "progress after threshold",
+			opts: []Option{
+				Char('o'),
+				Threshold(5, linestyle.Light, cell.BgColor(cell.ColorRed)),
+				HideTextProgress(),
+			},
+			absolute: &absoluteCall{done: 6, total: 10},
+			canvas:   image.Rect(0, 0, 10, 3),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustRectangle(c, image.Rect(0, 0, 6, 3),
+					draw.RectChar('o'),
+					draw.RectCellOpts(cell.BgColor(cell.ColorGreen)),
+				)
+				testdraw.MustHVLines(c, []draw.HVLine{{
+					Start: image.Point{X: 5, Y: 0},
+					End:   image.Point{X: 5, Y: 2},
+				}}, draw.HVLineStyle(linestyle.Light),
+					draw.HVLineCellOpts(cell.BgColor(cell.ColorRed)))
 				testcanvas.MustApply(c, ft)
 				return ft
 			},

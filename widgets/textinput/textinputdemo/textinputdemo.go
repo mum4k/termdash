@@ -200,7 +200,7 @@ func main() {
 				grid.Widget(
 					mirror,
 					container.Border(linestyle.Light),
-					container.BorderTitle("text"),
+					container.BorderTitle("Text"),
 					container.AlignHorizontal(align.HorizontalCenter),
 					container.AlignHorizontal(align.Horizontal(align.VerticalBottom)),
 					container.MarginBottom(1),

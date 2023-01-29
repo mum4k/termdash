@@ -329,7 +329,12 @@ func (fe *fieldEditor) content() string {
 
 // reset resets the content back to zero.
 func (fe *fieldEditor) reset() {
-	*fe = *newFieldEditor()
+	newValue := newFieldEditor()
+	if fe.onChange != nil {
+		fe.onChange("")
+		newValue.onChange = fe.onChange
+	}
+	*fe = *newValue
 }
 
 // insert inserts the rune at the current position of the cursor.

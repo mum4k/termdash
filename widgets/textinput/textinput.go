@@ -73,7 +73,7 @@ func New(opts ...Option) (*TextInput, error) {
 		editor: newFieldEditor(),
 		opts:   opt,
 	}
-
+	ti.editor.onChange = opt.onChange
 	for _, r := range ti.opts.defaultText {
 		ti.editor.insert(r)
 	}

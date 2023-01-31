@@ -280,8 +280,8 @@ type fieldEditor struct {
 }
 
 // newFieldEditor returns a new fieldEditor instance.
-func newFieldEditor() *fieldEditor {
-	return &fieldEditor{}
+func newFieldEditor(onChange ChangeFn) *fieldEditor {
+	return &fieldEditor{onChange: onChange}
 }
 
 // minFieldWidth is the minimum supported width of the text input field.
@@ -329,12 +329,7 @@ func (fe *fieldEditor) content() string {
 
 // reset resets the content back to zero.
 func (fe *fieldEditor) reset() {
-	newValue := newFieldEditor()
-	if fe.onChange != nil {
-		fe.onChange("")
-		newValue.onChange = fe.onChange
-	}
-	*fe = *newValue
+	*fe = *newFieldEditor(fe.onChange)
 }
 
 // insert inserts the rune at the current position of the cursor.

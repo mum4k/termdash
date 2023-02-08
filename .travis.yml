@@ -1,23 +1,21 @@
 language: go
 go:
-        #- 1.16.x
-        #- 1.17.x
-        - stable
+  - 1.20.x
+  - stable
 before_install:
-        - go install golang.org/x/tools/cmd/cover@latest
-        - go install github.com/mattn/goveralls@latest
-        - go install golang.org/x/lint/golint@latest
+  - go install golang.org/x/tools/cmd/cover@latest
+  - go install github.com/mattn/goveralls@latest
+  - go install golang.org/x/lint/golint@latest
 script:
-        - go get -t ./...
-        # Temporarily set -mod=mod to allow modification of go.mod and go.sum.
-        # This seems to be caused by a sum missing in the tcell dependency and
-        # should be removed when no longer needed.
-        - go test -v -covermode=count -coverprofile=coverage.out -mod=mod ./...
-        - CGO_ENABLED=1 go test -mod=mod -race ./...
-        - go vet ./...
-        #- diff -u <(echo -n) <(gofmt -d -s .)
-        - diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
-        - diff -u <(echo -n) <(golint ./...)
+  - go get -t ./...
+  - go test -v -covermode=count -coverprofile=coverage.out ./...
+  - CGO_ENABLED=1 go test -race ./...
+  - go vet ./...
+  - diff -u <(echo -n) <(gofmt -d -s .)
+  - diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
+  - diff -u <(echo -n) <(golint ./...)
+  - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 env:
   global:
-        - CGO_ENABLED=0
+    - CGO_ENABLED=0
+    - secure: FEFt9o7MvSvK2lnXJTydml/DCmNqPKIc+YJjPlKhfeGGJyruFvP55qkB0rHN7wb2r4L44qMqtM12c41YzA0sFhXXNowhCB0wd7mfyEt3cCLr4akqRedxOpz+qFBGv2oCBObP6e6irtsN0071KtDz9wsITchme3gf0A8l9PhjPeEu9UVbmN8lipouvQFqmdxqLNyxJ+ykbACkSTwIx2rkvU79aOPDoSnDO56Wqaq7V75CmZ13EtHupgmJIz2GECyIL6Ll6824AQiK1O5XXpnc8973Vw1s6kZB5Tyzvb2KaW5U9KhovgX1mTvnj1XJ//SQvh9yMjC5L51DLNbLSshVo7L4CiJZkq8QQLFILPOMaC1emrmhXxwizjbTmNOo96t2MYk2WASq636Uoez0ZkkZPjuwuKoexFi7r04vHEOjnF2N9liN+M8gwvJ5N/MakbS3ZPbZ+57w4xgwuxJRSUYQoT1VSU8E2rc+DQYa4HzY4wrcrJQG7HBjd4KBHnmHjEDAmawBb6iEI9d5d40j0LThxAOweh05YoWVmnTzMScuO27V5embStXab31jUrD4Qnj5/lliklGdYD5aWLKRZhSeg5mLikUITbhriABuUxMaR1FuQW4r1nSg3n8XA6MbwdvngO2DJyzp5iUQX3yfnUgrGzfp9okrA4CdxUHrY/jj8cw=

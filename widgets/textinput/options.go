@@ -270,9 +270,10 @@ func OnSubmit(fn SubmitFn) Option {
 	})
 }
 
-// The argument to ChangeFn contains all the text in the field after the change.
+// ChangeFn when passed to OnChage will be called with all the text in the text
+// input each time it gets modified.
 //
-// The callback function must be thread-safe as the keyboard event that
+// This function must be thread-safe as the keyboard event that
 // triggers the submission comes from a separate goroutine.
 type ChangeFn func(data string)
 

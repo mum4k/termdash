@@ -95,15 +95,15 @@ func SkipSlopesLTE(v int) Option {
 // This only has a visible effect when the horizontal segment has height of two
 // or the vertical segment has width of two.
 // Without this option segments with height / width of two look like this:
-//      -   |
-//     --- ||
-//          |
-//
-// With this option:
-//
-//	   ---  |
-//	    -   ||
-//	        |
+// x  -   |
+// x --- ||
+// x      |
+// x
+// x With this option:
+// x
+// x --- |
+// x  -  ||
+// x     |
 func ReverseSlopes() Option {
 	return option(func(opts *options) {
 		opts.reverseSlopes = true

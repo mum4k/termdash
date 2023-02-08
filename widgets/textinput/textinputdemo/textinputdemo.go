@@ -29,6 +29,7 @@ import (
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/segmentdisplay"
+	"github.com/mum4k/termdash/widgets/text"
 	"github.com/mum4k/termdash/widgets/textinput"
 )
 
@@ -128,11 +129,20 @@ func main() {
 	updateText := make(chan string)
 	go rollText(ctx, rollingSD, updateText)
 
+	mirror, err := text.New()
+	if err != nil {
+		panic(err)
+	}
+
 	input, err := textinput.New(
 		textinput.Label("New text:", cell.FgColor(cell.ColorNumber(33))),
 		textinput.MaxWidthCells(20),
 		textinput.Border(linestyle.Light),
 		textinput.PlaceHolder("Enter any text"),
+		textinput.OnChange(func(data string) {
+			mirror.Reset()
+			mirror.Write(data)
+		}),
 	)
 	if err != nil {
 		panic(err)
@@ -179,18 +189,30 @@ func main() {
 		),
 	)
 	builder.Add(
-		grid.RowHeightPerc(20,
-			grid.Widget(
-				input,
-				container.AlignHorizontal(align.HorizontalCenter),
-				container.AlignVertical(align.VerticalBottom),
-				container.MarginBottom(1),
+		grid.RowHeightPerc(40,
+			grid.RowHeightPerc(50,
+				grid.Widget(
+					input,
+					container.AlignHorizontal(align.HorizontalCenter),
+					container.AlignVertical(align.VerticalBottom),
+					container.MarginBottom(1),
+				),
+			),
+			grid.RowHeightPerc(50,
+				grid.Widget(
+					mirror,
+					container.Border(linestyle.Light),
+					container.BorderTitle("Text"),
+					container.AlignHorizontal(align.HorizontalCenter),
+					container.AlignHorizontal(align.Horizontal(align.VerticalBottom)),
+					container.MarginBottom(1),
+				),
 			),
 		),
 	)
 
 	builder.Add(
-		grid.RowHeightPerc(40,
+		grid.RowHeightPerc(20,
 			grid.ColWidthPerc(20),
 			grid.ColWidthPerc(20,
 				grid.Widget(

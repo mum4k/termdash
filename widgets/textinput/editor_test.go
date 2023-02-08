@@ -309,7 +309,7 @@ func TestCurCell(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			fe := newFieldEditor()
+			fe := newFieldEditor(nil)
 			fe.data = tc.data
 			fe.firstRune = tc.firstRune
 			fe.curDataPos = tc.curDataPos
@@ -323,13 +323,14 @@ func TestCurCell(t *testing.T) {
 
 func TestFieldEditor(t *testing.T) {
 	tests := []struct {
-		desc        string
-		width       int
-		ops         func(*fieldEditor) error
-		wantView    string
-		wantContent string
-		wantCurIdx  int
-		wantErr     bool
+		desc              string
+		width             int
+		ops               func(*fieldEditor) error
+		wantView          string
+		wantContent       string
+		wantCurIdx        int
+		wantErr           bool
+		wantOnChangeCalls int
 	}{
 		{
 			desc:    "fails for width too small",
@@ -352,9 +353,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('c')
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  3,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "longer data than the width, cursor at the end",
@@ -366,9 +368,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('d')
 				return nil
 			},
-			wantView:    "⇦cd",
-			wantContent: "abcd",
-			wantCurIdx:  3,
+			wantView:          "⇦cd",
+			wantContent:       "abcd",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "longer data than the width, cursor at the end, has full-width runes",
@@ -380,9 +383,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('世')
 				return nil
 			},
-			wantView:    "⇦世",
-			wantContent: "abc世",
-			wantCurIdx:  3,
+			wantView:          "⇦世",
+			wantContent:       "abc世",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "width decreased, adjusts cursor and shifts data",
@@ -397,9 +401,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('d')
 				return nil
 			},
-			wantView:    "⇦cd",
-			wantContent: "abcd",
-			wantCurIdx:  3,
+			wantView:          "⇦cd",
+			wantContent:       "abcd",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "cursor won't go right beyond the end of the data",
@@ -414,9 +419,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦cd",
-			wantContent: "abcd",
-			wantCurIdx:  3,
+			wantView:          "⇦cd",
+			wantContent:       "abcd",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "moves cursor to the left",
@@ -432,9 +438,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦cd",
-			wantContent: "abcd",
-			wantCurIdx:  2,
+			wantView:          "⇦cd",
+			wantContent:       "abcd",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "scrolls content to the left, start becomes visible",
@@ -452,9 +459,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "abc⇨",
-			wantContent: "abcd",
-			wantCurIdx:  1,
+			wantView:          "abc⇨",
+			wantContent:       "abcd",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "scrolls content to the left, both ends invisible",
@@ -473,9 +481,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦cd⇨",
-			wantContent: "abcde",
-			wantCurIdx:  1,
+			wantView:          "⇦cd⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "scrolls left, then back right to make end visible again",
@@ -500,9 +509,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦de",
-			wantContent: "abcde",
-			wantCurIdx:  3,
+			wantView:          "⇦de",
+			wantContent:       "abcde",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "scrolls left, won't go beyond the start of data",
@@ -524,9 +534,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "abc⇨",
-			wantContent: "abcde",
-			wantCurIdx:  0,
+			wantView:          "abc⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        0,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "scrolls left, then back right won't go beyond the end of data",
@@ -552,9 +563,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦de",
-			wantContent: "abcde",
-			wantCurIdx:  3,
+			wantView:          "⇦de",
+			wantContent:       "abcde",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "have less data than width, all fits",
@@ -568,9 +580,10 @@ func TestFieldEditor(t *testing.T) {
 				}
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  3,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "moves cursor to the start",
@@ -587,9 +600,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorStart()
 				return nil
 			},
-			wantView:    "abc⇨",
-			wantContent: "abcde",
-			wantCurIdx:  0,
+			wantView:          "abc⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        0,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "moves cursor to the end",
@@ -610,9 +624,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorEnd()
 				return nil
 			},
-			wantView:    "⇦de",
-			wantContent: "abcde",
-			wantCurIdx:  3,
+			wantView:          "⇦de",
+			wantContent:       "abcde",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "deletesBefore when cursor after the data",
@@ -629,9 +644,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.deleteBefore()
 				return nil
 			},
-			wantView:    "⇦cd",
-			wantContent: "abcd",
-			wantCurIdx:  3,
+			wantView:          "⇦cd",
+			wantContent:       "abcd",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "deletesBefore when cursor after the data, text has full-width rune",
@@ -648,9 +664,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.deleteBefore()
 				return nil
 			},
-			wantView:    "⇦世",
-			wantContent: "abc世",
-			wantCurIdx:  3,
+			wantView:          "⇦世",
+			wantContent:       "abc世",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "deletesBefore when cursor in the middle",
@@ -673,9 +690,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.deleteBefore()
 				return nil
 			},
-			wantView:    "acd⇨",
-			wantContent: "acde",
-			wantCurIdx:  1,
+			wantView:          "acd⇨",
+			wantContent:       "acde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "deletesBefore when cursor in the middle, full-width runes",
@@ -698,9 +716,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.deleteBefore()
 				return nil
 			},
-			wantView:    "世c⇨",
-			wantContent: "世cde",
-			wantCurIdx:  2,
+			wantView:          "世c⇨",
+			wantContent:       "世cde",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "deletesBefore does nothing when cursor at the start",
@@ -721,9 +740,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.deleteBefore()
 				return nil
 			},
-			wantView:    "abc⇨",
-			wantContent: "abcde",
-			wantCurIdx:  0,
+			wantView:          "abc⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        0,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "delete does nothing when cursor at the end",
@@ -740,9 +760,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "⇦de",
-			wantContent: "abcde",
-			wantCurIdx:  3,
+			wantView:          "⇦de",
+			wantContent:       "abcde",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "delete in the middle, last rune remains hidden",
@@ -764,9 +785,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "acd⇨",
-			wantContent: "acde",
-			wantCurIdx:  1,
+			wantView:          "acd⇨",
+			wantContent:       "acde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "delete in the middle, last rune becomes visible",
@@ -789,9 +811,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "ade",
-			wantContent: "ade",
-			wantCurIdx:  1,
+			wantView:          "ade",
+			wantContent:       "ade",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 7,
 		},
 		{
 			desc:  "delete in the middle, last full-width rune would be invisible, shifts to keep cursor in window",
@@ -815,9 +838,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "⇦世",
-			wantContent: "ab世",
-			wantCurIdx:  1,
+			wantView:          "⇦世",
+			wantContent:       "ab世",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 7,
 		},
 		{
 			desc:  "delete in the middle, last rune was and is visible",
@@ -837,9 +861,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "ac",
-			wantContent: "ac",
-			wantCurIdx:  1,
+			wantView:          "ac",
+			wantContent:       "ac",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "delete in the middle, last full-width rune was and is visible",
@@ -859,9 +884,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "a世",
-			wantContent: "a世",
-			wantCurIdx:  1,
+			wantView:          "a世",
+			wantContent:       "a世",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "delete last rune, contains full-width runes",
@@ -882,9 +908,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "",
-			wantContent: "",
-			wantCurIdx:  0,
+			wantView:          "",
+			wantContent:       "",
+			wantCurIdx:        0,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "half-width runes only, exact fit",
@@ -898,9 +925,10 @@ func TestFieldEditor(t *testing.T) {
 				}
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  3,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "full-width runes only, exact fit",
@@ -914,9 +942,10 @@ func TestFieldEditor(t *testing.T) {
 				}
 				return nil
 			},
-			wantView:    "你好世",
-			wantContent: "你好世",
-			wantCurIdx:  6,
+			wantView:          "你好世",
+			wantContent:       "你好世",
+			wantCurIdx:        6,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "half-width runes only, both ends hidden",
@@ -935,9 +964,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦cd⇨",
-			wantContent: "abcde",
-			wantCurIdx:  1,
+			wantView:          "⇦cd⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "half-width runes only, both ends invisible, scrolls to make start visible",
@@ -957,9 +987,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "abc⇨",
-			wantContent: "abcde",
-			wantCurIdx:  1,
+			wantView:          "abc⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "half-width runes only, both ends invisible, deletes to make start visible",
@@ -979,9 +1010,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.deleteBefore()
 				return nil
 			},
-			wantView:    "acd⇨",
-			wantContent: "acde",
-			wantCurIdx:  1,
+			wantView:          "acd⇨",
+			wantContent:       "acde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "half-width runes only, deletion on second page refills the field",
@@ -1001,9 +1033,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "⇦df",
-			wantContent: "abcdf",
-			wantCurIdx:  2,
+			wantView:          "⇦df",
+			wantContent:       "abcdf",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 7,
 		},
 		{
 			desc:  "half-width runes only, both ends invisible, scrolls to make end visible",
@@ -1027,9 +1060,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦de",
-			wantContent: "abcde",
-			wantCurIdx:  2,
+			wantView:          "⇦de",
+			wantContent:       "abcde",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "half-width runes only, both ends invisible, deletes to make end visible",
@@ -1052,9 +1086,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "⇦de",
-			wantContent: "abde",
-			wantCurIdx:  1,
+			wantView:          "⇦de",
+			wantContent:       "abde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 6,
 		},
 		{
 			desc:  "full-width runes only, both ends invisible",
@@ -1071,9 +1106,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦⇦世⇨",
-			wantContent: "你好世界",
-			wantCurIdx:  2,
+			wantView:          "⇦⇦世⇨",
+			wantContent:       "你好世界",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "full-width runes only, both ends invisible, scrolls to make start visible",
@@ -1094,9 +1130,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "你好⇨",
-			wantContent: "你好世界",
-			wantCurIdx:  2,
+			wantView:          "你好⇨",
+			wantContent:       "你好世界",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "full-width runes only, both ends invisible, deletes to make start visible",
@@ -1117,9 +1154,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.deleteBefore()
 				return nil
 			},
-			wantView:    "你世⇨",
-			wantContent: "你世界",
-			wantCurIdx:  2,
+			wantView:          "你世⇨",
+			wantContent:       "你世界",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "full-width runes only, both ends invisible, scrolls to make end visible",
@@ -1140,9 +1178,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦⇦界",
-			wantContent: "你好世界",
-			wantCurIdx:  2,
+			wantView:          "⇦⇦界",
+			wantContent:       "你好世界",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "full-width runes only, both ends invisible, deletes to make end visible",
@@ -1163,9 +1202,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.delete()
 				return nil
 			},
-			wantView:    "⇦⇦界",
-			wantContent: "你好界",
-			wantCurIdx:  2,
+			wantView:          "⇦⇦界",
+			wantContent:       "你好界",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "scrolls to make full-width rune appear at the beginning",
@@ -1183,9 +1223,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "你b⇨",
-			wantContent: "你bcd",
-			wantCurIdx:  2,
+			wantView:          "你b⇨",
+			wantContent:       "你bcd",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "scrolls to make full-width rune appear at the end",
@@ -1204,9 +1245,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦你",
-			wantContent: "abc你",
-			wantCurIdx:  1,
+			wantView:          "⇦你",
+			wantContent:       "abc你",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "inserts after last full width rune, first is half-width",
@@ -1222,9 +1264,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('e')
 				return nil
 			},
-			wantView:    "⇦c你e",
-			wantContent: "abc你e",
-			wantCurIdx:  5,
+			wantView:          "⇦c你e",
+			wantContent:       "abc你e",
+			wantCurIdx:        5,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "inserts after last full width rune, first is half-width",
@@ -1239,9 +1282,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('d')
 				return nil
 			},
-			wantView:    "⇦你d",
-			wantContent: "世b你d",
-			wantCurIdx:  4,
+			wantView:          "⇦你d",
+			wantContent:       "世b你d",
+			wantCurIdx:        4,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "inserts after last full width rune, hidden rune is full-width",
@@ -1256,9 +1300,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.insert('d')
 				return nil
 			},
-			wantView:    "⇦⇦cd",
-			wantContent: "世你cd",
-			wantCurIdx:  4,
+			wantView:          "⇦⇦cd",
+			wantContent:       "世你cd",
+			wantCurIdx:        4,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "scrolls right, first is full-width, last are half-width",
@@ -1282,9 +1327,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦⇦def⇨",
-			wantContent: "a你世defgh",
-			wantCurIdx:  3,
+			wantView:          "⇦⇦def⇨",
+			wantContent:       "a你世defgh",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 8,
 		},
 		{
 			desc:  "scrolls right, first is half-width, last is full-width",
@@ -1308,9 +1354,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦你世⇨",
-			wantContent: "abc你世fgh",
-			wantCurIdx:  3,
+			wantView:          "⇦你世⇨",
+			wantContent:       "abc你世fgh",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 8,
 		},
 		{
 			desc:  "scrolls right, first and last are full-width",
@@ -1328,9 +1375,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦⇦世⇨",
-			wantContent: "你好世界",
-			wantCurIdx:  2,
+			wantView:          "⇦⇦世⇨",
+			wantContent:       "你好世界",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "scrolls right, first and last are half-width",
@@ -1354,9 +1402,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRight()
 				return nil
 			},
-			wantView:    "⇦cdef⇨",
-			wantContent: "abcdefg",
-			wantCurIdx:  4,
+			wantView:          "⇦cdef⇨",
+			wantContent:       "abcdefg",
+			wantCurIdx:        4,
+			wantOnChangeCalls: 7,
 		},
 		{
 			desc:  "scrolls left, first is full-width, last are half-width",
@@ -1380,9 +1429,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦⇦def⇨",
-			wantContent: "a你世defgh",
-			wantCurIdx:  2,
+			wantView:          "⇦⇦def⇨",
+			wantContent:       "a你世defgh",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 8,
 		},
 		{
 			desc:  "scrolls left, first is half-width, last is full-width",
@@ -1406,9 +1456,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦你世⇨",
-			wantContent: "abc你世fgh",
-			wantCurIdx:  1,
+			wantView:          "⇦你世⇨",
+			wantContent:       "abc你世fgh",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 8,
 		},
 		{
 			desc:  "scrolls left, first and last are full-width",
@@ -1425,9 +1476,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦⇦世⇨",
-			wantContent: "你好世界",
-			wantCurIdx:  2,
+			wantView:          "⇦⇦世⇨",
+			wantContent:       "你好世界",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "scrolls left, first and last are half-width",
@@ -1450,9 +1502,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorLeft()
 				return nil
 			},
-			wantView:    "⇦cdef⇨",
-			wantContent: "abcdefg",
-			wantCurIdx:  1,
+			wantView:          "⇦cdef⇨",
+			wantContent:       "abcdefg",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 7,
 		},
 		{
 			desc:  "resets the field editor",
@@ -1467,9 +1520,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.reset()
 				return nil
 			},
-			wantView:    "",
-			wantContent: "",
-			wantCurIdx:  0,
+			wantView:          "",
+			wantContent:       "",
+			wantCurIdx:        0,
+			wantOnChangeCalls: 4,
 		},
 		{
 			desc:  "doesn't insert runes with rune width of zero",
@@ -1483,9 +1537,10 @@ func TestFieldEditor(t *testing.T) {
 				}
 				return nil
 			},
-			wantView:    "ac",
-			wantContent: "ac",
-			wantCurIdx:  2,
+			wantView:          "ac",
+			wantContent:       "ac",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 2,
 		},
 		{
 			desc:  "all text visible, moves cursor to position zero",
@@ -1500,9 +1555,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(0)
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  0,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        0,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "all text visible, moves cursor to position in the middle",
@@ -1517,9 +1573,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(1)
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  1,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "all text visible, moves cursor back to the last character",
@@ -1535,9 +1592,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(2)
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  2,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "all text visible, moves cursor to the appending space",
@@ -1553,9 +1611,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(3)
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  3,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "all text visible, moves cursor before the beginning of data",
@@ -1571,9 +1630,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(-1)
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  0,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        0,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "all text visible, moves cursor after the appending space",
@@ -1589,9 +1649,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(10)
 				return nil
 			},
-			wantView:    "abc",
-			wantContent: "abc",
-			wantCurIdx:  3,
+			wantView:          "abc",
+			wantContent:       "abc",
+			wantCurIdx:        3,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "moves cursor when there is no text",
@@ -1626,9 +1687,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(0)
 				return nil
 			},
-			wantView:    "⇦cd⇨",
-			wantContent: "abcde",
-			wantCurIdx:  1,
+			wantView:          "⇦cd⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "both ends hidden, moves cursor onto the first character",
@@ -1652,9 +1714,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(1)
 				return nil
 			},
-			wantView:    "⇦cd⇨",
-			wantContent: "abcde",
-			wantCurIdx:  1,
+			wantView:          "⇦cd⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        1,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "both ends hidden, moves cursor onto the right arrow",
@@ -1677,9 +1740,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(3)
 				return nil
 			},
-			wantView:    "⇦cd⇨",
-			wantContent: "abcde",
-			wantCurIdx:  2,
+			wantView:          "⇦cd⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "both ends hidden, moves cursor onto the last character",
@@ -1702,9 +1766,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(2)
 				return nil
 			},
-			wantView:    "⇦cd⇨",
-			wantContent: "abcde",
-			wantCurIdx:  2,
+			wantView:          "⇦cd⇨",
+			wantContent:       "abcde",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "moves cursor onto the first cell containing a full-width rune",
@@ -1727,9 +1792,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(4)
 				return nil
 			},
-			wantView:    "⇦⇦世界⇨",
-			wantContent: "你好世界你",
-			wantCurIdx:  4,
+			wantView:          "⇦⇦世界⇨",
+			wantContent:       "你好世界你",
+			wantCurIdx:        4,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "moves cursor onto the second cell containing a full-width rune",
@@ -1752,9 +1818,10 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(5)
 				return nil
 			},
-			wantView:    "⇦⇦世界⇨",
-			wantContent: "你好世界你",
-			wantCurIdx:  4,
+			wantView:          "⇦⇦世界⇨",
+			wantContent:       "你好世界你",
+			wantCurIdx:        4,
+			wantOnChangeCalls: 5,
 		},
 		{
 			desc:  "moves cursor onto the second right arrow",
@@ -1777,15 +1844,20 @@ func TestFieldEditor(t *testing.T) {
 				fe.cursorRelCell(1)
 				return nil
 			},
-			wantView:    "⇦⇦世界⇨",
-			wantContent: "你好世界你",
-			wantCurIdx:  2,
+			wantView:          "⇦⇦世界⇨",
+			wantContent:       "你好世界你",
+			wantCurIdx:        2,
+			wantOnChangeCalls: 5,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			fe := newFieldEditor()
+			var changeCount int
+			fe := newFieldEditor(func(data string) {
+				changeCount++
+			})
+
 			if tc.ops != nil {
 				if err := tc.ops(fe); err != nil {
 					t.Fatalf("ops => unexpected error: %v", err)
@@ -1807,6 +1879,10 @@ func TestFieldEditor(t *testing.T) {
 			gotContent := fe.content()
 			if gotContent != tc.wantContent {
 				t.Errorf("content -> %q, want %q", gotContent, tc.wantContent)
+			}
+
+			if tc.wantOnChangeCalls != changeCount {
+				t.Errorf("unexpected number of onChange calls -> %d, want %d", changeCount, tc.wantOnChangeCalls)
 			}
 		})
 	}

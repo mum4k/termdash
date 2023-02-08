@@ -70,10 +70,9 @@ func New(opts ...Option) (*TextInput, error) {
 		return nil, err
 	}
 	ti := &TextInput{
-		editor: newFieldEditor(),
+		editor: newFieldEditor(opt.onChange),
 		opts:   opt,
 	}
-
 	for _, r := range ti.opts.defaultText {
 		ti.editor.insert(r)
 	}

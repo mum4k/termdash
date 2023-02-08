@@ -274,11 +274,14 @@ type fieldEditor struct {
 
 	// width is the width of the text input field last time viewFor was called.
 	width int
+
+	// onChange if provided is the handler called when fieldData changes
+	onChange ChangeFn
 }
 
 // newFieldEditor returns a new fieldEditor instance.
-func newFieldEditor() *fieldEditor {
-	return &fieldEditor{}
+func newFieldEditor(onChange ChangeFn) *fieldEditor {
+	return &fieldEditor{onChange: onChange}
 }
 
 // minFieldWidth is the minimum supported width of the text input field.
@@ -326,7 +329,7 @@ func (fe *fieldEditor) content() string {
 
 // reset resets the content back to zero.
 func (fe *fieldEditor) reset() {
-	*fe = *newFieldEditor()
+	*fe = *newFieldEditor(fe.onChange)
 }
 
 // insert inserts the rune at the current position of the cursor.
@@ -338,6 +341,9 @@ func (fe *fieldEditor) insert(r rune) {
 	}
 	fe.data.insertAt(fe.curDataPos, r)
 	fe.curDataPos++
+	if fe.onChange != nil {
+		fe.onChange(string(fe.data))
+	}
 }
 
 // delete deletes the rune at the current position of the cursor.
@@ -347,6 +353,9 @@ func (fe *fieldEditor) delete() {
 		return
 	}
 	fe.data.deleteAt(fe.curDataPos)
+	if fe.onChange != nil {
+		fe.onChange(string(fe.data))
+	}
 }
 
 // deleteBefore deletes the rune that is immediately to the left of the cursor.

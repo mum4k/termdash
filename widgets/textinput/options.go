@@ -63,6 +63,7 @@ type options struct {
 
 	filter                   FilterFn
 	onSubmit                 SubmitFn
+	onChange                 ChangeFn
 	clearOnSubmit            bool
 	exclusiveKeyboardOnFocus bool
 }
@@ -266,6 +267,20 @@ type SubmitFn func(text string) error
 func OnSubmit(fn SubmitFn) Option {
 	return option(func(opts *options) {
 		opts.onSubmit = fn
+	})
+}
+
+// The argument to ChangeFn contains all the text in the field after the change.
+//
+// The callback function must be thread-safe as the keyboard event that
+// triggers the submission comes from a separate goroutine.
+type ChangeFn func(data string)
+
+// OnChange sets a function that will be called when the content of the text input
+// field changes.
+func OnChange(fn ChangeFn) Option {
+	return option(func(opts *options) {
+		opts.onChange = fn
 	})
 }
 

@@ -34,8 +34,10 @@ import (
 
 // rotate returns a new slice with inputs rotated by step.
 // I.e. for a step of one:
-//   inputs[0] -> inputs[len(inputs)-1]
-//   inputs[1] -> inputs[0]
+//
+//	inputs[0] -> inputs[len(inputs)-1]
+//	inputs[1] -> inputs[0]
+//
 // And so on.
 func rotate(inputs []rune, step int) []rune {
 	return append(inputs[step:], inputs[:step]...)

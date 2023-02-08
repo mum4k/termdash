@@ -27,13 +27,13 @@ right and down.
 
 Each cell:
 
-  X→ 0 1  Y
-    ┌───┐ ↓
-    │● ●│ 0
-    │● ●│ 1
-    │● ●│ 2
-    │● ●│ 3
-    └───┘
+	X→ 0 1  Y
+	  ┌───┐ ↓
+	  │● ●│ 0
+	  │● ●│ 1
+	  │● ●│ 2
+	  │● ●│ 3
+	  └───┘
 
 When using the braille canvas, the coordinates address the sub-cell points
 rather then cells themselves. However all points in the cell still share the

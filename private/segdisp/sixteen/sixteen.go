@@ -21,21 +21,21 @@ display ASCII characters.
 
 The following outlines segments in the display and their names.
 
-       A1      A2
-     ------- -------
-    | \     |     / |
-    |  \    |    /  |
-  F |   H   J   K   | B
-    |    \  |  /    |
-    |     \ | /     |
-     -G1---- ----G2-
-    |     / | \     |
-    |    /  |  \    |
-  E |   N   M   L   | C
-    |  /    |    \  |
-    | /     |     \ |
-     ------- -------
-       D1      D2
+	     A1      A2
+	   ------- -------
+	  | \     |     / |
+	  |  \    |    /  |
+	F |   H   J   K   | B
+	  |    \  |  /    |
+	  |     \ | /     |
+	   -G1---- ----G2-
+	  |     / | \     |
+	  |    /  |  \    |
+	E |   N   M   L   | C
+	  |  /    |    \  |
+	  | /     |     \ |
+	   ------- -------
+	     D1      D2
 */
 package sixteen
 

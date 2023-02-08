@@ -328,9 +328,10 @@ func (xs *XScale) CellLabel(x int) (*Value, error) {
 // the position. Positions grow up, coordinates grow down.
 //
 // Positions     Y Coordinates
-//         2  |  0
-//         1  |  1
-//         0  |  2
+//
+//	2  |  0
+//	1  |  1
+//	0  |  2
 func positionToY(pos int, height int) (int, error) {
 	max := height - 1
 	if min := 0; pos < min || pos > max {

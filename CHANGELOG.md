@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 08-Feb-2023
+
 ### Added
 
 - The `gauge` widget now supports drawing of a vertical threshold bar.
@@ -511,6 +513,7 @@ identifiers shouldn't be used externally.
 - The Text widget.
 
 [unreleased]: https://github.com/mum4k/termdash/compare/v0.17.0...devel
+[0.18.0]: https://github.com/mum4k/termdash/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/mum4k/termdash/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/mum4k/termdash/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/mum4k/termdash/compare/v0.15.0...v0.16.0

@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump github.com/mattn/go-runewidth from 0.0.13 to 0.0.14.
 - Bump github.com/gdamore/tcell/v2 from 2.5.1 to 2.5.3.
 - Bump github.com/gdamore/tcell/v2 from 2.5.1 to 2.5.2
+- Change the Go version in `go.mod` to 1.20.
+- Executed `go mod tidy`.
+- CI now executes tests with Golang v1.20 only.
 - Formatted all Go files with `gofmt` from Golang v1.20.
 
 ### Removed

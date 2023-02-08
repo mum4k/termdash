@@ -24,11 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change the Go version in `go.mod` to 1.20.
 - Executed `go mod tidy`.
 - CI now executes tests with Golang v1.20 only.
-- Formatted all Go files with `gofmt` from Golang v1.20.
 
 ### Removed
 
 - Removed the `Sourcegraph` badge from the main page.
+
+### Fixed
+
+- Formatted all Go files with `gofmt` from Golang v1.20.
+- Fixed line coverage reporting.
 
 ## [0.17.0] - 07-Jul-2022
 

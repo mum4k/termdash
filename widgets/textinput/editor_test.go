@@ -1523,7 +1523,7 @@ func TestFieldEditor(t *testing.T) {
 			wantView:          "",
 			wantContent:       "",
 			wantCurIdx:        0,
-			wantOnChangeCalls: 4,
+			wantOnChangeCalls: 3,
 		},
 		{
 			desc:  "doesn't insert runes with rune width of zero",

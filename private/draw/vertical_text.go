@@ -75,11 +75,12 @@ func VerticalTextOverrunMode(om OverrunMode) VerticalTextOption {
 
 // VerticalText prints the provided text on the canvas starting at the provided point.
 // The text is printed in a vertical orientation, i.e:
-//   H
-//   e
-//   l
-//   l
-//   o
+//
+//	H
+//	e
+//	l
+//	l
+//	o
 func VerticalText(c *canvas.Canvas, text string, start image.Point, opts ...VerticalTextOption) error {
 	ar := c.Area()
 	if !start.In(ar) {

@@ -128,9 +128,10 @@ func (ar *angleRange) contains(angle int) bool {
 // normalizeRange normalizes the start and end angles in degrees into ranges of
 // angles. Useful for cases where the 0/360 point falls within the range.
 // E.g:
-//   0,25   => angleRange{0, 26}
-//   0,360  => angleRange{0, 361}
-//   359,20 => angleRange{359, 361}, angleRange{0, 21}
+//
+//	0,25   => angleRange{0, 26}
+//	0,360  => angleRange{0, 361}
+//	359,20 => angleRange{359, 361}, angleRange{0, 21}
 func normalizeRange(start, end int) ([]*angleRange, error) {
 	if start < MinAngle || start > MaxAngle {
 		return nil, fmt.Errorf("invalid start angle:%d, must be in range %d <= start <= %d", start, MinAngle, MaxAngle)
@@ -159,8 +160,9 @@ func normalizeRange(start, end int) ([]*angleRange, error) {
 
 // RangeSize returns the size of the degree range.
 // E.g:
-//   0,25  => 25
-//   359,1 => 2
+//
+//	0,25  => 25
+//	359,1 => 2
 func RangeSize(start, end int) (int, error) {
 	ranges, err := normalizeRange(start, end)
 	if err != nil {
@@ -174,8 +176,9 @@ func RangeSize(start, end int) (int, error) {
 
 // RangeMid returns an angle that lies in the middle between start and end.
 // E.g:
-//   0,10   => 5
-//   350,10 => 0
+//
+//	0,10   => 5
+//	350,10 => 0
 func RangeMid(start, end int) (int, error) {
 	ranges, err := normalizeRange(start, end)
 	if err != nil {

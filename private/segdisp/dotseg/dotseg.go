@@ -21,19 +21,19 @@ display dot characters.
 
 The following outlines segments in the display and their names.
 
-     ---------------
-    |               |
-    |               |
-    |               |
-    |       o D1    |
-    |               |
-    |               |
-    |               |
-    |       o D2    |
-    |               |
-    |               |
-    |       o D3    |
-     ---------------
+	 ---------------
+	|               |
+	|               |
+	|               |
+	|       o D1    |
+	|               |
+	|               |
+	|               |
+	|       o D2    |
+	|               |
+	|               |
+	|       o D3    |
+	 ---------------
 */
 package dotseg
 

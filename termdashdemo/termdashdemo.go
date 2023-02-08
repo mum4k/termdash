@@ -976,8 +976,10 @@ func newLayoutButtons(c *container.Container, w *widgets) (*layoutButtons, error
 
 // rotateFloats returns a new slice with inputs rotated by step.
 // I.e. for a step of one:
-//   inputs[0] -> inputs[len(inputs)-1]
-//   inputs[1] -> inputs[0]
+//
+//	inputs[0] -> inputs[len(inputs)-1]
+//	inputs[1] -> inputs[0]
+//
 // And so on.
 func rotateFloats(inputs []float64, step int) []float64 {
 	return append(inputs[step:], inputs[:step]...)
@@ -985,8 +987,10 @@ func rotateFloats(inputs []float64, step int) []float64 {
 
 // rotateRunes returns a new slice with inputs rotated by step.
 // I.e. for a step of one:
-//   inputs[0] -> inputs[len(inputs)-1]
-//   inputs[1] -> inputs[0]
+//
+//	inputs[0] -> inputs[len(inputs)-1]
+//	inputs[1] -> inputs[0]
+//
 // And so on.
 func rotateRunes(inputs []rune, step int) []rune {
 	return append(inputs[step:], inputs[:step]...)

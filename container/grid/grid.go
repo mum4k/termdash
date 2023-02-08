@@ -53,11 +53,13 @@ func (b *Builder) Build() ([]container.Option, error) {
 
 // validate recursively validates the elements that were added to the builder.
 // Validates the following per each level of Rows or Columns.:
-//   The subElements are either exactly one Widget or any number of Rows and
-//   Columns.
-//   Each individual width or height is in the range 0 < v < 100.
-//   The sum of all widths is <= 100.
-//   The sum of all heights is <= 100.
+//
+//	The subElements are either exactly one Widget or any number of Rows and
+//	Columns.
+//	Each individual width or height is in the range 0 < v < 100.
+//	The sum of all widths is <= 100.
+//	The sum of all heights is <= 100.
+//
 // Argument fixedSizeParent indicates if any of the parent elements uses fixed
 // size splitType.
 func validate(elems []Element, fixedSizeParent bool) error {
@@ -182,17 +184,26 @@ func build(elems []Element, parentHeightPerc, parentWidthPerc int) []container.O
 // E.g. multiple rows would specify that they want the outer split percentage
 // of 25% each, but we are representing them in a tree of containers so the
 // inner splits vary:
-//     ╭─────────╮
+//
+//	╭─────────╮
+//
 // 25% │   25%   │
-//     │╭───────╮│ ---
+//
+//	│╭───────╮│ ---
+//
 // 25% ││  33%  ││
-//     ││╭─────╮││
+//
+//	││╭─────╮││
+//
 // 25% │││ 50% │││
-//     ││├─────┤││ 75%
+//
+//	││├─────┤││ 75%
+//
 // 25% │││ 50% │││
-//     ││╰─────╯││
-//     │╰───────╯│
-//     ╰─────────╯ ---
+//
+//	││╰─────╯││
+//	│╰───────╯│
+//	╰─────────╯ ---
 //
 // Argument outerPerc is the user specified percentage for the split, i.e. the
 // 25% in the example above.

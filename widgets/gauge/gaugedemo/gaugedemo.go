@@ -101,6 +101,7 @@ func main() {
 		gauge.Color(cell.ColorNumber(33)),
 		gauge.Border(linestyle.Light),
 		gauge.BorderTitle("Absolute progress"),
+		gauge.Threshold(43, linestyle.Light, cell.FgColor(cell.ColorRed)),
 	)
 	if err != nil {
 		panic(err)
@@ -124,6 +125,7 @@ func main() {
 		gauge.Color(cell.ColorRed),
 		gauge.FilledTextColor(cell.ColorBlack),
 		gauge.EmptyTextColor(cell.ColorYellow),
+		gauge.Threshold(20, linestyle.Double),
 	)
 	if err != nil {
 		panic(err)

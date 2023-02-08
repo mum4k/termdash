@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 08-Feb-2023
+
+### Added
+
+- The `gauge` widget now supports drawing of a vertical threshold bar.
+- The `TextInput` widget now supports an OnChange handler that allows user code
+  to be notified when the content of the text input changes.
+
+### Changed
+
+- Bump github.com/gdamore/tcell/v2 from 2.5.1 to 2.5.4.
+- Bump github.com/mattn/go-runewidth from 0.0.13 to 0.0.14.
+- Bump github.com/gdamore/tcell/v2 from 2.5.1 to 2.5.3.
+- Bump github.com/gdamore/tcell/v2 from 2.5.1 to 2.5.2
+- Change the Go version in `go.mod` to 1.20.
+- Executed `go mod tidy`.
+- CI now executes tests with Golang v1.20 only.
+
+### Removed
+
+- Removed the `Sourcegraph` badge from the main page.
+
+### Fixed
+
+- Formatted all Go files with `gofmt` from Golang v1.20.
+- Fixed line coverage reporting.
+
 ## [0.17.0] - 07-Jul-2022
 
 ### Added
@@ -490,6 +517,7 @@ identifiers shouldn't be used externally.
 - The Text widget.
 
 [unreleased]: https://github.com/mum4k/termdash/compare/v0.17.0...devel
+[0.18.0]: https://github.com/mum4k/termdash/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/mum4k/termdash/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/mum4k/termdash/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/mum4k/termdash/compare/v0.15.0...v0.16.0

@@ -105,7 +105,9 @@ func (t *Text) contentCells() int {
 // Write writes text for the widget to display. Multiple calls append
 // additional text. The text contain cannot control characters
 // (unicode.IsControl) or space character (unicode.IsSpace) other than:
-//   ' ', '\n'
+//
+//	' ', '\n'
+//
 // Any newline ('\n') characters are interpreted as newlines when displaying
 // the text.
 func (t *Text) Write(text string, wOpts ...WriteOption) error {

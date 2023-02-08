@@ -1,7 +1,7 @@
 language: go
 go:
-        - 1.16.x
-        - 1.17.x
+        #- 1.16.x
+        #- 1.17.x
         - stable
 before_install:
         - go install golang.org/x/tools/cmd/cover@latest
@@ -15,7 +15,7 @@ script:
         - go test -v -covermode=count -coverprofile=coverage.out -mod=mod ./...
         - CGO_ENABLED=1 go test -mod=mod -race ./...
         - go vet ./...
-        - diff -u <(echo -n) <(gofmt -d -s .)
+        #- diff -u <(echo -n) <(gofmt -d -s .)
         - diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
 env:

@@ -18,8 +18,6 @@ script:
         - diff -u <(echo -n) <(gofmt -d -s .)
         - diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
         - diff -u <(echo -n) <(golint ./...)
-        - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 env:
   global:
         - CGO_ENABLED=0
-        - secure: VOOh/w2YNAn+psiWYjIOQ5ZhhMb6Wz7zzmhIlj0dc5mGQztFAX5TuNWOU5JokvOigFy18JhPeDJRmp661xqM4gy1Znx1odSXES3YdCwt42pmpjYIkI9lI09xTRH6WYIRmYfCHe4J3A9/CWLeDRaAU1e+YqmNyraaGzE82ouUPH/I4A9gur4j4j6t1X/t0iovyd/4qNDsetUPevQsJS224Pv6Xhg3LGnSAXMPM+tu0t3UeEfRu/l9OgP6/bnet9BUx0BryFCVJp6fAtq7x61+WRIJesugrhHVgl/dz8CgFsVjRkqWQSNnZvt07dHNOX0mZj2U22OAkH+9ZN93wScs3bDZFXozrta7eOWhrJLcJTMrAxdHYMNKmoXqQQ0TGFV/L9blOtT8uj9US3wxeD11s4TyZePWIC5hnpUsNFoGPsBB45uwW2TSwvTTEL9bxWWzjYzSkLG5P6Kk4/JkeMh3OMFCM/LutX8QDch1n/s0CfXdy7qgh5G4I9ZhGTU+huJlumeuM4U+my0EPnA3uclJ97cw0n6K7MKwKCTTA8La2ifATunKC/U4Hjo1rf9DxofIrRIvwV5zEUIn1r6ut5fO+o+MWDupkvsMqIA7QJyCLhRp+pAlPWGDZLdrFEicN/kpULH4IGUIPn532gXzEOAG+Aq0WYDVPXGLSifSyxafiDk=

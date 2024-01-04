@@ -190,6 +190,7 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 						grid.Widget(w.spGreen,
 							container.Border(linestyle.Light),
 							container.BorderTitle("Green SparkLine"),
+							container.ID(subID),
 						),
 					),
 					grid.RowHeightPerc(50,
@@ -230,6 +231,7 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 				grid.Widget(w.spGreen,
 					container.Border(linestyle.Light),
 					container.BorderTitle("Green SparkLine"),
+					container.ID(subID),
 				),
 			),
 			grid.RowHeightPerc(33,
@@ -347,6 +349,7 @@ func contLayout(w *widgets) ([]container.Option, error) {
 						container.Border(linestyle.Light),
 						container.BorderTitle("Green SparkLine"),
 						container.PlaceWidget(w.spGreen),
+						container.ID(subID),
 					),
 					container.Bottom(
 						container.Border(linestyle.Light),
@@ -470,6 +473,9 @@ func contLayout(w *widgets) ([]container.Option, error) {
 // rootID is the ID assigned to the root container.
 const rootID = "root"
 
+// subID is ID of a sub container used to demonstrate dynamic update.
+const subID = "sub"
+
 // Terminal implementations
 const (
 	termboxTerminal = "termbox"
@@ -527,6 +533,11 @@ func main() {
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == keyboard.KeyEsc || k.Key == keyboard.KeyCtrlC {
 			cancel()
+		}
+		if k.Key == keyboard.KeyCtrlU {
+			if err := c.Update(subID, container.PlaceWidget(w.spRed)); err != nil {
+				panic(err)
+			}
 		}
 	}
 	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(redrawInterval)); err != nil {

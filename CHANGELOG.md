@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 29-Jan-2024
+
+### Added
+
+- Support for "Backtab" (a.k.a. Shift+Tab) as a supported keystroke for tcell
+  widgets.
+
+### Changed
+
+- Migrated CI from Travis to Github Actions.
+- Bump github.com/gdamore/tcell/v2 from 2.5.4 to 2.7.0.
+- Change the Go version in `go.mod` to 1.21.
+- Executed `go mod tidy`.
+- CI now executes tests with Golang v1.20 and v1.21.
+
 ## [0.18.0] - 08-Feb-2023
 
 ### Added
@@ -516,7 +531,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.17.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.19.0...devel
+[0.19.0]: https://github.com/mum4k/termdash/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/mum4k/termdash/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/mum4k/termdash/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/mum4k/termdash/compare/v0.16.0...v0.16.1

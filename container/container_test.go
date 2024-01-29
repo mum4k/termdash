@@ -1939,7 +1939,7 @@ func TestMouse(t *testing.T) {
 						),
 						Right(
 							PlaceWidget(fakewidget.New(widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused})),
-							KeyFocusPrevious(keyboard.KeyTab),
+							KeyFocusPrevious(keyboard.KeyBacktab),
 						),
 					),
 				)
@@ -1949,7 +1949,7 @@ func TestMouse(t *testing.T) {
 				return c, nil
 			},
 			events: []terminalapi.Event{
-				&terminalapi.Keyboard{Key: keyboard.KeyTab},
+				&terminalapi.Keyboard{Key: keyboard.KeyBacktab},
 			},
 			want: func(size image.Point) *faketerm.Terminal {
 				ft := faketerm.MustNew(size)
@@ -1966,7 +1966,7 @@ func TestMouse(t *testing.T) {
 					&widgetapi.Meta{Focused: true},
 					widgetapi.Options{WantKeyboard: widgetapi.KeyScopeFocused},
 					&fakewidget.Event{
-						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyTab},
+						Ev:   &terminalapi.Keyboard{Key: keyboard.KeyBacktab},
 						Meta: &widgetapi.EventMeta{Focused: true},
 					},
 				)

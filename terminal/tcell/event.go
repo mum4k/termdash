@@ -77,6 +77,7 @@ var tcellToTd = map[tcell.Key]keyboard.Key{
 	tcell.KeyCtrlZ:          keyboard.KeyCtrlZ,
 	tcell.KeyBackspace:      keyboard.KeyBackspace,
 	tcell.KeyTab:            keyboard.KeyTab,
+	tcell.KeyBacktab:        keyboard.KeyBacktab,
 	tcell.KeyEscape:         keyboard.KeyEsc,
 	tcell.KeyCtrlBackslash:  keyboard.KeyCtrlBackslash,
 	tcell.KeyCtrlRightSq:    keyboard.KeyCtrlRsqBracket,

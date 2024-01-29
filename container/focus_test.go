@@ -529,7 +529,7 @@ func TestFocusTrackerNextAndPrevious(t *testing.T) {
 
 	const (
 		keyNext     keyboard.Key = keyboard.KeyTab
-		keyPrevious keyboard.Key = '~'
+		keyPrevious keyboard.Key = keyboard.KeyBacktab
 	)
 
 	tests := []struct {

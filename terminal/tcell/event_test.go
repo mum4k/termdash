@@ -218,6 +218,7 @@ func TestKeyboardKeys(t *testing.T) {
 		{key: tcell.KeyBackspace, want: keyboard.KeyCtrlH},
 		{key: tcell.KeyCtrlH, want: keyboard.KeyBackspace},
 		{key: tcell.KeyTab, want: keyboard.KeyTab},
+		{key: tcell.KeyBacktab, want: keyboard.KeyBacktab},
 		{key: tcell.KeyTab, want: keyboard.KeyCtrlI},
 		{key: tcell.KeyCtrlI, want: keyboard.KeyTab},
 		{key: tcell.KeyCtrlJ, want: keyboard.KeyCtrlJ},

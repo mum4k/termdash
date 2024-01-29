@@ -65,6 +65,7 @@ var buttonNames = map[Key]string{
 	KeyCtrlG:      "KeyCtrlG",
 	KeyBackspace:  "KeyBackspace",
 	KeyTab:        "KeyTab",
+	KeyBacktab:    "KeyBacktab",
 	KeyCtrlJ:      "KeyCtrlJ",
 	KeyCtrlK:      "KeyCtrlK",
 	KeyCtrlL:      "KeyCtrlL",
@@ -130,6 +131,7 @@ const (
 	KeyCtrlG
 	KeyBackspace
 	KeyTab
+	KeyBacktab
 	KeyCtrlJ
 	KeyCtrlK
 	KeyCtrlL

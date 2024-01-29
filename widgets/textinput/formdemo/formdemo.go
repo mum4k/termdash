@@ -167,6 +167,7 @@ func newForm(cancel context.CancelFunc) (*form, error) {
 func formLayout(c *container.Container, f *form) error {
 	return c.Update("root",
 		container.KeyFocusNext(keyboard.KeyTab),
+		container.KeyFocusPrevious(keyboard.KeyBacktab),
 		container.KeyFocusGroupsNext(keyboard.KeyArrowDown, 1),
 		container.KeyFocusGroupsPrevious(keyboard.KeyArrowUp, 1),
 		container.KeyFocusGroupsNext(keyboard.KeyArrowRight, 2),

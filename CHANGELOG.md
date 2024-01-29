@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Migrated CI system from Travis to Github Actions.
-
 ## [0.18.0] - 08-Feb-2023
 
 ### Added

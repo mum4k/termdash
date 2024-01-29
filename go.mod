@@ -1,6 +1,6 @@
 module github.com/mum4k/termdash
 
-go 1.20
+go 1.21
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.0

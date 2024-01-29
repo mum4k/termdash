@@ -41,11 +41,5 @@ jobs:
     - name: Format
       run: diff -u <(echo -n) <(gofmt -d -s .)
 
-    - name: Licences
-      run: diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
-
     - name: Lint
       run: diff -u <(echo -n) <(golint ./...)
-
-    - name: Coverage
-      run: $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN

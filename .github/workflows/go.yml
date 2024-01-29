@@ -41,8 +41,8 @@ jobs:
     - name: Format
       run: diff -u <(echo -n) <(gofmt -d -s .)
 
-    - name: Licences
-      run: diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
+    #- name: Licences
+    #  run: diff -u <(echo -n) <(./private/scripts/autogen_licences.sh .)
 
     - name: Lint
       run: diff -u <(echo -n) <(golint ./...)

@@ -306,7 +306,7 @@ func donutAndLabel(cvsAr image.Rectangle) (donAr, labelAr image.Rectangle, err e
 	// Two lines for the text label at the bottom.
 	// One for the text itself and one for visual space between the donut and
 	// the label.
-	donAr, labelAr, err = area.HSplitCells(cvsAr, height-2)
+	donAr, labelAr, err = area.HSplitCells(cvsAr, height-2, false)
 	if err != nil {
 		return image.ZR, image.ZR, err
 	}

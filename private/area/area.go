@@ -39,7 +39,7 @@ func FromSize(size image.Point) (image.Rectangle, error) {
 }
 
 // HSplit returns two new areas created by splitting the provided area at the
-// specified percentage of its width. The percentage must be in the range
+// specified percentage of its height. The percentage must be in the range
 // 0 <= heightPerc <= 100.
 // Can return zero size areas.
 func HSplit(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
@@ -106,7 +106,7 @@ func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right i
 // be a zero or a positive integer. Providing a zero returns top=image.ZR,
 // bottom=area. Providing a number equal or larger to area's height returns
 // top=area, bottom=image.ZR.
-func HSplitCells(area image.Rectangle, cells int) (top image.Rectangle, bottom image.Rectangle, err error) {
+func HSplitCells(area image.Rectangle, cells int, fromMax bool) (top image.Rectangle, bottom image.Rectangle, err error) {
 	if min := 0; cells < min {
 		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
 	}
@@ -119,8 +119,16 @@ func HSplitCells(area image.Rectangle, cells int) (top image.Rectangle, bottom i
 		return area, image.ZR, nil
 	}
 
-	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+cells)
-	bottom = image.Rect(area.Min.X, area.Min.Y+cells, area.Max.X, area.Max.Y)
+	splitY := area.Min.Y
+	if fromMax {
+		splitY = area.Max.Y - cells
+	} else {
+		splitY = area.Min.Y + cells
+	}
+
+	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, splitY)
+	bottom = image.Rect(area.Min.X, splitY, area.Max.X, area.Max.Y)
+
 	return top, bottom, nil
 }
 

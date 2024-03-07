@@ -164,9 +164,9 @@ func HSplit(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom i
 	return hSplit(area, heightPerc, false)
 }
 
-// HSplit returns two new areas created by splitting the provided area at the
-// specified percentage of its height, applying the percentage to the second
-// area. The percentage must be in the range 0 <= heightPerc <= 100.
+// HSplitReversed returns two new areas created by splitting the provided area
+// at the specified percentage of its height, applying the percentage to the
+// second area. The percentage must be in the range 0 <= heightPerc <= 100.
 // Can return zero size areas.
 func HSplitReversed(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
 	return hSplit(area, heightPerc, true)
@@ -180,9 +180,9 @@ func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right im
 	return vSplit(area, widthPerc, false)
 }
 
-// VSplit returns two new areas created by splitting the provided area at the
-// specified percentage of its width, applying the percentage to the second area.
-// The percentage must be in the range 0 <= widthPerc <= 100.
+// VSplitReversed returns two new areas created by splitting the provided area
+// at the specified percentage of its width, applying the percentage to the
+// second area. The percentage must be in the range 0 <= widthPerc <= 100.
 // Can return zero size areas.
 func VSplitReversed(area image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle, err error) {
 	return vSplit(area, widthPerc, true)

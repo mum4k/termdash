@@ -22,6 +22,64 @@ import (
 	"github.com/mum4k/termdash/private/numbers"
 )
 
+// Size returns the size of the provided area.
+func Size(area image.Rectangle) image.Point {
+	return image.Point{
+		area.Dx(),
+		area.Dy(),
+	}
+}
+
+// FromSize returns the corresponding area for the provided size.
+func FromSize(size image.Point) (image.Rectangle, error) {
+	if size.X < 0 || size.Y < 0 {
+		return image.Rectangle{}, fmt.Errorf("cannot convert zero or negative size to an area, got: %+v", size)
+	}
+	return image.Rect(0, 0, size.X, size.Y), nil
+}
+
+// TODO
+func hSplit(area image.Rectangle, heightPerc int, reversed bool) (top image.Rectangle, bottom image.Rectangle, err error) {
+	if min, max := 0, 100; heightPerc < min || heightPerc > max {
+		return image.ZR, image.ZR, fmt.Errorf("invalid heightPerc %d, must be in range %d <= heightPerc <= %d", heightPerc, min, max)
+	}
+
+	height := area.Dy() * heightPerc / 100
+
+	if reversed {
+		top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Max.Y-height)
+		bottom = image.Rect(area.Min.X, area.Max.Y-height, area.Max.X, area.Max.Y)
+	} else {
+		top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+height)
+		bottom = image.Rect(area.Min.X, area.Min.Y+height, area.Max.X, area.Max.Y)
+	}
+
+	if top.Dy() == 0 {
+		top = image.ZR
+	}
+	if bottom.Dy() == 0 {
+		bottom = image.ZR
+	}
+
+	return top, bottom, nil
+}
+
+// HSplit returns two new areas created by splitting the provided area at the
+// specified percentage of its height, applying the percentage to the first
+// area. The percentage must be in the range 0 <= heightPerc <= 100.
+// Can return zero size areas.
+func HSplit(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
+	return hSplit(area, heightPerc, false)
+}
+
+// HSplitReversed returns two new areas created by splitting the provided area
+// at the specified percentage of its height, applying the percentage to the
+// second area. The percentage must be in the range 0 <= heightPerc <= 100.
+// Can return zero size areas.
+func HSplitReversed(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
+	return hSplit(area, heightPerc, true)
+}
+
 // TODO
 func vSplit(area image.Rectangle, widthPerc int, reversed bool) (left image.Rectangle, right image.Rectangle, err error) {
 	if min, max := 0, 100; widthPerc < min || widthPerc > max {
@@ -46,6 +104,22 @@ func vSplit(area image.Rectangle, widthPerc int, reversed bool) (left image.Rect
 	}
 
 	return left, right, nil
+}
+
+// VSplit returns two new areas created by splitting the provided area at the
+// specified percentage of its width, applying the percentage to the first area.
+// The percentage must be in the range 0 <= widthPerc <= 100.
+// Can return zero size areas.
+func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle, err error) {
+	return vSplit(area, widthPerc, false)
+}
+
+// VSplitReversed returns two new areas created by splitting the provided area
+// at the specified percentage of its width, applying the percentage to the
+// second area. The percentage must be in the range 0 <= widthPerc <= 100.
+// Can return zero size areas.
+func VSplitReversed(area image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle, err error) {
+	return vSplit(area, widthPerc, true)
 }
 
 // TODO
@@ -81,30 +155,22 @@ func vSplitCells(area image.Rectangle, cells int, reversed bool) (left image.Rec
 	return left, right, nil
 }
 
-// TODO
-func hSplit(area image.Rectangle, heightPerc int, reversed bool) (top image.Rectangle, bottom image.Rectangle, err error) {
-	if min, max := 0, 100; heightPerc < min || heightPerc > max {
-		return image.ZR, image.ZR, fmt.Errorf("invalid heightPerc %d, must be in range %d <= heightPerc <= %d", heightPerc, min, max)
-	}
+// VSplitCells returns two new areas created by splitting the provided area
+// after the specified amount of cells of its width, as applied to the first
+// area. The number of cells must be a zero or a positive integer. Providing a
+// zero returns left=image.ZR, right=area. Providing a number equal or larger to
+// area's width returns left=area, right=image.ZR.
+func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
+	return vSplitCells(area, cells, false)
+}
 
-	height := area.Dy() * heightPerc / 100
-
-	if reversed {
-		top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Max.Y-height)
-		bottom = image.Rect(area.Min.X, area.Max.Y-height, area.Max.X, area.Max.Y)
-	} else {
-		top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, area.Min.Y+height)
-		bottom = image.Rect(area.Min.X, area.Min.Y+height, area.Max.X, area.Max.Y)
-	}
-
-	if top.Dy() == 0 {
-		top = image.ZR
-	}
-	if bottom.Dy() == 0 {
-		bottom = image.ZR
-	}
-
-	return top, bottom, nil
+// VSplitCellsReversed returns two new areas created by splitting the provided
+// area after the specified amount of cells of its width, as applied to the
+// second area. The number of cells must be a zero or a positive integer.
+// Providing a zero returns left=image.ZR, right=area. Providing a number equal
+// or larger to area's width returns left=area, right=image.ZR.
+func VSplitCellsReversed(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
+	return vSplitCells(area, cells, true)
 }
 
 // TODO
@@ -138,72 +204,6 @@ func hSplitCells(area image.Rectangle, cells int, reversed bool) (top image.Rect
 	bottom = image.Rect(area.Min.X, splitY, area.Max.X, area.Max.Y)
 
 	return top, bottom, nil
-}
-
-// Size returns the size of the provided area.
-func Size(area image.Rectangle) image.Point {
-	return image.Point{
-		area.Dx(),
-		area.Dy(),
-	}
-}
-
-// FromSize returns the corresponding area for the provided size.
-func FromSize(size image.Point) (image.Rectangle, error) {
-	if size.X < 0 || size.Y < 0 {
-		return image.Rectangle{}, fmt.Errorf("cannot convert zero or negative size to an area, got: %+v", size)
-	}
-	return image.Rect(0, 0, size.X, size.Y), nil
-}
-
-// HSplit returns two new areas created by splitting the provided area at the
-// specified percentage of its height, applying the percentage to the first
-// area. The percentage must be in the range 0 <= heightPerc <= 100.
-// Can return zero size areas.
-func HSplit(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
-	return hSplit(area, heightPerc, false)
-}
-
-// HSplitReversed returns two new areas created by splitting the provided area
-// at the specified percentage of its height, applying the percentage to the
-// second area. The percentage must be in the range 0 <= heightPerc <= 100.
-// Can return zero size areas.
-func HSplitReversed(area image.Rectangle, heightPerc int) (top image.Rectangle, bottom image.Rectangle, err error) {
-	return hSplit(area, heightPerc, true)
-}
-
-// VSplit returns two new areas created by splitting the provided area at the
-// specified percentage of its width, applying the percentage to the first area.
-// The percentage must be in the range 0 <= widthPerc <= 100.
-// Can return zero size areas.
-func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle, err error) {
-	return vSplit(area, widthPerc, false)
-}
-
-// VSplitReversed returns two new areas created by splitting the provided area
-// at the specified percentage of its width, applying the percentage to the
-// second area. The percentage must be in the range 0 <= widthPerc <= 100.
-// Can return zero size areas.
-func VSplitReversed(area image.Rectangle, widthPerc int) (left image.Rectangle, right image.Rectangle, err error) {
-	return vSplit(area, widthPerc, true)
-}
-
-// VSplitCells returns two new areas created by splitting the provided area
-// after the specified amount of cells of its width, as applied to the first
-// area. The number of cells must be a zero or a positive integer. Providing a
-// zero returns left=image.ZR, right=area. Providing a number equal or larger to
-// area's width returns left=area, right=image.ZR.
-func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
-	return vSplitCells(area, cells, false)
-}
-
-// VSplitCellsReversed returns two new areas created by splitting the provided
-// area after the specified amount of cells of its width, as applied to the
-// second area. The number of cells must be a zero or a positive integer.
-// Providing a zero returns left=image.ZR, right=area. Providing a number equal
-// or larger to area's width returns left=area, right=image.ZR.
-func VSplitCellsReversed(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
-	return vSplitCells(area, cells, true)
 }
 
 // HSplitCells returns two new areas created by splitting the provided area

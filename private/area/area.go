@@ -22,6 +22,41 @@ import (
 	"github.com/mum4k/termdash/private/numbers"
 )
 
+// TODO
+func hSplitCells(area image.Rectangle, cells int, fromMax bool) (top image.Rectangle, bottom image.Rectangle, err error) {
+	if min := 0; cells < min {
+		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
+	}
+	if cells == 0 {
+		if fromMax {
+			return area, image.ZR, nil
+		} else {
+			return image.ZR, area, nil
+		}
+	}
+
+	height := area.Dy()
+	if cells >= height {
+		if fromMax {
+			return image.ZR, area, nil
+		} else {
+			return area, image.ZR, nil
+		}
+	}
+
+	splitY := area.Min.Y
+	if fromMax {
+		splitY = area.Max.Y - cells
+	} else {
+		splitY = area.Min.Y + cells
+	}
+
+	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, splitY)
+	bottom = image.Rect(area.Min.X, splitY, area.Max.X, area.Max.Y)
+
+	return top, bottom, nil
+}
+
 // Size returns the size of the provided area.
 func Size(area image.Rectangle) image.Point {
 	return image.Point{
@@ -102,34 +137,21 @@ func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right i
 }
 
 // HSplitCells returns two new areas created by splitting the provided area
-// after the specified amount of cells of its height. The number of cells must
-// be a zero or a positive integer. Providing a zero returns top=image.ZR,
-// bottom=area. Providing a number equal or larger to area's height returns
-// top=area, bottom=image.ZR.
-func HSplitCells(area image.Rectangle, cells int, fromMax bool) (top image.Rectangle, bottom image.Rectangle, err error) {
-	if min := 0; cells < min {
-		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
-	}
-	if cells == 0 {
-		return image.ZR, area, nil
-	}
+// after the specified amount of cells of its height, as applied to the first
+// area. The number of cells must be a zero or a positive integer. Providing a
+// zero returns top=image.ZR, bottom=area. Providing a number equal or larger to
+// area's height returns top=area, bottom=image.ZR.
+func HSplitCells(area image.Rectangle, cells int) (top image.Rectangle, bottom image.Rectangle, err error) {
+	return hSplitCells(area, cells, false)
+}
 
-	height := area.Dy()
-	if cells >= height {
-		return area, image.ZR, nil
-	}
-
-	splitY := area.Min.Y
-	if fromMax {
-		splitY = area.Max.Y - cells
-	} else {
-		splitY = area.Min.Y + cells
-	}
-
-	top = image.Rect(area.Min.X, area.Min.Y, area.Max.X, splitY)
-	bottom = image.Rect(area.Min.X, splitY, area.Max.X, area.Max.Y)
-
-	return top, bottom, nil
+// HSplitCells returns two new areas created by splitting the provided area
+// after the specified amount of cells of its height, as applied to the second
+// area. The number of cells must be a zero or a positive integer. Providing a
+// zero returns top=area, bottom=image.ZR. Providing a number equal or larger to
+// area's height returns top=image.ZR, bottom=area.
+func HSplitCellsReversed(area image.Rectangle, cells int) (top image.Rectangle, bottom image.Rectangle, err error) {
+	return hSplitCells(area, cells, true)
 }
 
 // ExcludeBorder returns a new area created by subtracting a border around the

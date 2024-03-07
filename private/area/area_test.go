@@ -372,7 +372,6 @@ func TestHSplitCells(t *testing.T) {
 		desc       string
 		area       image.Rectangle
 		cells      int
-		fromMax    bool
 		wantTop    image.Rectangle
 		wantBottom image.Rectangle
 		wantErr    bool
@@ -419,14 +418,6 @@ func TestHSplitCells(t *testing.T) {
 			wantBottom: image.Rect(1, 2, 3, 3),
 		},
 		{
-			desc:       "splits area with even height from max",
-			area:       image.Rect(1, 1, 3, 3),
-			cells:      1,
-			fromMax:    true,
-			wantTop:    image.Rect(1, 1, 3, 2),
-			wantBottom: image.Rect(1, 2, 3, 3),
-		},
-		{
 			desc:       "splits area with odd width",
 			area:       image.Rect(1, 1, 4, 4),
 			cells:      1,
@@ -440,19 +431,11 @@ func TestHSplitCells(t *testing.T) {
 			wantTop:    image.Rect(0, 0, 4, 3),
 			wantBottom: image.Rect(0, 3, 4, 4),
 		},
-		{
-			desc:       "splits to unequal areas from max",
-			area:       image.Rect(0, 0, 4, 4),
-			cells:      3,
-			fromMax:    true,
-			wantTop:    image.Rect(0, 0, 4, 1),
-			wantBottom: image.Rect(0, 1, 4, 4),
-		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			gotTop, gotBottom, err := HSplitCells(tc.area, tc.cells, tc.fromMax)
+			gotTop, gotBottom, err := HSplitCells(tc.area, tc.cells)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("HSplitCells => unexpected error:%v, wantErr:%v", err, tc.wantErr)
 			}

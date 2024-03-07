@@ -30,18 +30,16 @@ func vSplitCells(area image.Rectangle, cells int, reversed bool) (left image.Rec
 	if cells == 0 {
 		if reversed {
 			return area, image.ZR, nil
-		} else {
-			return image.ZR, area, nil
 		}
+		return image.ZR, area, nil
 	}
 
 	width := area.Dx()
 	if cells >= width {
 		if reversed {
 			return image.ZR, area, nil
-		} else {
-			return area, image.ZR, nil
 		}
+		return area, image.ZR, nil
 	}
 
 	splitX := area.Min.X
@@ -64,18 +62,16 @@ func hSplitCells(area image.Rectangle, cells int, reversed bool) (top image.Rect
 	if cells == 0 {
 		if reversed {
 			return area, image.ZR, nil
-		} else {
-			return image.ZR, area, nil
 		}
+		return image.ZR, area, nil
 	}
 
 	height := area.Dy()
 	if cells >= height {
 		if reversed {
 			return image.ZR, area, nil
-		} else {
-			return area, image.ZR, nil
 		}
+		return area, image.ZR, nil
 	}
 
 	splitY := area.Min.Y
@@ -156,11 +152,11 @@ func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right i
 	return vSplitCells(area, cells, false)
 }
 
-// VSplitCells returns two new areas created by splitting the provided area
-// after the specified amount of cells of its width, as applied to the second
-// area. The number of cells must be a zero or a positive integer. Providing a
-// zero returns left=image.ZR, right=area. Providing a number equal or larger to
-// area's width returns left=area, right=image.ZR.
+// VSplitCellsReversed returns two new areas created by splitting the provided
+// area after the specified amount of cells of its width, as applied to the
+// second area. The number of cells must be a zero or a positive integer.
+// Providing a zero returns left=image.ZR, right=area. Providing a number equal
+// or larger to area's width returns left=area, right=image.ZR.
 func VSplitCellsReversed(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
 	return vSplitCells(area, cells, true)
 }
@@ -174,11 +170,11 @@ func HSplitCells(area image.Rectangle, cells int) (top image.Rectangle, bottom i
 	return hSplitCells(area, cells, false)
 }
 
-// HSplitCells returns two new areas created by splitting the provided area
-// after the specified amount of cells of its height, as applied to the second
-// area. The number of cells must be a zero or a positive integer. Providing a
-// zero returns top=area, bottom=image.ZR. Providing a number equal or larger to
-// area's height returns top=image.ZR, bottom=area.
+// HSplitCellsReversed returns two new areas created by splitting the provided
+// area after the specified amount of cells of its height, as applied to the
+// second area. The number of cells must be a zero or a positive integer.
+// Providing a zero returns top=area, bottom=image.ZR. Providing a number equal
+// or larger to area's height returns top=image.ZR, bottom=area.
 func HSplitCellsReversed(area image.Rectangle, cells int) (top image.Rectangle, bottom image.Rectangle, err error) {
 	return hSplitCells(area, cells, true)
 }

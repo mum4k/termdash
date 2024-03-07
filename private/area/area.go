@@ -23,12 +23,46 @@ import (
 )
 
 // TODO
-func hSplitCells(area image.Rectangle, cells int, fromMax bool) (top image.Rectangle, bottom image.Rectangle, err error) {
+func vSplitCells(area image.Rectangle, cells int, reversed bool) (left image.Rectangle, right image.Rectangle, err error) {
 	if min := 0; cells < min {
 		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
 	}
 	if cells == 0 {
-		if fromMax {
+		if reversed {
+			return area, image.ZR, nil
+		} else {
+			return image.ZR, area, nil
+		}
+	}
+
+	width := area.Dx()
+	if cells >= width {
+		if reversed {
+			return image.ZR, area, nil
+		} else {
+			return area, image.ZR, nil
+		}
+	}
+
+	splitX := area.Min.X
+	if reversed {
+		splitX = area.Max.X - cells
+	} else {
+		splitX = area.Min.X + cells
+	}
+
+	left = image.Rect(area.Min.X, area.Min.Y, splitX, area.Max.Y)
+	right = image.Rect(splitX, area.Min.Y, area.Max.X, area.Max.Y)
+	return left, right, nil
+}
+
+// TODO
+func hSplitCells(area image.Rectangle, cells int, reversed bool) (top image.Rectangle, bottom image.Rectangle, err error) {
+	if min := 0; cells < min {
+		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
+	}
+	if cells == 0 {
+		if reversed {
 			return area, image.ZR, nil
 		} else {
 			return image.ZR, area, nil
@@ -37,7 +71,7 @@ func hSplitCells(area image.Rectangle, cells int, fromMax bool) (top image.Recta
 
 	height := area.Dy()
 	if cells >= height {
-		if fromMax {
+		if reversed {
 			return image.ZR, area, nil
 		} else {
 			return area, image.ZR, nil
@@ -45,7 +79,7 @@ func hSplitCells(area image.Rectangle, cells int, fromMax bool) (top image.Recta
 	}
 
 	splitY := area.Min.Y
-	if fromMax {
+	if reversed {
 		splitY = area.Max.Y - cells
 	} else {
 		splitY = area.Min.Y + cells
@@ -114,26 +148,21 @@ func VSplit(area image.Rectangle, widthPerc int) (left image.Rectangle, right im
 }
 
 // VSplitCells returns two new areas created by splitting the provided area
-// after the specified amount of cells of its width. The number of cells must
-// be a zero or a positive integer. Providing a zero returns left=image.ZR,
-// right=area. Providing a number equal or larger to area's width returns
-// left=area, right=image.ZR.
+// after the specified amount of cells of its width, as applied to the first
+// area. The number of cells must be a zero or a positive integer. Providing a
+// zero returns left=image.ZR, right=area. Providing a number equal or larger to
+// area's width returns left=area, right=image.ZR.
 func VSplitCells(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
-	if min := 0; cells < min {
-		return image.ZR, image.ZR, fmt.Errorf("invalid cells %d, must be a positive integer", cells)
-	}
-	if cells == 0 {
-		return image.ZR, area, nil
-	}
+	return vSplitCells(area, cells, false)
+}
 
-	width := area.Dx()
-	if cells >= width {
-		return area, image.ZR, nil
-	}
-
-	left = image.Rect(area.Min.X, area.Min.Y, area.Min.X+cells, area.Max.Y)
-	right = image.Rect(area.Min.X+cells, area.Min.Y, area.Max.X, area.Max.Y)
-	return left, right, nil
+// VSplitCells returns two new areas created by splitting the provided area
+// after the specified amount of cells of its width, as applied to the second
+// area. The number of cells must be a zero or a positive integer. Providing a
+// zero returns left=image.ZR, right=area. Providing a number equal or larger to
+// area's width returns left=area, right=image.ZR.
+func VSplitCellsReversed(area image.Rectangle, cells int) (left image.Rectangle, right image.Rectangle, err error) {
+	return vSplitCells(area, cells, true)
 }
 
 // HSplitCells returns two new areas created by splitting the provided area

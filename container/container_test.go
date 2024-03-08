@@ -865,6 +865,32 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc:     "vertical, reversed unequal split",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(linestyle.Light),
+						),
+						Right(
+							Border(linestyle.Light),
+						),
+						SplitPercentFromEnd(20),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 16, 10))
+				testdraw.MustBorder(cvs, image.Rect(16, 0, 20, 10))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
 			desc:     "vertical fixed splits",
 			termSize: image.Point{20, 10},
 			container: func(ft *faketerm.Terminal) (*Container, error) {
@@ -886,6 +912,32 @@ func TestNew(t *testing.T) {
 				cvs := testcanvas.MustNew(ft.Area())
 				testdraw.MustBorder(cvs, image.Rect(0, 0, 4, 10))
 				testdraw.MustBorder(cvs, image.Rect(4, 0, 20, 10))
+				testcanvas.MustApply(cvs, ft)
+				return ft
+			},
+		},
+		{
+			desc:     "vertical, reversed fixed splits",
+			termSize: image.Point{20, 10},
+			container: func(ft *faketerm.Terminal) (*Container, error) {
+				return New(
+					ft,
+					SplitVertical(
+						Left(
+							Border(linestyle.Light),
+						),
+						Right(
+							Border(linestyle.Light),
+						),
+						SplitFixedFromEnd(4),
+					),
+				)
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				cvs := testcanvas.MustNew(ft.Area())
+				testdraw.MustBorder(cvs, image.Rect(0, 0, 16, 10))
+				testdraw.MustBorder(cvs, image.Rect(16, 0, 20, 10))
 				testcanvas.MustApply(cvs, ft)
 				return ft
 			},

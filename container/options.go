@@ -313,7 +313,7 @@ func SplitPercent(p int) SplitOption {
 // SplitPercentFromEnd sets the relative size of the split as percentage of the
 // available space.
 // When using SplitVertical, the provided size is applied to the new right
-// container, the new leftcontainer gets the reminder of the size.
+// container, the new left container gets the reminder of the size.
 // When using SplitHorizontal, the provided size is applied to the new bottom
 // container, the new top container gets the reminder of the size.
 // The provided value must be a positive number in the range 0 < p < 100.

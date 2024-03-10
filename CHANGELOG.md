@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 10-Mar-2024
+
+### Added
+
+- Support for an alternative way of splitting containers where the size or
+  percentage is specified for the right (or bottom) container and the left (or
+  top) is calculated.
+
+### Changed
+
+- Bump github.com/gdamore/tcell/v2 from 2.7.0 to 2.7.4.
+
 ## [0.19.0] - 29-Jan-2024
 
 ### Added
@@ -531,7 +543,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.19.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.20.0...devel
+[0.20.0]: https://github.com/mum4k/termdash/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/mum4k/termdash/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/mum4k/termdash/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/mum4k/termdash/compare/v0.16.1...v0.17.0

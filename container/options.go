@@ -108,9 +108,10 @@ type options struct {
 	inherited inherited
 
 	// split identifies how is this container split.
-	split        splitType
-	splitPercent int
-	splitFixed   int
+	split         splitType
+	splitReversed bool
+	splitPercent  int
+	splitFixed    int
 
 	// widget is the widget in the container.
 	// A container can have either two sub containers (left and right) or a
@@ -247,10 +248,11 @@ func newOptions(parent *options) *options {
 		inherited: inherited{
 			focusedColor: cell.ColorYellow,
 		},
-		hAlign:       align.HorizontalCenter,
-		vAlign:       align.VerticalMiddle,
-		splitPercent: DefaultSplitPercent,
-		splitFixed:   DefaultSplitFixed,
+		hAlign:        align.HorizontalCenter,
+		vAlign:        align.VerticalMiddle,
+		splitReversed: DefaultSplitReversed,
+		splitPercent:  DefaultSplitPercent,
+		splitFixed:    DefaultSplitFixed,
 	}
 	if parent != nil {
 		opts.global = parent.global
@@ -281,13 +283,17 @@ func (so splitOption) setSplit(opts *options) error {
 	return so(opts)
 }
 
+// DefaultSplitReversed is the default value for the SplitReversed option.
+const DefaultSplitReversed = false
+
 // DefaultSplitPercent is the default value for the SplitPercent option.
 const DefaultSplitPercent = 50
 
 // DefaultSplitFixed is the default value for the SplitFixed option.
 const DefaultSplitFixed = -1
 
-// SplitPercent sets the relative size of the split as percentage of the available space.
+// SplitPercent sets the relative size of the split as percentage of the
+// available space.
 // When using SplitVertical, the provided size is applied to the new left
 // container, the new right container gets the reminder of the size.
 // When using SplitHorizontal, the provided size is applied to the new top
@@ -304,6 +310,25 @@ func SplitPercent(p int) SplitOption {
 	})
 }
 
+// SplitPercentFromEnd sets the relative size of the split as percentage of the
+// available space.
+// When using SplitVertical, the provided size is applied to the new right
+// container, the new left container gets the reminder of the size.
+// When using SplitHorizontal, the provided size is applied to the new bottom
+// container, the new top container gets the reminder of the size.
+// The provided value must be a positive number in the range 0 < p < 100.
+// If not provided, defaults to using SplitPercent with DefaultSplitPercent.
+func SplitPercentFromEnd(p int) SplitOption {
+	return splitOption(func(opts *options) error {
+		if min, max := 0, 100; p <= min || p >= max {
+			return fmt.Errorf("invalid split percentage %d, must be in range %d < p < %d", p, min, max)
+		}
+		opts.splitReversed = true
+		opts.splitPercent = p
+		return nil
+	})
+}
+
 // SplitFixed sets the size of the first container to be a fixed value
 // and makes the second container take up the remaining space.
 // When using SplitVertical, the provided size is applied to the new left
@@ -311,14 +336,36 @@ func SplitPercent(p int) SplitOption {
 // When using SplitHorizontal, the provided size is applied to the new top
 // container, the new bottom container gets the reminder of the size.
 // The provided value must be a positive number in the range 0 <= cells.
-// If SplitFixed() is not specified, it defaults to SplitPercent() and its given value.
-// Only one of SplitFixed() and SplitPercent() can be specified per container.
+// If SplitFixed* or SplitPercent* is not specified, it defaults to
+// SplitPercent() and its given value.
+// Only one SplitFixed* or SplitPercent* may be specified per container.
 func SplitFixed(cells int) SplitOption {
 	return splitOption(func(opts *options) error {
 		if cells < 0 {
 			return fmt.Errorf("invalid fixed value %d, must be in range %d <= cells", cells, 0)
 		}
 		opts.splitFixed = cells
+		return nil
+	})
+}
+
+// SplitFixedFromEnd sets the size of the second container to be a fixed value
+// and makes the first container take up the remaining space.
+// When using SplitVertical, the provided size is applied to the new right
+// container, the new left container gets the reminder of the size.
+// When using SplitHorizontal, the provided size is applied to the new bottom
+// container, the new top container gets the reminder of the size.
+// The provided value must be a positive number in the range 0 <= cells.
+// If SplitFixed* or SplitPercent* is not specified, it defaults to
+// SplitPercent() and its given value.
+// Only one SplitFixed* or SplitPercent* may be specified per container.
+func SplitFixedFromEnd(cells int) SplitOption {
+	return splitOption(func(opts *options) error {
+		if cells < 0 {
+			return fmt.Errorf("invalid fixed value %d, must be in range %d <= cells", cells, 0)
+		}
+		opts.splitFixed = cells
+		opts.splitReversed = true
 		return nil
 	})
 }

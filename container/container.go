@@ -180,13 +180,25 @@ func (c *Container) split() (image.Rectangle, image.Rectangle, error) {
 	}
 	if c.opts.splitFixed > DefaultSplitFixed {
 		if c.opts.split == splitTypeVertical {
+			if c.opts.splitReversed {
+				return area.VSplitCellsReversed(ar, c.opts.splitFixed)
+			}
 			return area.VSplitCells(ar, c.opts.splitFixed)
+		}
+		if c.opts.splitReversed {
+			return area.HSplitCellsReversed(ar, c.opts.splitFixed)
 		}
 		return area.HSplitCells(ar, c.opts.splitFixed)
 	}
 
 	if c.opts.split == splitTypeVertical {
+		if c.opts.splitReversed {
+			return area.VSplitReversed(ar, c.opts.splitPercent)
+		}
 		return area.VSplit(ar, c.opts.splitPercent)
+	}
+	if c.opts.splitReversed {
+		return area.HSplitReversed(ar, c.opts.splitPercent)
 	}
 	return area.HSplit(ar, c.opts.splitPercent)
 }

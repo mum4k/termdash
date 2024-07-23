@@ -153,7 +153,7 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 		grid.RowHeightPerc(25,
 			grid.Widget(w.segDist,
 				container.Border(linestyle.Light),
-				container.BorderTitle("Press Esc to quit"),
+				container.BorderTitle("Press Esc to quit | x to reset linechart"),
 			),
 		),
 		grid.RowHeightPerc(5,
@@ -211,6 +211,7 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 				grid.Widget(w.heartLC,
 					container.Border(linestyle.Light),
 					container.BorderTitle("A LineChart"),
+					container.ID(heartLCID),
 				),
 			),
 		)
@@ -246,6 +247,7 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 				grid.Widget(w.heartLC,
 					container.Border(linestyle.Light),
 					container.BorderTitle("A LineChart"),
+					container.ID(heartLCID),
 				),
 			),
 		)
@@ -470,6 +472,9 @@ func contLayout(w *widgets) ([]container.Option, error) {
 // rootID is the ID assigned to the root container.
 const rootID = "root"
 
+// heartLCID is the ID assigned to the container with the linechart that displays a heart rhythm.
+const heartLCID = "heartLC"
+
 // Terminal implementations
 const (
 	termboxTerminal = "termbox"
@@ -524,12 +529,23 @@ func main() {
 		panic(err)
 	}
 
-	quitter := func(k *terminalapi.Keyboard) {
+	keyHandler := func(k *terminalapi.Keyboard) {
 		if k.Key == keyboard.KeyEsc || k.Key == keyboard.KeyCtrlC {
 			cancel()
 		}
+		if k.Key == 'x' || k.Key == 'X' {
+			if err := c.Update(heartLCID,
+				container.PlaceWidget(w.sineLC),
+				container.Border(linestyle.Light),
+				container.BorderTitle("A LineChart"),
+				container.ID(heartLCID),
+			); err != nil {
+				panic(err)
+			}
+		}
 	}
-	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(redrawInterval)); err != nil {
+
+	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(keyHandler), termdash.RedrawInterval(redrawInterval)); err != nil {
 		panic(err)
 	}
 }

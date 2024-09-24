@@ -184,6 +184,17 @@ go run widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go
 
 [<img src="./doc/images/segmentdisplaydemo.gif" alt="segmentdisplaydemo" type="image/gif">](widgets/segmentdisplay/segmentdisplaydemo/segmentdisplaydemo.go)
 
+## The TreeView
+
+Displays a tree view which provides a hierarchical and collapsible view for displaying and interacting with nested data structures.
+[treeviewdemo](widgets/treeview/treeviewdemo/treeviewdemo.go).
+
+```go
+go run widgets/treeview/treeviewdemo/treeviewdemo.go
+```
+
+[<img src="./doc/images/treeviewdemo.gif" alt="treeviewdemo" type="image/gif">](widgets/treeview/treeviewdemo/treeviewdemo.go)
+
 # Contributing
 
 If you are willing to contribute, improve the infrastructure or develop a
@@ -219,8 +230,8 @@ Termdash uses [this branching model](https://nvie.com/posts/a-successful-git-bra
 - [perfstat](https://github.com/flaviostutz/perfstat): Analyze and show tips about possible bottlenecks in Linux systems.
 - [gex](https://github.com/Tosch110/gex): Cosmos SDK explorer in-terminal.
 - [ali](https://github.com/nakabonne/ali): ALI HTTP load testing tool with realtime analysis.
-- [suimon](https://github.com/bartosian/suimon): SUI blockchain explorer and monitor. 
-
+- [suimon](https://github.com/bartosian/suimon): SUI blockchain explorer and monitor.
 # Disclaimer
 
 This is not an official Google product.
+

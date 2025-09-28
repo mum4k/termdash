@@ -112,7 +112,6 @@ func (p *Pie) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	mid, radiusX := pieChartMidAndRadii(cvs.Area())
 
 	innerRadiusX := int(float64(radiusX) * 0.6)
-	// innerRadiusY := int(float64(radiusY) * 0.6)
 
 	currentAngle := 0.0
 	for i, value := range p.values {

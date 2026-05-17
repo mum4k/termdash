@@ -18,7 +18,6 @@ package emojikeyboard
 import (
 	"fmt"
 	"image"
-	"slices"
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
@@ -417,7 +416,15 @@ func (ek *EmojiKeyboard) fireSelect(emoji string) {
 
 // containsEmoji reports whether the emoji list contains the provided entry.
 func containsEmoji(emojis []string, want string) bool {
-	return want != "" && slices.Contains(emojis, want)
+	if want == "" {
+		return false
+	}
+	for _, emoji := range emojis {
+		if emoji == want {
+			return true
+		}
+	}
+	return false
 }
 
 // minInt returns the smaller of two integers.

@@ -409,9 +409,17 @@ func TestStatusControlsHandleMouseAndDraw(t *testing.T) {
 	controls.draw(ft, size, true)
 	buffer := ft.BackBuffer()
 	sample := func(rect image.Rectangle) image.Point {
+		dx := rect.Dx() / 2
+		if dx < 0 {
+			dx = 0
+		}
+		dy := rect.Dy() / 2
+		if dy < 0 {
+			dy = 0
+		}
 		return image.Point{
-			X: rect.Min.X + max(0, rect.Dx()/2),
-			Y: rect.Min.Y + max(0, rect.Dy()/2),
+			X: rect.Min.X + dx,
+			Y: rect.Min.Y + dy,
 		}
 	}
 	for _, point := range []image.Point{

@@ -18,7 +18,9 @@ package main
 
 import (
 	"context"
+
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/tcell"
@@ -33,12 +35,39 @@ func main() {
 	}
 	defer t.Close()
 
-	hp, err := heatmap.New()
+	hp, err := heatmap.New(
+		heatmap.CellWidth(3),
+		heatmap.AxisCellOpts(cell.FgColor(cell.ColorNumber(245))),
+		heatmap.XLabelCellOpts(cell.FgColor(cell.ColorNumber(153))),
+		heatmap.YLabelCellOpts(cell.FgColor(cell.ColorNumber(117))),
+		heatmap.Palette(
+			cell.ColorNumber(236),
+			cell.ColorNumber(239),
+			cell.ColorNumber(24),
+			cell.ColorNumber(31),
+			cell.ColorNumber(38),
+			cell.ColorNumber(45),
+			cell.ColorNumber(81),
+		),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: set heatmap's data
+	if err := hp.Values(
+		[]string{"00", "06", "12", "18", "24"},
+		[]string{"MON", "TUE", "WED", "THU", "FRI", "SAT"},
+		[][]float64{
+			{12, 30, 44, 28, 18},
+			{18, 52, 66, 40, 24},
+			{24, 48, 72, 55, 32},
+			{10, 26, 38, 22, 14},
+			{16, 34, 58, 44, 20},
+			{8, 18, 28, 16, 10},
+		},
+	); err != nil {
+		panic(err)
+	}
 
 	c, err := container.New(
 		t,

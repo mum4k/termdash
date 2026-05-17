@@ -27,12 +27,12 @@ import (
 type EventHandler struct {
 	cancel        context.CancelFunc
 	rootContainer *container.Container
-	modalManager  *ModalManager
+	modalManager  *Manager
 	mutex         sync.Mutex
 }
 
 // NewEventHandler creates an event handler for a modal manager and root container.
-func NewEventHandler(ctx context.Context, cancel context.CancelFunc, rootContainer *container.Container, modalManager *ModalManager) *EventHandler {
+func NewEventHandler(ctx context.Context, cancel context.CancelFunc, rootContainer *container.Container, modalManager *Manager) *EventHandler {
 	_ = ctx
 	return &EventHandler{
 		cancel:        cancel,

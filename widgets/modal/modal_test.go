@@ -173,10 +173,10 @@ func TestMinimizeAndRestoreDock(t *testing.T) {
 	}
 }
 
-// TestModalManagerShowHide verifies the manager can show and clear a modal.
-func TestModalManagerShowHide(t *testing.T) {
+// TestManagerShowHide verifies the manager can show and clear a modal.
+func TestManagerShowHide(t *testing.T) {
 	root := newModalTestContainer(t)
-	manager := &ModalManager{}
+	manager := &Manager{}
 	modal := NewModal("modal", nil, NewOptions())
 
 	if err := manager.ShowModal(modal, root); err != nil {
@@ -196,7 +196,7 @@ func TestModalManagerShowHide(t *testing.T) {
 // TestEventHandlerHandlesEscAndQuit verifies escape hides the modal and q cancels the demo.
 func TestEventHandlerHandlesEscAndQuit(t *testing.T) {
 	root := newModalTestContainer(t)
-	manager := &ModalManager{}
+	manager := &Manager{}
 	modal := NewModal("modal", nil, NewOptions())
 	if err := manager.ShowModal(modal, root); err != nil {
 		t.Fatalf("ShowModal => unexpected error: %v", err)
@@ -221,7 +221,7 @@ func TestEventHandlerHandlesEscAndQuit(t *testing.T) {
 // routing does not interfere with widget-local modal dragging.
 func TestEventHandlerHandleMouseDoesNotMutateModal(t *testing.T) {
 	root := newModalTestContainer(t)
-	manager := &ModalManager{}
+	manager := &Manager{}
 	opts := NewOptions(Border(true), MinimumSize(image.Point{X: 1, Y: 1}))
 	item := NewDraggableWidget("drag", &fillWidget{r: 'x'}, 2, 2, 8, 6, opts)
 	modal := NewModal("modal", []*DraggableWidget{item}, opts)

@@ -186,7 +186,7 @@ func main() {
 	defer cancel()
 
 	// Animated borders (active panel: gradient arc; inactive: warm gold).
-	go setupBorderFX(cont, ctx)
+	go setupBorderFX(ctx, cont)
 
 	// Background goroutines.
 	go startEventGenerator(ctx, tl, picker)
@@ -288,7 +288,7 @@ func buildLayout(t *tcell.Terminal, tl *timeline.Timeline, detail *text.Text, pi
 // Active (focused) panel: animated purple→blue arc.
 // Inactive panels: static warm-gold border.
 // Blocks until ctx is cancelled — run it in a goroutine.
-func setupBorderFX(cont *container.Container, ctx context.Context) {
+func setupBorderFX(ctx context.Context, cont *container.Container) {
 	fx := borderfx.NewAnimator(cont)
 	fx.ApplyProfile(borderfx.Profiles.GradientArc, "root", "eventlog", "details", "picker")
 	fx.Run(ctx)

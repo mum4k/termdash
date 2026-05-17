@@ -292,6 +292,7 @@ func (t *ThreeD) normalizeRotation() {
 	}
 }
 
+// Rotate applies the provided delta rotation around the X, Y, and Z axes.
 func (t *ThreeD) Rotate(delta Vector3D) {
 	t.mu.Lock()
 	defer t.mu.Unlock()

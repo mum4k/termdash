@@ -54,8 +54,8 @@ func (t *Tab) setNotification(active bool, duration time.Duration) {
 	}
 }
 
-// tabSnapshot captures the header-visible state of a tab.
-type tabSnapshot struct {
+// Snapshot captures the header-visible state of a tab.
+type Snapshot struct {
 	Name         string
 	Notification bool
 }
@@ -239,13 +239,13 @@ func (m *Manager) GetTabIndex(target *Tab) int {
 }
 
 // Snapshot returns a stable copy of the header-visible manager state.
-func (m *Manager) Snapshot() ([]tabSnapshot, int) {
+func (m *Manager) Snapshot() ([]Snapshot, int) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	snapshot := make([]tabSnapshot, 0, len(m.tabs))
+	snapshot := make([]Snapshot, 0, len(m.tabs))
 	for _, tab := range m.tabs {
-		snapshot = append(snapshot, tabSnapshot{
+		snapshot = append(snapshot, Snapshot{
 			Name:         tab.Name,
 			Notification: tab.HasNotification(),
 		})

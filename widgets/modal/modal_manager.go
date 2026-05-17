@@ -21,14 +21,14 @@ import (
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
-// ModalManager tracks the currently visible modal.
-type ModalManager struct {
+// Manager tracks the currently visible modal.
+type Manager struct {
 	activeModal *Modal
 	mutex       sync.Mutex
 }
 
 // ShowModal places the modal into the container whose ID matches modal.ID.
-func (mm *ModalManager) ShowModal(modal *Modal, c *container.Container) error {
+func (mm *Manager) ShowModal(modal *Modal, c *container.Container) error {
 	mm.mutex.Lock()
 	defer mm.mutex.Unlock()
 
@@ -40,7 +40,7 @@ func (mm *ModalManager) ShowModal(modal *Modal, c *container.Container) error {
 }
 
 // HideModal removes the active modal from its host container.
-func (mm *ModalManager) HideModal(c *container.Container) error {
+func (mm *Manager) HideModal(c *container.Container) error {
 	mm.mutex.Lock()
 	defer mm.mutex.Unlock()
 
@@ -56,7 +56,7 @@ func (mm *ModalManager) HideModal(c *container.Container) error {
 }
 
 // HandleMouse forwards a mouse event to the active modal.
-func (mm *ModalManager) HandleMouse(event *terminalapi.Mouse) bool {
+func (mm *Manager) HandleMouse(event *terminalapi.Mouse) bool {
 	mm.mutex.Lock()
 	defer mm.mutex.Unlock()
 
@@ -68,7 +68,7 @@ func (mm *ModalManager) HandleMouse(event *terminalapi.Mouse) bool {
 }
 
 // HasActiveModal reports whether a modal is currently visible.
-func (mm *ModalManager) HasActiveModal() bool {
+func (mm *Manager) HasActiveModal() bool {
 	mm.mutex.Lock()
 	defer mm.mutex.Unlock()
 	return mm.activeModal != nil

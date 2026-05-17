@@ -66,18 +66,18 @@ const (
 	OrientationVertical
 )
 
-// SliderStyle is a named visual preset for the slider track.
-type SliderStyle int
+// Preset is a named visual preset for the slider track.
+type Preset int
 
 // String implements fmt.Stringer.
-func (s SliderStyle) String() string {
+func (s Preset) String() string {
 	if n, ok := styleNames[s]; ok {
 		return n
 	}
 	return "StyleUnknown"
 }
 
-var styleNames = map[SliderStyle]string{
+var styleNames = map[Preset]string{
 	StyleBar:              "StyleBar",
 	StyleSegmented:        "StyleSegmented",
 	StyleSegmentedBlocks:  "StyleSegmentedBlocks",
@@ -90,7 +90,7 @@ var styleNames = map[SliderStyle]string{
 
 const (
 	// StyleBar is the default solid filled bar with a knob.
-	StyleBar SliderStyle = iota
+	StyleBar Preset = iota
 	// StyleSegmented draws a thin segmented line.
 	StyleSegmented
 	// StyleSegmentedBlocks draws dense rectangular block segments.
@@ -117,7 +117,7 @@ type options struct {
 	orientation    Direction
 	hAlign         align.Horizontal
 	vAlign         align.Vertical
-	style          SliderStyle
+	style          Preset
 	fillRune       rune
 	trackRune      rune
 	knobRune       rune
@@ -137,8 +137,10 @@ var (
 )
 
 const (
+	// DefaultWidth is the default slider length in terminal cells.
 	DefaultWidth = 18
-	DefaultStep  = 1
+	// DefaultStep is the default increment used for keyboard changes.
+	DefaultStep = 1
 )
 
 // validate validates the provided options.
@@ -255,7 +257,7 @@ func AlignVertical(v align.Vertical) Option {
 }
 
 // Style applies one of the built-in visual slider styles.
-func Style(s SliderStyle) Option {
+func Style(s Preset) Option {
 	return option(func(opts *options) {
 		opts.style = s
 		applyStyle(opts, s)
@@ -347,7 +349,7 @@ func OnChange(fn ChangeFn) Option {
 	})
 }
 
-func applyStyle(opts *options, style SliderStyle) {
+func applyStyle(opts *options, style Preset) {
 	switch style {
 	case StyleBar:
 		opts.fillRune = '█'

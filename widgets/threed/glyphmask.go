@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"image"
-	_ "image/png"
+	_ "image/png" // register PNG decoder for embedded emoji assets
 	"math"
 	"strings"
 	"sync"

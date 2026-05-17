@@ -146,7 +146,7 @@ func (h *Header) Advance() error {
 // The notification suffix is empty when the tab has no active notification.
 // Splitting the two parts allows the notification icon to be rendered in a
 // distinct alarm color rather than the ordinary label color.
-func (h *Header) tabLabelParts(active bool, tabState tabSnapshot) (main, notif string) {
+func (h *Header) tabLabelParts(active bool, tabState Snapshot) (main, notif string) {
 	icon := h.opts.InactiveIcon
 	if active {
 		icon = h.opts.ActiveIcon

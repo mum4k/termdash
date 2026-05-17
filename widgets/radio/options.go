@@ -88,10 +88,14 @@ var (
 )
 
 const (
-	DefaultSelectedRune   = '◉'
+	// DefaultSelectedRune is the default indicator rune for the selected item.
+	DefaultSelectedRune = '◉'
+	// DefaultUnselectedRune is the default indicator rune for an unselected item.
 	DefaultUnselectedRune = '○'
-	DefaultGap            = 3
-	DefaultIndicatorGap   = 1
+	// DefaultGap is the default number of cells between radio items.
+	DefaultGap = 3
+	// DefaultIndicatorGap is the default number of cells between indicator and label.
+	DefaultIndicatorGap = 1
 )
 
 // validate validates the provided options.

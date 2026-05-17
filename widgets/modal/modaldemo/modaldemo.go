@@ -84,7 +84,7 @@ func main() {
 	item3.Title = "Telemetry Notes"
 	modalWidget := modal.NewModal("modal", []*modal.DraggableWidget{item1, item2, item3}, opts)
 
-	manager := &modal.ModalManager{}
+	manager := &modal.Manager{}
 
 	root, err := container.New(
 		term,

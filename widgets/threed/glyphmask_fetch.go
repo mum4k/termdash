@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	_ "image/png"
+	_ "image/png" // register PNG decoder for downloaded emoji assets
 	"io"
 	"net/http"
 	"os"

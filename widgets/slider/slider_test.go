@@ -38,7 +38,7 @@ func TestNew(t *testing.T) {
 		{desc: "fails on zero step", opts: []Option{Step(0)}, wantErr: true},
 		{desc: "fails on zero width", opts: []Option{Width(0)}, wantErr: true},
 		{desc: "fails on invalid orientation", opts: []Option{Orientation(Direction(99))}, wantErr: true},
-		{desc: "fails on invalid style", opts: []Option{Style(SliderStyle(99))}, wantErr: true},
+		{desc: "fails on invalid style", opts: []Option{Style(Preset(99))}, wantErr: true},
 		{desc: "accepts defaults"},
 	}
 

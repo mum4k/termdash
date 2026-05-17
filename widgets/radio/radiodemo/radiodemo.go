@@ -57,15 +57,15 @@ func main() {
 
 	r, err := radio.New([]radio.Item{
 		{
-				Label:            "ON",
-				CellOpts:         []cell.Option{cell.FgColor(cell.ColorGreen)},
-				SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorGreen)},
+			Label:            "ON",
+			CellOpts:         []cell.Option{cell.FgColor(cell.ColorGreen)},
+			SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorGreen)},
 		},
 		{
-				Label:            "OFF",
-				UnselectedText:   "◎",
-				CellOpts:         []cell.Option{cell.FgColor(cell.ColorRed)},
-				SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorRed)},
+			Label:            "OFF",
+			UnselectedText:   "◎",
+			CellOpts:         []cell.Option{cell.FgColor(cell.ColorRed)},
+			SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorRed)},
 		},
 	}, radio.UseIndicatorSet(radio.IndicatorSets.Circle), radio.OnChange(func(index int, label string) error {
 		_ = index

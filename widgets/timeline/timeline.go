@@ -124,7 +124,7 @@ func FormatMiniBar(count, total, width int) string {
 
 // Event is a single entry in the timeline.
 type Event struct {
-	Time        string    // display string shown in the log row
+	Time        string // display string shown in the log row
 	Title       string
 	Description string
 	// Severity controls the row color and glyph prefix.  Defaults to SeverityDebug.
@@ -187,14 +187,14 @@ func MaxEvents(n int) Option {
 // It implements widgetapi.Widget and can be placed directly in any container.
 type Timeline struct {
 	mu            sync.Mutex
-	events        []Event   // all events ever appended (capped to maxEvents when set)
-	displayed     []Event   // events currently visible (filtered or same as events)
-	scrollOffset  int       // index of the first visible row in displayed
-	selectedIndex int       // -1 means no selection; index into displayed
-	canvasHeight  int       // updated each Draw call; used by Keyboard/Mouse for bounds
-	canvasWidth   int       // updated each Draw call; used for bounds checking
-	followTail    bool      // when true, Draw always pins the view to the last event
-	maxEvents     int       // 0 = unlimited; >0 caps the events ring buffer
+	events        []Event // all events ever appended (capped to maxEvents when set)
+	displayed     []Event // events currently visible (filtered or same as events)
+	scrollOffset  int     // index of the first visible row in displayed
+	selectedIndex int     // -1 means no selection; index into displayed
+	canvasHeight  int     // updated each Draw call; used by Keyboard/Mouse for bounds
+	canvasWidth   int     // updated each Draw call; used for bounds checking
+	followTail    bool    // when true, Draw always pins the view to the last event
+	maxEvents     int     // 0 = unlimited; >0 caps the events ring buffer
 	filterActive  bool
 	filterStart   time.Time
 	filterEnd     time.Time

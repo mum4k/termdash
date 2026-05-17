@@ -134,26 +134,26 @@ type PanelRectFunc func(termSize image.Point, id string) image.Rectangle
 //
 //  1. Wrap your terminal:
 //
-//	lo := borderfx.WrapWithLoading(t, func(size image.Point, id string) image.Rectangle {
-//	    outer := myLayout.BorderRect(size, id) // the panel's outer border rect
-//	    return outer.Inset(1)                  // strip the 1-cell border
-//	})
+//     lo := borderfx.WrapWithLoading(t, func(size image.Point, id string) image.Rectangle {
+//     outer := myLayout.BorderRect(size, id) // the panel's outer border rect
+//     return outer.Inset(1)                  // strip the 1-cell border
+//     })
 //
 //  2. Set loading content and wire the animator (one call does both):
 //
-//	lo.SetContent("sensors", borderfx.LoadingText.BootSequence)
-//	fx.ApplyInterlacedLoadingContent(lo, "sensors", "comms")
+//     lo.SetContent("sensors", borderfx.LoadingText.BootSequence)
+//     fx.ApplyInterlacedLoadingContent(lo, "sensors", "comms")
 //
 //  3. Hide when boot is done:
 //
-//	lo.Hide()
+//     lo.Hide()
 type LoadingOverlay struct {
-	terminalapi.Terminal        // all non-overridden calls delegate here
-	mu      sync.RWMutex
-	bg      LoadingBackground
-	rectFn  PanelRectFunc
-	frames  map[string]string  // panel ID → loading text currently displayed
-	visible bool
+	terminalapi.Terminal // all non-overridden calls delegate here
+	mu                   sync.RWMutex
+	bg                   LoadingBackground
+	rectFn               PanelRectFunc
+	frames               map[string]string // panel ID → loading text currently displayed
+	visible              bool
 }
 
 // WrapWithLoading wraps t and returns a LoadingOverlay ready to display an

@@ -57,9 +57,9 @@ type TimeRangePicker struct {
 	width      int // canvas width captured during last Draw
 
 	// drag state
-	dragActive    bool // true while ButtonLeft is held
-	dragStartX    int  // x-column where the drag began
-	dragCurrentX  int  // x-column of the latest ButtonLeft move (for ghost pin)
+	dragActive   bool // true while ButtonLeft is held
+	dragStartX   int  // x-column where the drag began
+	dragCurrentX int  // x-column of the latest ButtonLeft move (for ghost pin)
 
 	// onChange is called (in its own goroutine) whenever the selection changes.
 	onChange func(start, end time.Time, hasRange bool)

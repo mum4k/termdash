@@ -358,9 +358,9 @@ func main() {
 
 	// ── Radar widget ─────────────────────────────────────────────────────────
 	radarWidget, err := radar.New(
-		radar.SweepSpeed(45),        // 45 °/s → one rotation every 8 s
-		radar.BeamWidth(32),         // 32° phosphor trail
-		radar.SweepSpan(360),        // Full rotation
+		radar.SweepSpeed(45), // 45 °/s → one rotation every 8 s
+		radar.BeamWidth(32),  // 32° phosphor trail
+		radar.SweepSpan(360), // Full rotation
 		radar.SweepDirection(radar.DirectionClockwise),
 		radar.RangeRings(4),
 		radar.BeamColor(0, 255, 70), // Classic neon green

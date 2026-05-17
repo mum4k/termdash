@@ -345,7 +345,7 @@ func (r *Radar) drawTooltip(cvs *canvas.Canvas, ar image.Rectangle, contactX, co
 	}
 	// innerW: 1 space padding each side + content.
 	innerW := maxContent + 2
-	boxW := innerW + 2 // +2 for left and right border characters.
+	boxW := innerW + 2     // +2 for left and right border characters.
 	boxH := len(lines) + 2 // +2 for top and bottom border characters.
 
 	// ── Position: right of contact, vertically centred ────────────────────────

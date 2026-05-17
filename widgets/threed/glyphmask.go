@@ -1,0 +1,610 @@
+package threed
+
+import (
+	"embed"
+	"fmt"
+	"image"
+	_ "image/png"
+	"math"
+	"strings"
+	"sync"
+	"unicode"
+)
+
+// rasterMaskResult caches the outcome of one rasterizeSymbolMask call so the
+// animation loop does not re-rasterize the same emoji on every frame tick.
+type rasterMaskResult struct {
+	mask  glyphMask
+	valid bool
+}
+
+// rasterMaskCache maps a UTF-8 emoji string to its cached rasterMaskResult.
+var rasterMaskCache sync.Map
+
+// brailleLineCache maps a UTF-8 emoji string to a pre-computed []string of
+// braille-encoded lines (the EmojiToBrailleLines output).  A nil slice value
+// means rasterization was attempted but produced no usable mask.
+var brailleLineCache sync.Map
+
+// glyphModelCache maps a UTF-8 emoji string to its fully-built *Model. The
+// stored model is read-only after construction so concurrent reads are safe.
+var glyphModelCache sync.Map
+
+const (
+	// defaultSymbolMaskResolution is the pixel resolution used when rendering
+	// emoji masks for the braille status-panel preview (EmojiToBrailleLines).
+	// High resolution preserves detail in the 2-D braille preview.
+	defaultSymbolMaskResolution = 256
+
+	// defaultSymbolModelResolution is the pixel resolution used when building
+	// the 3-D extruded model (newGlyphMaskModel).  At 40 each mask cell
+	// projects to roughly 1.0–1.2 terminal columns at the default zoom,
+	// giving fine detail while staying at or above the minimum braille
+	// subcell size so every cell is individually renderable.
+	defaultSymbolModelResolution = 40
+
+	// defaultSymbolDepthScale is the half-depth expressed as a fraction of the
+	// total model extent (defaultSymbolExtent).  Using an extent-based value
+	// keeps the shape visually thick regardless of how many mask pixels there
+	// are, matching the depth of the braille-disc fallback.
+	defaultSymbolDepthScale = 0.08
+
+	defaultSymbolExtent = 2.6
+)
+
+//go:embed assets/openmoji/*.png
+var bundledEmojiAssets embed.FS
+
+// glyphMask is a compact binary raster used to build extruded symbol meshes.
+type glyphMask struct {
+	Width  int
+	Height int
+	Filled []bool
+	Colors []Color
+}
+
+// At reports whether the given raster cell is filled.
+func (m glyphMask) At(x, y int) bool {
+	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
+		return false
+	}
+	return m.Filled[y*m.Width+x]
+}
+
+// ColorAt returns the sampled color for the given raster cell.
+func (m glyphMask) ColorAt(x, y int) Color {
+	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
+		return Color{}
+	}
+	if len(m.Colors) != len(m.Filled) {
+		return Color{}
+	}
+	return m.Colors[y*m.Width+x]
+}
+
+// newGlyphMaskModel rasterizes a symbol and extrudes the resulting mask into a
+// solid model. It returns nil when rasterization is unavailable or empty.
+//
+// The fully-built *Model is stored in glyphModelCache so the animation loop
+// (which calls this on every frame) pays the construction cost only once per
+// unique emoji string. The stored model is treated as read-only after caching.
+func newGlyphMaskModel(frame string, step int) *Model {
+	// Fast path: model already cached.
+	if v, hit := glyphModelCache.Load(frame); hit {
+		if m, ok := v.(*Model); ok {
+			return m
+		}
+		return nil
+	}
+
+	// Build the model exactly once, then cache it.
+	var model *Model
+	if mask, ok := bundledSymbolMask(frame, defaultSymbolModelResolution); ok {
+		if trimmed, ok := trimGlyphMask(mask); ok {
+			model = buildGlyphMaskModel(trimmed)
+		}
+	}
+
+	if model == nil {
+		// Check the raster cache before calling the (potentially expensive)
+		// rasterizeSymbolMask implementation.
+		if v, hit := rasterMaskCache.Load(frame); hit {
+			entry := v.(rasterMaskResult)
+			if entry.valid {
+				model = buildGlyphMaskModel(entry.mask)
+			}
+		} else {
+			mask, err := rasterizeSymbolMask(frame, defaultSymbolModelResolution)
+			var entry rasterMaskResult
+			if err == nil {
+				trimmed, ok := trimGlyphMask(mask)
+				if ok {
+					entry = rasterMaskResult{mask: trimmed, valid: true}
+				}
+			}
+			rasterMaskCache.Store(frame, entry)
+			if entry.valid {
+				model = buildGlyphMaskModel(entry.mask)
+			}
+		}
+	}
+
+	// Cache result (nil is stored as (*Model)(nil) wrapped in interface{}).
+	glyphModelCache.Store(frame, model)
+	return model
+}
+
+// buildGlyphMaskModel converts a filled binary mask into an extruded mesh.
+//
+// Each filled cell becomes its own front and back face, preserving the
+// per-pixel color sampled from the source PNG.  This keeps internal emoji
+// features (eyes, mouth, etc.) visually distinct from the surrounding face
+// color rather than averaging them away into a uniform hue.
+//
+// The side color is fixed (rather than varying with a step parameter) because
+// the per-frame variation is imperceptible (≤3% per channel) and fixity allows
+// the resulting model to be cached across frames.
+func buildGlyphMaskModel(mask glyphMask) *Model {
+	sideColor := Color{R: 0.46, G: 0.68, B: 0.94}
+	model := NewModel()
+
+	cellSize := defaultSymbolExtent / math.Max(float64(mask.Width), float64(mask.Height))
+	// halfDepth is a fixed fraction of the total model extent so the shape
+	// looks visually thick (comparable to the braille-disc fallback) regardless
+	// of how many mask pixels are used.
+	halfDepth := defaultSymbolExtent * defaultSymbolDepthScale
+	left := -float64(mask.Width) * cellSize / 2
+	top := float64(mask.Height) * cellSize / 2
+
+	// One front+back face per filled cell so per-pixel color detail is
+	// preserved.  Boundary side faces are added separately below.
+	for y := 0; y < mask.Height; y++ {
+		for x := 0; x < mask.Width; x++ {
+			if !mask.At(x, y) {
+				continue
+			}
+			// Use the PNG color directly. Phong shading (ambient 0.5 +
+			// diffuse 0.9) already lifts the base color enough for terminal
+			// display; pre-multiplying further would clip bright channels and
+			// wash out internal features (eyes, outlines, etc.).
+			cellColor := mask.ColorAt(x, y)
+			addGlyphCellFaces(model, left, top, cellSize, halfDepth, x, y, cellColor)
+			addGlyphBoundaryFaces(model, mask, left, top, cellSize, halfDepth, x, y, blendColor(cellColor, sideColor, 0.18))
+		}
+	}
+
+	if len(model.Faces) == 0 {
+		return nil
+	}
+	return model
+}
+
+// addGlyphCellFaces adds one front face and one back face for a single filled
+// mask cell.  Using one face per cell (rather than one per row-run) preserves
+// the per-pixel color sampled from the source image.
+func addGlyphCellFaces(model *Model, left, top, cellSize, halfDepth float64, x, y int, color Color) {
+	x0 := left + float64(x)*cellSize
+	x1 := x0 + cellSize
+	y0 := top - float64(y)*cellSize
+	y1 := y0 - cellSize
+
+	// Front face (facing +Z, CCW winding when viewed from +Z).
+	model.AddFace(Face{
+		Vertices: []Vector3D{
+			{X: x0, Y: y0, Z: halfDepth},
+			{X: x1, Y: y0, Z: halfDepth},
+			{X: x1, Y: y1, Z: halfDepth},
+			{X: x0, Y: y1, Z: halfDepth},
+		},
+		Char:       '█',
+		RenderMode: FaceRenderFill,
+		Color:      color,
+		HasColor:   true,
+	})
+
+	// Back face (facing -Z, reversed winding).
+	model.AddFace(Face{
+		Vertices: []Vector3D{
+			{X: x0, Y: y0, Z: -halfDepth},
+			{X: x0, Y: y1, Z: -halfDepth},
+			{X: x1, Y: y1, Z: -halfDepth},
+			{X: x1, Y: y0, Z: -halfDepth},
+		},
+		Char:       '█',
+		RenderMode: FaceRenderFill,
+		Color:      color,
+		HasColor:   true,
+	})
+}
+
+// bundledSymbolMask resolves a bundled emoji PNG asset and converts its alpha
+// channel into a compact binary raster mask.
+func bundledSymbolMask(frame string, resolution int) (glyphMask, bool) {
+	if resolution <= 0 {
+		return glyphMask{}, false
+	}
+	name := bundledEmojiAssetName(frame)
+	if name == "" {
+		return glyphMask{}, false
+	}
+	f, err := bundledEmojiAssets.Open("assets/openmoji/" + name + ".png")
+	if err != nil {
+		return glyphMask{}, false
+	}
+	defer f.Close()
+
+	img, _, err := image.Decode(f)
+	if err != nil {
+		return glyphMask{}, false
+	}
+	return rasterImageMask(img, resolution), true
+}
+
+// bundledEmojiAssetName converts a UTF-8 symbol into the bundled asset naming
+// convention used by the OpenMoji-derived demo assets.
+func bundledEmojiAssetName(frame string) string {
+	rs := []rune(frame)
+	if len(rs) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(rs))
+	for _, r := range rs {
+		if unicode.IsMark(r) {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf("%X", r))
+	}
+	return strings.Join(parts, "-")
+}
+
+// rasterImageMask downsamples an alpha-backed image into a square binary mask.
+func rasterImageMask(img image.Image, resolution int) glyphMask {
+	src := img.Bounds()
+	srcW, srcH := src.Dx(), src.Dy()
+	if srcW <= 0 || srcH <= 0 || resolution <= 0 {
+		return glyphMask{}
+	}
+
+	scale := math.Max(float64(srcW), float64(srcH)) / float64(resolution)
+	if scale < 1 {
+		scale = 1
+	}
+	outW := maxInt(1, int(math.Ceil(float64(srcW)/scale)))
+	outH := maxInt(1, int(math.Ceil(float64(srcH)/scale)))
+	offsetX := (resolution - outW) / 2
+	offsetY := (resolution - outH) / 2
+
+	mask := glyphMask{
+		Width:  resolution,
+		Height: resolution,
+		Filled: make([]bool, resolution*resolution),
+		Colors: make([]Color, resolution*resolution),
+	}
+
+	for y := 0; y < outH; y++ {
+		srcMinY := src.Min.Y + int(math.Floor(float64(y)*scale))
+		srcMaxY := src.Min.Y + int(math.Ceil(float64(y+1)*scale))
+		if srcMaxY <= srcMinY {
+			srcMaxY = srcMinY + 1
+		}
+		if srcMaxY > src.Max.Y {
+			srcMaxY = src.Max.Y
+		}
+
+		for x := 0; x < outW; x++ {
+			srcMinX := src.Min.X + int(math.Floor(float64(x)*scale))
+			srcMaxX := src.Min.X + int(math.Ceil(float64(x+1)*scale))
+			if srcMaxX <= srcMinX {
+				srcMaxX = srcMinX + 1
+			}
+			if srcMaxX > src.Max.X {
+				srcMaxX = src.Max.X
+			}
+
+			var alphaSum uint64
+			var redSum uint64
+			var greenSum uint64
+			var blueSum uint64
+			var samples uint64
+			var visibleSamples uint64
+			for sy := srcMinY; sy < srcMaxY; sy++ {
+				for sx := srcMinX; sx < srcMaxX; sx++ {
+					r, g, b, a := img.At(sx, sy).RGBA()
+					alphaSum += uint64(a)
+					samples++
+					if a == 0 {
+						continue
+					}
+					// Go's color.RGBA() always returns pre-multiplied values
+					// (r_premult = r_actual * a / 65535).  Un-premultiply here
+					// so averaging across samples yields the true channel
+					// intensities rather than alpha-dimmed values.
+					redSum += uint64(r) * 65535 / uint64(a)
+					greenSum += uint64(g) * 65535 / uint64(a)
+					blueSum += uint64(b) * 65535 / uint64(a)
+					visibleSamples++
+				}
+			}
+			if samples == 0 {
+				continue
+			}
+
+			// Fill the cell if at least one source pixel had meaningful alpha.
+			// Using a low threshold (1/64 of max) rather than 1/8 ensures
+			// thin features and edge cells are not silently dropped during
+			// downsampling.
+			avgAlpha := alphaSum / samples
+			if avgAlpha < 0x0400 {
+				continue
+			}
+			idx := (offsetY+y)*mask.Width + (offsetX + x)
+			mask.Filled[idx] = true
+			if visibleSamples > 0 {
+				mask.Colors[idx] = Color{
+					R: clampFloat(float64(redSum)/float64(visibleSamples)/65535.0, 0, 1),
+					G: clampFloat(float64(greenSum)/float64(visibleSamples)/65535.0, 0, 1),
+					B: clampFloat(float64(blueSum)/float64(visibleSamples)/65535.0, 0, 1),
+				}
+			}
+		}
+	}
+
+	return mask
+}
+
+// trimGlyphMask crops away fully empty rows and columns around the active
+// symbol so the resulting model is centered tightly around the glyph.
+func trimGlyphMask(mask glyphMask) (glyphMask, bool) {
+	if mask.Width == 0 || mask.Height == 0 || len(mask.Filled) != mask.Width*mask.Height {
+		return glyphMask{}, false
+	}
+
+	minX, minY := mask.Width, mask.Height
+	maxX, maxY := -1, -1
+	for y := 0; y < mask.Height; y++ {
+		for x := 0; x < mask.Width; x++ {
+			if !mask.At(x, y) {
+				continue
+			}
+			if x < minX {
+				minX = x
+			}
+			if x > maxX {
+				maxX = x
+			}
+			if y < minY {
+				minY = y
+			}
+			if y > maxY {
+				maxY = y
+			}
+		}
+	}
+	if maxX < minX || maxY < minY {
+		return glyphMask{}, false
+	}
+
+	width := maxX - minX + 1
+	height := maxY - minY + 1
+	trimmed := glyphMask{
+		Width:  width,
+		Height: height,
+		Filled: make([]bool, width*height),
+		Colors: make([]Color, width*height),
+	}
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			idx := y*width + x
+			trimmed.Filled[idx] = mask.At(minX+x, minY+y)
+			trimmed.Colors[idx] = mask.ColorAt(minX+x, minY+y)
+		}
+	}
+	return trimmed, true
+}
+
+// addGlyphBoundaryFaces adds the exposed side quads around one filled mask
+// cell. Only boundaries touching empty space produce geometry.
+func addGlyphBoundaryFaces(model *Model, mask glyphMask, left, top, cellSize, halfDepth float64, x, y int, color Color) {
+	x0 := left + float64(x)*cellSize
+	x1 := x0 + cellSize
+	y0 := top - float64(y)*cellSize
+	y1 := y0 - cellSize
+
+	if !mask.At(x-1, y) {
+		addGlyphSideFace(model,
+			Vector3D{X: x0, Y: y0, Z: halfDepth},
+			Vector3D{X: x0, Y: y1, Z: halfDepth},
+			Vector3D{X: x0, Y: y1, Z: -halfDepth},
+			Vector3D{X: x0, Y: y0, Z: -halfDepth},
+			color,
+		)
+	}
+	if !mask.At(x+1, y) {
+		addGlyphSideFace(model,
+			Vector3D{X: x1, Y: y0, Z: halfDepth},
+			Vector3D{X: x1, Y: y0, Z: -halfDepth},
+			Vector3D{X: x1, Y: y1, Z: -halfDepth},
+			Vector3D{X: x1, Y: y1, Z: halfDepth},
+			color,
+		)
+	}
+	if !mask.At(x, y-1) {
+		addGlyphSideFace(model,
+			Vector3D{X: x0, Y: y0, Z: halfDepth},
+			Vector3D{X: x0, Y: y0, Z: -halfDepth},
+			Vector3D{X: x1, Y: y0, Z: -halfDepth},
+			Vector3D{X: x1, Y: y0, Z: halfDepth},
+			color,
+		)
+	}
+	if !mask.At(x, y+1) {
+		addGlyphSideFace(model,
+			Vector3D{X: x0, Y: y1, Z: halfDepth},
+			Vector3D{X: x1, Y: y1, Z: halfDepth},
+			Vector3D{X: x1, Y: y1, Z: -halfDepth},
+			Vector3D{X: x0, Y: y1, Z: -halfDepth},
+			color,
+		)
+	}
+}
+
+// addGlyphSideFace appends one extruded side quad to the model.
+func addGlyphSideFace(model *Model, a, b, c, d Vector3D, color Color) {
+	model.AddFace(Face{
+		Vertices:   []Vector3D{a, b, c, d},
+		Char:       '█',
+		RenderMode: FaceRenderFill,
+		Color:      color,
+		HasColor:   true,
+	})
+}
+
+// EmojiToBrailleLines converts an emoji string into a slice of braille-encoded
+// text lines that form a small pixel-art preview of the emoji's glyph mask.
+//
+// cols and rows specify how many braille character columns and rows to produce.
+// Each braille character encodes a 2×4 pixel cell, so the preview is rendered
+// at cols*2 × rows*4 pixels resolution.
+//
+// Results are cached so the function is safe to call on every render frame
+// without triggering repeated CDN fetches.
+//
+// The function returns nil when no glyph mask is available for the frame.
+func EmojiToBrailleLines(frame string, cols, rows int) []string {
+	if cols <= 0 || rows <= 0 {
+		return nil
+	}
+
+	// Return the cached result if this emoji has been processed before.
+	// A stored nil value means rasterization failed and should not be retried.
+	if v, hit := brailleLineCache.Load(frame); hit {
+		if lines, ok := v.([]string); ok {
+			return lines
+		}
+		return nil
+	}
+
+	lines := computeBrailleLines(frame, cols, rows)
+	// Store nil explicitly so we don't re-attempt failed fetches on every frame.
+	var cacheVal interface{}
+	if lines != nil {
+		cacheVal = lines
+	}
+	brailleLineCache.Store(frame, cacheVal)
+	return lines
+}
+
+// computeBrailleLines is the uncached implementation of EmojiToBrailleLines.
+func computeBrailleLines(frame string, cols, rows int) []string {
+	var mask glyphMask
+	var ok bool
+
+	if mask, ok = bundledSymbolMask(frame, defaultSymbolMaskResolution); !ok {
+		var err error
+		if mask, err = rasterizeSymbolMask(frame, defaultSymbolMaskResolution); err != nil {
+			return nil
+		}
+	}
+
+	mask, ok = trimGlyphMask(mask)
+	if !ok {
+		return nil
+	}
+
+	return maskToBrailleLines(mask, cols, rows)
+}
+
+// maskToBrailleLines encodes a glyphMask into cols×rows braille Unicode lines.
+//
+// Each braille character represents a 2×4 pixel cell.  The mask is sampled
+// with integer scaling so there is no floating-point drift across cells.
+func maskToBrailleLines(mask glyphMask, cols, rows int) []string {
+	if cols <= 0 || rows <= 0 || mask.Width == 0 || mask.Height == 0 {
+		return nil
+	}
+
+	// Each braille character covers 2 columns × 4 rows of pixels.
+	pixW := cols * 2
+	pixH := rows * 4
+
+	lines := make([]string, rows)
+	for row := 0; row < rows; row++ {
+		var sb strings.Builder
+		for col := 0; col < cols; col++ {
+			var bits byte
+			// Sample the 2×4 sub-pixels for this braille cell and map each set
+			// pixel to its corresponding braille dot bit position.
+			// Integer scaling avoids floating-point rounding drift across cells.
+			for py := 0; py < 4; py++ {
+				for px := 0; px < 2; px++ {
+					mx := (col*2 + px) * mask.Width / pixW
+					my := (row*4 + py) * mask.Height / pixH
+					if mask.At(mx, my) {
+						bits |= brailleDotBit(px, py)
+					}
+				}
+			}
+			sb.WriteRune(rune(0x2800 + int(bits)))
+		}
+		lines[row] = sb.String()
+	}
+	return lines
+}
+
+// brailleDotBits maps [col][row] → the Unicode braille bitmask for that dot.
+//
+// Standard braille dot layout (dots 1–8, Unicode U+2800 base):
+//
+//	col 0  col 1
+//	dot 1  dot 4   row 0   → bits 0, 3
+//	dot 2  dot 5   row 1   → bits 1, 4
+//	dot 3  dot 6   row 2   → bits 2, 5
+//	dot 7  dot 8   row 3   → bits 6, 7
+var brailleDotBits = [2][4]byte{
+	{1 << 0, 1 << 1, 1 << 2, 1 << 6}, // col 0
+	{1 << 3, 1 << 4, 1 << 5, 1 << 7}, // col 1
+}
+
+// brailleDotBit returns the bitmask for the braille dot at pixel column px
+// (0–1) and pixel row py (0–3). Returns 0 for out-of-range inputs.
+func brailleDotBit(px, py int) byte {
+	if px < 0 || px > 1 || py < 0 || py > 3 {
+		return 0
+	}
+	return brailleDotBits[px][py]
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// darkenColor scales a color down for side and back shading.
+func darkenColor(color Color, factor float64) Color {
+	return Color{
+		R: clampFloat(color.R*factor, 0, 1),
+		G: clampFloat(color.G*factor, 0, 1),
+		B: clampFloat(color.B*factor, 0, 1),
+	}
+}
+
+// brightenColor scales a color up by the given factor, clamping at 1.0.
+func brightenColor(color Color, factor float64) Color {
+	return Color{
+		R: clampFloat(color.R*factor, 0, 1),
+		G: clampFloat(color.G*factor, 0, 1),
+		B: clampFloat(color.B*factor, 0, 1),
+	}
+}
+
+// blendColor mixes a base color with an accent color by the given weight.
+func blendColor(base, accent Color, weight float64) Color {
+	w := clampFloat(weight, 0, 1)
+	return Color{
+		R: clampFloat(base.R*(1-w)+accent.R*w, 0, 1),
+		G: clampFloat(base.G*(1-w)+accent.G*w, 0, 1),
+		B: clampFloat(base.B*(1-w)+accent.B*w, 0, 1),
+	}
+}

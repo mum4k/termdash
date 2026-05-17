@@ -35,6 +35,8 @@ import (
 	"github.com/mum4k/termdash/widgets/linechart/internal/zoom"
 )
 
+const defaultScalePrecision = 2
+
 // seriesValues represent values stored in the series.
 type seriesValues struct {
 	// values are the values in the series.
@@ -104,6 +106,17 @@ type LineChart struct {
 
 	// zoom tracks the zooming of the X axis.
 	zoom *zoom.Tracker
+
+	// thresholdLine is an optional horizontal guide rendered across the chart.
+	thresholdLine *thresholdLine
+}
+
+// Sample identifies a visible data point under a rendered line segment.
+type Sample struct {
+	// X is the one-based visible sample index.
+	X int
+	// Y is the value at X or the interpolated value on a visible segment.
+	Y float64
 }
 
 // New returns a new line chart widget.
@@ -113,8 +126,9 @@ func New(opts ...Option) (*LineChart, error) {
 		return nil, err
 	}
 	return &LineChart{
-		series: map[string]*seriesValues{},
-		opts:   opt,
+		series:        map[string]*seriesValues{},
+		opts:          opt,
+		thresholdLine: opt.thresholdLine,
 	}, nil
 }
 
@@ -196,6 +210,37 @@ func (lc *LineChart) ValueCapacity() int {
 	return lc.capacity
 }
 
+// ValueAt returns the visible sample under pos for a canvas of size.
+//
+// The provided position must be relative to the widget canvas, not the
+// terminal. A sample is only returned when the rendered line occupies the
+// hovered cell, which keeps hover readouts from appearing in empty graph space.
+func (lc *LineChart) ValueAt(size, pos image.Point) (Sample, bool) {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+
+	if size.X <= 0 || size.Y <= 0 {
+		return Sample{}, false
+	}
+
+	cvs, err := canvas.New(image.Rect(0, 0, size.X, size.Y))
+	if err != nil {
+		return Sample{}, false
+	}
+	xd, _, graphAr, segments, ok := lc.hoverLayout(cvs)
+	if !ok || !pos.In(graphAr) {
+		return Sample{}, false
+	}
+
+	hovered, err := lc.hoveredSeriesCell(graphAr, segments, pos)
+	if err != nil || !hovered {
+		return Sample{}, false
+	}
+
+	sample, ok := hoverSample(graphAr, xd, segments, pos)
+	return sample, ok
+}
+
 // Series sets the values that should be displayed as the line chart with the
 // provided label.
 // The values that should not be displayed on the line chart should be represented
@@ -232,6 +277,24 @@ func (lc *LineChart) Series(label string, values []float64, opts ...SeriesOption
 	return nil
 }
 
+// SetThresholdLine updates the horizontal guide rendered across the plotted
+// area at the provided Y value.
+func (lc *LineChart) SetThresholdLine(value float64, opts ...cell.Option) {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+	lc.thresholdLine = &thresholdLine{
+		value:    value,
+		cellOpts: opts,
+	}
+}
+
+// ClearThresholdLine removes any previously configured horizontal guide.
+func (lc *LineChart) ClearThresholdLine() {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+	lc.thresholdLine = nil
+}
+
 // xDetails returns the details for the X axis given the specified minimum and
 // maximum value to display.
 func (lc *LineChart) xDetails(cvs *canvas.Canvas, reqYWidth, min, max int) (*axes.XDetails, error) {
@@ -264,6 +327,9 @@ func (lc *LineChart) xDetailsForCap(cvs *canvas.Canvas, bc *braille.Canvas, xd *
 	diff := values - lc.capacity
 	xMin := int(xd.Scale.Min.Value) + diff
 	xMax := int(xd.Scale.Max.Value)
+	if lc.opts.brailleOnly {
+		return lc.brailleOnlyXDetails(cvs, xMin, xMax)
+	}
 	unscaledXD, err := lc.xDetails(cvs, yd.Start.X, xMin, xMax)
 	if err != nil {
 		return nil, err
@@ -273,6 +339,9 @@ func (lc *LineChart) xDetailsForCap(cvs *canvas.Canvas, bc *braille.Canvas, xd *
 
 // axesDetails determines the details about the X and Y axes.
 func (lc *LineChart) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetails, error) {
+	if lc.opts.brailleOnly {
+		return lc.brailleOnlyDetails(cvs)
+	}
 	reqXHeight := axes.RequiredHeight(lc.maxXValue(), lc.xLabels, lc.opts.xLabelOrientation)
 	yp := &axes.YProperties{
 		Min:            lc.yMin,
@@ -293,6 +362,44 @@ func (lc *LineChart) axesDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDet
 		return nil, nil, err
 	}
 	return xd, yd, nil
+}
+
+// brailleOnlyDetails returns full-canvas scale details without visible axes.
+func (lc *LineChart) brailleOnlyDetails(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetails, error) {
+	graphAr := cvs.Area()
+	xd, err := lc.brailleOnlyXDetails(cvs, 0, lc.maxXValue())
+	if err != nil {
+		return nil, nil, err
+	}
+	ydScale, err := axes.NewYScale(lc.yMin, lc.yMax, graphAr.Dy(), defaultScalePrecision, lc.opts.yAxisMode, lc.opts.yAxisValueFormatter)
+	if err != nil {
+		return nil, nil, err
+	}
+	return xd, &axes.YDetails{
+		Width: 0,
+		Start: image.Point{X: graphAr.Min.X, Y: graphAr.Min.Y},
+		End:   image.Point{X: graphAr.Min.X, Y: graphAr.Max.Y - 1},
+		Scale: ydScale,
+	}, nil
+}
+
+// brailleOnlyXDetails returns scale details for full-canvas braille plotting.
+func (lc *LineChart) brailleOnlyXDetails(cvs *canvas.Canvas, min, max int) (*axes.XDetails, error) {
+	graphAr := cvs.Area()
+	scale, err := axes.NewXScale(min, max, graphAr.Dx(), defaultScalePrecision)
+	if err != nil {
+		return nil, err
+	}
+	return &axes.XDetails{
+		Start: image.Point{X: graphAr.Min.X, Y: graphAr.Max.Y - 1},
+		End:   image.Point{X: graphAr.Max.X - 1, Y: graphAr.Max.Y - 1},
+		Scale: scale,
+		Properties: &axes.XProperties{
+			Min: min,
+			Max: max,
+			LO:  lc.opts.xLabelOrientation,
+		},
+	}, nil
 }
 
 // Draw draws the values as line charts.
@@ -323,6 +430,9 @@ func (lc *LineChart) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 
 // drawAxes draws the X,Y axes and their labels.
 func (lc *LineChart) drawAxes(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) error {
+	if lc.opts.brailleOnly {
+		return nil
+	}
 	lines := []draw.HVLine{
 		{Start: yd.Start, End: yd.End},
 		{Start: xd.Start, End: xd.End},
@@ -363,6 +473,9 @@ func (lc *LineChart) drawAxes(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YD
 // graphAr returns the area available for the graph itself sized so that it
 // fits between the axes and the canvas borders.
 func (lc *LineChart) graphAr(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.YDetails) image.Rectangle {
+	if lc.opts.brailleOnly {
+		return cvs.Area()
+	}
 	return image.Rect(yd.Start.X+1, yd.Start.Y, cvs.Area().Max.X, xd.End.Y)
 }
 
@@ -403,57 +516,44 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 
 	for _, name := range names {
 		sv := lc.series[name]
-		// Skip over series that don't have at least two points since we can't
-		// draw a line for just one point.
-		// Skip over series that fall under the minimum value on the X axis.
-		if got := len(sv.values); got <= 1 {
-			continue
-		}
-
-		var prev float64
-		for i := 1; i < len(sv.values); i++ {
-			v := sv.values[i]
-			prev = sv.values[i-1]
-
-			// Skip the values that are missing.
-			if math.IsNaN(v) || math.IsNaN(prev) {
+		for _, segment := range sampleVisibleSeries(
+			sv.values,
+			int(xdZoomed.Scale.Min.Value),
+			int(xdZoomed.Scale.Max.Value),
+			lc.capacity,
+			lc.opts.downsampler,
+		) {
+			if len(segment) <= 1 {
 				continue
 			}
+			for i := 1; i < len(segment); i++ {
+				start, end := segment[i-1], segment[i]
+				startX, err := xdZoomed.Scale.ValueToPixel(start.index)
+				if err != nil {
+					return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, start.index, xdZoomed.Scale, start.index, err)
+				}
+				endX, err := xdZoomed.Scale.ValueToPixel(end.index)
+				if err != nil {
+					return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, end.index, xdZoomed.Scale, end.index, err)
+				}
 
-			if i < int(xdZoomed.Scale.Min.Value)+1 || i > int(xdZoomed.Scale.Max.Value) {
-				// Don't draw lines for values that aren't supposed to be visible.
-				// These are either values outside of the current zoom or
-				// values at the beginning of a series that falls before athe
-				// start of an unscaled X axis when the XAxisUnscaled option is
-				// provided.
-				continue
-			}
+				startY, err := yd.Scale.ValueToPixel(start.value)
+				if err != nil {
+					return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, start.index, yd.Scale, start.value, err)
+				}
 
-			startX, err := xdZoomed.Scale.ValueToPixel(i - 1)
-			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, i-1, xdZoomed.Scale, i-1, err)
-			}
-			endX, err := xdZoomed.Scale.ValueToPixel(i)
-			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, xdZoomed.Scale.ValueToPixel(%v) => %v", name, i, xdZoomed.Scale, i, err)
-			}
+				endY, err := yd.Scale.ValueToPixel(end.value)
+				if err != nil {
+					return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, end.index, yd.Scale, end.value, err)
+				}
 
-			startY, err := yd.Scale.ValueToPixel(prev)
-			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, i-1, yd.Scale, prev, err)
-			}
-
-			endY, err := yd.Scale.ValueToPixel(v)
-			if err != nil {
-				return nil, fmt.Errorf("failure for series %v[%d] on scale %v, yd.Scale.ValueToPixel(%v) => %v", name, i, yd.Scale, v, err)
-			}
-
-			if err := draw.BrailleLine(bc,
-				image.Point{startX, startY},
-				image.Point{endX, endY},
-				draw.BrailleLineCellOpts(sv.seriesCellOpts...),
-			); err != nil {
-				return nil, fmt.Errorf("draw.BrailleLine => %v", err)
+				if err := draw.BrailleLine(bc,
+					image.Point{startX, startY},
+					image.Point{endX, endY},
+					draw.BrailleLineCellOpts(sv.seriesCellOpts...),
+				); err != nil {
+					return nil, fmt.Errorf("draw.BrailleLine => %v", err)
+				}
 			}
 		}
 	}
@@ -464,10 +564,250 @@ func (lc *LineChart) drawSeries(cvs *canvas.Canvas, xd *axes.XDetails, yd *axes.
 		}
 	}
 
+	if err := lc.drawThresholdLine(bc, yd); err != nil {
+		return nil, err
+	}
+
 	if err := bc.CopyTo(cvs); err != nil {
 		return nil, fmt.Errorf("bc.Apply => %v", err)
 	}
 	return xdZoomed, nil
+}
+
+// hoverSegment stores one visible plotted segment in braille pixel space.
+type hoverSegment struct {
+	startX int
+	startY int
+	endX   int
+	endY   int
+	start  samplePoint
+	end    samplePoint
+}
+
+// hoverLayout determines the visible graph area, zoomed scales, and visible
+// line segments for hover hit-testing.
+func (lc *LineChart) hoverLayout(cvs *canvas.Canvas) (*axes.XDetails, *axes.YDetails, image.Rectangle, []hoverSegment, bool) {
+	needAr, err := area.FromSize(lc.minSize())
+	if err != nil || !needAr.In(cvs.Area()) {
+		return nil, nil, image.Rectangle{}, nil, false
+	}
+
+	xd, yd, err := lc.axesDetails(cvs)
+	if err != nil {
+		return nil, nil, image.Rectangle{}, nil, false
+	}
+
+	graphAr := lc.graphAr(cvs, xd, yd)
+	bc, err := braille.New(graphAr)
+	if err != nil {
+		return nil, nil, image.Rectangle{}, nil, false
+	}
+
+	xdForCap, err := lc.xDetailsForCap(cvs, bc, xd, yd)
+	if err != nil {
+		return nil, nil, image.Rectangle{}, nil, false
+	}
+
+	xdZoomed := xdForCap
+	if lc.zoom != nil {
+		xdZoomed = lc.zoom.Zoom()
+	}
+
+	segments, ok := lc.hoverSegments(xdZoomed, yd)
+	if !ok {
+		return nil, nil, image.Rectangle{}, nil, false
+	}
+	return xdZoomed, yd, graphAr, segments, true
+}
+
+// hoverSegments returns the visible plotted segments used for hover hit-testing.
+func (lc *LineChart) hoverSegments(xd *axes.XDetails, yd *axes.YDetails) ([]hoverSegment, bool) {
+	var names []string
+	for name := range lc.series {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	var segments []hoverSegment
+	for _, name := range names {
+		sv := lc.series[name]
+		for _, segment := range sampleVisibleSeries(
+			sv.values,
+			int(xd.Scale.Min.Value),
+			int(xd.Scale.Max.Value),
+			lc.capacity,
+			lc.opts.downsampler,
+		) {
+			if len(segment) <= 1 {
+				continue
+			}
+			for i := 1; i < len(segment); i++ {
+				start, end := segment[i-1], segment[i]
+				startX, err := xd.Scale.ValueToPixel(start.index)
+				if err != nil {
+					return nil, false
+				}
+				endX, err := xd.Scale.ValueToPixel(end.index)
+				if err != nil {
+					return nil, false
+				}
+				startY, err := yd.Scale.ValueToPixel(start.value)
+				if err != nil {
+					return nil, false
+				}
+				endY, err := yd.Scale.ValueToPixel(end.value)
+				if err != nil {
+					return nil, false
+				}
+				segments = append(segments, hoverSegment{
+					startX: startX,
+					startY: startY,
+					endX:   endX,
+					endY:   endY,
+					start:  start,
+					end:    end,
+				})
+			}
+		}
+	}
+	return segments, true
+}
+
+// hoveredSeriesCell reports whether pos lands on a rendered series cell.
+func (lc *LineChart) hoveredSeriesCell(graphAr image.Rectangle, segments []hoverSegment, pos image.Point) (bool, error) {
+	cvs, err := canvas.New(image.Rect(0, 0, graphAr.Dx(), graphAr.Dy()))
+	if err != nil {
+		return false, err
+	}
+	bc, err := braille.New(cvs.Area())
+	if err != nil {
+		return false, err
+	}
+
+	for _, segment := range segments {
+		if err := draw.BrailleLine(
+			bc,
+			image.Point{X: segment.startX, Y: segment.startY},
+			image.Point{X: segment.endX, Y: segment.endY},
+		); err != nil {
+			return false, err
+		}
+	}
+	if err := bc.CopyTo(cvs); err != nil {
+		return false, err
+	}
+
+	cellPoint := image.Point{X: pos.X - graphAr.Min.X, Y: pos.Y - graphAr.Min.Y}
+	cellValue, err := cvs.Cell(cellPoint)
+	if err != nil {
+		return false, err
+	}
+	return cellValue.Rune != 0 && cellValue.Rune != ' ', nil
+}
+
+// hoverSample returns the nearest visible sample represented at pos.
+func hoverSample(graphAr image.Rectangle, xd *axes.XDetails, segments []hoverSegment, pos image.Point) (Sample, bool) {
+	if len(segments) == 0 {
+		return Sample{}, false
+	}
+
+	cellPixelLeft := (pos.X - graphAr.Min.X) * braille.ColMult
+	cellPixelRight := cellPixelLeft + braille.ColMult - 1
+	cellPixelTop := (pos.Y - graphAr.Min.Y) * braille.RowMult
+	cellPixelBottom := cellPixelTop + braille.RowMult - 1
+	centerX := float64(cellPixelLeft+cellPixelRight) / 2
+	centerY := float64(cellPixelTop+cellPixelBottom) / 2
+
+	bestDistance := math.MaxFloat64
+	bestSample := Sample{}
+	bestFound := false
+
+	for _, segment := range segments {
+		minX := min(segment.startX, segment.endX)
+		maxX := max(segment.startX, segment.endX)
+		if cellPixelRight < minX || cellPixelLeft > maxX {
+			continue
+		}
+
+		for hoverPixelX := cellPixelLeft; hoverPixelX <= cellPixelRight; hoverPixelX++ {
+			t := 0.0
+			if segment.startX != segment.endX {
+				t = float64(hoverPixelX-segment.startX) / float64(segment.endX-segment.startX)
+			}
+			if t < 0 {
+				t = 0
+			}
+			if t > 1 {
+				t = 1
+			}
+
+			pixelY := float64(segment.startY) + float64(segment.endY-segment.startY)*t
+			if pixelY < float64(cellPixelTop) || pixelY > float64(cellPixelBottom) {
+				continue
+			}
+
+			xValue, err := xd.Scale.PixelToValue(hoverPixelX)
+			if err != nil {
+				continue
+			}
+			yValue := segment.start.value + (segment.end.value-segment.start.value)*t
+			distance := math.Hypot(float64(hoverPixelX)-centerX, pixelY-centerY)
+			if !bestFound || distance < bestDistance {
+				bestDistance = distance
+				bestSample = Sample{
+					X: int(math.Round(xValue)) + 1,
+					Y: yValue,
+				}
+				bestFound = true
+			}
+		}
+	}
+
+	return bestSample, bestFound
+}
+
+// min returns the smaller of the provided integers.
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+// max returns the larger of the provided integers.
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+// drawThresholdLine renders the configured horizontal guide across the plotted
+// area when one is enabled.
+func (lc *LineChart) drawThresholdLine(bc *braille.Canvas, yd *axes.YDetails) error {
+	if lc.thresholdLine == nil {
+		return nil
+	}
+
+	y, err := yd.Scale.ValueToPixel(lc.thresholdLine.value)
+	if err != nil {
+		return fmt.Errorf("yd.Scale.ValueToPixel(%v) => %v", lc.thresholdLine.value, err)
+	}
+
+	maxX := bc.Area().Dx() - 1
+	if maxX < 0 {
+		return nil
+	}
+
+	if err := draw.BrailleLine(
+		bc,
+		image.Point{X: 0, Y: y},
+		image.Point{X: maxX, Y: y},
+		draw.BrailleLineCellOpts(lc.thresholdLine.cellOpts...),
+	); err != nil {
+		return fmt.Errorf("draw.BrailleLine(threshold) => %v", err)
+	}
+	return nil
 }
 
 // highlightRange highlights the range of X columns on the braille canvas.
@@ -495,6 +835,9 @@ func (lc *LineChart) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) erro
 
 // minSize determines the minimum required size to draw the line chart.
 func (lc *LineChart) minSize() image.Point {
+	if lc.opts.brailleOnly {
+		return image.Point{1, 1}
+	}
 	// At the very least we need:
 	// - n cells width for the Y axis and its labels as reported by it.
 	// - at least 1 cell width for the graph.

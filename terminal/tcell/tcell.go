@@ -20,7 +20,6 @@ import (
 	"image"
 
 	tcell "github.com/gdamore/tcell/v2"
-	"github.com/gdamore/tcell/v2/encoding"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/private/event/eventqueue"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -78,6 +77,7 @@ type Terminal struct {
 	// Options.
 	colorMode  terminalapi.ColorMode
 	clearStyle *cell.Options
+	mouseOn    bool
 }
 
 // tcellNewScreen can be overridden from tests.
@@ -107,12 +107,32 @@ func newTerminal(opts ...Option) (*Terminal, error) {
 	return t, nil
 }
 
+// EnableMouse enables mouse capture for focus and click handling.
+func (t *Terminal) EnableMouse() {
+	t.screen.EnableMouse(tcell.MouseButtonEvents)
+	t.mouseOn = true
+}
+
+// EnableMouseMotion enables mouse capture including hover/motion events.
+func (t *Terminal) EnableMouseMotion() {
+	t.screen.EnableMouse(tcell.MouseButtonEvents | tcell.MouseMotionEvents)
+	t.mouseOn = true
+}
+
+// DisableMouse disables mouse capture so the host terminal can select text.
+func (t *Terminal) DisableMouse() {
+	t.screen.DisableMouse()
+	t.mouseOn = false
+}
+
+// MouseEnabled reports whether mouse capture is currently enabled.
+func (t *Terminal) MouseEnabled() bool {
+	return t.mouseOn
+}
+
 // New returns a new tcell based Terminal.
 // Call Close() when the terminal isn't required anymore.
 func New(opts ...Option) (*Terminal, error) {
-	// Enable full character set support for tcell
-	encoding.Register()
-
 	t, err := newTerminal(opts...)
 	if err != nil {
 		return nil, err
@@ -122,7 +142,8 @@ func New(opts ...Option) (*Terminal, error) {
 	}
 
 	clearStyle := cellOptsToStyle(t.clearStyle, t.colorMode)
-	t.screen.EnableMouse()
+	t.screen.EnableMouse(tcell.MouseButtonEvents)
+	t.mouseOn = true
 	t.screen.SetStyle(clearStyle)
 
 	go t.pollEvents() // Stops when Close() is called.

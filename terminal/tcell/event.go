@@ -28,29 +28,40 @@ var tcellSpaceKey = tcell.Key(' ')
 
 // tcellToTd maps tcell key values to the termdash format.
 var tcellToTd = map[tcell.Key]keyboard.Key{
-	tcellSpaceKey:           keyboard.KeySpace,
-	tcell.KeyF1:             keyboard.KeyF1,
-	tcell.KeyF2:             keyboard.KeyF2,
-	tcell.KeyF3:             keyboard.KeyF3,
-	tcell.KeyF4:             keyboard.KeyF4,
-	tcell.KeyF5:             keyboard.KeyF5,
-	tcell.KeyF6:             keyboard.KeyF6,
-	tcell.KeyF7:             keyboard.KeyF7,
-	tcell.KeyF8:             keyboard.KeyF8,
-	tcell.KeyF9:             keyboard.KeyF9,
-	tcell.KeyF10:            keyboard.KeyF10,
-	tcell.KeyF11:            keyboard.KeyF11,
-	tcell.KeyF12:            keyboard.KeyF12,
-	tcell.KeyInsert:         keyboard.KeyInsert,
-	tcell.KeyDelete:         keyboard.KeyDelete,
-	tcell.KeyHome:           keyboard.KeyHome,
-	tcell.KeyEnd:            keyboard.KeyEnd,
-	tcell.KeyPgUp:           keyboard.KeyPgUp,
-	tcell.KeyPgDn:           keyboard.KeyPgDn,
-	tcell.KeyUp:             keyboard.KeyArrowUp,
-	tcell.KeyDown:           keyboard.KeyArrowDown,
-	tcell.KeyLeft:           keyboard.KeyArrowLeft,
-	tcell.KeyRight:          keyboard.KeyArrowRight,
+	tcellSpaceKey:   keyboard.KeySpace,
+	tcell.KeyF1:     keyboard.KeyF1,
+	tcell.KeyF2:     keyboard.KeyF2,
+	tcell.KeyF3:     keyboard.KeyF3,
+	tcell.KeyF4:     keyboard.KeyF4,
+	tcell.KeyF5:     keyboard.KeyF5,
+	tcell.KeyF6:     keyboard.KeyF6,
+	tcell.KeyF7:     keyboard.KeyF7,
+	tcell.KeyF8:     keyboard.KeyF8,
+	tcell.KeyF9:     keyboard.KeyF9,
+	tcell.KeyF10:    keyboard.KeyF10,
+	tcell.KeyF11:    keyboard.KeyF11,
+	tcell.KeyF12:    keyboard.KeyF12,
+	tcell.KeyInsert: keyboard.KeyInsert,
+	tcell.KeyDelete: keyboard.KeyDelete,
+	tcell.KeyHome:   keyboard.KeyHome,
+	tcell.KeyEnd:    keyboard.KeyEnd,
+	tcell.KeyPgUp:   keyboard.KeyPgUp,
+	tcell.KeyPgDn:   keyboard.KeyPgDn,
+	tcell.KeyUp:     keyboard.KeyArrowUp,
+	tcell.KeyDown:   keyboard.KeyArrowDown,
+	tcell.KeyLeft:   keyboard.KeyArrowLeft,
+	tcell.KeyRight:  keyboard.KeyArrowRight,
+	// Some terminal/keypad combinations emit diagonal/cross keys instead of
+	// digit runes for numpad presses. Map them onto navigation keys so higher
+	// layers can still bind these inputs predictably.
+	tcell.KeyUpLeft:    keyboard.KeyHome,
+	tcell.KeyUpRight:   keyboard.KeyPgUp,
+	tcell.KeyDownLeft:  keyboard.KeyEnd,
+	tcell.KeyDownRight: keyboard.KeyPgDn,
+	// KeyCenter/KeyClear commonly correspond to numpad "5" when num-lock is
+	// off or on terminals that don't emit a rune for keypad center.
+	tcell.KeyCenter:         keyboard.Key('5'),
+	tcell.KeyClear:          keyboard.Key('5'),
 	tcell.KeyEnter:          keyboard.KeyEnter,
 	tcell.KeyCtrlA:          keyboard.KeyCtrlA,
 	tcell.KeyCtrlB:          keyboard.KeyCtrlB,
@@ -99,6 +110,12 @@ func convKey(event *tcell.EventKey) terminalapi.Event {
 
 	k, ok := tcellToTd[tcellKey]
 	if !ok {
+		if tcellKey >= tcell.Key('!') && tcellKey <= tcell.Key('~') {
+			return &terminalapi.Keyboard{
+				Key: keyboard.Key(rune(tcellKey)),
+			}
+		}
+
 		return terminalapi.NewErrorf("unknown keyboard key '%v' in a keyboard event %v", tcellKey, event.Name())
 	}
 

@@ -24,7 +24,7 @@ import (
 	"github.com/mum4k/termdash/private/runewidth"
 )
 
-// sparks are the characters used to draw the SparkLine.
+// sparks are the default characters used to draw the SparkLine.
 var sparks = []rune{'▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'}
 
 // visibleMax determines the maximum visible data point given the canvas width.
@@ -63,12 +63,21 @@ type blocks struct {
 // to represent the provided value given the specified max visible value and
 // number of vertical cells available to the SparkLine.
 func toBlocks(value, max, vertCells int) blocks {
+	return toBlocksWithSparks(value, max, vertCells, sparks)
+}
+
+// toBlocksWithSparks determines the number of full and partial vertical
+// blocks required to represent the provided value using the provided spark set.
+func toBlocksWithSparks(value, max, vertCells int, sparkSet []rune) blocks {
 	if value <= 0 || max <= 0 || vertCells <= 0 {
+		return blocks{}
+	}
+	if len(sparkSet) == 0 {
 		return blocks{}
 	}
 
 	// How many of the smallest spark elements fit into a cell.
-	cellSparks := len(sparks)
+	cellSparks := len(sparkSet)
 
 	// Scale is how much of the max does one smallest spark element represent,
 	// given the vertical cells that will be used to represent the value.
@@ -83,18 +92,30 @@ func toBlocks(value, max, vertCells int) blocks {
 
 	part := elements % cellSparks
 	if part > 0 {
-		b.partSpark = sparks[part-1]
+		b.partSpark = sparkSet[part-1]
 	}
 	return b
+}
+
+// validateSparkRunes ensures all runes in the spark set occupy exactly one
+// terminal cell.
+func validateSparkRunes(sparkSet []rune) error {
+	if len(sparkSet) == 0 {
+		return fmt.Errorf("SparkRunes must contain at least one rune")
+	}
+	for i, s := range sparkSet {
+		if got := runewidth.RuneWidth(s); got != 1 {
+			return fmt.Errorf("SparkRunes[%d]=%q has width %d, expected 1", i, s, got)
+		}
+	}
+	return nil
 }
 
 // init ensures that all spark characters are half-width runes.
 // The SparkLine widget assumes that each value can be represented in a column
 // that has a width of one cell.
 func init() {
-	for i, s := range sparks {
-		if got := runewidth.RuneWidth(s); got > 1 {
-			panic(fmt.Sprintf("all sparks must be half-width runes (width of one), spark[%d] has width %d", i, got))
-		}
+	if err := validateSparkRunes(sparks); err != nil {
+		panic(fmt.Sprintf("invalid default spark rune set: %v", err))
 	}
 }

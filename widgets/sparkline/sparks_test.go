@@ -258,6 +258,32 @@ func TestToBlocks(t *testing.T) {
 	}
 }
 
+func TestToBlocksWithSparks(t *testing.T) {
+	got := toBlocksWithSparks(8, 8, 1, []rune{'a', 'b', 'c', 'd'})
+	want := blocks{full: 1, partSpark: 0}
+	if diff := pretty.Compare(want, got); diff != "" {
+		t.Fatalf("toBlocksWithSparks => unexpected diff (-want, +got):\n%s", diff)
+	}
+
+	got = toBlocksWithSparks(2, 8, 1, []rune{'a', 'b', 'c', 'd'})
+	want = blocks{full: 0, partSpark: 'a'}
+	if diff := pretty.Compare(want, got); diff != "" {
+		t.Fatalf("toBlocksWithSparks partial => unexpected diff (-want, +got):\n%s", diff)
+	}
+}
+
+func TestValidateSparkRunes(t *testing.T) {
+	if err := validateSparkRunes(nil); err == nil {
+		t.Fatal("validateSparkRunes(nil) => nil error, want error")
+	}
+	if err := validateSparkRunes([]rune{'a', '⚡'}); err == nil {
+		t.Fatal("validateSparkRunes with multi-cell rune => nil error, want error")
+	}
+	if err := validateSparkRunes([]rune{'a', 'b'}); err != nil {
+		t.Fatalf("validateSparkRunes valid set => unexpected error: %v", err)
+	}
+}
+
 // findRune finds the rune in the slice and returns its index.
 // Returns -1 if the rune isn't in the slice.
 func findRune(target rune, runes []rune) int {

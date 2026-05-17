@@ -56,6 +56,20 @@ func TestSparkLine(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			desc: "fails on multi-cell spark rune",
+			opts: []Option{
+				SparkRunes('⚡'),
+			},
+			update: func(sl *SparkLine) error {
+				return nil
+			},
+			canvas: image.Rect(0, 0, 1, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				return faketerm.MustNew(size)
+			},
+			wantErr: true,
+		},
+		{
 			desc: "draws empty for no data points",
 			update: func(sl *SparkLine) error {
 				return nil
@@ -88,6 +102,27 @@ func TestSparkLine(t *testing.T) {
 				c := testcanvas.MustNew(ft.Area())
 
 				testdraw.MustText(c, "▁▂▃▄▅▆▇█", image.Point{1, 0}, draw.TextCellOpts(
+					cell.FgColor(DefaultColor),
+				))
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+			wantCapacity: 9,
+		},
+		{
+			desc: "uses custom spark runes",
+			opts: []Option{
+				SparkRunes('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'),
+			},
+			update: func(sl *SparkLine) error {
+				return sl.Add([]int{0, 1, 2, 3, 4, 5, 6, 7, 8})
+			},
+			canvas: image.Rect(0, 0, 9, 1),
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testdraw.MustText(c, "abcdefgh", image.Point{1, 0}, draw.TextCellOpts(
 					cell.FgColor(DefaultColor),
 				))
 				testcanvas.MustApply(c, ft)
@@ -501,6 +536,79 @@ func TestSparkLine(t *testing.T) {
 				t.Errorf("ValueCapacity => %v, want %v", gotCapacity, tc.wantCapacity)
 			}
 		})
+	}
+}
+
+func TestSparkLineDrawsThresholdLine(t *testing.T) {
+	sl, err := New(
+		Threshold(50),
+		ThresholdLineColor(cell.ColorRed),
+	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := sl.Add([]int{0, 100, 0, 0}); err != nil {
+		t.Fatalf("Add => unexpected error: %v", err)
+	}
+
+	cvs, err := canvas.New(image.Rect(0, 0, 4, 4))
+	if err != nil {
+		t.Fatalf("canvas.New => unexpected error: %v", err)
+	}
+	if err := sl.Draw(cvs, nil); err != nil {
+		t.Fatalf("Draw => unexpected error: %v", err)
+	}
+
+	found := false
+	for x := 0; x < 4; x++ {
+		for y := 0; y < 4; y++ {
+			cellAt, err := cvs.Cell(image.Point{X: x, Y: y})
+			if err != nil {
+				t.Fatalf("Cell => unexpected error: %v", err)
+			}
+			if cellAt.Rune == '─' && cellAt.Opts != nil && cellAt.Opts.FgColor == cell.ColorRed {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected threshold line cell with red color")
+	}
+}
+
+func TestSparkLineColorsBarsAboveThreshold(t *testing.T) {
+	sl, err := New(
+		Color(cell.ColorGreen),
+		Threshold(50),
+		AlertColor(cell.ColorRed),
+	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := sl.Add([]int{100}); err != nil {
+		t.Fatalf("Add => unexpected error: %v", err)
+	}
+
+	cvs, err := canvas.New(image.Rect(0, 0, 1, 4))
+	if err != nil {
+		t.Fatalf("canvas.New => unexpected error: %v", err)
+	}
+	if err := sl.Draw(cvs, nil); err != nil {
+		t.Fatalf("Draw => unexpected error: %v", err)
+	}
+
+	foundRed := false
+	for y := 0; y < 4; y++ {
+		cellAt, err := cvs.Cell(image.Point{X: 0, Y: y})
+		if err != nil {
+			t.Fatalf("Cell => unexpected error: %v", err)
+		}
+		if cellAt.Rune != 0 && cellAt.Opts != nil && cellAt.Opts.FgColor == cell.ColorRed {
+			foundRed = true
+		}
+	}
+	if !foundRed {
+		t.Fatal("expected at least one over-threshold spark cell to use alert color")
 	}
 }
 

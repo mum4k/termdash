@@ -68,9 +68,9 @@ func main() {
 	cloak, err := checkbox.New("Enable Cloak",
 		checkbox.UseIndicatorSet(checkbox.IndicatorSets.Heavy),
 		checkbox.OnChange(func(checked bool) error {
-		cloakOn = checked
-		return writeStatus(cloakOn, shieldsOn)
-	}))
+			cloakOn = checked
+			return writeStatus(cloakOn, shieldsOn)
+		}))
 	if err != nil {
 		panic(err)
 	}
@@ -79,9 +79,9 @@ func main() {
 		checkbox.Checked(true),
 		checkbox.UseIndicatorSet(checkbox.IndicatorSets.Rounded),
 		checkbox.OnChange(func(checked bool) error {
-		shieldsOn = checked
-		return writeStatus(cloakOn, shieldsOn)
-	}))
+			shieldsOn = checked
+			return writeStatus(cloakOn, shieldsOn)
+		}))
 	if err != nil {
 		panic(err)
 	}

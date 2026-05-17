@@ -79,18 +79,18 @@ type options struct {
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
-		sweepSpeed:  60.0,  // One full rotation every 6 seconds.
-		beamWidth:   35.0,  // 35-degree fade trail.
-		sweepSpan:   360.0, // Full rotation.
-		startAngle:  0.0,   // Start at North.
-		direction:   DirectionClockwise,
-		rangeRings:  3,
-		beamR:       0,   // Neon green beam.
-		beamG:       255,
-		beamB:       70,
-		contactR:    255, // Hot red contacts.
-		contactG:    50,
-		contactB:    50,
+		sweepSpeed:     60.0,  // One full rotation every 6 seconds.
+		beamWidth:      35.0,  // 35-degree fade trail.
+		sweepSpan:      360.0, // Full rotation.
+		startAngle:     0.0,   // Start at North.
+		direction:      DirectionClockwise,
+		rangeRings:     3,
+		beamR:          0, // Neon green beam.
+		beamG:          255,
+		beamB:          70,
+		contactR:       255, // Hot red contacts.
+		contactG:       50,
+		contactB:       50,
 		contactChar:    '◆',
 		tooltipEnabled: true,
 	}

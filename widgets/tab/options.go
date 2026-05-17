@@ -31,14 +31,14 @@ type Options struct {
 // NewOptions initializes default options or applies provided options.
 func NewOptions(opts ...Option) *Options {
 	o := &Options{
-		Tabs:                []*Tab{},
-		LabelColor:          cell.ColorNumber(252),
-		ActiveTextColor:     cell.ColorNumber(231),
-		InactiveTextColor:   cell.ColorNumber(247),
-		ActiveTabColor:      cell.ColorNumber(24),
-		InactiveTabColor:    cell.ColorNumber(236),
-		ActiveIcon:          "◆",
-		InactiveIcon:        "○",
+		Tabs:              []*Tab{},
+		LabelColor:        cell.ColorNumber(252),
+		ActiveTextColor:   cell.ColorNumber(231),
+		InactiveTextColor: cell.ColorNumber(247),
+		ActiveTabColor:    cell.ColorNumber(24),
+		InactiveTabColor:  cell.ColorNumber(236),
+		ActiveIcon:        "◆",
+		InactiveIcon:      "○",
 		NotificationIcon:  "⚠",
 		// Bright amber — high-contrast alarm colour visible on both light and
 		// dark tab backgrounds without clashing with the active/inactive text.

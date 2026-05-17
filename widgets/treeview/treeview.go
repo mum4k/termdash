@@ -258,7 +258,7 @@ func setInitialExpandedState(tv *TreeView, expandRoot bool) {
 // calculateHeight calculates the height of a node, including its children if expanded.
 func (tv *TreeView) calculateHeight(tn *TreeNode) int {
 	height := 1 // Start with the height of the current node
-	if tn.ExpandedState {
+	if tn.GetExpandedState() {
 		for _, child := range tn.Children {
 			height += tv.calculateHeight(child)
 		}
@@ -306,7 +306,7 @@ func (tv *TreeView) getNodePrefix(tn *TreeNode) string {
 	}
 
 	if len(tn.Children) > 0 {
-		if tn.ExpandedState {
+		if tn.GetExpandedState() {
 			return tv.expandedIcon
 		}
 		return tv.collapsedIcon
@@ -319,7 +319,7 @@ func (tv *TreeView) getNodePrefix(tn *TreeNode) string {
 func (tv *TreeView) drawNode(cvs *canvas.Canvas, nodesToDraw []*TreeNode) error {
 	for y, tn := range nodesToDraw {
 		// Determine if this node is selected
-		isSelected := (tn.ID == tv.selectedNode.ID)
+		isSelected := tv.selectedNode != nil && tn.ID == tv.selectedNode.ID
 
 		// Get the prefix based on node state
 		prefix := tv.getNodePrefix(tn)
@@ -396,7 +396,7 @@ func (tv *TreeView) handleMouseClick(x, y int) error {
 	visibleNodes := tv.visibleNodes
 	clickedNode := tv.findNodeByClick(x, y, visibleNodes)
 	if clickedNode != nil {
-		tv.logger.Printf("Node: %s (ID: %s) clicked, expanded: %v", clickedNode.Label, clickedNode.ID, clickedNode.ExpandedState)
+		tv.logger.Printf("Node: %s (ID: %s) clicked, expanded: %v", clickedNode.Label, clickedNode.ID, clickedNode.GetExpandedState())
 		// Update selectedNode to the clicked node
 		tv.selectedNode = clickedNode
 		if err := tv.handleNodeClick(clickedNode); err != nil {
@@ -416,7 +416,7 @@ func (tv *TreeView) handleNodeClick(tn *TreeNode) error {
 		// Toggle expansion state
 		tn.SetExpandedState(!tn.GetExpandedState())
 		tv.updateTotalHeight()
-		tv.logger.Printf("Toggled expansion for node: %s to %v", tn.Label, tn.ExpandedState)
+		tv.logger.Printf("Toggled expansion for node: %s to %v", tn.Label, tn.GetExpandedState())
 		return nil
 	}
 
@@ -445,6 +445,9 @@ func (tv *TreeView) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error
 	if m.Button == mouse.ButtonRelease {
 		return nil
 	}
+
+	tv.mu.Lock()
+	defer tv.mu.Unlock()
 
 	// Adjust coordinates to be relative to the widget's position
 	x := m.Position.X - tv.position.X
@@ -490,17 +493,18 @@ func (tv *TreeView) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error
 // Keyboard handles keyboard events.
 func (tv *TreeView) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
 	tv.mu.Lock()
+	defer tv.mu.Unlock()
 	visibleNodes := tv.visibleNodes
 	currentIndex := tv.getSelectedNodeIndex(visibleNodes)
-	tv.mu.Unlock()
 	if currentIndex == -1 {
 		if len(visibleNodes) > 0 {
+			// No node was selected yet: initialize to the first visible node and
+			// treat this key press as consumed so we don't also move the cursor.
 			tv.selectedNode = visibleNodes[0]
-			currentIndex = 0
-		} else {
-			// No visible nodes to select
-			return nil
 		}
+		// Whether we just initialized or had no nodes at all, do not apply any
+		// movement for this key event.
+		return nil
 	}
 
 	// Debounce Enter key to avoid rapid toggling
@@ -549,6 +553,9 @@ func (tv *TreeView) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta)
 
 // getSelectedNodeIndex returns the index of the selected node in the visibleNodes list.
 func (tv *TreeView) getSelectedNodeIndex(visibleNodes []*TreeNode) int {
+	if tv.selectedNode == nil {
+		return -1
+	}
 	for idx, tn := range visibleNodes {
 		if tn.ID == tv.selectedNode.ID {
 			return idx
@@ -583,14 +590,16 @@ func (tv *TreeView) drawLabel(cvs *canvas.Canvas, label string, x, y int, fgColo
 
 	truncatedLabel := truncateString(label, displayWidth)
 
-	for i, r := range truncatedLabel {
-		if x+i >= cvs.Area().Dx() || y >= cvs.Area().Dy() {
+	col := 0
+	for _, r := range truncatedLabel {
+		if x+col >= cvs.Area().Dx() || y >= cvs.Area().Dy() {
 			// If the x or y position exceeds the canvas dimensions, stop drawing
 			break
 		}
-		if _, err := cvs.SetCell(image.Point{X: x + i, Y: y}, r, cell.FgColor(fgColor), cell.BgColor(bgColor)); err != nil {
+		if _, err := cvs.SetCell(image.Point{X: x + col, Y: y}, r, cell.FgColor(fgColor), cell.BgColor(bgColor)); err != nil {
 			return err
 		}
+		col += runewidth.RuneWidth(r)
 	}
 	return nil
 }
@@ -598,13 +607,13 @@ func (tv *TreeView) drawLabel(cvs *canvas.Canvas, label string, x, y int, fgColo
 // Draw renders the treeview widget.
 func (tv *TreeView) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	tv.mu.Lock()
+	defer tv.mu.Unlock()
 	tv.updateVisibleNodes()
 	visibleNodes := tv.visibleNodes
 	totalHeight := len(visibleNodes)
 	width := cvs.Area().Dx()
 	tv.canvasWidth = width // Set canvasWidth here
 	tv.canvasHeight = cvs.Area().Dy()
-	tv.mu.Unlock()
 
 	// Log canvas dimensions
 	tv.logger.Printf("Canvas Area: Dx=%d, Dy=%d", tv.canvasWidth, tv.canvasHeight)
@@ -728,7 +737,7 @@ func (tv *TreeView) updateVisibleNodes() {
 	var traverse func(tn *TreeNode)
 	traverse = func(tn *TreeNode) {
 		allVisible = append(allVisible, tn)
-		if tn.ExpandedState {
+		if tn.GetExpandedState() {
 			for _, child := range tn.Children {
 				traverse(child)
 			}

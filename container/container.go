@@ -276,6 +276,19 @@ func (c *Container) Update(id string, opts ...Option) error {
 	return nil
 }
 
+// ActiveID returns the ID of the currently focused container.
+// If the focused container has no ID, an empty string is returned.
+func (c *Container) ActiveID() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	active := c.focusTracker.active()
+	if active == nil {
+		return ""
+	}
+	return active.opts.id
+}
+
 // updateFocusFromMouse processes the mouse event and determines if it changes
 // the focused container.
 // Caller must hold c.mu.

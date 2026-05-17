@@ -356,6 +356,52 @@ func TestBorder(t *testing.T) {
 			},
 		},
 		{
+			desc:   "applies border cell styling to title colors without replacing title runes",
+			canvas: image.Rect(0, 0, 6, 4),
+			border: image.Rect(0, 0, 6, 4),
+			opts: []BorderOption{
+				BorderTitle("ab", OverrunModeStrict, cell.FgColor(cell.ColorBlue)),
+				BorderCellStyleFunc(func(bc BorderCell) BorderCellStyle {
+					if bc.Point.Y == bc.Border.Min.Y && bc.Point.X >= 1 && bc.Point.X <= 2 {
+						return BorderCellStyle{
+							Rune:     '█',
+							CellOpts: []cell.Option{cell.FgColor(cell.ColorRed)},
+						}
+					}
+					return BorderCellStyle{}
+				}),
+			},
+			want: func(size image.Point) *faketerm.Terminal {
+				ft := faketerm.MustNew(size)
+				c := testcanvas.MustNew(ft.Area())
+
+				testcanvas.MustSetCell(c, image.Point{0, 0}, lineStyleChars[linestyle.Light][topLeftCorner])
+				testcanvas.MustSetCell(c, image.Point{0, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{0, 3}, lineStyleChars[linestyle.Light][bottomLeftCorner])
+
+				testcanvas.MustSetCell(c, image.Point{1, 0}, 'a', cell.FgColor(cell.ColorBlue), cell.FgColor(cell.ColorRed))
+				testcanvas.MustSetCell(c, image.Point{1, 3}, lineStyleChars[linestyle.Light][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{2, 0}, 'b', cell.FgColor(cell.ColorBlue), cell.FgColor(cell.ColorRed))
+				testcanvas.MustSetCell(c, image.Point{2, 3}, lineStyleChars[linestyle.Light][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{3, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{3, 3}, lineStyleChars[linestyle.Light][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{4, 0}, lineStyleChars[linestyle.Light][hLine])
+				testcanvas.MustSetCell(c, image.Point{4, 3}, lineStyleChars[linestyle.Light][hLine])
+
+				testcanvas.MustSetCell(c, image.Point{5, 0}, lineStyleChars[linestyle.Light][topRightCorner])
+				testcanvas.MustSetCell(c, image.Point{5, 1}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 2}, lineStyleChars[linestyle.Light][vLine])
+				testcanvas.MustSetCell(c, image.Point{5, 3}, lineStyleChars[linestyle.Light][bottomRightCorner])
+
+				testcanvas.MustApply(c, ft)
+				return ft
+			},
+		},
+		{
 			desc:   "aligns the title to the left",
 			canvas: image.Rect(0, 0, 6, 4),
 			border: image.Rect(0, 0, 6, 4),
@@ -499,5 +545,38 @@ func TestBorder(t *testing.T) {
 				t.Errorf("Border => %v", diff)
 			}
 		})
+	}
+}
+
+func TestBorderCellStylerMarksTitleCells(t *testing.T) {
+	c := testcanvas.MustNew(image.Rect(0, 0, 8, 4))
+	var titleCells []BorderCell
+	var borderTitleCells []BorderCell
+
+	err := Border(c, image.Rect(0, 0, 8, 4),
+		BorderTitle("ab", OverrunModeStrict),
+		BorderCellStyleFunc(func(bc BorderCell) BorderCellStyle {
+			if bc.Title {
+				titleCells = append(titleCells, bc)
+				return BorderCellStyle{}
+			}
+			if bc.Rune == 'a' || bc.Rune == 'b' {
+				borderTitleCells = append(borderTitleCells, bc)
+			}
+			return BorderCellStyle{}
+		}),
+	)
+	if err != nil {
+		t.Fatalf("Border => unexpected error: %v", err)
+	}
+
+	if got, want := len(titleCells), 2; got != want {
+		t.Fatalf("title cell count = %d, want %d", got, want)
+	}
+	if got, want := string([]rune{titleCells[0].Rune, titleCells[1].Rune}), "ab"; got != want {
+		t.Fatalf("title runes = %q, want %q", got, want)
+	}
+	if len(borderTitleCells) != 0 {
+		t.Fatalf("non-title border cells unexpectedly received title runes: %+v", borderTitleCells)
 	}
 }

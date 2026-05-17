@@ -19,6 +19,7 @@ package slider
 import (
 	"fmt"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 )
 
@@ -42,6 +43,70 @@ func (o option) set(opts *options) {
 // and mouse event handling paths, which run in separate goroutines.
 type ChangeFn func(value int) error
 
+// Direction indicates the axis the slider is drawn on.
+type Direction int
+
+// String implements fmt.Stringer.
+func (o Direction) String() string {
+	if n, ok := orientationNames[o]; ok {
+		return n
+	}
+	return "OrientationUnknown"
+}
+
+var orientationNames = map[Direction]string{
+	OrientationHorizontal: "OrientationHorizontal",
+	OrientationVertical:   "OrientationVertical",
+}
+
+const (
+	// OrientationHorizontal draws the slider left-to-right.
+	OrientationHorizontal Direction = iota
+	// OrientationVertical draws the slider bottom-to-top.
+	OrientationVertical
+)
+
+// SliderStyle is a named visual preset for the slider track.
+type SliderStyle int
+
+// String implements fmt.Stringer.
+func (s SliderStyle) String() string {
+	if n, ok := styleNames[s]; ok {
+		return n
+	}
+	return "StyleUnknown"
+}
+
+var styleNames = map[SliderStyle]string{
+	StyleBar:              "StyleBar",
+	StyleSegmented:        "StyleSegmented",
+	StyleSegmentedBlocks:  "StyleSegmentedBlocks",
+	StyleDots:             "StyleDots",
+	StyleSegmentedDots:    "StyleSegmentedDots",
+	StyleSquares:          "StyleSquares",
+	StyleSegmentedSquares: "StyleSegmentedSquares",
+	StyleStars:            "StyleStars",
+}
+
+const (
+	// StyleBar is the default solid filled bar with a knob.
+	StyleBar SliderStyle = iota
+	// StyleSegmented draws a thin segmented line.
+	StyleSegmented
+	// StyleSegmentedBlocks draws dense rectangular block segments.
+	StyleSegmentedBlocks
+	// StyleDots draws filled and empty circular dots.
+	StyleDots
+	// StyleSegmentedDots draws smaller dot segments.
+	StyleSegmentedDots
+	// StyleSquares draws filled and empty square blocks.
+	StyleSquares
+	// StyleSegmentedSquares draws smaller square segments.
+	StyleSegmentedSquares
+	// StyleStars draws filled and empty star segments.
+	StyleStars
+)
+
 // options holds the provided options.
 type options struct {
 	min            int
@@ -49,6 +114,10 @@ type options struct {
 	value          int
 	step           int
 	width          int
+	orientation    Direction
+	hAlign         align.Horizontal
+	vAlign         align.Vertical
+	style          SliderStyle
 	fillRune       rune
 	trackRune      rune
 	knobRune       rune
@@ -83,6 +152,12 @@ func (o *options) validate() error {
 	if o.width <= 0 {
 		return fmt.Errorf("invalid width %d, want width > 0", o.width)
 	}
+	if _, ok := orientationNames[o.orientation]; !ok {
+		return fmt.Errorf("invalid orientation %v", o.orientation)
+	}
+	if _, ok := styleNames[o.style]; !ok {
+		return fmt.Errorf("invalid style %v", o.style)
+	}
 	return nil
 }
 
@@ -94,6 +169,10 @@ func newOptions() *options {
 		value:          0,
 		step:           DefaultStep,
 		width:          DefaultWidth,
+		orientation:    OrientationHorizontal,
+		hAlign:         align.HorizontalLeft,
+		vAlign:         align.VerticalTop,
+		style:          StyleBar,
 		fillRune:       '█',
 		trackRune:      '░',
 		knobRune:       '●',
@@ -132,12 +211,80 @@ func Step(v int) Option {
 	})
 }
 
-// Width sets the slider width in terminal cells.
-func Width(cells int) Option {
+// Length sets the number of terminal cells used along the slider axis.
+func Length(cells int) Option {
 	return option(func(opts *options) {
 		opts.width = cells
 	})
 }
+
+// Width sets the slider length in terminal cells.
+//
+// Width is kept for compatibility with existing horizontal sliders. For
+// vertical sliders, Height or Length is usually clearer.
+func Width(cells int) Option {
+	return Length(cells)
+}
+
+// Height sets the slider length in terminal cells.
+//
+// This is an alias for Length intended for vertical sliders.
+func Height(cells int) Option {
+	return Length(cells)
+}
+
+// Orientation sets whether the slider is drawn horizontally or vertically.
+func Orientation(o Direction) Option {
+	return option(func(opts *options) {
+		opts.orientation = o
+	})
+}
+
+// AlignHorizontal positions the slider horizontally inside a larger canvas.
+func AlignHorizontal(h align.Horizontal) Option {
+	return option(func(opts *options) {
+		opts.hAlign = h
+	})
+}
+
+// AlignVertical positions the slider vertically inside a larger canvas.
+func AlignVertical(v align.Vertical) Option {
+	return option(func(opts *options) {
+		opts.vAlign = v
+	})
+}
+
+// Style applies one of the built-in visual slider styles.
+func Style(s SliderStyle) Option {
+	return option(func(opts *options) {
+		opts.style = s
+		applyStyle(opts, s)
+	})
+}
+
+// BarStyle applies the default solid bar style.
+func BarStyle() Option { return Style(StyleBar) }
+
+// SegmentedStyle applies the thin segmented-line style.
+func SegmentedStyle() Option { return Style(StyleSegmented) }
+
+// SegmentedBlocksStyle applies the dense rectangular block style.
+func SegmentedBlocksStyle() Option { return Style(StyleSegmentedBlocks) }
+
+// DotsStyle applies the filled and empty circular dot style.
+func DotsStyle() Option { return Style(StyleDots) }
+
+// SegmentedDotsStyle applies the smaller dot segment style.
+func SegmentedDotsStyle() Option { return Style(StyleSegmentedDots) }
+
+// SquaresStyle applies the filled and empty square style.
+func SquaresStyle() Option { return Style(StyleSquares) }
+
+// SegmentedSquaresStyle applies the smaller square segment style.
+func SegmentedSquaresStyle() Option { return Style(StyleSegmentedSquares) }
+
+// StarsStyle applies the filled and empty star style.
+func StarsStyle() Option { return Style(StyleStars) }
 
 // FillRune sets the rune used for the filled portion of the slider.
 func FillRune(r rune) Option {
@@ -198,4 +345,41 @@ func OnChange(fn ChangeFn) Option {
 	return option(func(opts *options) {
 		opts.onChange = fn
 	})
+}
+
+func applyStyle(opts *options, style SliderStyle) {
+	switch style {
+	case StyleBar:
+		opts.fillRune = '█'
+		opts.trackRune = '░'
+		opts.knobRune = '●'
+	case StyleSegmented:
+		opts.fillRune = '─'
+		opts.trackRune = '╌'
+		opts.knobRune = '●'
+	case StyleSegmentedBlocks:
+		opts.fillRune = '▌'
+		opts.trackRune = '┆'
+		opts.knobRune = '█'
+	case StyleDots:
+		opts.fillRune = '●'
+		opts.trackRune = '○'
+		opts.knobRune = '●'
+	case StyleSegmentedDots:
+		opts.fillRune = '•'
+		opts.trackRune = '∘'
+		opts.knobRune = '•'
+	case StyleSquares:
+		opts.fillRune = '■'
+		opts.trackRune = '□'
+		opts.knobRune = '■'
+	case StyleSegmentedSquares:
+		opts.fillRune = '▪'
+		opts.trackRune = '▫'
+		opts.knobRune = '▪'
+	case StyleStars:
+		opts.fillRune = '★'
+		opts.trackRune = '☆'
+		opts.knobRune = '★'
+	}
 }

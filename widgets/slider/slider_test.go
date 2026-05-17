@@ -19,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/private/canvas/testcanvas"
@@ -36,6 +37,8 @@ func TestNew(t *testing.T) {
 		{desc: "fails on inverted range", opts: []Option{Min(10), Max(1)}, wantErr: true},
 		{desc: "fails on zero step", opts: []Option{Step(0)}, wantErr: true},
 		{desc: "fails on zero width", opts: []Option{Width(0)}, wantErr: true},
+		{desc: "fails on invalid orientation", opts: []Option{Orientation(Direction(99))}, wantErr: true},
+		{desc: "fails on invalid style", opts: []Option{Style(SliderStyle(99))}, wantErr: true},
 		{desc: "accepts defaults"},
 	}
 
@@ -67,6 +70,76 @@ func TestDraw(t *testing.T) {
 	ft := drawSlider(t, s, image.Point{X: 5, Y: 1}, false)
 	if got := string([]rune(strings.Split(ft.String(), "\n")[0])[:5]); got != "█●░░░" {
 		t.Fatalf("draw = %q, want %q", got, "█●░░░")
+	}
+}
+
+func TestDrawWithAlignment(t *testing.T) {
+	s, err := New(
+		Min(0),
+		Max(100),
+		Value(100),
+		Width(3),
+		AlignHorizontal(align.HorizontalCenter),
+		AlignVertical(align.VerticalBottom),
+	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+
+	ft := drawSlider(t, s, image.Point{X: 7, Y: 3}, false)
+	if got := firstRunes(row(ft, 2), 5); got != "  ██●" {
+		t.Fatalf("aligned draw row = %q, want %q", got, "  ██●")
+	}
+}
+
+func TestDrawVertical(t *testing.T) {
+	s, err := New(
+		Min(0),
+		Max(100),
+		Value(50),
+		Height(5),
+		Orientation(OrientationVertical),
+		AlignHorizontal(align.HorizontalRight),
+	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+
+	ft := drawSlider(t, s, image.Point{X: 3, Y: 5}, false)
+	want := []rune{'░', '░', '●', '█', '█'}
+	for y, wantRune := range want {
+		if got := []rune(row(ft, y))[2]; got != wantRune {
+			t.Fatalf("vertical draw row %d = %q, want %q", y, got, wantRune)
+		}
+	}
+}
+
+func TestDrawStyles(t *testing.T) {
+	tests := []struct {
+		desc string
+		opt  Option
+		want string
+	}{
+		{desc: "segmented", opt: SegmentedStyle(), want: "──●╌╌"},
+		{desc: "segmented blocks", opt: SegmentedBlocksStyle(), want: "▌▌█┆┆"},
+		{desc: "dots", opt: DotsStyle(), want: "●●●○○"},
+		{desc: "segmented dots", opt: SegmentedDotsStyle(), want: "•••∘∘"},
+		{desc: "squares", opt: SquaresStyle(), want: "■■■□□"},
+		{desc: "segmented squares", opt: SegmentedSquaresStyle(), want: "▪▪▪▫▫"},
+		{desc: "stars", opt: StarsStyle(), want: "★★★☆☆"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			s, err := New(Min(0), Max(100), Value(50), Width(5), tc.opt)
+			if err != nil {
+				t.Fatalf("New => unexpected error: %v", err)
+			}
+			ft := drawSlider(t, s, image.Point{X: 5, Y: 1}, false)
+			if got := firstRunes(row(ft, 0), 5); got != tc.want {
+				t.Fatalf("style draw = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
 
@@ -136,6 +209,48 @@ func TestKeyboardAndMouse(t *testing.T) {
 	}
 }
 
+func TestVerticalKeyboardAndMouse(t *testing.T) {
+	var got []int
+	s, err := New(
+		Min(0),
+		Max(100),
+		Value(50),
+		Height(5),
+		Orientation(OrientationVertical),
+		Step(10),
+		OnChange(func(value int) error {
+			got = append(got, value)
+			return nil
+		}),
+	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+
+	if err := s.Keyboard(&terminalapi.Keyboard{Key: keyboard.KeyArrowUp}, &widgetapi.EventMeta{Focused: true}); err != nil {
+		t.Fatalf("Keyboard up => unexpected error: %v", err)
+	}
+	if err := s.Keyboard(&terminalapi.Keyboard{Key: keyboard.KeyArrowDown}, &widgetapi.EventMeta{Focused: true}); err != nil {
+		t.Fatalf("Keyboard down => unexpected error: %v", err)
+	}
+	if err := s.Mouse(&terminalapi.Mouse{Button: mouse.ButtonLeft, Position: image.Point{X: 0, Y: 0}}, &widgetapi.EventMeta{Focused: true}); err != nil {
+		t.Fatalf("Mouse top => unexpected error: %v", err)
+	}
+	if err := s.Mouse(&terminalapi.Mouse{Button: mouse.ButtonLeft, Position: image.Point{X: 0, Y: 4}}, &widgetapi.EventMeta{Focused: true}); err != nil {
+		t.Fatalf("Mouse bottom => unexpected error: %v", err)
+	}
+
+	want := []int{60, 50, 100, 0}
+	if len(got) != len(want) {
+		t.Fatalf("callback count = %d, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("callback[%d] = %d, want %d", i, got[i], want[i])
+		}
+	}
+}
+
 func TestValueHelpersAndOptions(t *testing.T) {
 	s, err := New(
 		Min(1),
@@ -170,6 +285,14 @@ func TestValueHelpersAndOptions(t *testing.T) {
 	if got := s.valueAtX(17); got != 100 {
 		t.Fatalf("valueAtX(max) = %d, want 100", got)
 	}
+}
+
+func row(ft *faketerm.Terminal, y int) string {
+	return strings.Split(ft.String(), "\n")[y]
+}
+
+func firstRunes(s string, n int) string {
+	return string([]rune(s)[:n])
 }
 
 func drawSlider(t *testing.T, s *Slider, size image.Point, focused bool) *faketerm.Terminal {

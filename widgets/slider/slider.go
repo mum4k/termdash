@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package slider implements an interactive horizontal value slider widget.
+// Package slider implements an interactive value slider widget.
 package slider
 
 import (
 	"image"
 	"sync"
 
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/private/canvas"
@@ -33,8 +34,9 @@ import (
 type Slider struct {
 	mu sync.Mutex
 
-	value int
-	opts  *options
+	value      int
+	opts       *options
+	lastOrigin image.Point
 }
 
 // New returns a new Slider.
@@ -74,12 +76,14 @@ func (s *Slider) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	need := image.Point{X: s.opts.width, Y: 1}
+	need := s.minSizeLocked()
 	if need.X > cvs.Area().Dx() || need.Y > cvs.Area().Dy() {
 		return draw.ResizeNeeded(cvs)
 	}
 
 	knob := s.knobIndexLocked(s.value)
+	origin := s.originLocked(cvs.Area())
+	s.lastOrigin = origin
 	for i := 0; i < s.opts.width; i++ {
 		r := s.opts.trackRune
 		cellOpts := s.opts.trackCellOpts
@@ -94,7 +98,7 @@ func (s *Slider) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 				cellOpts = s.opts.focusedKnobOps
 			}
 		}
-		if _, err := cvs.SetCell(image.Point{X: i, Y: 0}, r, cellOpts...); err != nil {
+		if _, err := cvs.SetCell(s.pointAtSlotLocked(origin, i), r, cellOpts...); err != nil {
 			return err
 		}
 	}
@@ -110,6 +114,14 @@ func (s *Slider) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) er
 		return s.changeBy(-s.opts.step)
 	case keyboard.KeyArrowRight:
 		return s.changeBy(s.opts.step)
+	case keyboard.KeyArrowDown:
+		if s.opts.orientation == OrientationVertical {
+			return s.changeBy(-s.opts.step)
+		}
+	case keyboard.KeyArrowUp:
+		if s.opts.orientation == OrientationVertical {
+			return s.changeBy(s.opts.step)
+		}
 	case keyboard.KeyHome:
 		return s.setAndNotify(s.opts.min)
 	case keyboard.KeyEnd:
@@ -117,6 +129,7 @@ func (s *Slider) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) er
 	default:
 		return nil
 	}
+	return nil
 }
 
 // Mouse processes mouse events for the slider.
@@ -126,10 +139,15 @@ func (s *Slider) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	if m.Button != mouse.ButtonLeft {
 		return nil
 	}
-	if m.Position.Y != 0 || m.Position.X < 0 || m.Position.X >= s.opts.width {
+
+	s.mu.Lock()
+	if !s.containsPointLocked(m.Position) {
+		s.mu.Unlock()
 		return nil
 	}
-	return s.setAndNotify(s.valueAtX(m.Position.X))
+	next := s.valueAtPointLocked(m.Position)
+	s.mu.Unlock()
+	return s.setAndNotify(next)
 }
 
 // Options implements widgetapi.Widget.Options.
@@ -137,7 +155,7 @@ func (s *Slider) Options() widgetapi.Options {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return widgetapi.Options{
-		MinimumSize:  image.Point{X: s.opts.width, Y: 1},
+		MinimumSize:  s.minSizeLocked(),
 		WantKeyboard: widgetapi.KeyScopeFocused,
 		WantMouse:    widgetapi.MouseScopeWidget,
 	}
@@ -182,11 +200,89 @@ func (s *Slider) knobIndexLocked(v int) int {
 }
 
 func (s *Slider) valueAtX(x int) int {
-	if x <= 0 || s.opts.width <= 1 {
+	return s.valueAtSlotLocked(x)
+}
+
+func (s *Slider) minSizeLocked() image.Point {
+	if s.opts.orientation == OrientationVertical {
+		return image.Point{X: 1, Y: s.opts.width}
+	}
+	return image.Point{X: s.opts.width, Y: 1}
+}
+
+func (s *Slider) originLocked(ar image.Rectangle) image.Point {
+	need := s.minSizeLocked()
+	return image.Point{
+		X: alignedOffset(ar.Dx(), need.X, horizontalToInt(s.opts.hAlign)),
+		Y: alignedOffset(ar.Dy(), need.Y, verticalToInt(s.opts.vAlign)),
+	}
+}
+
+func (s *Slider) pointAtSlotLocked(origin image.Point, slot int) image.Point {
+	if s.opts.orientation == OrientationVertical {
+		return image.Point{X: origin.X, Y: origin.Y + s.opts.width - 1 - slot}
+	}
+	return image.Point{X: origin.X + slot, Y: origin.Y}
+}
+
+func (s *Slider) containsPointLocked(p image.Point) bool {
+	p = p.Sub(s.lastOrigin)
+	if s.opts.orientation == OrientationVertical {
+		return p.X == 0 && p.Y >= 0 && p.Y < s.opts.width
+	}
+	return p.Y == 0 && p.X >= 0 && p.X < s.opts.width
+}
+
+func (s *Slider) valueAtPointLocked(p image.Point) int {
+	p = p.Sub(s.lastOrigin)
+	if s.opts.orientation == OrientationVertical {
+		return s.valueAtSlotLocked(s.opts.width - 1 - p.Y)
+	}
+	return s.valueAtSlotLocked(p.X)
+}
+
+func (s *Slider) valueAtSlotLocked(slot int) int {
+	if slot <= 0 || s.opts.width <= 1 {
 		return s.opts.min
 	}
-	if x >= s.opts.width-1 {
+	if slot >= s.opts.width-1 {
 		return s.opts.max
 	}
-	return s.opts.min + (x*(s.opts.max-s.opts.min))/(s.opts.width-1)
+	return s.opts.min + (slot*(s.opts.max-s.opts.min))/(s.opts.width-1)
+}
+
+func alignedOffset(available, need, mode int) int {
+	if available <= need {
+		return 0
+	}
+	switch mode {
+	case 1:
+		return (available - need) / 2
+	case 2:
+		return available - need
+	default:
+		return 0
+	}
+}
+
+func horizontalToInt(h align.Horizontal) int {
+	switch h {
+	case align.HorizontalCenter:
+		return 1
+	case align.HorizontalRight:
+		return 2
+	default:
+		return 0
+	}
+}
+
+func verticalToInt(v align.Vertical) int {
+	switch v {
+	case align.VerticalMiddle:
+		return 1
+	case align.VerticalBottom:
+		return 2
+	default:
+		return 0
+	}
 }

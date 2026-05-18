@@ -498,7 +498,7 @@ func buildDemoScenes(assetLoaded bool) []sceneSpec {
 
 	return []sceneSpec{
 		{
-			Name:    "Relay Platform",
+			Name:    "Orbital Core",
 			Summary: "A clean deep-space relay uses boxes, line struts, and a sensor crown to show that threed can render crisp engineered forms, not just abstract primitives.",
 			Features: []string{
 				"filled prism construction",

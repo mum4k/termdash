@@ -120,6 +120,60 @@ func TestDrawGlyphFacePlacesRuneAtCenter(t *testing.T) {
 	}
 }
 
+func TestDrawUsesFaceLineColor(t *testing.T) {
+	widget, err := New(
+		ShowAxes(false),
+		BackfaceCulling(false),
+		AmbientColor(Color{R: 1, G: 1, B: 1}),
+		DiffuseColor(Color{}),
+		SpecularColor(Color{}),
+	)
+	if err != nil {
+		t.Fatalf("New() => unexpected error: %v", err)
+	}
+
+	model := NewModel()
+	model.AddFace(Face{
+		Vertices: []Vector3D{
+			{X: -1, Y: 0, Z: 0},
+			{X: 1, Y: 0, Z: 0},
+		},
+		Char:     '=',
+		Color:    Color{R: 0.85, G: 0.22, B: 0.18},
+		HasColor: true,
+	})
+	widget.SetModel(model)
+
+	cvs, err := canvas.New(image.Rect(0, 0, 20, 10))
+	if err != nil {
+		t.Fatalf("canvas.New() => unexpected error: %v", err)
+	}
+	if err := widget.Draw(cvs, nil); err != nil {
+		t.Fatalf("Draw() => unexpected error: %v", err)
+	}
+
+	var found bool
+	wantColor := Color{R: 0.85, G: 0.22, B: 0.18}.ToCellColor()
+	for y := 0; y < cvs.Area().Dy() && !found; y++ {
+		for x := 0; x < cvs.Area().Dx(); x++ {
+			got, err := cvs.Cell(image.Point{X: x, Y: y})
+			if err != nil {
+				t.Fatalf("cvs.Cell() => unexpected error: %v", err)
+			}
+			if got.Rune == '=' {
+				found = true
+				if got.Opts == nil || got.Opts.FgColor != wantColor {
+					t.Fatalf("line fg color = %v, want %v", got.Opts.FgColor, wantColor)
+				}
+				break
+			}
+		}
+	}
+	if !found {
+		t.Fatal("rendered line rune not found on canvas")
+	}
+}
+
 func TestSubcellSceneProducesBrailleDetail(t *testing.T) {
 	cvs, err := canvas.New(image.Rect(0, 0, 4, 4))
 	if err != nil {

@@ -245,7 +245,11 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 	// Render glyph overlays and explicit line faces on top of the filled scene.
 	for _, pf := range t.projected {
 		if len(pf.Points) == 2 {
-			drawLine(t.doubleBuffer, pf.Points[0], pf.Points[1], '─', cell.FgColor(cell.ColorWhite))
+			char := pf.Char
+			if char == 0 {
+				char = '─'
+			}
+			drawLine(t.doubleBuffer, pf.Points[0], pf.Points[1], char, cell.FgColor(pf.ShadeColor.ToCellColor()))
 			continue
 		}
 		if len(pf.Points) > 2 && pf.RenderMode != FaceRenderFill {

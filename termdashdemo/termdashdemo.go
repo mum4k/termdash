@@ -1666,7 +1666,7 @@ func mobiusPoint(u, v, R float64) threed.Vector3D {
 // The direction alternates over the full 2π loop (Möbius property).
 func mobiusNormal(u float64) threed.Vector3D {
 	nx := -math.Cos(u) * math.Cos(u/2)
-	ny := math.Sin(u/2)
+	ny := math.Sin(u / 2)
 	nz := -math.Sin(u) * math.Cos(u/2)
 	mag := math.Sqrt(nx*nx + ny*ny + nz*nz)
 	if mag < 1e-9 {
@@ -1728,7 +1728,7 @@ func buildColoredSphere(center threed.Vector3D, radius float64) *threed.Model {
 			v11 := threed.Vector3D{X: center.X + radius*math.Sin(phi1)*math.Cos(th1), Y: center.Y + radius*math.Cos(phi1), Z: center.Z + radius*math.Sin(phi1)*math.Sin(th1)}
 			model.AddFace(threed.Face{
 				Vertices: []threed.Vector3D{v00, v01, v11, v10},
-				Char: '█', Color: clr, HasColor: true,
+				Char:     '█', Color: clr, HasColor: true,
 			})
 		}
 	}
@@ -1765,7 +1765,7 @@ func buildColoredCube(center threed.Vector3D, size float64) *threed.Model {
 	for _, s := range specs {
 		model.AddFace(threed.Face{
 			Vertices: []threed.Vector3D{vv[s.idx[0]], vv[s.idx[1]], vv[s.idx[2]], vv[s.idx[3]]},
-			Char: '█', Color: s.clr, HasColor: true,
+			Char:     '█', Color: s.clr, HasColor: true,
 		})
 	}
 	return model
@@ -1809,11 +1809,11 @@ func mergeThreed(models ...*threed.Model) *threed.Model {
 // buildMobiusScene composes the full animated scene for the given step.
 func buildMobiusScene(step int) *threed.Model {
 	const (
-		R           = 2.0  // Möbius strip major radius
-		halfWidth   = 0.55 // half cross-section width
-		segments    = 56   // strip mesh resolution
-		liftHeight  = 0.70 // how far above the strip center each rider floats
-		riderSpeed  = 0.025 // angular advance per frame (radians)
+		R          = 2.0   // Möbius strip major radius
+		halfWidth  = 0.55  // half cross-section width
+		segments   = 56    // strip mesh resolution
+		liftHeight = 0.70  // how far above the strip center each rider floats
+		riderSpeed = 0.025 // angular advance per frame (radians)
 	)
 
 	strip := buildMobiusStrip(R, halfWidth, segments)

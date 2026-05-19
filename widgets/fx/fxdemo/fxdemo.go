@@ -36,6 +36,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"image"
 	"log"
 	"math"
 	"strings"
@@ -51,6 +52,7 @@ import (
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/fx"
+	"github.com/mum4k/termdash/widgets/modal"
 	"github.com/mum4k/termdash/widgets/text"
 )
 
@@ -61,10 +63,8 @@ const (
 	autoAdvance = 4 * time.Second
 
 	// Container IDs used for hot-swapping widgets.
-	idLog     = "fx-log"
-	idModal   = "fx-modal" // centered password modal; hidden after unlock
-	idStatus  = "fx-status"
-	idConsole = "fx-console"
+	// idModal hosts the draggable modal window set for the entire stage.
+	idModal   = "fx-modal"
 	idCatalog = "fx-catalog"
 	idInfo    = "fx-info"
 )
@@ -303,21 +303,26 @@ func (ls *lockState) consumeJustUnlocked() bool {
 }
 
 // fillLockScreen renders the password prompt into t.
+// Kept compact so it fits inside the draggable modal window.
 func fillLockScreen(t *text.Text, input, errMsg string) error {
 	t.Reset()
 	masked := strings.Repeat("●", len(input))
 
-	_ = t.Write("\n\n  Content is encrypted.\n", wo(clrMid))
-	_ = t.Write("  Enter the password to unlock.\n\n", wo(clrMid))
-	_ = t.Write("  Password: ", wo(clrDim))
-	_ = t.Write(masked+"_\n\n", wo(clrAccent), text.WriteCellOpts(cell.Bold()))
+	_ = t.Write("\n  ✦  SECURE TERMINAL\n\n", wo(clrAccent), text.WriteCellOpts(cell.Bold()))
+	_ = t.Write("  Content is encrypted.\n\n", wo(clrDim))
+	_ = t.Write("  Password  ", wo(clrMid))
+	_ = t.Write("│ "+masked+"▌\n\n", wo(clrAccent), text.WriteCellOpts(cell.Bold()))
 
 	if errMsg != "" {
 		_ = t.Write("  "+errMsg+"\n\n", wo(clrErr))
+	} else {
+		_ = t.Write("\n", wo(clrDim))
 	}
 
-	_ = t.Write("  Hint: termdash\n\n", wo(clrDim))
-	_ = t.Write("  Press Enter to submit\n", wo(clrDim))
+	_ = t.Write("  ──────────────────────────────\n", wo(clrDim))
+	_ = t.Write("  hint    │ ", wo(clrDim))
+	_ = t.Write("termdash\n\n", wo(clrDim))
+	_ = t.Write("  Enter · Backspace\n", wo(clrDim))
 	return nil
 }
 
@@ -327,7 +332,7 @@ func renderLockedCatalog(t *text.Text) error {
 	_ = t.Write("\n", wo(clrDim))
 	_ = t.Write(" 🔒  DEMO LOCKED\n\n", wo(clrErr), text.WriteCellOpts(cell.Bold()))
 	_ = t.Write(" 13 effects waiting.\n\n", wo(clrMid))
-	_ = t.Write(" Type in the central\n", wo(clrDim))
+	_ = t.Write(" Type in the top\n", wo(clrDim))
 	_ = t.Write(" pane, then Enter.\n", wo(clrDim))
 	return nil
 }
@@ -340,15 +345,6 @@ func renderLockedInfo(t *text.Text) error {
 	_ = t.Write(" Unlock to browse\n", wo(clrDim))
 	_ = t.Write(" 13 fx effects.\n", wo(clrDim))
 	return nil
-}
-
-// newBlankWidget returns an empty text widget used to visually hide a pane.
-func newBlankWidget() *text.Text {
-	t, err := text.New()
-	if err != nil {
-		log.Fatalf("blank widget: %v", err)
-	}
-	return t
 }
 
 // ── numSelector ───────────────────────────────────────────────────────────────
@@ -743,47 +739,71 @@ func renderControls(t *text.Text) error {
 
 // ── EffectWidget + FocusEffectWidget factory ──────────────────────────────────
 
-// wrapContent wraps each content widget in a looping EffectWidget then in a
-// FocusEffectWidget so focus changes animate the content.
-func wrapContent(idx int, cw *contentWidgets) (logFW, statusFW, consoleFW *fx.FocusEffectWidget, err error) {
+// paneWidgets bundles the layers of a content pane.
+//
+//   - focus  — outermost widget placed in the container
+//   - framed — the FramedWidget that draws the self-owned border
+//
+// The stack is: text → FramedWidget → EffectWidget → FocusEffectWidget.
+// Because FramedWidget paints its border onto the widget canvas, effects
+// applied by EffectWidget and FocusEffectWidget cover the entire visual
+// area — border characters and inner content together.
+type paneWidgets struct {
+	focus  *fx.FocusEffectWidget
+	framed *fx.FramedWidget
+}
+
+// wrapContent builds a paneWidgets for each content widget using the effect
+// at idx.  The containers for these panes must use linestyle.None so that
+// FramedWidget's self-drawn border is the only border visible.
+func wrapContent(idx int, cw *contentWidgets) (logP, statusP, consoleP paneWidgets, err error) {
 	effects := allEffects[idx].Build()
 	focusIn := []fx.Effect{fx.FadeIn(300 * time.Millisecond)}
 	focusOut := []fx.Effect{fx.FadeOut(300 * time.Millisecond)}
 
-	wrap := func(inner *text.Text) (*fx.FocusEffectWidget, error) {
-		ew, err := fx.NewLooping(inner, effects...)
+	wrap := func(inner *text.Text, title string) (paneWidgets, error) {
+		// FramedWidget: draws the border onto the widget canvas so the effect
+		// animates border + content as a single unit.
+		framed, err := fx.FramedNew(inner,
+			fx.FramedTitle(title),
+			fx.FramedBorderOpts(cell.FgColor(cell.ColorNumber(240))),
+		)
 		if err != nil {
-			return nil, err
+			return paneWidgets{}, err
 		}
-		return fx.FocusNew(ew, focusIn, focusOut)
+		// EffectWidget: plays the selected looping animation on the whole area.
+		ew, err := fx.NewLooping(framed, effects...)
+		if err != nil {
+			return paneWidgets{}, err
+		}
+		// FocusEffectWidget: overlays a fade on focus transitions.
+		fw, err := fx.FocusNew(ew, focusIn, focusOut)
+		if err != nil {
+			return paneWidgets{}, err
+		}
+		return paneWidgets{focus: fw, framed: framed}, nil
 	}
-	if logFW, err = wrap(cw.log); err != nil {
-		return nil, nil, nil, fmt.Errorf("logW: %w", err)
+
+	if logP, err = wrap(cw.log, "Signal Log"); err != nil {
+		return paneWidgets{}, paneWidgets{}, paneWidgets{}, fmt.Errorf("logW: %w", err)
 	}
-	if statusFW, err = wrap(cw.status); err != nil {
-		return nil, nil, nil, fmt.Errorf("statusW: %w", err)
+	if statusP, err = wrap(cw.status, "System Metrics"); err != nil {
+		return paneWidgets{}, paneWidgets{}, paneWidgets{}, fmt.Errorf("statusW: %w", err)
 	}
-	if consoleFW, err = wrap(cw.console); err != nil {
-		return nil, nil, nil, fmt.Errorf("consoleW: %w", err)
+	if consoleP, err = wrap(cw.console, "Diagnostics Console"); err != nil {
+		return paneWidgets{}, paneWidgets{}, paneWidgets{}, fmt.Errorf("consoleW: %w", err)
 	}
 	return
 }
 
 // setFocusCallbacks wires OnFocusChange so focus transitions animate the
-// corresponding pane's border color.
-func setFocusCallbacks(c *container.Container, logFW, statusFW, consoleFW *fx.FocusEffectWidget) {
-	for _, p := range []struct {
-		fw *fx.FocusEffectWidget
-		id string
-	}{
-		{logFW, idLog},
-		{statusFW, idStatus},
-		{consoleFW, idConsole},
-	} {
+// FramedWidget's border color (the border is now part of the widget canvas).
+func setFocusCallbacks(logP, statusP, consoleP paneWidgets) {
+	for _, p := range []paneWidgets{logP, statusP, consoleP} {
 		p := p
-		p.fw.OnFocusChange = func(gained bool) {
+		p.focus.OnFocusChange = func(gained bool) {
 			fx.AnimateBorderFocus(gained, 300*time.Millisecond, 236, 255, 20, func(n int) {
-				_ = c.Update(p.id, container.BorderColor(cell.ColorNumber(n)))
+				p.framed.SetBorderColor(cell.ColorNumber(n))
 			})
 		}
 	}
@@ -802,17 +822,12 @@ func pane(title string, extra ...container.Option) []container.Option {
 
 // buildLayout constructs the container tree.
 //
-// Stage top area is three columns: log (33%) | modal (33%) | status (33%).
-// The modal column holds the password widget when locked and becomes invisible
-// (linestyle.None, blank widget) when onUnlock is called.
+// Stage layout (left 68%):
 //
-// logW     — blank widget when locked; Signal Log widget when unlocked
-// modalW   — password prompt widget; replaced with blank on unlock
-// statusW  — scrambled widget when locked; System Metrics when unlocked
-// consoleW — scrambled widget when locked; Diagnostics Console when unlocked
+//	idModal hosts draggable modal windows for password, log, status, and console.
+//	The right sidebar remains fixed so effect selection and controls stay visible.
 func buildLayout(
 	term *tcell.Terminal,
-	logW, modalW, statusW, consoleW widgetapi.Widget,
 	catalog, info, controls *text.Text,
 ) (*container.Container, error) {
 	return container.New(
@@ -826,49 +841,9 @@ func buildLayout(
 				container.SplitVertical(
 					// ── Stage (left 68%) ──────────────────────────────────
 					container.Left(
-						container.SplitHorizontal(
-							// Top: three-column row  log | modal | status
-							container.Top(
-								container.SplitVertical(
-									// Log pane (left 33%) — no border when locked
-									container.Left(
-										container.Border(linestyle.None),
-										container.ID(idLog),
-										container.PlaceWidget(logW),
-									),
-									// Modal + Status (right 67%)
-									container.Right(
-										container.SplitVertical(
-											// Modal pane (center, 50% of right ≈ 33% of stage)
-											container.Left(
-												container.Border(linestyle.Round),
-												container.BorderTitle(" 🔒 ACCESS RESTRICTED "),
-												container.BorderColor(cell.ColorNumber(197)),
-												container.ID(idModal),
-												container.PlaceWidget(modalW),
-											),
-											// Status pane (right 50% of right ≈ 33% of stage)
-											container.Right(
-												pane("System Metrics",
-													container.ID(idStatus),
-													container.PlaceWidget(statusW),
-												)...,
-											),
-											container.SplitPercent(50),
-										),
-									),
-									container.SplitPercent(33),
-								),
-							),
-							// Bottom: console (full stage width)
-							container.Bottom(
-								pane("Diagnostics Console",
-									container.ID(idConsole),
-									container.PlaceWidget(consoleW),
-								)...,
-							),
-							container.SplitPercent(48),
-						),
+						container.Border(linestyle.None),
+						container.ID(idModal),
+						// modal.Manager.ShowModal places the draggable window set here.
 					),
 					// ── Sidebar (right 32%) ────────────────────────────────
 					container.Right(
@@ -915,6 +890,31 @@ func buildLayout(
 	)
 }
 
+func demoModalOptions() *modal.Options {
+	return modal.NewOptions(
+		modal.Border(true),
+		modal.MinimumSize(image.Point{X: 36, Y: 12}),
+		modal.TitleBarCellOpts(
+			cell.BgColor(cell.ColorNumber(17)),
+			cell.FgColor(cell.ColorNumber(214)),
+		),
+		modal.TitleCellOpts(
+			cell.FgColor(cell.ColorNumber(214)),
+			cell.Bold(),
+		),
+		modal.TitleControlCellOpts(
+			cell.FgColor(cell.ColorNumber(159)),
+			cell.Bold(),
+		),
+	)
+}
+
+func newStageWindow(id, title string, w widgetapi.Widget, x, y, width, height int, opts *modal.Options) *modal.DraggableWidget {
+	item := modal.NewDraggableWidget(id, w, x, y, width, height, opts)
+	item.Title = title
+	return item
+}
+
 func mustFooter() *text.Text {
 	t, err := text.New()
 	if err != nil {
@@ -947,28 +947,28 @@ func mustFooter() *text.Text {
 
 // ── switching ─────────────────────────────────────────────────────────────────
 
-// switchEffect hot-swaps the three content panes to use the effect at idx.
-// Does NOT touch idModal — that is managed by onUnlock.
+// switchEffect hot-swaps the three stage modal windows to use the effect at idx.
 func switchEffect(
 	idx int,
 	c *container.Container,
 	cw *contentWidgets,
 	catalog, info *text.Text,
+	manager *modal.Manager,
+	modalOpts *modal.Options,
 ) error {
-	logW, statusW, consoleW, err := wrapContent(idx, cw)
+	logP, statusP, consoleP, err := wrapContent(idx, cw)
 	if err != nil {
 		return err
 	}
-	setFocusCallbacks(c, logW, statusW, consoleW)
+	setFocusCallbacks(logP, statusP, consoleP)
 
-	if err := c.Update(idLog, container.PlaceWidget(logW)); err != nil {
-		return fmt.Errorf("update log: %w", err)
-	}
-	if err := c.Update(idStatus, container.PlaceWidget(statusW)); err != nil {
-		return fmt.Errorf("update status: %w", err)
-	}
-	if err := c.Update(idConsole, container.PlaceWidget(consoleW)); err != nil {
-		return fmt.Errorf("update console: %w", err)
+	stage := modal.NewModal(idModal, []*modal.DraggableWidget{
+		newStageWindow("signal-log", "Signal Log", logP.focus, 3, 1, 82, 21, modalOpts),
+		newStageWindow("system-metrics", "System Metrics", statusP.focus, 5, 24, 44, 13, modalOpts),
+		newStageWindow("diagnostics-console", "Diagnostics Console", consoleP.focus, 52, 24, 50, 13, modalOpts),
+	}, modalOpts)
+	if err := manager.ShowModal(stage, c); err != nil {
+		return fmt.Errorf("show stage modal: %w", err)
 	}
 	if err := renderCatalog(catalog, idx); err != nil {
 		return fmt.Errorf("catalog: %w", err)
@@ -980,47 +980,22 @@ func switchEffect(
 	return nil
 }
 
-// onUnlock is called when the correct password is entered.  It:
-//  1. Hides the modal by switching to linestyle.None + blank widget
-//  2. Restores the log pane border and places real content in all three panes
-//  3. Updates the sidebar catalog and info
-//  4. Resets the auto-advance timer for a clean 4-second window
-//  5. Sets justUnlocked so animateDemo skips the next tick's switch check
+// onUnlock swaps the locked window set for the animated fx window set.
 func onUnlock(
 	c *container.Container,
 	cw *contentWidgets,
 	ls *lockState,
 	catalog, info *text.Text,
 	state *demoState,
+	manager *modal.Manager,
+	modalOpts *modal.Options,
 ) {
 	active := state.getActive()
 
-	logW, statusW, consoleW, err := wrapContent(active, cw)
-	if err != nil {
-		log.Printf("onUnlock wrapContent: %v", err)
+	if err := switchEffect(active, c, cw, catalog, info, manager, modalOpts); err != nil {
+		log.Printf("onUnlock switchEffect: %v", err)
 		return
 	}
-	setFocusCallbacks(c, logW, statusW, consoleW)
-
-	// Hide the modal (linestyle.None makes it visually disappear).
-	_ = c.Update(idModal,
-		container.Border(linestyle.None),
-		container.PlaceWidget(newBlankWidget()),
-	)
-
-	// Restore the log pane border and reveal real content.
-	_ = c.Update(idLog,
-		container.Border(linestyle.Round),
-		container.BorderTitle(" Signal Log "),
-		container.BorderColor(cell.ColorNumber(240)),
-		container.PlaceWidget(logW),
-	)
-	_ = c.Update(idStatus, container.PlaceWidget(statusW))
-	_ = c.Update(idConsole, container.PlaceWidget(consoleW))
-
-	// Restore sidebar.
-	_ = renderCatalog(catalog, active)
-	_ = renderInfo(info, active)
 
 	// Reset auto-advance timer for a fresh window after unlock.
 	state.setActive(active)
@@ -1052,6 +1027,8 @@ func animateDemo(
 	ls *lockState,
 	catalog, info *text.Text,
 	state *demoState,
+	manager *modal.Manager,
+	modalOpts *modal.Options,
 ) {
 	ticker := time.NewTicker(redrawTick)
 	defer ticker.Stop()
@@ -1081,7 +1058,7 @@ func animateDemo(
 
 			active := state.getActive()
 			if active != lastActive {
-				if err := switchEffect(active, c, cw, catalog, info); err != nil {
+				if err := switchEffect(active, c, cw, catalog, info, manager, modalOpts); err != nil {
 					log.Printf("switchEffect: %v", err)
 				}
 				lastActive = active
@@ -1101,6 +1078,8 @@ func handleKeyboard(
 	catalog, info *text.Text,
 	state *demoState,
 	sel *numSelector,
+	manager *modal.Manager,
+	modalOpts *modal.Options,
 ) {
 	switch k.Key {
 	case keyboard.KeyEsc, keyboard.KeyCtrlC:
@@ -1112,7 +1091,7 @@ func handleKeyboard(
 		switch {
 		case k.Key == keyboard.KeyEnter:
 			if ls.submit() {
-				onUnlock(c, cw, ls, catalog, info, state)
+				onUnlock(c, cw, ls, catalog, info, state, manager, modalOpts)
 			}
 		case k.Key == keyboard.KeyBackspace || k.Key == keyboard.KeyBackspace2:
 			ls.backspace()
@@ -1134,7 +1113,7 @@ func handleKeyboard(
 		state.prev()
 	case ' ':
 		active := state.getActive()
-		if err := switchEffect(active, c, cw, catalog, info); err != nil {
+		if err := switchEffect(active, c, cw, catalog, info, manager, modalOpts); err != nil {
 			log.Printf("replay: %v", err)
 		}
 	default:
@@ -1175,27 +1154,39 @@ func main() {
 	if err := renderLockedInfo(info); err != nil {
 		log.Fatalf("locked info: %v", err)
 	}
+	modalOpts := demoModalOptions()
 
 	// Default effect: "Sequence: Glitch → FadeIn" — a dramatic entrance.
 	state := &demoState{}
 	state.setActive(defaultEffectIdx)
 
-	// Scrambled widgets for the status and console panes while locked.
-	scramStat, err := fx.NewLooping(cw.status, fx.Scramble(0xdeadbeef))
+	// Locked scramble widgets: content is scrambled but the FramedWidget draws
+	// a clean border and title so pane labels remain legible while locked.
+	//
+	// Stack: text → EffectWidget(Scramble) → FramedWidget
+	// Scramble runs inside Framed, so only the inner canvas is obfuscated.
+	dimBorder := []fx.FramedOption{fx.FramedBorderOpts(cell.FgColor(cell.ColorNumber(238)))}
+
+	scramStatEW, err := fx.NewLooping(cw.status, fx.Scramble(0xdeadbeef))
 	if err != nil {
 		log.Fatalf("scramble status: %v", err)
 	}
-	scramCons, err := fx.NewLooping(cw.console, fx.Scramble(0xcafebabe))
+	scramStat, err := fx.FramedNew(scramStatEW, append(dimBorder, fx.FramedTitle("System Metrics"))...)
+	if err != nil {
+		log.Fatalf("framed scramble status: %v", err)
+	}
+
+	scramConsEW, err := fx.NewLooping(cw.console, fx.Scramble(0xcafebabe))
 	if err != nil {
 		log.Fatalf("scramble console: %v", err)
 	}
+	scramCons, err := fx.FramedNew(scramConsEW, append(dimBorder, fx.FramedTitle("Diagnostics Console"))...)
+	if err != nil {
+		log.Fatalf("framed scramble console: %v", err)
+	}
 
-	// Build the layout:
-	//   idLog   → blank (no border, left of modal)
-	//   idModal → password prompt (centered, bright border)
-	//   idStatus  → scrambled
-	//   idConsole → scrambled
-	root, err := buildLayout(term, newBlankWidget(), ls.promptW, scramStat, scramCons, catalog, info, controls)
+	// Build the fixed shell; idModal hosts the draggable stage windows.
+	root, err := buildLayout(term, catalog, info, controls)
 	if err != nil {
 		log.Fatalf("layout: %v", err)
 	}
@@ -1204,7 +1195,22 @@ func main() {
 		state.setActive(n - 1)
 	})
 
-	go animateDemo(ctx, root, cw, ls, catalog, info, state)
+	// Enable mouse motion so the modal window can be dragged.
+	term.EnableMouseMotion()
+
+	// Build the locked modal stage. Every stage pane is a draggable modal
+	// window so minimize/restore and styling are consistent from the start.
+	pwdItem := newStageWindow("password", "🔒  Access Restricted", ls.promptW, 4, 1, 42, 15, modalOpts)
+	statusItem := newStageWindow("system-metrics", "System Metrics", scramStat, 4, 18, 46, 13, modalOpts)
+	consoleItem := newStageWindow("diagnostics-console", "Diagnostics Console", scramCons, 53, 18, 52, 13, modalOpts)
+	modalWidget := modal.NewModal(idModal, []*modal.DraggableWidget{pwdItem, statusItem, consoleItem}, modalOpts)
+
+	manager := &modal.Manager{}
+	if err := manager.ShowModal(modalWidget, root); err != nil {
+		log.Fatalf("show modal: %v", err)
+	}
+
+	go animateDemo(ctx, root, cw, ls, catalog, info, state, manager, modalOpts)
 
 	if err := termdash.Run(
 		ctx,
@@ -1212,7 +1218,7 @@ func main() {
 		root,
 		termdash.RedrawInterval(redrawTick),
 		termdash.KeyboardSubscriber(func(k *terminalapi.Keyboard) {
-			handleKeyboard(k, cancel, root, cw, ls, catalog, info, state, sel)
+			handleKeyboard(k, cancel, root, cw, ls, catalog, info, state, sel, manager, modalOpts)
 		}),
 	); err != nil {
 		log.Fatalf("termdash: %v", err)

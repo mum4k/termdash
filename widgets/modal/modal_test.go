@@ -173,6 +173,28 @@ func TestMinimizeAndRestoreDock(t *testing.T) {
 	}
 }
 
+// TestMinimizedDockShowsCompactTitle verifies docked windows keep a readable
+// title label and make truncation explicit.
+func TestMinimizedDockShowsCompactTitle(t *testing.T) {
+	opts := NewOptions(Border(true), MinimumSize(image.Point{X: 1, Y: 1}), DockGap(1))
+	item := NewDraggableWidget("observability-dashboard-cluster-window", &fillWidget{r: 'x'}, 1, 1, 18, 6, opts)
+	item.Title = "Observability Dashboard Cluster Window"
+	modal := NewModal("modal", []*DraggableWidget{item}, opts)
+
+	_ = drawModal(t, modal, image.Point{X: 36, Y: 10})
+	minimize := image.Point{X: item.X + item.Width - 2, Y: item.Y}
+	modal.HandleMouse(&terminalapi.Mouse{Button: mouse.ButtonLeft, Position: minimize})
+	ft := drawModal(t, modal, image.Point{X: 36, Y: 10})
+
+	if got, want := item.Width, maxDockedWidth; got != want {
+		t.Fatalf("docked width = %d, want compact width %d", got, want)
+	}
+	dockLine := strings.Split(ft.String(), "\n")[item.Y]
+	if !strings.Contains(dockLine, "Observability") || !strings.Contains(dockLine, "...") {
+		t.Fatalf("docked title line = %q, want compact title with ellipsis", dockLine)
+	}
+}
+
 // TestManagerShowHide verifies the manager can show and clear a modal.
 func TestManagerShowHide(t *testing.T) {
 	root := newModalTestContainer(t)

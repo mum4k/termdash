@@ -28,6 +28,11 @@ import (
 	"github.com/mum4k/termdash/widgetapi"
 )
 
+const (
+	minDockedWidth = 8
+	maxDockedWidth = 24
+)
+
 // Modal renders and manages a set of draggable child widgets.
 type Modal struct {
 	// ID identifies the container that hosts the modal.
@@ -260,6 +265,9 @@ func (m *Modal) drawItem(dst *canvas.Canvas, meta *widgetapi.Meta, item *Draggab
 			return err
 		}
 		if visible.Dx() <= 2 || visible.Dy() <= 2 {
+			if item.minimized {
+				return m.drawTitleBar(dst, item, visible)
+			}
 			return nil
 		}
 		contentArea = image.Rect(visible.Min.X+1, visible.Min.Y+2, visible.Max.X-1, visible.Max.Y-1)
@@ -302,16 +310,21 @@ func (m *Modal) drawTitleBar(dst *canvas.Canvas, item *DraggableWidget, visible 
 		return err
 	}
 
-	title := " " + item.Title + " "
 	maxTitleX := titleBar.Max.X
 	if item.Minimizable {
 		maxTitleX -= 2
 	}
 	if maxTitleX > titleBar.Min.X {
+		title := " " + item.Title + " "
+		overrun := draw.OverrunModeTrim
+		if item.minimized {
+			title = compactDockTitle(item.Title, maxTitleX-titleBar.Min.X)
+			overrun = draw.OverrunModeTrim
+		}
 		if err := draw.Text(dst, title, titleBar.Min,
 			draw.TextCellOpts(m.Opts.TitleCellOpts...),
 			draw.TextMaxX(maxTitleX),
-			draw.TextOverrunMode(draw.OverrunModeTrim),
+			draw.TextOverrunMode(overrun),
 		); err != nil {
 			return err
 		}
@@ -349,10 +362,11 @@ func (m *Modal) layoutMinimizedLocked() {
 		if !item.minimized {
 			continue
 		}
+		remaining := maxInt(m.currentWidth-x, minDockedWidth)
 		item.X = x
 		item.Y = y
 		item.Height = dockedHeight(item.Border)
-		item.Width = dockedWidth(item.Title, item.Minimizable)
+		item.Width = dockedWidth(item.Title, item.Minimizable, remaining)
 		x += item.Width + m.Opts.DockGap
 	}
 }
@@ -385,12 +399,47 @@ func (dw *DraggableWidget) restoreLocked(canvasWidth, canvasHeight int) {
 }
 
 // dockedWidth returns the docked width for a minimized window title.
-func dockedWidth(title string, minimizable bool) int {
+func dockedWidth(title string, minimizable bool, available int) int {
 	width := len([]rune(" " + title + " "))
 	if minimizable {
 		width += 2
 	}
-	return maxInt(width, 8)
+	width = maxInt(width, minDockedWidth)
+	width = minInt(width, maxDockedWidth)
+	if available > 0 {
+		width = minInt(width, maxInt(available, minDockedWidth))
+	}
+	return width
+}
+
+// compactDockTitle returns a minimized dock label that makes truncation explicit.
+func compactDockTitle(title string, width int) string {
+	if width <= 0 {
+		return ""
+	}
+	title = strings.TrimSpace(title)
+	if title == "" {
+		title = "Window"
+	}
+
+	full := []rune(" " + title + " ")
+	if len(full) <= width {
+		return string(full)
+	}
+	if width <= 4 {
+		return string([]rune("...")[:minInt(width, 3)])
+	}
+
+	ellipsis := []rune("...")
+	availableTitle := width - len(ellipsis) - 1
+	if availableTitle < 1 {
+		availableTitle = 1
+	}
+	titleRunes := []rune(title)
+	if len(titleRunes) > availableTitle {
+		titleRunes = titleRunes[:availableTitle]
+	}
+	return " " + string(titleRunes) + "..."
 }
 
 // dockedHeight returns the window height while docked in minimized form.
@@ -447,6 +496,14 @@ func clampInt(v, min, max int) int {
 // maxInt returns the larger of two integers.
 func maxInt(a, b int) int {
 	if a > b {
+		return a
+	}
+	return b
+}
+
+// minInt returns the smaller of two integers.
+func minInt(a, b int) int {
+	if a < b {
 		return a
 	}
 	return b

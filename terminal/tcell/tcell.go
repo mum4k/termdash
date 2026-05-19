@@ -20,6 +20,7 @@ import (
 	"image"
 
 	tcell "github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v2/encoding"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/private/event/eventqueue"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -133,6 +134,9 @@ func (t *Terminal) MouseEnabled() bool {
 // New returns a new tcell based Terminal.
 // Call Close() when the terminal isn't required anymore.
 func New(opts ...Option) (*Terminal, error) {
+	// Enable full character set support for tcell.
+	encoding.Register()
+
 	t, err := newTerminal(opts...)
 	if err != nil {
 		return nil, err

@@ -112,14 +112,14 @@ func main() {
 	stage, err := threed.New(
 		threed.ShowAxes(false),
 		threed.EnableLogging(false),
-		threed.BackfaceCulling(true),
+		threed.BackfaceCulling(false),
 		threed.RotationStep(0.08),
-		threed.ZoomScale(22.0),
-		threed.UprightOnly(false),
-		threed.AmbientColor(threed.Color{R: 0.42, G: 0.42, B: 0.42}),
+		threed.ZoomScale(28.0),
+		threed.UprightOnly(true),
+		threed.AmbientColor(threed.Color{R: 0.52, G: 0.52, B: 0.52}),
 		threed.DiffuseColor(threed.Color{R: 1.00, G: 1.00, B: 1.00}),
-		threed.SpecularColor(threed.Color{R: 0.48, G: 0.48, B: 0.48}),
-		threed.Shininess(36),
+		threed.SpecularColor(threed.Color{R: 0.44, G: 0.44, B: 0.44}),
+		threed.Shininess(48),
 	)
 	if err != nil {
 		log.Fatalf("failed to create threed widget: %v", err)
@@ -191,19 +191,19 @@ func main() {
 											container.PlaceWidget(controls),
 										)...,
 									),
-									container.SplitPercent(62),
+									container.SplitPercent(70),
 								),
 							),
-							container.SplitPercent(34),
+							container.SplitPercent(30),
 						),
 					),
-					container.SplitPercent(68),
+					container.SplitPercent(62),
 				),
 			),
 			container.Bottom(
 				container.PlaceWidget(mustFooter()),
 			),
-			container.SplitPercent(91),
+			container.SplitPercent(93),
 		),
 	)
 	if err != nil {
@@ -480,7 +480,7 @@ func renderControls(w *text.Text, assetLoaded bool) error {
 // buildDemoScenes returns the curated 3D showcase scenes.
 func buildDemoScenes(assetLoaded bool) []sceneSpec {
 	assetName := "Prism Field"
-	assetSummary := "Braille-density filled prisms demonstrate the shaded polygon pipeline without relying on external assets."
+	assetSummary := "A clean prism-board fallback with stacked bars, rails, and labeled blocks."
 	assetFeatures := []string{
 		"filled face shading",
 		"procedural bar-field composition",
@@ -488,7 +488,7 @@ func buildDemoScenes(assetLoaded bool) []sceneSpec {
 	}
 	if assetLoaded {
 		assetName = "Image Relief"
-		assetSummary = "Asset-backed extrusion shows the cross-platform image-to-model path on a clean display pedestal."
+		assetSummary = "Asset-backed extrusion on a clean display pedestal."
 		assetFeatures = []string{
 			"image extrusion via threed.LoadImageModel",
 			"source-derived face colors",
@@ -498,156 +498,126 @@ func buildDemoScenes(assetLoaded bool) []sceneSpec {
 
 	return []sceneSpec{
 		{
-			Name:    "Orbital Core",
-			Summary: "A clean deep-space relay uses boxes, line struts, and a sensor crown to show that threed can render crisp engineered forms, not just abstract primitives.",
+			Name:    "Terminal Forms",
+			Summary: "Sharp box-drawing forms, chips, nodes, and traces arranged as terminal-native geometry.",
 			Features: []string{
-				"filled prism construction",
-				"line struts and antenna elements",
-				"calm professional showroom orbit",
+				"crisp box-drawing geometry",
+				"multiple high-contrast shape families",
+				"explicit title-like glyph placement",
 			},
-			Orbit: threed.Vector3D{X: 0.002, Y: 0.015, Z: 0.000},
-			Build: buildRelayPlatformScene,
+			Orbit: threed.Vector3D{},
+			Build: buildCircuitBloomScene,
 		},
 		{
-			Name:    "Geometry Array",
-			Summary: "A balanced primitive gallery highlights the stock constructors and how they can live together in one polished lighting setup.",
+			Name:    "Shape Board",
+			Summary: "A compact board of cubes, pyramids, diamonds, rings, bars, and node networks.",
 			Features: []string{
-				"CreateCube, CreatePyramid, CreateSphere",
-				"CreateOctahedron and CreateTetrahedron",
-				"shared plinth and restrained support rails",
+				"large readable terminal forms",
+				"wireframe and solid glyph shapes",
+				"tight cyan, green, amber, and rose accents",
 			},
-			Orbit: threed.Vector3D{X: 0.006, Y: 0.018, Z: 0.000},
-			Build: buildGeometryArrayScene,
+			Orbit: threed.Vector3D{},
+			Build: buildFormCatalogScene,
 		},
 		{
-			Name:    "Signal Rig",
-			Summary: "Chart helpers and custom bar prisms combine into a telemetry stage that feels analytic instead of toy-like.",
+			Name:    "Signal Lattice",
+			Summary: "Clean terminal charts: bars, traces, packets, rails, and a compact signal matrix.",
 			Features: []string{
-				"chart-driven model generation",
-				"bar-field composition",
-				"line primitives and layered annotation",
+				"readable bar and trace charts",
+				"clean packet rails",
+				"compact signal matrix",
 			},
-			Orbit: threed.Vector3D{X: 0.008, Y: 0.016, Z: 0.000},
+			Orbit: threed.Vector3D{},
 			Build: buildSignalRigScene,
 		},
 		{
 			Name:     assetName,
 			Summary:  assetSummary,
 			Features: assetFeatures,
-			Orbit:    threed.Vector3D{X: 0.008, Y: 0.016, Z: 0.000},
+			Orbit:    threed.Vector3D{},
 			Build:    buildAssetReliefScene,
 		},
 	}
 }
 
-// buildRelayPlatformScene assembles the main hero scene.
-func buildRelayPlatformScene(_ int, _ *threed.Model) *threed.Model {
-	base := createBoxModel(threed.Vector3D{X: 0, Y: -1.25, Z: 0}, 6.4, 0.20, 3.6, threed.Color{R: 0.12, G: 0.16, B: 0.22})
-	deck := createBoxModel(threed.Vector3D{X: 0, Y: -0.92, Z: 0}, 4.2, 0.16, 2.2, threed.Color{R: 0.22, G: 0.29, B: 0.40})
-	body := createBoxModel(threed.Vector3D{X: 0, Y: -0.05, Z: 0}, 1.55, 0.86, 1.10, threed.Color{R: 0.56, G: 0.82, B: 0.98})
-	spine := createBoxModel(threed.Vector3D{X: 0, Y: 0.70, Z: 0}, 0.26, 0.92, 0.26, threed.Color{R: 0.92, G: 0.94, B: 1.00})
-	crown := threed.CreateOctahedron(threed.Vector3D{X: 0, Y: 1.42, Z: 0}, 0.62)
-	crown.SetColor(threed.Color{R: 0.98, G: 0.84, B: 0.26})
-
-	leftPanel := createBoxModel(threed.Vector3D{X: -2.35, Y: 0.00, Z: 0}, 1.75, 0.10, 0.92, threed.Color{R: 0.30, G: 0.46, B: 0.70})
-	rightPanel := createBoxModel(threed.Vector3D{X: 2.35, Y: 0.00, Z: 0}, 1.75, 0.10, 0.92, threed.Color{R: 0.30, G: 0.46, B: 0.70})
-	leftArm := createBoxModel(threed.Vector3D{X: -1.38, Y: 0.00, Z: 0}, 0.54, 0.10, 0.18, threed.Color{R: 0.78, G: 0.86, B: 0.96})
-	rightArm := createBoxModel(threed.Vector3D{X: 1.38, Y: 0.00, Z: 0}, 0.54, 0.10, 0.18, threed.Color{R: 0.78, G: 0.86, B: 0.96})
-
-	thrusterLeft := createBoxModel(threed.Vector3D{X: -0.55, Y: -0.18, Z: -0.78}, 0.24, 0.34, 0.24, threed.Color{R: 0.84, G: 0.90, B: 0.96})
-	thrusterRight := createBoxModel(threed.Vector3D{X: 0.55, Y: -0.18, Z: -0.78}, 0.24, 0.34, 0.24, threed.Color{R: 0.84, G: 0.90, B: 0.96})
-
-	struts := threed.NewModel()
-	addLine(struts, threed.Vector3D{X: -1.05, Y: -0.10, Z: 0}, threed.Vector3D{X: -1.95, Y: 0.00, Z: 0}, '─')
-	addLine(struts, threed.Vector3D{X: 1.05, Y: -0.10, Z: 0}, threed.Vector3D{X: 1.95, Y: 0.00, Z: 0}, '─')
-	addLine(struts, threed.Vector3D{X: -0.30, Y: 1.05, Z: 0}, threed.Vector3D{X: 0.30, Y: 1.05, Z: 0}, '─')
-	addLine(struts, threed.Vector3D{X: 0, Y: 1.05, Z: 0}, threed.Vector3D{X: 0, Y: 1.34, Z: 0}, '│')
-	addLine(struts, threed.Vector3D{X: -2.35, Y: 0.00, Z: -0.46}, threed.Vector3D{X: -2.35, Y: 0.00, Z: 0.46}, '─')
-	addLine(struts, threed.Vector3D{X: 2.35, Y: 0.00, Z: -0.46}, threed.Vector3D{X: 2.35, Y: 0.00, Z: 0.46}, '─')
-	struts.SetColor(threed.Color{R: 0.68, G: 0.82, B: 0.95})
-
+// buildCircuitBloomScene assembles the main reference-inspired circuit scene.
+func buildCircuitBloomScene(step int, _ *threed.Model) *threed.Model {
+	rows := []string{
+		"╭─────────────────────────╮     ◆   ◆   ◆       ┌───────┐",
+		"│  ┌──────────┐   ╱╲      │   ◆───◆───◆───◆     │ █ █ █ │",
+		"│  │  CUBE    │  ╱  ╲     │   │   │   │   │     │ █ █ █ │",
+		"│  │  ┌────┐  │ ╱────╲    │   ◆───◆───◆───◆     └───┬───┘",
+		"│  │  │    │  │ ╲    ╱    │       │   │               │",
+		"│  │  └────┘  │  ╲  ╱     │   ┌───┘   └───────┐   ┌──┴──┐",
+		"│  └──────────┘   ╲╱      │   │  ┌─────┐      │   │ NODE │",
+		"╰───────────────┬─────────╯   │  │ ▣ ▣ │  ◇   │   └─────┘",
+		"                │             │  └──┬──┘ ◇◇◇  │",
+		"  ○────○────○───┼───○────○    └─────┼────◇────┘",
+		"  │    │    │   │   │    │          │",
+		"  ○────○────○   ●   ○────○     ┌────┴────┐   ▲",
+		"       │        │        │     │ BARS    │  ▲▲▲",
+		"  ┌────┴────┐   │   ┌────┴──┐  │ █ █ █ █ │ ▲▲▲▲▲",
+		"  │ TRACE   ├───┘   │ RING  │  │ █ █ █ █ │   │",
+		"  └─────────┘       │ ○ ○ ○ │  └─────────┘   │",
+		"                    └───────┘        ────────┘",
+	}
+	halo := []string{
+		"    ·       ·          ·              ·          ·",
+		"       ·          ·          ·             ·",
+		"  ·          ·              ·        ·           ·",
+	}
 	return mergeModels(
-		base,
-		deck,
-		body,
-		spine,
-		crown,
-		leftArm,
-		rightArm,
-		leftPanel,
-		rightPanel,
-		thrusterLeft,
-		thrusterRight,
-		struts,
+		createGlyphRows(threed.Vector3D{X: -1.72, Y: 1.65, Z: -0.22}, rows, 0.038, 0.20, terminalFormColor),
+		createGlyphRows(threed.Vector3D{X: -1.70, Y: 1.83, Z: -0.40}, halo, 0.038, 0.20, mutedCircuitColor),
+		createPulseGlyphs(step),
 	)
 }
 
-// buildGeometryArrayScene assembles the primitive shape lineup.
-func buildGeometryArrayScene(step int, _ *threed.Model) *threed.Model {
-	base := createBoxModel(threed.Vector3D{X: 0, Y: -1.18, Z: 0}, 8.2, 0.18, 3.4, threed.Color{R: 0.12, G: 0.16, B: 0.23})
-	rail := threed.NewModel()
-	addLine(rail, threed.Vector3D{X: -4.0, Y: -0.95, Z: -0.82}, threed.Vector3D{X: 4.0, Y: -0.95, Z: -0.82}, '─')
-	addLine(rail, threed.Vector3D{X: -4.0, Y: -0.95, Z: 0.82}, threed.Vector3D{X: 4.0, Y: -0.95, Z: 0.82}, '─')
-	rail.SetColor(threed.Color{R: 0.34, G: 0.48, B: 0.66})
-
-	cube := threed.CreateCube(threed.Vector3D{X: -3.2, Y: -0.15, Z: 0}, 1.15, '█')
-	cube.SetColor(threed.Color{R: 0.54, G: 0.86, B: 1.00})
-	pyramid := threed.CreatePyramid(threed.Vector3D{X: -1.45, Y: -0.10, Z: 0}, 1.35, '█')
-	pyramid.SetColor(threed.Color{R: 0.98, G: 0.74, B: 0.30})
-	octa := threed.CreateOctahedron(threed.Vector3D{X: 0.25, Y: 0.00, Z: 0}, 1.25)
-	octa.SetColor(threed.Color{R: 0.80, G: 0.74, B: 0.98})
-	tetra := threed.CreateTetrahedron(threed.Vector3D{X: 1.95, Y: 0.04, Z: 0}, 1.18)
-	tetra.SetColor(threed.Color{R: 0.63, G: 0.95, B: 0.80})
-	sphere := threed.CreateSphere(threed.Vector3D{X: 3.65, Y: -0.05, Z: 0}, 0.78, 12, 18, '█')
-	sphere.SetColor(threed.Color{R: 0.66, G: 0.82, B: 1.00})
-
-	spine := threed.NewModel()
-	addLine(spine, threed.Vector3D{X: -3.2, Y: 0.72, Z: 0}, threed.Vector3D{X: -1.45, Y: 0.72, Z: 0}, '─')
-	addLine(spine, threed.Vector3D{X: -1.45, Y: 0.72, Z: 0}, threed.Vector3D{X: 0.25, Y: 0.72, Z: 0}, '─')
-	addLine(spine, threed.Vector3D{X: 0.25, Y: 0.72, Z: 0}, threed.Vector3D{X: 1.95, Y: 0.72, Z: 0}, '─')
-	addLine(spine, threed.Vector3D{X: 1.95, Y: 0.72, Z: 0}, threed.Vector3D{X: 3.65, Y: 0.72, Z: 0}, '─')
-	spine.SetColor(threed.Color{R: 0.86, G: 0.90, B: 0.96})
-
-	return mergeModels(base, rail, cube, pyramid, octa, tetra, sphere, spine)
+// buildFormCatalogScene assembles the mixed primitive and glyph form lineup.
+func buildFormCatalogScene(step int, _ *threed.Model) *threed.Model {
+	rows := []string{
+		"┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐",
+		"│ WIREFRAME    │  │ PYRAMID      │  │ DIAMOND      │  │ RING ARRAY   │",
+		"│    ┌────┐    │  │      ▲       │  │      ◆       │  │   ○ ○ ○      │",
+		"│ ┌──┼────┼──┐ │  │     ▲▲▲      │  │     ◆ ◆      │  │ ○       ○    │",
+		"│ │  └────┘  │ │  │    ▲▲▲▲▲     │  │    ◆   ◆     │  │ ○       ○    │",
+		"│ └──────────┘ │  │   ▲▲▲▲▲▲▲    │  │     ◆ ◆      │  │   ○ ○ ○      │",
+		"└──────────────┘  └──────┬───────┘  └──────◆───────┘  └──────┬───────┘",
+		"                         │                       │            │",
+		"┌──────────────┐  ┌──────┴───────┐  ┌────────────┴─┐  ┌──────┴───────┐",
+		"│ BAR BLOCKS   │  │ NODE MESH    │  │ CHIP STRIP   │  │ TRACE BUS    │",
+		"│ █ █ █ █ █ █  │  │ ◆──◆──◆──◆   │  │ ▣ ▣ ▣ ▣ ▣    │  │ ═══╦═══╦═══  │",
+		"│ █ █ █ █ █ █  │  │ │  │  │  │   │  │ ├─┬─┬─┬─┤    │  │    ║   ║     │",
+		"│ █ █ █ █ █ █  │  │ ◆──◆──◆──◆   │  │ ▣ ▣ ▣ ▣ ▣    │  │ ═══╩═══╩═══  │",
+		"└──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘",
+	}
+	return mergeModels(
+		createGlyphRows(threed.Vector3D{X: -1.78, Y: 1.48, Z: -0.22}, rows, 0.036, 0.21, terminalFormColor),
+		createPulseGlyphs(step+8),
+	)
 }
 
 // buildSignalRigScene assembles the telemetry-inspired model stack.
 func buildSignalRigScene(step int, _ *threed.Model) *threed.Model {
-	base := createBoxModel(threed.Vector3D{X: 0, Y: -1.18, Z: 0}, 9.0, 0.18, 4.2, threed.Color{R: 0.12, G: 0.16, B: 0.24})
-	grid := createGridModel(-1.05, 8.8, 4.0, 16, 7)
-	grid.SetColor(threed.Color{R: 0.24, G: 0.36, B: 0.50})
-
-	barModel := threed.NewModel()
-	lineData := make([]float64, 18)
-	for i := 0; i < len(lineData); i++ {
-		phase := float64(step)*0.08 + float64(i)*0.34
-		value := 0.5 + 0.5*math.Sin(phase) + 0.25*math.Cos(phase*0.6)
-		if value < 0.12 {
-			value = 0.12
-		}
-		lineData[i] = value
-		x := -4.1 + float64(i)*0.48
-		height := 0.35 + value*1.35
-		z := 0.55 * math.Sin(float64(i)*0.45+float64(step)*0.03)
-		bar := createBoxModel(threed.Vector3D{X: x, Y: -1.0 + height/2, Z: z}, 0.28, height, 0.28, threed.Color{
-			R: 0.42 + value*0.35,
-			G: 0.78 + value*0.15,
-			B: 0.95,
-		})
-		barModel = mergeModels(barModel, bar)
+	frame := step % 6
+	pulse := []string{"▁", "▂", "▃", "▄", "▅", "▆"}[frame]
+	rows := []string{
+		"┌──────────────────── SIGNAL LATTICE ────────────────────┐",
+		"│  AMPLITUDE       PACKET RAIL              MATRIX       │",
+		"│  ████▇▇▆▅▄▃▂     ═══╦══════╦══════╦═══    ◆──◆──◆──◆   │",
+		"│  ███▇▆▅▄▃▂▁       ║      ║      ║       │  │  │  │   │",
+		"│  ██▆▅▄▃▂▁         ═╩══════╩══════╩═══    ◆──◆──◆──◆   │",
+		"│                                                       │",
+		"│  TRACE A     ┌───┐       ┌────┐       ┌──┐            │",
+		"│  ────────╮   │   ╰───────╯    ╰───────╯  ╰────        │",
+		"│          ╰───╯                                         │",
+		"│  TRACE B     ╭────╮          ╭──────╮                 │",
+		"│  ────────────╯    ╰──────────╯      ╰────────         │",
+		"│                                                       │",
+		"│  BINS       " + pulse + " ███ ███  ██  ████  ██  ███        │",
+		"└───────────────────────────────────────────────────────┘",
 	}
-
-	trace := threed.GenerateLineChartModel(lineData)
-	trace.SetColor(threed.Color{R: 1.00, G: 0.86, B: 0.28})
-	shiftLineModel(trace, 0.0, 0.55, -1.2)
-
-	backline := threed.GenerateLineChartModel([]float64{
-		0.75, 0.82, 0.66, 0.78, 0.92, 0.72, 0.60, 0.68, 0.88, 0.97,
-	})
-	backline.SetColor(threed.Color{R: 0.66, G: 0.90, B: 1.00})
-	shiftLineModel(backline, -2.0, 1.18, 1.2)
-
-	return mergeModels(base, grid, barModel, trace, backline)
+	return createGlyphRows(threed.Vector3D{X: -1.55, Y: 1.34, Z: -0.22}, rows, 0.041, 0.22, graphColor)
 }
 
 // buildAssetReliefScene assembles the asset-backed or procedural fallback scene.
@@ -673,27 +643,25 @@ func buildImageReliefScene(step int, asset *threed.Model) *threed.Model {
 
 // buildPrismFieldScene creates a procedural fallback scene when no asset is present.
 func buildPrismFieldScene(step int) *threed.Model {
-	base := createBoxModel(threed.Vector3D{X: 0, Y: -1.20, Z: 0}, 8.4, 0.18, 4.8, threed.Color{R: 0.14, G: 0.18, B: 0.24})
-	grid := createGridModel(-1.08, 8.1, 4.4, 16, 8)
-	grid.SetColor(threed.Color{R: 0.22, G: 0.34, B: 0.48})
-
-	field := threed.NewModel()
-	for row := 0; row < 4; row++ {
-		for col := 0; col < 8; col++ {
-			phase := float64(step)*0.10 + float64(row)*0.55 + float64(col)*0.22
-			height := 0.28 + 0.85*(0.5+0.5*math.Sin(phase))
-			x := -3.2 + float64(col)*0.9
-			z := -1.35 + float64(row)*0.9
-			clr := threed.Color{
-				R: 0.38 + 0.08*float64(row),
-				G: 0.70 + 0.03*float64(col),
-				B: 0.98,
-			}
-			field = mergeModels(field, createBoxModel(threed.Vector3D{X: x, Y: -1.0 + height/2, Z: z}, 0.44, height, 0.44, clr))
-		}
+	frame := step % 4
+	bar := []string{"▂", "▄", "▆", "█"}[frame]
+	rows := []string{
+		"┌──────────────────── PRISM FIELD ───────────────────────┐",
+		"│  STACKS                         PROFILE                │",
+		"│  ┌────┐  ┌────┐  ┌────┐         ┌─────────────────┐    │",
+		"│  │ ██ │  │ █  │  │ ██ │         │ ▁▂▄▆█▆▄▂▁▂▄▆█   │    │",
+		"│  │ ██ │  │ ██ │  │ █  │         └────────┬────────┘    │",
+		"│  └─┬──┘  └─┬──┘  └─┬──┘                  │             │",
+		"│    │       │       │        ◆────◆────◆───┘             │",
+		"│  ┌─┴───────┴───────┴─┐     │    │    │                 │",
+		"│  │  " + bar + "  █  ▆  ▄  ▂  █  │     ◆────◆────◆                 │",
+		"│  └───────────────────┘                                      │",
+		"│                                                             │",
+		"│  RAIL A  ═════╦═════╦═════╦═════╦═════                    │",
+		"│  RAIL B  ─────┴─────┴─────┴─────┴─────   ○ ○ ○ ○ ○        │",
+		"└─────────────────────────────────────────────────────────────┘",
 	}
-
-	return mergeModels(base, grid, field)
+	return createGlyphRows(threed.Vector3D{X: -1.60, Y: 1.34, Z: -0.22}, rows, 0.040, 0.22, graphColor)
 }
 
 // createBoxModel creates a rectangular prism centered at the provided point.
@@ -763,6 +731,190 @@ func createGridModel(y, width, depth float64, cols, rows int) *threed.Model {
 	return model
 }
 
+type glyphColorFunc func(rune) threed.Color
+
+func createGlyphRows(origin threed.Vector3D, rows []string, cellWidth, cellHeight float64, colorFor glyphColorFunc) *threed.Model {
+	model := threed.NewModel()
+	for row, line := range rows {
+		col := 0
+		for _, r := range line {
+			if r != ' ' {
+				addGlyphBillboard(model, threed.Vector3D{
+					X: origin.X + float64(col)*cellWidth,
+					Y: origin.Y - float64(row)*cellHeight,
+					Z: origin.Z,
+				}, cellWidth*1.65, r, colorFor(r))
+			}
+			col++
+		}
+	}
+	return model
+}
+
+func terminalFormColor(r rune) threed.Color {
+	switch {
+	case strings.ContainsRune("┌┐└┘─│├┤┬┴┼╭╮╰╯╦╩═║", r):
+		return threed.Color{R: 0.54, G: 0.92, B: 0.96}
+	case strings.ContainsRune("▲△╱╲", r):
+		return threed.Color{R: 0.96, G: 0.74, B: 0.22}
+	case strings.ContainsRune("◆◇", r):
+		return threed.Color{R: 0.46, G: 0.94, B: 0.32}
+	case strings.ContainsRune("○●", r):
+		return threed.Color{R: 0.66, G: 0.88, B: 1.00}
+	case strings.ContainsRune("█▣", r):
+		return threed.Color{R: 0.96, G: 0.28, B: 0.46}
+	default:
+		return threed.Color{R: 0.82, G: 0.86, B: 0.88}
+	}
+}
+
+func mutedCircuitColor(r rune) threed.Color {
+	if r == '·' {
+		return threed.Color{R: 0.18, G: 0.28, B: 0.26}
+	}
+	return threed.Color{R: 0.26, G: 0.34, B: 0.34}
+}
+
+func graphColor(r rune) threed.Color {
+	switch {
+	case strings.ContainsRune("┌┐└┘─│├┤┬┴┼╭╮╰╯╦╩═║╔╗╚╝", r):
+		return threed.Color{R: 0.50, G: 0.88, B: 0.92}
+	case strings.ContainsRune("█▇▆▅▄▃▂▁", r):
+		return threed.Color{R: 0.70, G: 0.92, B: 1.00}
+	case strings.ContainsRune("◆◇", r):
+		return threed.Color{R: 0.48, G: 0.96, B: 0.34}
+	case strings.ContainsRune("○●", r):
+		return threed.Color{R: 0.95, G: 0.78, B: 0.24}
+	default:
+		return threed.Color{R: 0.84, G: 0.86, B: 0.88}
+	}
+}
+
+func createPulseGlyphs(step int) *threed.Model {
+	model := threed.NewModel()
+	points := []threed.Vector3D{
+		{X: -1.05, Y: 1.42, Z: -0.34},
+		{X: -0.72, Y: -0.30, Z: -0.34},
+		{X: 0.58, Y: 1.18, Z: -0.34},
+		{X: 1.12, Y: -1.18, Z: -0.34},
+		{X: 0.06, Y: -1.48, Z: -0.34},
+	}
+	glyphs := []rune{'✦', '◆', '●', '✧', '◇'}
+	for i, p := range points {
+		if (step+i)%3 == 0 {
+			addGlyphBillboard(model, p, 0.08, glyphs[i%len(glyphs)], threed.Color{R: 0.98, G: 0.96, B: 0.42})
+		}
+	}
+	return model
+}
+
+// createFrontGridModel creates a faint etched grid in the XY plane.
+func createFrontGridModel(z, width, height float64, cols, rows int) *threed.Model {
+	model := threed.NewModel()
+	left := -width / 2
+	right := width / 2
+	bottom := -height / 2
+	top := height / 2
+	color := threed.Color{R: 0.12, G: 0.20, B: 0.22}
+
+	for i := 0; i <= cols; i++ {
+		t := float64(i) / math.Max(float64(cols), 1)
+		x := left + t*width
+		addColoredLine(model, threed.Vector3D{X: x, Y: bottom, Z: z}, threed.Vector3D{X: x, Y: top, Z: z}, '│', color)
+	}
+	for i := 0; i <= rows; i++ {
+		t := float64(i) / math.Max(float64(rows), 1)
+		y := bottom + t*height
+		addColoredLine(model, threed.Vector3D{X: left, Y: y, Z: z}, threed.Vector3D{X: right, Y: y, Z: z}, '─', color)
+	}
+	return model
+}
+
+// createCircuitCluster creates a compact field of terminal glyphs and traces.
+func createCircuitCluster(center threed.Vector3D, rows, cols int, spacing float64, primary, accent threed.Color, step int) *threed.Model {
+	model := threed.NewModel()
+	glyphs := []rune{'┌', '┐', '└', '┘', '┼', '╷', '╵', '╶', '╴', '•', '◆', '▪', '█', '╋', '╂', '┬', '┴'}
+	width := float64(cols-1) * spacing
+	height := float64(rows-1) * spacing
+
+	for row := 0; row < rows; row++ {
+		for col := 0; col < cols; col++ {
+			index := (row*cols + col + step) % len(glyphs)
+			x := center.X - width/2 + float64(col)*spacing
+			y := center.Y - height/2 + float64(row)*spacing
+			z := center.Z
+			color := primary
+			if (row+col+step)%4 == 0 {
+				color = accent
+			}
+			if (row*2+col+step)%9 == 0 {
+				addCircuitChip(model, threed.Vector3D{X: x, Y: y, Z: z - 0.02}, spacing*0.54, spacing*0.36, color)
+				continue
+			}
+			addGlyphBillboard(model, threed.Vector3D{X: x, Y: y, Z: z - 0.04}, spacing*1.20, glyphs[index], color)
+		}
+	}
+
+	for row := 0; row < rows; row++ {
+		y := center.Y - height/2 + float64(row)*spacing
+		if row%2 == 0 {
+			addColoredLine(model, threed.Vector3D{X: center.X - width/2, Y: y, Z: center.Z - 0.16}, threed.Vector3D{X: center.X + width/2, Y: y, Z: center.Z - 0.16}, '─', primary)
+		}
+	}
+	for col := 0; col < cols; col++ {
+		x := center.X - width/2 + float64(col)*spacing
+		if col%3 == 0 {
+			addColoredLine(model, threed.Vector3D{X: x, Y: center.Y - height/2, Z: center.Z - 0.18}, threed.Vector3D{X: x, Y: center.Y + height/2, Z: center.Z - 0.18}, '│', accent)
+		}
+	}
+
+	return model
+}
+
+// createChipBank creates a row of small solid modules like the blocks in the reference.
+func createChipBank(center threed.Vector3D, count int, spacing float64, color threed.Color) *threed.Model {
+	model := threed.NewModel()
+	start := -float64(count-1) * spacing / 2
+	for i := 0; i < count; i++ {
+		x := center.X + start + float64(i)*spacing
+		model = mergeModels(model, createBoxModel(threed.Vector3D{X: x, Y: center.Y, Z: center.Z}, spacing*0.44, spacing*0.76, 0.18, color))
+	}
+	return model
+}
+
+func createTraceHeader(center threed.Vector3D, width float64, color threed.Color) *threed.Model {
+	model := threed.NewModel()
+	addColoredLine(model, threed.Vector3D{X: center.X - width/2, Y: center.Y, Z: center.Z}, threed.Vector3D{X: center.X + width/2, Y: center.Y, Z: center.Z}, '─', color)
+	for i := 0; i < 7; i++ {
+		x := center.X - width/2 + float64(i)*width/6
+		addGlyphBillboard(model, threed.Vector3D{X: x, Y: center.Y + 0.18*math.Sin(float64(i)), Z: center.Z - 0.03}, 0.20, []rune{'■', '┼', '◆', '●', '╋', '┤', '├'}[i], color)
+	}
+	return model
+}
+
+func addCircuitChip(model *threed.Model, center threed.Vector3D, width, height float64, color threed.Color) {
+	chip := createBoxModel(center, width, height, 0.12, color)
+	for _, face := range chip.Faces {
+		model.AddFace(face)
+	}
+}
+
+func addGlyphBillboard(model *threed.Model, center threed.Vector3D, size float64, glyph rune, color threed.Color) {
+	half := size / 2
+	model.AddFace(threed.Face{
+		Vertices: []threed.Vector3D{
+			{X: center.X - half, Y: center.Y - half, Z: center.Z},
+			{X: center.X - half, Y: center.Y + half, Z: center.Z},
+			{X: center.X + half, Y: center.Y + half, Z: center.Z},
+			{X: center.X + half, Y: center.Y - half, Z: center.Z},
+		},
+		Char:       glyph,
+		RenderMode: threed.FaceRenderGlyph,
+		Color:      color,
+		HasColor:   true,
+	})
+}
+
 // createRingBand creates a flat extruded ring in the XZ plane.
 func createRingBand(center threed.Vector3D, innerRadius, outerRadius, height float64, segments int, color threed.Color) *threed.Model {
 	if segments < 8 {
@@ -820,6 +972,15 @@ func addLine(model *threed.Model, a, b threed.Vector3D, char rune) {
 	model.AddFace(threed.Face{
 		Vertices: []threed.Vector3D{a, b},
 		Char:     char,
+	})
+}
+
+func addColoredLine(model *threed.Model, a, b threed.Vector3D, char rune, color threed.Color) {
+	model.AddFace(threed.Face{
+		Vertices: []threed.Vector3D{a, b},
+		Char:     char,
+		Color:    color,
+		HasColor: true,
 	})
 }
 

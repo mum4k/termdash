@@ -14,13 +14,30 @@ func TestBuildDemoScenes(t *testing.T) {
 	if got, want := len(scenes), sceneCount; got != want {
 		t.Fatalf("len(buildDemoScenes(false)) = %d, want %d", got, want)
 	}
-	if got, want := scenes[0].Name, "Orbital Core"; got != want {
+	if got, want := scenes[0].Name, "Terminal Forms"; got != want {
 		t.Fatalf("scenes[0].Name = %q, want %q", got, want)
 	}
 
 	withAsset := buildDemoScenes(true)
 	if got, want := withAsset[3].Name, "Image Relief"; got != want {
 		t.Fatalf("asset scene name = %q, want %q", got, want)
+	}
+}
+
+// TestCircuitScenesIncludeGlyphForms verifies the reference-inspired scenes use
+// glyph-rendered shapes in addition to filled meshes.
+func TestCircuitScenesIncludeGlyphForms(t *testing.T) {
+	for _, scene := range buildDemoScenes(false)[:2] {
+		model := scene.Build(4, nil)
+		var glyphFaces int
+		for _, face := range model.Faces {
+			if face.RenderMode == threed.FaceRenderGlyph {
+				glyphFaces++
+			}
+		}
+		if glyphFaces < 10 {
+			t.Fatalf("%s scene glyph faces = %d, want a dense glyph layer", scene.Name, glyphFaces)
+		}
 	}
 }
 
@@ -63,8 +80,8 @@ func TestAssetSceneUsesProvidedModel(t *testing.T) {
 // TestSceneCatalogTextHighlightsActive verifies the scene list emphasizes the active scene.
 func TestSceneCatalogTextHighlightsActive(t *testing.T) {
 	lines := sceneCatalogText(buildDemoScenes(false), 1, false)
-	if got := lines[1].line; got != "▶ 2. Geometry Array" {
-		t.Fatalf("active line = %q, want highlighted Geometry Array", got)
+	if got := lines[1].line; got != "▶ 2. Shape Board" {
+		t.Fatalf("active line = %q, want highlighted Shape Board", got)
 	}
 	if got := lines[1].color; got != cell.ColorNumber(159) {
 		t.Fatalf("active line color = %v, want %v", got, cell.ColorNumber(159))

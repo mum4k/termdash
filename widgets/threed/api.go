@@ -25,10 +25,15 @@ import (
 type ShapeKind int
 
 const (
+	// ShapeCube is the built-in cube primitive.
 	ShapeCube ShapeKind = iota
+	// ShapePyramid is the built-in square pyramid primitive.
 	ShapePyramid
+	// ShapeTetrahedron is the built-in tetrahedron primitive.
 	ShapeTetrahedron
+	// ShapeOctahedron is the built-in octahedron primitive.
 	ShapeOctahedron
+	// ShapeSphere is the built-in sphere primitive.
 	ShapeSphere
 )
 

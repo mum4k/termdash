@@ -19,6 +19,7 @@ import (
 	"strings"
 )
 
+// ShowcaseSceneCount is the number of curated showcase scenes.
 const ShowcaseSceneCount = 9
 
 // ShowcaseScene describes one curated ThreeD showcase scene.

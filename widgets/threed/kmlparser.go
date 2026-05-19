@@ -5,6 +5,7 @@ package threed
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -131,6 +132,12 @@ func ExtractPlacemarksFromFolder(folder Folder) []Placemark {
 
 // GenerateModelFromKML generates a 3D model from KML data.
 func GenerateModelFromKML(kml *KML, logger *log.Logger) (*Model, error) {
+	if kml == nil {
+		return nil, fmt.Errorf("kml is nil")
+	}
+	if logger == nil {
+		logger = quietLogger()
+	}
 	model := NewModel()
 	placemarks := ExtractPlacemarksFromDocument(kml.Document)
 
@@ -147,7 +154,7 @@ func GenerateModelFromKML(kml *KML, logger *log.Logger) (*Model, error) {
 			if len(coords) > 0 {
 				position := GeoTo3D(coords[0])
 				marker := createMarker(position, 0.1, '●') // Using a small size for markers
-				model.Faces = append(model.Faces, marker.Faces...)
+				model.Append(marker)
 			}
 		}
 
@@ -163,7 +170,7 @@ func GenerateModelFromKML(kml *KML, logger *log.Logger) (*Model, error) {
 				coords[i] = GeoTo3D(coord)
 			}
 			line := createLine(coords, '─') // Using a line character
-			model.Faces = append(model.Faces, line.Faces...)
+			model.Append(line)
 		}
 
 		// Handle Polygon geometries
@@ -178,7 +185,7 @@ func GenerateModelFromKML(kml *KML, logger *log.Logger) (*Model, error) {
 				coords[i] = GeoTo3D(coord)
 			}
 			polygon := createPolygon(coords, '█') // Using a block character
-			model.Faces = append(model.Faces, polygon.Faces...)
+			model.Append(polygon)
 		}
 	}
 	center := model.Center()

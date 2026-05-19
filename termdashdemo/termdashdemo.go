@@ -34,9 +34,14 @@ import (
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/private/canvas"
+	"github.com/mum4k/termdash/private/draw"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgetapi"
 	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/borderfx"
 	"github.com/mum4k/termdash/widgets/button"
@@ -53,6 +58,7 @@ import (
 	"github.com/mum4k/termdash/widgets/segmentdisplay"
 	"github.com/mum4k/termdash/widgets/slider"
 	"github.com/mum4k/termdash/widgets/sparkline"
+	"github.com/mum4k/termdash/widgets/spectrum"
 	"github.com/mum4k/termdash/widgets/spinner"
 	"github.com/mum4k/termdash/widgets/tab"
 	"github.com/mum4k/termdash/widgets/text"
@@ -97,10 +103,11 @@ const (
 	idVizStatus  = "demo-viz-status"
 
 	// Tab 4 – Explorer
-	idExplTree  = "demo-expl-tree"
-	idExplTime  = "demo-expl-timeline"
-	idExplSpark = "demo-expl-spark"
-	idExplSpin  = "demo-expl-spin"
+	idExplTree = "demo-expl-tree"
+	idExplTime = "demo-expl-timeline"
+	idExplPick = "demo-expl-picker"
+	idExplPrev = "demo-expl-preview"
+	idExplSpin = "demo-expl-spin"
 
 	// Tab 5 – ThreeD
 	idThreeDStage = "demo-threed-stage"
@@ -114,7 +121,7 @@ var animatedPaneIDs = []string{
 	idCtrlSeg, idCtrlInput, idCtrlSlider, idCtrlCheck,
 	idCtrlDrop, idCtrlRadio, idCtrlActions, idCtrlStatus,
 	idVizModal, idVizHeatmap, idVizPie, idVizStatus,
-	idExplTree, idExplTime, idExplSpark, idExplSpin,
+	idExplTree, idExplTime, idExplPick, idExplPrev, idExplSpin,
 	idThreeDStage, idThreeDInfo,
 }
 
@@ -1187,22 +1194,47 @@ func renderVizStatus(w *text.Text, contacts int, load float64) error {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tab 4 – Explorer  (TreeView · Timeline · Spinner · SparkLine)
+// Tab 4 – Explorer  (catalog · live previews · timeline scrubber)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // explWidgets groups Tab 4's widgets.
 type explWidgets struct {
+	mu       sync.Mutex
+	root     *container.Container
 	tree     *treeview.TreeView
-	timeLine *timeline.Timeline
+	line     *linechart.LineChart
+	bar      *barchart.BarChart
 	sparkA   *sparkline.SparkLine
+	donut    *donut.Donut
+	pie      *pie.Pie
+	heat     *heatmap.HeatMap
+	gauge    *gauge.Gauge
+	radar    *radar.Radar
+	spectrum *spectrum.Spectrum
+	timeLine *timeline.Timeline
+	picker   *timeline.TimeRangePicker
+	prevTime *timeline.Timeline
+	prevPick *timeline.TimeRangePicker
 	spinW    *text.Text
+	previews map[string]func() []container.Option
 }
 
 // newExplorerTab creates all Explorer widgets and returns the tab.
 func newExplorerTab(ctx context.Context) (*explWidgets, *tab.Tab, error) {
+	w, err := newExplorerWidgets()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// ── TreeView – termdash widget catalog ────────────────────────────────────
 	mkLeaf := func(label string) *treeview.TreeNode {
-		return &treeview.TreeNode{Label: label}
+		n := &treeview.TreeNode{Label: label}
+		if _, ok := w.previews[label]; ok {
+			n.OnClick = func() error {
+				return w.selectCatalogItem(label)
+			}
+		}
+		return n
 	}
 	mkGroup := func(label string, children ...*treeview.TreeNode) *treeview.TreeNode {
 		return &treeview.TreeNode{
@@ -1216,6 +1248,7 @@ func newExplorerTab(ctx context.Context) (*explWidgets, *tab.Tab, error) {
 			mkLeaf("LineChart"), mkLeaf("BarChart"), mkLeaf("SparkLine"),
 			mkLeaf("Donut"), mkLeaf("Pie"), mkLeaf("HeatMap"),
 			mkLeaf("Gauge"), mkLeaf("Radar"), mkLeaf("Spectrum"),
+			mkLeaf("Timeline"), mkLeaf("TimeRangePicker"),
 		),
 		mkGroup("Input Controls",
 			mkLeaf("Button"), mkLeaf("TextInput"), mkLeaf("Checkbox"),
@@ -1226,7 +1259,7 @@ func newExplorerTab(ctx context.Context) (*explWidgets, *tab.Tab, error) {
 		),
 		mkGroup("Layout & FX",
 			mkLeaf("Modal"), mkLeaf("TreeView ← you are here"),
-			mkLeaf("Timeline"), mkLeaf("BorderFX"), mkLeaf("Tab"),
+			mkLeaf("BorderFX"), mkLeaf("Tab"),
 		),
 	}
 	tv, err := treeview.New(
@@ -1240,52 +1273,7 @@ func newExplorerTab(ctx context.Context) (*explWidgets, *tab.Tab, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// ── Timeline – live event log ──────────────────────────────────────────────
-	tl, err := timeline.New(timeline.FollowTail(), timeline.MaxEvents(200))
-	if err != nil {
-		return nil, nil, err
-	}
-	// Seed with initial events
-	seeds := []struct {
-		sev   timeline.Severity
-		title string
-		desc  string
-	}{
-		{timeline.SeverityInfo, "System Boot", "All subsystems nominal"},
-		{timeline.SeverityDebug, "Config Loaded", "23 widgets initialised"},
-		{timeline.SeverityInfo, "Tab System Ready", "4 tabs active"},
-		{timeline.SeverityWarn, "Memory Pressure", "Usage at 82% — monitoring"},
-		{timeline.SeverityInfo, "BorderFX Active", "Interlace sweep on all panes"},
-		{timeline.SeverityDebug, "Radar Armed", "3 contacts acquired"},
-	}
-	now := time.Now()
-	for i, s := range seeds {
-		tl.AddEvent(timeline.Event{
-			Time:      now.Add(-time.Duration(len(seeds)-i) * 8 * time.Second).Format("15:04:05"),
-			Title:     s.title,
-			Timestamp: now.Add(-time.Duration(len(seeds)-i) * 8 * time.Second),
-			Severity:  s.sev,
-		})
-		_ = s.desc // desc shown in Title for compact display
-	}
-
-	// ── SparkLine – activity monitor ──────────────────────────────────────────
-	spA, err := sparkline.New(
-		sparkline.Color(cell.ColorNumber(75)),
-		sparkline.Label("Activity", cell.FgColor(cell.ColorNumber(245))),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// ── Spinner text widget ───────────────────────────────────────────────────
-	spinW, err := text.New()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	w := &explWidgets{tree: tv, timeLine: tl, sparkA: spA, spinW: spinW}
+	w.tree = tv
 
 	// ── Layout ───────────────────────────────────────────────────────────────
 	content := container.SplitVertical(
@@ -1296,31 +1284,619 @@ func newExplorerTab(ctx context.Context) (*explWidgets, *tab.Tab, error) {
 		container.Right(
 			container.SplitHorizontal(
 				container.Top(
-					paneOpts(idExplTime, "Live Event Stream",
-						container.PlaceWidget(tl))...,
+					paneOpts(idExplPrev, "LineChart Preview",
+						container.PlaceWidget(w.line))...,
 				),
 				container.Bottom(
 					container.SplitHorizontal(
 						container.Top(
-							paneOpts(idExplSpark, "Activity",
-								container.PlaceWidget(spA))...,
+							paneOpts(idExplPick, "Timeline Range Picker",
+								container.PlaceWidget(w.picker))...,
 						),
 						container.Bottom(
-							paneOpts(idExplSpin, "System Status",
-								container.PaddingLeft(1),
-								container.PaddingTop(1),
-								container.PlaceWidget(spinW))...,
+							container.SplitVertical(
+								container.Left(
+									paneOpts(idExplTime, "Live Event Stream",
+										container.PlaceWidget(w.timeLine))...,
+								),
+								container.Right(
+									paneOpts(idExplSpin, "System Status",
+										container.PaddingLeft(1),
+										container.PaddingTop(1),
+										container.PlaceWidget(w.spinW))...,
+								),
+								container.SplitPercent(64),
+							),
 						),
-						container.SplitPercent(55),
+						container.SplitPercent(36),
 					),
 				),
-				container.SplitPercent(70),
+				container.SplitPercent(62),
 			),
 		),
 		container.SplitPercent(32),
 	)
 
 	return w, &tab.Tab{Name: "Explorer", Content: content}, nil
+}
+
+// setRoot allows catalog clicks to swap the preview pane after the root exists.
+func (w *explWidgets) setRoot(root *container.Container) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.root = root
+}
+
+// selectCatalogItem swaps the right-hand preview pane to the selected widget.
+func (w *explWidgets) selectCatalogItem(name string) error {
+	w.mu.Lock()
+	root := w.root
+	buildPreview := w.previews[name]
+	w.mu.Unlock()
+	if root == nil || buildPreview == nil {
+		return nil
+	}
+	return root.Update(idExplPrev, buildPreview()...)
+}
+
+// newExplorerWidgets creates every live visualization used by the Explorer catalog.
+func newExplorerWidgets() (*explWidgets, error) {
+	lineW, err := linechart.New(
+		linechart.AxesCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		linechart.XLabelCellOpts(cell.FgColor(cell.ColorNumber(245))),
+		linechart.YLabelCellOpts(cell.FgColor(cell.ColorNumber(245))),
+		linechart.ThresholdLine(0.82, cell.FgColor(cell.ColorNumber(203))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	barW, err := barchart.New(
+		barchart.BarWidth(6),
+		barchart.BarGap(2),
+		barchart.ShowValues(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	sparkW, err := sparkline.New(
+		sparkline.Color(cell.ColorNumber(75)),
+		sparkline.AlertColor(cell.ColorNumber(203)),
+		sparkline.Threshold(78),
+		sparkline.Label("Activity", cell.FgColor(cell.ColorNumber(245))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	donutW, err := donut.New(
+		donut.CellOpts(cell.FgColor(cell.ColorNumber(75))),
+		donut.TextCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.Bold()),
+		donut.Label("COMPUTE", cell.FgColor(cell.ColorNumber(245))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	pieW, err := pie.New(pie.ColorOption([]cell.Color{
+		cell.ColorNumber(75), cell.ColorNumber(118), cell.ColorNumber(220),
+		cell.ColorNumber(203), cell.ColorNumber(159),
+	}))
+	if err != nil {
+		return nil, err
+	}
+	heatW, err := heatmap.New(
+		heatmap.AxisCellOpts(cell.FgColor(cell.ColorNumber(240))),
+		heatmap.XLabelCellOpts(cell.FgColor(cell.ColorNumber(245))),
+		heatmap.YLabelCellOpts(cell.FgColor(cell.ColorNumber(245))),
+		heatmap.Palette(cell.ColorNumber(235), cell.ColorNumber(24), cell.ColorNumber(31), cell.ColorNumber(75), cell.ColorNumber(159)),
+	)
+	if err != nil {
+		return nil, err
+	}
+	gaugeW, err := gauge.New(
+		gauge.Height(3),
+		gauge.Color(cell.ColorNumber(75)),
+		gauge.TextLabel(" throughput"),
+		gauge.Threshold(82, linestyle.Light, cell.FgColor(cell.ColorNumber(203))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	radarW, err := radar.New(
+		radar.SweepSpeed(95),
+		radar.BeamColor(90, 255, 190),
+		radar.ContactColor(255, 210, 90),
+		radar.RangeRings(4),
+	)
+	if err != nil {
+		return nil, err
+	}
+	spectrumW, err := spectrum.New(
+		spectrum.Stereo(),
+		spectrum.ChannelLabels("LEFT", "RIGHT"),
+		spectrum.MaxValue(100),
+		spectrum.Gradient(cell.ColorNumber(24), cell.ColorNumber(75), cell.ColorNumber(159), cell.ColorNumber(220), cell.ColorNumber(203)),
+		spectrum.AxisCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		spectrum.Threshold(78),
+		spectrum.ThresholdLineColor(cell.ColorNumber(203)),
+		spectrum.AlertColor(cell.ColorNumber(203)),
+	)
+	if err != nil {
+		return nil, err
+	}
+	timelineW, err := timeline.New(timeline.FollowTail(), timeline.MaxEvents(200))
+	if err != nil {
+		return nil, err
+	}
+	pickerW, err := timeline.NewTimeRangePicker(func(start, end time.Time, hasRange bool) {
+		if hasRange {
+			timelineW.SetTimeFilter(start, end)
+			return
+		}
+		timelineW.ClearTimeFilter()
+	})
+	if err != nil {
+		return nil, err
+	}
+	timelinePreview, err := timeline.New(timeline.FollowTail(), timeline.MaxEvents(200))
+	if err != nil {
+		return nil, err
+	}
+	pickerPreview, err := timeline.NewTimeRangePicker(func(start, end time.Time, hasRange bool) {
+		if hasRange {
+			timelinePreview.SetTimeFilter(start, end)
+			return
+		}
+		timelinePreview.ClearTimeFilter()
+	})
+	if err != nil {
+		return nil, err
+	}
+	spinW, err := text.New()
+	if err != nil {
+		return nil, err
+	}
+	buttonW, err := button.New("Run Action", func() error {
+		return writeExplorerStatus(spinW, "Button press received")
+	},
+		button.Width(18),
+		button.Height(3),
+		button.FillColor(cell.ColorNumber(75)),
+		button.FocusedFillColor(cell.ColorNumber(159)),
+		button.PressedFillColor(cell.ColorNumber(118)),
+		button.TextColor(cell.ColorBlack),
+	)
+	if err != nil {
+		return nil, err
+	}
+	inputW, err := textinput.New(
+		textinput.Label("Query", cell.FgColor(cell.ColorNumber(245))),
+		textinput.DefaultText("termdash widgets"),
+		textinput.PlaceHolder("type here"),
+		textinput.FillColor(cell.ColorNumber(234)),
+		textinput.TextColor(cell.ColorNumber(231)),
+		textinput.CursorColor(cell.ColorNumber(159)),
+		textinput.Border(linestyle.Light),
+		textinput.BorderColor(cell.ColorNumber(75)),
+		textinput.MaxWidthCells(36),
+	)
+	if err != nil {
+		return nil, err
+	}
+	checkW, err := checkbox.New("Enable alerts",
+		checkbox.Checked(true),
+		checkbox.UseIndicatorSet(checkbox.IndicatorSets.Heavy),
+		checkbox.CellOpts(cell.FgColor(cell.ColorNumber(245))),
+		checkbox.FocusedCellOpts(cell.FgColor(cell.ColorNumber(159))),
+		checkbox.CheckedCellOpts(cell.FgColor(cell.ColorNumber(118))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	radioW, err := radio.New([]radio.Item{
+		{Label: "Low"},
+		{Label: "Balanced"},
+		{Label: "High"},
+	},
+		radio.Selected(1),
+		radio.UseIndicatorSet(radio.IndicatorSets.Diamond),
+	)
+	if err != nil {
+		return nil, err
+	}
+	sliderW, err := slider.New(
+		slider.Width(34),
+		slider.Value(64),
+		slider.Step(5),
+		slider.SegmentedBlocksStyle(),
+		slider.FillCellOpts(cell.FgColor(cell.ColorNumber(75))),
+		slider.TrackCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		slider.KnobCellOpts(cell.FgColor(cell.ColorNumber(231))),
+		slider.FocusedKnobCellOpts(cell.FgColor(cell.ColorNumber(159))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	dropdownW, err := dropdown.New([]string{"Telemetry", "Operations", "Charts", "Controls"},
+		dropdown.Selected(1),
+		dropdown.Width(24),
+		dropdown.GlyphSet(dropdown.GlyphProfiles.Minimal),
+		dropdown.CellOpts(cell.FgColor(cell.ColorNumber(245)), cell.BgColor(cell.ColorNumber(234))),
+		dropdown.FocusedCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.BgColor(cell.ColorNumber(236))),
+		dropdown.SelectedCellOpts(cell.FgColor(cell.ColorNumber(159)), cell.BgColor(cell.ColorNumber(236))),
+		dropdown.BorderCellOpts(cell.FgColor(cell.ColorNumber(75))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	textW, err := explorerText("Text widget\n\nRich terminal copy with word wrapping, color, and scroll handling.", cell.ColorNumber(245))
+	if err != nil {
+		return nil, err
+	}
+	segmentW, err := explorerSegmentDisplay()
+	if err != nil {
+		return nil, err
+	}
+	threedW, err := explorerThreeD()
+	if err != nil {
+		return nil, err
+	}
+	treePreview, err := explorerTreeView()
+	if err != nil {
+		return nil, err
+	}
+	modalPreview, err := explorerModalPreview()
+	if err != nil {
+		return nil, err
+	}
+	borderPreview, err := explorerText("BorderFX preview\n\nFocus this pane and watch the registered border animation render around the selected preview.", cell.ColorNumber(159))
+	if err != nil {
+		return nil, err
+	}
+	tabPreview := newExplorerTabPreview()
+	w := &explWidgets{
+		line: lineW, bar: barW, sparkA: sparkW, donut: donutW, pie: pieW,
+		heat: heatW, gauge: gaugeW, radar: radarW, spectrum: spectrumW,
+		timeLine: timelineW, picker: pickerW, prevTime: timelinePreview, prevPick: pickerPreview, spinW: spinW,
+	}
+	w.previews = map[string]func() []container.Option{
+		"LineChart":               explorerWidgetPreview("LineChart", lineW),
+		"BarChart":                explorerWidgetPreview("BarChart", barW),
+		"SparkLine":               explorerWidgetPreview("SparkLine", sparkW),
+		"Donut":                   explorerWidgetPreview("Donut", donutW),
+		"Pie":                     explorerWidgetPreview("Pie", pieW),
+		"HeatMap":                 explorerWidgetPreview("HeatMap", heatW),
+		"Gauge":                   explorerWidgetPreview("Gauge", gaugeW),
+		"Radar":                   explorerWidgetPreview("Radar", radarW),
+		"Spectrum":                explorerWidgetPreview("Spectrum", spectrumW),
+		"Timeline":                explorerWidgetPreview("Timeline", timelinePreview),
+		"TimeRangePicker":         explorerWidgetPreview("TimeRangePicker", pickerPreview),
+		"Button":                  explorerControlPreview("Button", buttonW),
+		"TextInput":               explorerControlPreview("TextInput", inputW),
+		"Checkbox":                explorerControlPreview("Checkbox", checkW),
+		"Radio":                   explorerControlPreview("Radio", radioW),
+		"Slider":                  explorerControlPreview("Slider", sliderW),
+		"Dropdown":                explorerControlPreview("Dropdown", dropdownW),
+		"Text":                    explorerWidgetPreview("Text", textW),
+		"SegmentDisplay":          explorerWidgetPreview("SegmentDisplay", segmentW),
+		"ThreeD":                  explorerWidgetPreview("ThreeD", threedW),
+		"Modal":                   explorerWidgetPreview("Modal", modalPreview),
+		"TreeView ← you are here": explorerWidgetPreview("TreeView", treePreview),
+		"BorderFX":                explorerWidgetPreview("BorderFX", borderPreview),
+		"Tab":                     explorerWidgetPreview("Tab", tabPreview),
+	}
+	seedExplorerTimeline(timelineW, pickerW)
+	seedExplorerTimeline(timelinePreview, pickerPreview)
+	if err := writeExplorerStatus(spinW, "Catalog ready"); err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
+// explorerWidgetPreview returns a standard preview pane for one catalog item.
+func explorerWidgetPreview(title string, widget widgetapi.Widget) func() []container.Option {
+	return func() []container.Option {
+		return paneOpts(idExplPrev, title+" Preview", container.PlaceWidget(widget))
+	}
+}
+
+// explorerControlPreview adds padding around compact input widgets.
+func explorerControlPreview(title string, widget widgetapi.Widget) func() []container.Option {
+	return func() []container.Option {
+		return paneOpts(idExplPrev, title+" Preview",
+			container.PaddingLeft(2),
+			container.PaddingTop(2),
+			container.PlaceWidget(widget),
+		)
+	}
+}
+
+// explorerText creates a one-off text widget for catalog previews.
+func explorerText(copy string, color cell.Color) (*text.Text, error) {
+	w, err := text.New(text.WrapAtWords())
+	if err != nil {
+		return nil, err
+	}
+	if err := w.Write(copy, text.WriteCellOpts(cell.FgColor(color))); err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
+// explorerSegmentDisplay creates a real SegmentDisplay preview.
+func explorerSegmentDisplay() (*segmentdisplay.SegmentDisplay, error) {
+	sd, err := segmentdisplay.New(segmentdisplay.MaximizeDisplayedText())
+	if err != nil {
+		return nil, err
+	}
+	chunks := []*segmentdisplay.TextChunk{
+		segmentdisplay.NewChunk("TERM", segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorNumber(75)))),
+		segmentdisplay.NewChunk("DASH", segmentdisplay.WriteCellOpts(cell.FgColor(cell.ColorNumber(118)))),
+	}
+	if err := sd.Write(chunks); err != nil {
+		return nil, err
+	}
+	return sd, nil
+}
+
+// explorerThreeD creates a compact live ThreeD widget preview.
+func explorerThreeD() (*threed.ThreeD, error) {
+	stage, err := threed.New(
+		threed.ShowAxes(false),
+		threed.EnableLogging(false),
+		threed.BackfaceCulling(false),
+		threed.ZoomScale(20.0),
+		threed.UprightOnly(false),
+		threed.AmbientColor(threed.Color{R: 0.38, G: 0.38, B: 0.38}),
+		threed.DiffuseColor(threed.Color{R: 1.0, G: 1.0, B: 1.0}),
+	)
+	if err != nil {
+		return nil, err
+	}
+	model := threed.Cube(
+		threed.ModelSize(1.4),
+		threed.ModelRune('█'),
+		threed.ModelColor(threed.NeonCyan),
+	)
+	stage.SetModel(model)
+	stage.Rotate(threed.Vector3D{X: 0.55, Y: 0.45, Z: 0.12})
+	return stage, nil
+}
+
+// explorerTreeView creates a nested TreeView preview.
+func explorerTreeView() (*treeview.TreeView, error) {
+	return treeview.New(
+		treeview.Nodes(
+			&treeview.TreeNode{
+				Label:         "Catalog",
+				ExpandedState: true,
+				Children: []*treeview.TreeNode{
+					{Label: "Visualization"},
+					{Label: "Input Controls"},
+					{Label: "Display"},
+					{Label: "Layout & FX"},
+				},
+			},
+		),
+		treeview.LabelColor(cell.ColorNumber(252)),
+		treeview.ExpandedIcon("▼"),
+		treeview.CollapsedIcon("▶"),
+		treeview.LeafIcon("·"),
+		treeview.IndentationPerLevel(2),
+	)
+}
+
+// explorerModalPreview creates a draggable modal widget preview.
+func explorerModalPreview() (*modal.Modal, error) {
+	body, err := explorerText("Drag me by the title bar.\nClick - to minimize and restore.", cell.ColorNumber(245))
+	if err != nil {
+		return nil, err
+	}
+	logW, err := explorerText("Modal child window\nsame border/minimize behavior", cell.ColorNumber(159))
+	if err != nil {
+		return nil, err
+	}
+	main := modal.NewDraggableWidget("explorer-modal-main", body, 4, 2, 34, 8, nil)
+	main.Title = "Modal Window"
+	aux := modal.NewDraggableWidget("explorer-modal-log", logW, 26, 10, 32, 7, nil)
+	aux.Title = "Compact Log"
+	return modal.NewModal("explorer-modal-preview", []*modal.DraggableWidget{main, aux}, nil), nil
+}
+
+type explorerTabPreview struct {
+	mu     sync.Mutex
+	active int
+	frame  int
+	rects  []image.Rectangle
+}
+
+func newExplorerTabPreview() *explorerTabPreview {
+	return &explorerTabPreview{}
+}
+
+func (p *explorerTabPreview) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
+	_ = meta
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	ar := cvs.Area()
+	p.frame++
+	p.rects = p.rects[:0]
+
+	x := ar.Min.X
+	for i, label := range []string{"Metrics", "Events", "Graph"} {
+		tabText := fmt.Sprintf(" %s %s ", explorerTabIcon(i == p.active), label)
+		width := runewidth.StringWidth(tabText)
+		p.rects = append(p.rects, image.Rect(x-ar.Min.X, 0, x-ar.Min.X+width, 2))
+
+		fg := cell.ColorNumber(245)
+		bg := cell.ColorNumber(236)
+		if i == p.active {
+			fg = cell.ColorNumber(159)
+			bg = cell.ColorNumber(24)
+		}
+		if err := draw.Text(cvs, tabText, image.Point{X: x, Y: ar.Min.Y},
+			draw.TextCellOpts(cell.FgColor(fg), cell.BgColor(bg), cell.Bold()),
+			draw.TextMaxX(ar.Max.X),
+			draw.TextOverrunMode(draw.OverrunModeTrim),
+		); err != nil {
+			return err
+		}
+
+		marker := strings.Repeat("─", width)
+		if i == p.active {
+			marker = explorerTabSweep(width, p.frame)
+		}
+		if err := draw.Text(cvs, marker, image.Point{X: x, Y: ar.Min.Y + 1},
+			draw.TextCellOpts(cell.FgColor(explorerTabUnderlineColor(i == p.active))),
+			draw.TextMaxX(ar.Max.X),
+			draw.TextOverrunMode(draw.OverrunModeTrim),
+		); err != nil {
+			return err
+		}
+		x += width + 1
+	}
+
+	return p.drawActiveBody(cvs, ar)
+}
+
+func (p *explorerTabPreview) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
+	_ = meta
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	switch k.Key {
+	case keyboard.KeyArrowLeft:
+		p.active = (p.active + 2) % 3
+	case keyboard.KeyArrowRight, keyboard.KeyTab:
+		p.active = (p.active + 1) % 3
+	}
+	return nil
+}
+
+func (p *explorerTabPreview) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
+	_ = meta
+	if m.Button != mouse.ButtonLeft {
+		return nil
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for i, r := range p.rects {
+		if m.Position.In(r) {
+			p.active = i
+			return nil
+		}
+	}
+	return nil
+}
+
+func (p *explorerTabPreview) Options() widgetapi.Options {
+	return widgetapi.Options{
+		MinimumSize:  image.Point{X: 36, Y: 8},
+		WantKeyboard: widgetapi.KeyScopeFocused,
+		WantMouse:    widgetapi.MouseScopeWidget,
+	}
+}
+
+func (p *explorerTabPreview) drawActiveBody(cvs *canvas.Canvas, ar image.Rectangle) error {
+	content := [][]string{
+		{"METRICS", "load 64%", "p95 42ms", "queue 07"},
+		{"EVENTS", "12:08 deploy started", "12:09 cache warm", "12:10 checks green"},
+		{"GRAPH", "▁▃▅▇▆▅▇█▆▃", "series: live", "mode: preview"},
+	}
+	rows := content[p.active]
+	for i, row := range rows {
+		color := cell.ColorNumber(245)
+		if i == 0 {
+			color = cell.ColorNumber(159)
+		}
+		if err := draw.Text(cvs, row, image.Point{X: ar.Min.X + 2, Y: ar.Min.Y + 3 + i},
+			draw.TextCellOpts(cell.FgColor(color)),
+			draw.TextMaxX(ar.Max.X),
+			draw.TextOverrunMode(draw.OverrunModeTrim),
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func explorerTabIcon(active bool) string {
+	if active {
+		return "◆"
+	}
+	return "○"
+}
+
+func explorerTabUnderlineColor(active bool) cell.Color {
+	if active {
+		return cell.ColorNumber(75)
+	}
+	return cell.ColorNumber(238)
+}
+
+func explorerTabSweep(width, frame int) string {
+	if width <= 0 {
+		return ""
+	}
+	head := frame % width
+	runes := []rune(strings.Repeat("─", width))
+	runes[head] = '●'
+	if head > 0 {
+		runes[head-1] = '•'
+	}
+	return string(runes)
+}
+
+// writeExplorerStatus refreshes the small status pane.
+func writeExplorerStatus(w *text.Text, message string) error {
+	w.Reset()
+	rows := []struct {
+		k string
+		v string
+	}{
+		{"Status:   ", message + "\n"},
+		{"Catalog:  ", "all leaves selectable\n"},
+		{"Preview:  ", "right pane swaps live widgets\n"},
+		{"Tip:      ", "click tree items to inspect"},
+	}
+	for _, row := range rows {
+		if err := w.Write(row.k, text.WriteCellOpts(cell.FgColor(cell.ColorNumber(245)))); err != nil {
+			return err
+		}
+		if err := w.Write(row.v, text.WriteCellOpts(cell.FgColor(cell.ColorNumber(252)))); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// seedExplorerTimeline gives the Timeline and TimeRangePicker meaningful initial data.
+func seedExplorerTimeline(tl *timeline.Timeline, picker *timeline.TimeRangePicker) {
+	seeds := []struct {
+		sev   timeline.Severity
+		title string
+	}{
+		{timeline.SeverityInfo, "System Boot"},
+		{timeline.SeverityDebug, "Config Loaded"},
+		{timeline.SeverityInfo, "Tab System Ready"},
+		{timeline.SeverityWarn, "Memory Pressure"},
+		{timeline.SeverityInfo, "BorderFX Active"},
+		{timeline.SeverityDebug, "Radar Armed"},
+		{timeline.SeverityInfo, "Spectrum Calibrated"},
+		{timeline.SeverityWarn, "Timeline Range Armed"},
+	}
+	now := time.Now()
+	events := make([]timeline.Event, 0, len(seeds))
+	for i, s := range seeds {
+		ts := now.Add(-time.Duration(len(seeds)-i) * 8 * time.Second)
+		e := timeline.Event{
+			Time:      ts.Format("15:04:05"),
+			Title:     s.title,
+			Timestamp: ts,
+			Severity:  s.sev,
+		}
+		tl.AddEvent(e)
+		events = append(events, e)
+	}
+	picker.SetPickerEvents(events)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1414,6 +1990,8 @@ func animateExplorer(ctx context.Context, w *explWidgets) {
 
 	sp := spinner.Must("dots")
 	spinStep := 0
+	var lineVals []float64
+	radarAngle := 0.0
 
 	eventNames := []struct {
 		sev   timeline.Severity
@@ -1450,15 +2028,72 @@ func animateExplorer(ctx context.Context, w *explWidgets) {
 		case <-eventTicker.C:
 			e := eventNames[eventIdx%len(eventNames)]
 			eventIdx++
-			w.timeLine.AddEvent(timeline.Event{
+			event := timeline.Event{
 				Time:      time.Now().Format("15:04:05"),
 				Title:     e.title,
 				Timestamp: time.Now(),
 				Severity:  e.sev,
-			})
+			}
+			w.timeLine.AddEvent(event)
+			w.picker.AddPickerEvent(event)
+			w.prevTime.AddEvent(event)
+			w.prevPick.AddPickerEvent(event)
 
 		case <-activityTicker.C:
-			_ = w.sparkA.Add([]int{rand.Intn(101)})
+			phase := float64(spinStep) * 0.18
+			load := clampInt(int(58+32*math.Sin(phase)), 4, 98)
+			lineVals = appendRollingFloat(lineVals, 0.55+0.34*math.Sin(phase)+0.18*math.Cos(phase*1.7), 90)
+			if err := w.line.Series("latency", append([]float64(nil), lineVals...),
+				linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(75))),
+			); err != nil {
+				log.Printf("explorer linechart: %v", err)
+			}
+			if err := w.bar.Values([]int{
+				clampInt(int(46+28*math.Sin(phase*0.8)), 2, 100),
+				clampInt(int(63+24*math.Cos(phase*1.1)), 2, 100),
+				clampInt(int(38+34*math.Sin(phase*1.4+1.5)), 2, 100),
+				clampInt(int(74+18*math.Cos(phase*0.7+0.6)), 2, 100),
+			}, 100,
+				barchart.Labels([]string{"cpu", "mem", "io", "net"}),
+				barchart.BarColors([]cell.Color{cell.ColorNumber(75), cell.ColorNumber(118), cell.ColorNumber(220), cell.ColorNumber(203)}),
+				barchart.ValueColors([]cell.Color{cell.ColorNumber(231), cell.ColorNumber(231), cell.ColorNumber(231), cell.ColorNumber(231)}),
+			); err != nil {
+				log.Printf("explorer barchart: %v", err)
+			}
+			if err := w.sparkA.Add([]int{load}); err != nil {
+				log.Printf("explorer sparkline: %v", err)
+			}
+			if err := w.donut.Percent(load, donut.Label(fmt.Sprintf("LOAD %02d%%", load), cell.FgColor(cell.ColorNumber(245)))); err != nil {
+				log.Printf("explorer donut: %v", err)
+			}
+			if err := w.pie.Values([]int{
+				clampInt(int(24+14*math.Sin(phase)), 4, 50),
+				clampInt(int(20+12*math.Cos(phase*0.9)), 4, 50),
+				clampInt(int(18+9*math.Sin(phase*1.3+1.7)), 4, 50),
+				clampInt(int(15+7*math.Cos(phase*1.6+0.8)), 4, 50),
+				clampInt(int(12+5*math.Sin(phase*2.1)), 4, 50),
+			}); err != nil {
+				log.Printf("explorer pie: %v", err)
+			}
+			xl, yl, hv := vizHeatmapFrame(phase)
+			if err := w.heat.Values(xl, yl, hv); err != nil {
+				log.Printf("explorer heatmap: %v", err)
+			}
+			if err := w.gauge.Percent(load); err != nil {
+				log.Printf("explorer gauge: %v", err)
+			}
+			radarAngle = math.Mod(radarAngle+5.0, 360.0)
+			if err := w.radar.SetContacts([]*radar.Contact{
+				{Angle: math.Mod(radarAngle+35, 360), Distance: 0.34, Label: "A1"},
+				{Angle: math.Mod(radarAngle+165, 360), Distance: 0.62, Label: "B2"},
+				{Angle: math.Mod(radarAngle+290, 360), Distance: 0.78, Label: "C3"},
+			}); err != nil {
+				log.Printf("explorer radar: %v", err)
+			}
+			primary, secondary := explorerSpectrumFrame(phase, 64)
+			if err := w.spectrum.SetStereo(primary, secondary); err != nil {
+				log.Printf("explorer spectrum: %v", err)
+			}
 
 		case <-spinTicker.C:
 			spinLabelTimer++
@@ -1474,8 +2109,8 @@ func animateExplorer(ctx context.Context, w *explWidgets) {
 				{"", frame + "\n"},
 				{"Uptime:   ", fmt.Sprintf("%s\n", fmtDuration(time.Since(time.Now().Add(-time.Duration(spinStep)*120*time.Millisecond))))},
 				{"Events:   ", fmt.Sprintf("%d logged\n", eventIdx)},
-				{"Widgets:  ", "25 active\n"},
-				{"Tabs:     ", "4 / 4 loaded"},
+				{"Catalog:  ", "11 visualizations\n"},
+				{"Tabs:     ", "5 loaded"},
 			}
 			for _, ln := range statusLines {
 				kColor := cell.FgColor(cell.ColorNumber(245))
@@ -1501,6 +2136,18 @@ func fmtDuration(d time.Duration) string {
 	m := int(d.Minutes()) % 60
 	s := int(d.Seconds()) % 60
 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+}
+
+// explorerSpectrumFrame returns a compact stereo signal for the Explorer preview.
+func explorerSpectrumFrame(phase float64, n int) ([]int, []int) {
+	left := make([]int, n)
+	right := make([]int, n)
+	for i := 0; i < n; i++ {
+		x := float64(i) / float64(n)
+		left[i] = clampInt(int(48+38*math.Sin(phase+x*math.Pi*4)+12*math.Sin(phase*1.7+x*math.Pi*11)), 0, 100)
+		right[i] = clampInt(int(44+34*math.Cos(phase*0.9+x*math.Pi*5)+14*math.Sin(phase*1.2+x*math.Pi*9)), 0, 100)
+	}
+	return left, right
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1986,6 +2633,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("root container: %v", err)
 	}
+	explW.setRoot(root)
 
 	// ── Seed first tab ────────────────────────────────────────────────────────
 	tabContent := tab.NewContent(tabManager)

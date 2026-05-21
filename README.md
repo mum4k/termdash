@@ -307,6 +307,16 @@ Run the
 go run widgets/threed/threeddemo/threeddemo.go
 ```
 
+## The FX
+
+Wraps widgets with animated effects such as fade, sweep, scramble and framed
+canvas rendering. Run the
+[fxdemo](widgets/fx/fxdemo/fxdemo.go).
+
+```go
+go run widgets/fx/fxdemo/fxdemo.go
+```
+
 ## The BorderFX
 
 Provides animated border and title effects for containers. Run the
@@ -314,6 +324,16 @@ Provides animated border and title effects for containers. Run the
 
 ```go
 go run widgets/borderfx/borderfxdemo/borderfxdemo.go
+```
+
+## The Toast
+
+Displays configurable toast notifications in normal containers and modal
+windows, with placement, animation, progress and action callbacks. Run the
+[toastdemo](widgets/toast/toastdemo/toastdemo.go).
+
+```go
+go run widgets/toast/toastdemo/toastdemo.go
 ```
 
 ## The EmojiKeyboard

@@ -129,6 +129,84 @@ type Style struct {
 	ProgressCellOpts []cell.Option
 }
 
+// SurfaceOption configures a Surface.
+type SurfaceOption interface {
+	// setSurface applies the option to the provided surface options.
+	setSurface(*surfaceOptions)
+}
+
+type surfaceOption func(*surfaceOptions)
+
+func (so surfaceOption) setSurface(opts *surfaceOptions) {
+	so(opts)
+}
+
+type surfacePlacement struct {
+	placement Placement
+	opts      []Option
+}
+
+type surfaceOptions struct {
+	defaultPlacement Placement
+	defaultToastOpts []Option
+	minimumSize      image.Point
+	placements       []surfacePlacement
+}
+
+func newSurfaceOptions(opts ...SurfaceOption) *surfaceOptions {
+	so := &surfaceOptions{
+		defaultPlacement: PlacementTopRight,
+		minimumSize:      image.Point{X: 8, Y: 3},
+	}
+	for _, opt := range opts {
+		opt.setSurface(so)
+	}
+	return so
+}
+
+func (so *surfaceOptions) validate() error {
+	switch so.defaultPlacement {
+	case PlacementTopRight, PlacementTopLeft, PlacementBottomRight, PlacementBottomLeft, PlacementCenter:
+	default:
+		return fmt.Errorf("unsupported default surface placement %d", so.defaultPlacement)
+	}
+	if so.minimumSize.X < 1 || so.minimumSize.Y < 1 {
+		return fmt.Errorf("toast surface minimum size must be positive, got %v", so.minimumSize)
+	}
+	return nil
+}
+
+// DefaultPlacement sets the placement used by Surface.Notify.
+func DefaultPlacement(p Placement) SurfaceOption {
+	return surfaceOption(func(so *surfaceOptions) {
+		so.defaultPlacement = p
+	})
+}
+
+// DefaultToastOptions sets options inherited by managers created by a Surface.
+func DefaultToastOptions(opts ...Option) SurfaceOption {
+	return surfaceOption(func(so *surfaceOptions) {
+		so.defaultToastOpts = append([]Option(nil), opts...)
+	})
+}
+
+// SurfaceMinimumSize sets the smallest canvas requested by a Surface.
+func SurfaceMinimumSize(size image.Point) SurfaceOption {
+	return surfaceOption(func(so *surfaceOptions) {
+		so.minimumSize = size
+	})
+}
+
+// SurfacePlacement pre-registers a placement on a Surface.
+func SurfacePlacement(p Placement, opts ...Option) SurfaceOption {
+	return surfaceOption(func(so *surfaceOptions) {
+		so.placements = append(so.placements, surfacePlacement{
+			placement: p,
+			opts:      append([]Option(nil), opts...),
+		})
+	})
+}
+
 // Option configures a Manager.
 type Option interface {
 	// set applies the option to the provided options.

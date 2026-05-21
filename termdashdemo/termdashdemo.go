@@ -65,6 +65,7 @@ import (
 	"github.com/mum4k/termdash/widgets/textinput"
 	"github.com/mum4k/termdash/widgets/threed"
 	"github.com/mum4k/termdash/widgets/timeline"
+	"github.com/mum4k/termdash/widgets/toast"
 	"github.com/mum4k/termdash/widgets/treeview"
 )
 
@@ -1258,7 +1259,7 @@ func newExplorerTab(ctx context.Context) (*explWidgets, *tab.Tab, error) {
 			mkLeaf("Text"), mkLeaf("SegmentDisplay"), mkLeaf("ThreeD"),
 		),
 		mkGroup("Layout & FX",
-			mkLeaf("Modal"), mkLeaf("TreeView ← you are here"),
+			mkLeaf("Modal"), mkLeaf("Toast"), mkLeaf("TreeView ← you are here"),
 			mkLeaf("BorderFX"), mkLeaf("Tab"),
 		),
 	}
@@ -1547,6 +1548,10 @@ func newExplorerWidgets() (*explWidgets, error) {
 	if err != nil {
 		return nil, err
 	}
+	toastPreview, err := explorerToastPreview(spinW)
+	if err != nil {
+		return nil, err
+	}
 	borderPreview, err := explorerText("BorderFX preview\n\nFocus this pane and watch the registered border animation render around the selected preview.", cell.ColorNumber(159))
 	if err != nil {
 		return nil, err
@@ -1579,6 +1584,7 @@ func newExplorerWidgets() (*explWidgets, error) {
 		"SegmentDisplay":          explorerWidgetPreview("SegmentDisplay", segmentW),
 		"ThreeD":                  explorerWidgetPreview("ThreeD", threedW),
 		"Modal":                   explorerWidgetPreview("Modal", modalPreview),
+		"Toast":                   explorerWidgetPreview("Toast", toastPreview),
 		"TreeView ← you are here": explorerWidgetPreview("TreeView", treePreview),
 		"BorderFX":                explorerWidgetPreview("BorderFX", borderPreview),
 		"Tab":                     explorerWidgetPreview("Tab", tabPreview),
@@ -1699,6 +1705,54 @@ func explorerModalPreview() (*modal.Modal, error) {
 	aux := modal.NewDraggableWidget("explorer-modal-log", logW, 26, 10, 32, 7, nil)
 	aux.Title = "Compact Log"
 	return modal.NewModal("explorer-modal-preview", []*modal.DraggableWidget{main, aux}, nil), nil
+}
+
+// explorerToastPreview creates a live toast notification surface preview.
+func explorerToastPreview(status *text.Text) (*toast.Surface, error) {
+	surface, err := toast.NewSurface(
+		toast.SurfaceMinimumSize(image.Point{X: 36, Y: 12}),
+		toast.DefaultToastOptions(
+			toast.Width(34),
+			toast.MinWidth(18),
+			toast.MaxWidth(40),
+			toast.MaxVisible(3),
+			toast.Margin(2, 1),
+			toast.AnimationMode(toast.AnimationSlide),
+			toast.AnimationDuration(420*time.Millisecond),
+			toast.DismissOnClick(false),
+			toast.Border(linestyle.Round, cell.FgColor(cell.ColorNumber(244))),
+			toast.FillCellOpts(cell.BgColor(cell.ColorNumber(16))),
+			toast.TitleCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.Bold()),
+			toast.MessageCellOpts(cell.FgColor(cell.ColorNumber(252))),
+			toast.ActionCellOpts(cell.FgColor(cell.ColorNumber(159)), cell.Bold()),
+			toast.Shadow(true, cell.BgColor(cell.ColorNumber(235))),
+		),
+		toast.SurfacePlacement(toast.PlacementBottomLeft, toast.SlideDirection(toast.DirectionBottom)),
+		toast.SurfacePlacement(toast.PlacementCenter, toast.AnimationMode(toast.AnimationPop), toast.Width(30)),
+	)
+	if err != nil {
+		return nil, err
+	}
+	surface.Notify("Toast surface", "A reusable overlay widget with slide animations, actions, and severity styling.",
+		toast.WithSeverity(toast.SeverityInfo),
+		toast.Sticky(),
+		toast.WithAction("trace", func() error {
+			return writeExplorerStatus(status, "Toast action callback")
+		}),
+	)
+	surface.NotifyAt(toast.PlacementBottomLeft, "Action ready", "Click [ack] to update the Explorer status pane.",
+		toast.WithSeverity(toast.SeveritySuccess),
+		toast.Sticky(),
+		toast.WithAction("ack", func() error {
+			return writeExplorerStatus(status, "Toast acknowledged")
+		}),
+	)
+	surface.NotifyAt(toast.PlacementCenter, "Pop callout", "Center placement uses the same Surface API.",
+		toast.WithSeverity(toast.SeverityNeutral),
+		toast.Sticky(),
+		toast.WithIcon('◈'),
+	)
+	return surface, nil
 }
 
 type explorerTabPreview struct {

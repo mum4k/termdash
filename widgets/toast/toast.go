@@ -61,7 +61,18 @@ type Notification struct {
 	// ShowProgress controls whether Progress is drawn.
 	ShowProgress bool
 	// Actions are compact labels drawn at the bottom of the toast.
-	Actions []string
+	Actions []Action
+}
+
+// Action is a clickable label shown in a notification footer.
+type Action struct {
+	// Label is drawn between square brackets.
+	Label string
+	// Callback runs when the label is clicked. A nil callback renders as a
+	// visual-only action.
+	Callback func() error
+	// Dismiss removes the notification after a successful click.
+	Dismiss bool
 }
 
 // NotificationOption configures a notification passed to Notify.
@@ -121,7 +132,24 @@ func WithProgress(progress float64) NotificationOption {
 // WithActions sets compact action labels for the notification footer.
 func WithActions(actions ...string) NotificationOption {
 	return notificationOption(func(n *Notification) {
-		n.Actions = append([]string(nil), actions...)
+		n.Actions = make([]Action, 0, len(actions))
+		for _, label := range actions {
+			n.Actions = append(n.Actions, Action{Label: label})
+		}
+	})
+}
+
+// WithAction appends a clickable action label to the notification footer.
+func WithAction(label string, callback func() error) NotificationOption {
+	return notificationOption(func(n *Notification) {
+		n.Actions = append(n.Actions, Action{Label: label, Callback: callback})
+	})
+}
+
+// WithActionValues replaces the notification footer with prepared actions.
+func WithActionValues(actions ...Action) NotificationOption {
+	return notificationOption(func(n *Notification) {
+		n.Actions = cloneActions(actions)
 	})
 }
 
@@ -140,7 +168,15 @@ type Manager struct {
 	notifications []Notification
 	nextID        int
 	lastRects     map[string]image.Rectangle
+	lastActions   []actionHit
 	opts          *options
+}
+
+type actionHit struct {
+	id       string
+	rect     image.Rectangle
+	callback func() error
+	dismiss  bool
 }
 
 // New returns a new notification manager.
@@ -185,7 +221,7 @@ func (m *Manager) Push(n Notification) string {
 	if n.ShowProgress {
 		n.Progress = clampFloat(n.Progress, 0, 1)
 	}
-	n.Actions = append([]string(nil), n.Actions...)
+	n.Actions = cloneActions(n.Actions)
 	m.notifications = append(m.notifications, n)
 	return n.ID
 }
@@ -203,6 +239,7 @@ func (m *Manager) Clear() {
 	defer m.mu.Unlock()
 	m.notifications = nil
 	m.lastRects = map[string]image.Rectangle{}
+	m.lastActions = nil
 }
 
 // Count returns the number of notifications currently held by the manager.
@@ -229,6 +266,7 @@ func (m *Manager) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	width := m.toastWidth(ar)
 	rects := m.layout(ar, visible, width)
 	m.lastRects = map[string]image.Rectangle{}
+	m.lastActions = nil
 
 	for i, n := range visible {
 		progress := m.animationProgress(n, now)
@@ -236,10 +274,12 @@ func (m *Manager) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		if m.opts.animation == AnimationPop {
 			rect = popRect(rects[i], progress)
 		}
-		if err := m.drawNotification(cvs, rect, n, progress); err != nil {
+		hits, err := m.drawNotification(cvs, rect, n, progress)
+		if err != nil {
 			return err
 		}
 		m.lastRects[n.ID] = rect
+		m.lastActions = append(m.lastActions, hits...)
 	}
 	return nil
 }
@@ -253,30 +293,44 @@ func (m *Manager) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) e
 // Mouse implements widgetapi.Widget.
 func (m *Manager) Mouse(event *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
 	_, _ = meta, event
-	if event == nil || !m.opts.dismissOnClick || event.Button != mouse.ButtonLeft {
+	if event == nil || event.Button != mouse.ButtonLeft {
 		return nil
 	}
 
 	m.mu.Lock()
-	defer m.mu.Unlock()
-	for id, rect := range m.lastRects {
-		if event.Position.In(rect) {
-			m.dismissLocked(id)
-			return nil
+	var callback func() error
+	for _, hit := range m.lastActions {
+		if !event.Position.In(hit.rect) {
+			continue
 		}
+		callback = hit.callback
+		if hit.dismiss {
+			m.dismissLocked(hit.id)
+		}
+		break
+	}
+	if callback == nil && m.opts.dismissOnClick {
+		for id, rect := range m.lastRects {
+			if event.Position.In(rect) {
+				m.dismissLocked(id)
+				break
+			}
+		}
+	}
+	m.mu.Unlock()
+
+	if callback != nil {
+		return callback()
 	}
 	return nil
 }
 
 // Options implements widgetapi.Widget.
 func (m *Manager) Options() widgetapi.Options {
-	opts := widgetapi.Options{
+	return widgetapi.Options{
 		MinimumSize: m.opts.minimumSize,
+		WantMouse:   widgetapi.MouseScopeWidget,
 	}
-	if m.opts.dismissOnClick {
-		opts.WantMouse = widgetapi.MouseScopeWidget
-	}
-	return opts
 }
 
 func (m *Manager) dismissLocked(id string) bool {
@@ -284,10 +338,21 @@ func (m *Manager) dismissLocked(id string) bool {
 		if n.ID == id {
 			m.notifications = append(m.notifications[:i], m.notifications[i+1:]...)
 			delete(m.lastRects, id)
+			m.removeActionHitsLocked(id)
 			return true
 		}
 	}
 	return false
+}
+
+func (m *Manager) removeActionHitsLocked(id string) {
+	kept := m.lastActions[:0]
+	for _, hit := range m.lastActions {
+		if hit.id != id {
+			kept = append(kept, hit)
+		}
+	}
+	m.lastActions = kept
 }
 
 func (m *Manager) expireLocked(now time.Time) {
@@ -490,7 +555,7 @@ func popRect(rect image.Rectangle, progress float64) image.Rectangle {
 	return image.Rect(cx-w/2, cy-h/2, cx-w/2+w, cy-h/2+h)
 }
 
-func (m *Manager) drawNotification(cvs *canvas.Canvas, rect image.Rectangle, n Notification, progress float64) error {
+func (m *Manager) drawNotification(cvs *canvas.Canvas, rect image.Rectangle, n Notification, progress float64) ([]actionHit, error) {
 	style := m.style(n)
 	fade := m.opts.animation == AnimationFade && progress < 1
 	fillOpts := mergeCellOpts(m.opts.fillCellOpts, style.FillCellOpts, fadeOpts(fade))
@@ -503,15 +568,15 @@ func (m *Manager) drawNotification(cvs *canvas.Canvas, rect image.Rectangle, n N
 
 	if m.opts.shadow {
 		if err := fillRect(cvs, rect.Add(image.Point{X: 1, Y: 1}), ' ', m.opts.shadowCellOpts); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	if err := fillRect(cvs, rect, ' ', fillOpts); err != nil {
-		return err
+		return nil, err
 	}
 	if m.opts.border != linestyle.None {
 		if err := drawBorder(cvs, rect, m.opts.border, borderOpts); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -520,7 +585,7 @@ func (m *Manager) drawNotification(cvs *canvas.Canvas, rect image.Rectangle, n N
 	maxX := rect.Max.X - inset - 1
 	y := rect.Min.Y + inset + 1
 	if maxX <= x {
-		return nil
+		return nil, nil
 	}
 
 	title := n.Title
@@ -533,35 +598,33 @@ func (m *Manager) drawNotification(cvs *canvas.Canvas, rect image.Rectangle, n N
 	}
 	if icon != 0 {
 		if err := writeText(cvs, string(icon), image.Point{X: x, Y: y}, maxX, iconOpts); err != nil {
-			return err
+			return nil, err
 		}
 		x += 2
 	}
 	if err := writeText(cvs, title, image.Point{X: x, Y: y}, maxX, titleOpts); err != nil {
-		return err
+		return nil, err
 	}
 	y++
 
 	contentWidth := maxX - (rect.Min.X + inset + 1)
 	for _, line := range wrapLines(n.Message, contentWidth, m.opts.maxMessageLines) {
 		if err := writeText(cvs, line, image.Point{X: rect.Min.X + inset + 1, Y: y}, maxX, messageOpts); err != nil {
-			return err
+			return nil, err
 		}
 		y++
 	}
 
 	if n.ShowProgress {
 		if err := drawProgress(cvs, image.Point{X: rect.Min.X + inset + 1, Y: y}, maxX, n.Progress, progressOpts); err != nil {
-			return err
+			return nil, err
 		}
 		y++
 	}
 	if len(n.Actions) > 0 {
-		if err := writeText(cvs, actionText(n.Actions), image.Point{X: rect.Min.X + inset + 1, Y: y}, maxX, actionOpts); err != nil {
-			return err
-		}
+		return drawActions(cvs, n.ID, image.Point{X: rect.Min.X + inset + 1, Y: y}, maxX, n.Actions, actionOpts)
 	}
-	return nil
+	return nil, nil
 }
 
 func (m *Manager) style(n Notification) Style {
@@ -772,21 +835,69 @@ func splitAtWidth(text string, width int) (string, string) {
 	return b.String(), ""
 }
 
-func actionText(actions []string) string {
+func drawActions(cvs *canvas.Canvas, id string, start image.Point, maxX int, actions []Action, opts []cell.Option) ([]actionHit, error) {
+	if start.Y < cvs.Area().Min.Y || start.Y >= cvs.Area().Max.Y || maxX <= start.X {
+		return nil, nil
+	}
+	var hits []actionHit
+	cur := start
+	for _, action := range actions {
+		label := strings.TrimSpace(action.Label)
+		if label == "" {
+			continue
+		}
+		token := "[" + label + "]"
+		width := runewidth.StringWidth(token)
+		if cur.X > start.X {
+			if cur.X+1 >= maxX {
+				break
+			}
+			if err := writeText(cvs, " ", cur, maxX, opts); err != nil {
+				return nil, err
+			}
+			cur.X++
+		}
+		if cur.X+width > maxX {
+			break
+		}
+		rect := image.Rect(cur.X, cur.Y, cur.X+width, cur.Y+1)
+		if err := writeText(cvs, token, cur, maxX, opts); err != nil {
+			return nil, err
+		}
+		if action.Callback != nil {
+			hits = append(hits, actionHit{
+				id:       id,
+				rect:     rect,
+				callback: action.Callback,
+				dismiss:  action.Dismiss,
+			})
+		}
+		cur.X += width
+	}
+	return hits, nil
+}
+
+func actionText(actions []Action) string {
 	var b strings.Builder
 	for i, action := range actions {
-		action = strings.TrimSpace(action)
-		if action == "" {
+		label := strings.TrimSpace(action.Label)
+		if label == "" {
 			continue
 		}
 		if i > 0 && b.Len() > 0 {
 			b.WriteRune(' ')
 		}
 		b.WriteRune('[')
-		b.WriteString(action)
+		b.WriteString(label)
 		b.WriteRune(']')
 	}
 	return b.String()
+}
+
+func cloneActions(actions []Action) []Action {
+	cloned := make([]Action, len(actions))
+	copy(cloned, actions)
+	return cloned
 }
 
 func mergeCellOpts(groups ...[]cell.Option) []cell.Option {

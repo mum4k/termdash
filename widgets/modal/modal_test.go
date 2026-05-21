@@ -144,6 +144,25 @@ func TestDraggableWidgetContentClickDoesNotDrag(t *testing.T) {
 	}
 }
 
+func TestDraggableWidgetForwardsMouseToContent(t *testing.T) {
+	opts := NewOptions(Border(true), MinimumSize(image.Point{X: 1, Y: 1}))
+	child := &mouseWidget{}
+	item := NewDraggableWidget("clickable", child, 1, 1, 12, 7, opts)
+	modal := NewModal("modal", []*DraggableWidget{item}, opts)
+
+	_ = drawModal(t, modal, image.Point{X: 24, Y: 12})
+	if err := modal.Mouse(&terminalapi.Mouse{Button: mouse.ButtonLeft, Position: image.Point{X: 3, Y: 4}}, &widgetapi.EventMeta{}); err != nil {
+		t.Fatalf("Mouse => unexpected error: %v", err)
+	}
+
+	if got, want := child.clicks, 1; got != want {
+		t.Fatalf("child clicks = %d, want %d", got, want)
+	}
+	if got, want := child.last, (image.Point{X: 1, Y: 1}); got != want {
+		t.Fatalf("child last point = %v, want %v", got, want)
+	}
+}
+
 // TestMinimizeAndRestoreDock verifies windows minimize into the bottom dock and restore on click.
 func TestMinimizeAndRestoreDock(t *testing.T) {
 	opts := NewOptions(Border(true), MinimumSize(image.Point{X: 1, Y: 1}), DockGap(2))
@@ -319,6 +338,33 @@ func (fw *fillWidget) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) err
 // Options reports the test widget's interaction and size requirements.
 func (fw *fillWidget) Options() widgetapi.Options {
 	return widgetapi.Options{}
+}
+
+type mouseWidget struct {
+	clicks int
+	last   image.Point
+}
+
+// Draw fills the widget canvas for test purposes.
+func (mw *mouseWidget) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
+	return cvs.SetAreaCells(cvs.Area(), 'm')
+}
+
+// Keyboard ignores keyboard input for test purposes.
+func (mw *mouseWidget) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) error {
+	return nil
+}
+
+// Mouse records forwarded modal mouse events.
+func (mw *mouseWidget) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
+	mw.clicks++
+	mw.last = m.Position
+	return nil
+}
+
+// Options reports that the test widget wants mouse events.
+func (mw *mouseWidget) Options() widgetapi.Options {
+	return widgetapi.Options{WantMouse: widgetapi.MouseScopeWidget}
 }
 
 // minSizeWidget refuses to draw unless the modal honors its minimum size.

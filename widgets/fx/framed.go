@@ -184,7 +184,25 @@ func (fw *FramedWidget) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventM
 
 // Mouse implements widgetapi.Widget.
 func (fw *FramedWidget) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
-	return fw.inner.Mouse(m, meta)
+	fw.mu.Lock()
+	innerSize := fw.lastSize
+	fw.mu.Unlock()
+
+	adjusted := &terminalapi.Mouse{
+		Position: image.Point{-1, -1},
+		Button:   m.Button,
+	}
+	innerArea := image.Rect(1, 1, innerSize.X+1, innerSize.Y+1)
+	if innerSize == (image.Point{}) {
+		// Mouse events can arrive before the first draw in tests or unusual
+		// embedding paths. In that case, still account for the top/left border.
+		if m.Position.X >= 1 && m.Position.Y >= 1 {
+			adjusted.Position = m.Position.Sub(image.Point{X: 1, Y: 1})
+		}
+	} else if m.Position.In(innerArea) {
+		adjusted.Position = m.Position.Sub(innerArea.Min)
+	}
+	return fw.inner.Mouse(adjusted, meta)
 }
 
 // Options implements widgetapi.Widget.

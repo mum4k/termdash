@@ -177,12 +177,23 @@ func TestFramedDelegatesKeyboardAndMouse(t *testing.T) {
 		t.Fatalf("Keyboard was not delegated")
 	}
 
-	mouseEvent := &terminalapi.Mouse{Button: mouse.ButtonLeft, Position: image.Point{X: 1, Y: 2}}
+	cvs, err := canvas.New(image.Rect(0, 0, 10, 8))
+	if err != nil {
+		t.Fatalf("canvas.New => unexpected error: %v", err)
+	}
+	if err := fw.Draw(cvs, &widgetapi.Meta{}); err != nil {
+		t.Fatalf("Draw => unexpected error: %v", err)
+	}
+
+	mouseEvent := &terminalapi.Mouse{Button: mouse.ButtonLeft, Position: image.Point{X: 2, Y: 3}}
 	if err := fw.Mouse(mouseEvent, &widgetapi.EventMeta{}); err != nil {
 		t.Fatalf("Mouse => unexpected error: %v", err)
 	}
-	if gotMouse != mouseEvent {
-		t.Fatalf("Mouse was not delegated")
+	if got, want := gotMouse.Position, (image.Point{X: 1, Y: 2}); got != want {
+		t.Fatalf("Mouse position = %v, want %v", got, want)
+	}
+	if got, want := gotMouse.Button, mouse.ButtonLeft; got != want {
+		t.Fatalf("Mouse button = %v, want %v", got, want)
 	}
 }
 

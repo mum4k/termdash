@@ -122,8 +122,7 @@ func (m *Modal) Keyboard(k *terminalapi.Keyboard, meta *widgetapi.EventMeta) err
 
 // Mouse implements widgetapi.Widget.Mouse.
 func (m *Modal) Mouse(event *terminalapi.Mouse, meta *widgetapi.EventMeta) error {
-	m.HandleMouse(event)
-	return nil
+	return m.handleMouse(event)
 }
 
 // Options implements widgetapi.Widget.Options.
@@ -136,6 +135,10 @@ func (m *Modal) Options() widgetapi.Options {
 
 // HandleMouse updates the top-most matching draggable widget.
 func (m *Modal) HandleMouse(event *terminalapi.Mouse) {
+	_ = m.handleMouse(event)
+}
+
+func (m *Modal) handleMouse(event *terminalapi.Mouse) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -146,11 +149,16 @@ func (m *Modal) HandleMouse(event *terminalapi.Mouse) {
 		if !item.dragging && !event.Position.In(area) {
 			continue
 		}
-		if item.HandleMouse(event, m.maxZIndex, m.currentWidth, m.currentHeight, m) {
+		handled, err := item.handleMouse(event, m.maxZIndex, m.currentWidth, m.currentHeight, m)
+		if err != nil {
+			return err
+		}
+		if handled {
 			m.dirty = true
-			return
+			return nil
 		}
 	}
+	return nil
 }
 
 // SetDirty marks the modal for redraw.
@@ -183,12 +191,18 @@ func NewDraggableWidget(id string, widget widgetapi.Widget, x, y, width, height 
 
 // HandleMouse updates drag state and position for the draggable widget.
 func (dw *DraggableWidget) HandleMouse(event *terminalapi.Mouse, maxZIndexFunc func() int, canvasWidth, canvasHeight int, modal *Modal) bool {
+	handled, _ := dw.handleMouse(event, maxZIndexFunc, canvasWidth, canvasHeight, modal)
+	return handled
+}
+
+func (dw *DraggableWidget) handleMouse(event *terminalapi.Mouse, maxZIndexFunc func() int, canvasWidth, canvasHeight int, modal *Modal) (bool, error) {
 	dw.mutex.Lock()
 	defer dw.mutex.Unlock()
 
 	frameArea := dw.rect()
 	minimizeArea := dw.minimizeRect()
 	titleArea := dw.titleBarRect()
+	contentArea := dw.contentRect()
 
 	switch {
 	case event.Button == mouse.ButtonLeft && dw.Minimizable && event.Position.In(minimizeArea):
@@ -198,31 +212,41 @@ func (dw *DraggableWidget) HandleMouse(event *terminalapi.Mouse, maxZIndexFunc f
 			dw.minimizeLocked(frameArea)
 			modal.layoutMinimizedLocked()
 		}
-		return true
+		return true, nil
 
 	case dw.minimized && event.Button == mouse.ButtonLeft && event.Position.In(frameArea):
 		dw.restoreLocked(canvasWidth, canvasHeight)
 		modal.layoutMinimizedLocked()
-		return true
+		return true, nil
 
 	case event.Button == mouse.ButtonLeft && !dw.dragging && event.Position.In(titleArea):
 		dw.ZIndex = maxZIndexFunc() + 1
 		dw.offsetX = event.Position.X - dw.X
 		dw.offsetY = event.Position.Y - dw.Y
 		dw.dragging = true
-		return true
+		return true, nil
 
 	case dw.dragging && event.Button == mouse.ButtonRelease:
 		dw.dragging = false
-		return true
+		return true, nil
 
 	case dw.dragging:
 		dw.X = clampInt(event.Position.X-dw.offsetX, 0, maxInt(canvasWidth-dw.Width, 0))
 		dw.Y = clampInt(event.Position.Y-dw.offsetY, 0, maxInt(canvasHeight-dw.Height, 0))
-		return true
+		return true, nil
+
+	case !dw.minimized && event.Position.In(contentArea) && dw.Widget.Options().WantMouse != widgetapi.MouseScopeNone:
+		childEvent := &terminalapi.Mouse{
+			Position: event.Position.Sub(contentArea.Min),
+			Button:   event.Button,
+		}
+		if err := dw.Widget.Mouse(childEvent, &widgetapi.EventMeta{}); err != nil {
+			return true, err
+		}
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
 // rect returns the widget rectangle in modal coordinates.
@@ -238,6 +262,14 @@ func (dw *DraggableWidget) titleBarRect() image.Rectangle {
 // minimizeRect returns the clickable rectangle for the minimize or restore control.
 func (dw *DraggableWidget) minimizeRect() image.Rectangle {
 	return image.Rect(dw.X+maxInt(dw.Width-2, 0), dw.Y, dw.X+dw.Width, dw.Y+1)
+}
+
+func (dw *DraggableWidget) contentRect() image.Rectangle {
+	frameArea := dw.rect()
+	if dw.Border {
+		return image.Rect(frameArea.Min.X+1, frameArea.Min.Y+2, frameArea.Max.X-1, frameArea.Max.Y-1)
+	}
+	return image.Rect(frameArea.Min.X, frameArea.Min.Y+1, frameArea.Max.X, frameArea.Max.Y)
 }
 
 // sortedItems returns the draggable items ordered by z-index from back to front.

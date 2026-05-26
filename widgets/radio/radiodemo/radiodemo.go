@@ -63,7 +63,6 @@ func main() {
 		},
 		{
 			Label:            "OFF",
-			UnselectedText:   "◎",
 			CellOpts:         []cell.Option{cell.FgColor(cell.ColorRed)},
 			SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorRed)},
 		},

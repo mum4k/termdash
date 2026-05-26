@@ -336,6 +336,18 @@ windows, with placement, animation, progress and action callbacks. Run the
 go run widgets/toast/toastdemo/toastdemo.go
 ```
 
+## The HUD
+
+Displays a drop-down modal HUD overlay with live OS values, compact in/out
+sparklines, a disk pie, a 3D spectrum analyzer, a telemetry treeview,
+double-Escape toggling, animated borderfx framing, embedded toast notifications
+and action controls. Run the
+[huddemo](widgets/hud/huddemo/huddemo.go).
+
+```go
+go run widgets/hud/huddemo/huddemo.go
+```
+
 ## The EmojiKeyboard
 
 Displays a paginated emoji grid for keyboard and mouse selection. It is

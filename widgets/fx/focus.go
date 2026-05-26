@@ -16,7 +16,6 @@ package fx
 
 import (
 	"image"
-	"math"
 	"sync"
 	"time"
 
@@ -29,8 +28,7 @@ import (
 // sequences when the container gains or loses keyboard focus.
 //
 // Create with FocusNew, then optionally set OnFocusChange to be notified of
-// each transition — use it to animate the container's border color via
-// AnimateBorderFocus.
+// each focus transition.
 //
 // Example:
 //
@@ -39,9 +37,7 @@ import (
 //	    []fx.Effect{fx.FadeOut(300*time.Millisecond)},  // lost
 //	)
 //	fw.OnFocusChange = func(gained bool) {
-//	    fx.AnimateBorderFocus(gained, 300*time.Millisecond, 236, 255, 20, func(n int) {
-//	        _ = myContainer.Update(myID, container.BorderColor(cell.ColorNumber(n)))
-//	    })
+//	    // update the container border or widget border here
 //	}
 //
 // Implements widgetapi.Widget.  Thread-safe.
@@ -149,42 +145,4 @@ func (w *FocusEffectWidget) Mouse(m *terminalapi.Mouse, meta *widgetapi.EventMet
 // Options implements widgetapi.Widget.
 func (w *FocusEffectWidget) Options() widgetapi.Options {
 	return w.inner.Options()
-}
-
-// ── Border animation helper ───────────────────────────────────────────────────
-
-// BorderAnimFunc is called on each animation step with the current xterm-256
-// color index.  Pass a closure that calls container.Update to apply the color.
-type BorderAnimFunc func(colorIndex int)
-
-// AnimateBorderFocus smoothly transitions a container's border color between
-// a dim and a bright xterm-256 color index when focus changes.
-//
-//   - gained=true  → fades from dimIndex to brightIndex (focus gained)
-//   - gained=false → fades from brightIndex to dimIndex (focus lost)
-//
-// d is the total animation duration, steps controls smoothness (16–32 works
-// well), and fn is called once per step with the current color index.
-//
-// The animation runs in a new goroutine; this function returns immediately.
-func AnimateBorderFocus(gained bool, d time.Duration, dimIndex, brightIndex, steps int, fn BorderAnimFunc) {
-	go func() {
-		if steps <= 0 {
-			steps = 1
-		}
-		tick := d / time.Duration(steps)
-		for i := 0; i <= steps; i++ {
-			t := float64(i) / float64(steps)
-			if !gained {
-				t = 1.0 - t
-			}
-			// Sine ease-in-out for a smooth, natural feel.
-			t = (1 - math.Cos(t*math.Pi)) / 2
-			idx := dimIndex + int(math.Round(float64(brightIndex-dimIndex)*t))
-			fn(idx)
-			if i < steps {
-				time.Sleep(tick)
-			}
-		}
-	}()
 }

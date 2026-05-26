@@ -39,8 +39,8 @@ import (
 // Place the outermost widget in a container with linestyle.None so the
 // container does not draw a second border on top.
 //
-// The border color can be updated at runtime (e.g. from AnimateBorderFocus)
-// by calling SetBorderColor — it is safe to call from any goroutine.
+// The border color can be updated at runtime by calling SetBorderColor —
+// it is safe to call from any goroutine.
 //
 // Create with FramedNew.
 type FramedWidget struct {

@@ -802,11 +802,41 @@ func setFocusCallbacks(logP, statusP, consoleP paneWidgets) {
 	for _, p := range []paneWidgets{logP, statusP, consoleP} {
 		p := p
 		p.focus.OnFocusChange = func(gained bool) {
-			fx.AnimateBorderFocus(gained, 300*time.Millisecond, 236, 255, 20, func(n int) {
+			animateBorderFocus(gained, 300*time.Millisecond, 236, 255, 20, func(n int) {
 				p.framed.SetBorderColor(cell.ColorNumber(n))
 			})
 		}
 	}
+}
+
+// animateBorderFocus smoothly transitions a border color between dim and bright
+// xterm-256 color indices over duration d.  Call from an OnFocusChange callback
+// to animate a FramedWidget's border in sync with focus changes.
+//
+//   - gained=true  → fades from dimIndex to brightIndex
+//   - gained=false → fades from brightIndex to dimIndex
+//
+// The animation runs in a new goroutine; this function returns immediately.
+func animateBorderFocus(gained bool, d time.Duration, dimIndex, brightIndex, steps int, fn func(int)) {
+	go func() {
+		if steps <= 0 {
+			steps = 1
+		}
+		tick := d / time.Duration(steps)
+		for i := 0; i <= steps; i++ {
+			t := float64(i) / float64(steps)
+			if !gained {
+				t = 1.0 - t
+			}
+			// Sine ease-in-out for a smooth, natural feel.
+			t = (1 - math.Cos(t*math.Pi)) / 2
+			idx := dimIndex + int(math.Round(float64(brightIndex-dimIndex)*t))
+			fn(idx)
+			if i < steps {
+				time.Sleep(tick)
+			}
+		}
+	}()
 }
 
 // ── layout ────────────────────────────────────────────────────────────────────

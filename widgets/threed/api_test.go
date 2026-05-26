@@ -101,6 +101,18 @@ func TestKMLAPI(t *testing.T) {
 	}
 }
 
+func TestEnableLoggingCompatibilityNoOp(t *testing.T) {
+	opts := defaultOptions()
+	EnableLogging(false).set(opts)
+	if opts.LogWriter != nil {
+		t.Fatalf("EnableLogging(false) set LogWriter = %v, want nil", opts.LogWriter)
+	}
+	EnableLogging(true).set(opts)
+	if opts.LogWriter != nil {
+		t.Fatalf("EnableLogging(true) set LogWriter = %v, want nil", opts.LogWriter)
+	}
+}
+
 func TestModelCompositionHelpers(t *testing.T) {
 	left := Cube(ModelPosition(Vector3D{X: -1}))
 	right := Sphere(ModelPosition(Vector3D{X: 1}), ModelSegments(4, 6))

@@ -124,6 +124,14 @@ func LogWriter(w io.Writer) Option {
 	})
 }
 
+// EnableLogging is retained as a compatibility no-op.
+// Use LogWriter(w) to capture debug output instead.
+//
+// Deprecated: use LogWriter.
+func EnableLogging(_ bool) Option {
+	return optionFunc(func(_ *Options) {})
+}
+
 // BackfaceCulling sets whether faces pointed away from the camera are skipped.
 func BackfaceCulling(enable bool) Option {
 	return optionFunc(func(o *Options) {

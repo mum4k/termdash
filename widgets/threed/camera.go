@@ -25,61 +25,83 @@ import (
 // wide in pixels. Without this the cube appears vertically stretched.
 const terminalCellAspect = 0.5
 
+// fovDegrees is the fixed field-of-view used by all cameras.
+const fovDegrees = 60.0
+
+// fovRadFactor is 1/tan(fov/2) computed once at package init — fov never
+// changes, so there is no reason to recompute it on every vertex projection.
+var fovRadFactor = 1.0 / math.Tan(fovDegrees*0.5*math.Pi/180.0)
+
 // Camera represents the viewer's perspective.
 type Camera struct {
-	Width     int         // Viewport width
-	Height    int         // Viewport height
-	Scale     float64     // Scale factor
+	Width     int         // Viewport width in cells
+	Height    int         // Viewport height in cells
+	Scale     float64     // Scale factor applied after projection
 	Direction Vector3D    // Forward direction the camera looks (world space)
 	logger    *log.Logger // Logger for debugging
-	Zoom      float64     // Zoom level (distance from camera to scene origin)
+	Zoom      float64     // Distance from camera to scene origin along Z
+
+	// Cached per-frame values — recomputed by UpdateProjection when dimensions change.
+	aspectRatio float64 // Width/Height; avoids the division inside the hot Project path
+	halfW       float64 // float64(Width)/2  — screen centre X
+	halfH       float64 // float64(Height)/2 — screen centre Y
 }
 
 // NewCamera creates a new camera with default settings.
 // The camera sits at z = -Zoom and looks in the +Z direction.
 func NewCamera(logger *log.Logger) Camera {
-	return Camera{
+	c := Camera{
 		Width:  80,
 		Height: 24,
 		Scale:  1.0,
-		// Camera is at z = -Zoom, looking toward +Z.
-		// Backface culling keeps faces where normal·Direction < 0,
-		// i.e. normals that oppose the camera's forward vector.
+		// Camera looks toward +Z; backface culling keeps faces whose normal
+		// opposes this direction (normal·Direction < 0).
 		Direction: Vector3D{X: 0, Y: 0, Z: 1},
 		logger:    logger,
 		Zoom:      5.0,
 	}
+	c.UpdateProjection()
+	return c
 }
 
-// Project projects a 3D point onto 2D screen space using perspective projection.
-func (c *Camera) Project(v Vector3D) Vector2D {
-	// Perspective projection parameters
-	fov := 60.0 // Field of view in degrees
-	aspectRatio := float64(c.Width) / float64(c.Height)
-	fovRad := 1.0 / math.Tan(fov*0.5*math.Pi/180.0)
+// UpdateProjection caches the aspect ratio and screen-centre values that
+// Project uses for every vertex. Call this once after changing Width or Height
+// rather than recomputing inside the hot per-vertex path.
+func (c *Camera) UpdateProjection() {
+	if c.Height > 0 {
+		c.aspectRatio = float64(c.Width) / float64(c.Height)
+	}
+	c.halfW = float64(c.Width) / 2
+	c.halfH = float64(c.Height) / 2
+}
 
-	// Camera is at z = -Zoom; adding Zoom gives depth from camera.
+// Project maps a 3D point into 2D screen space using perspective projection.
+// The per-frame constants (fovRadFactor, aspectRatio, halfW, halfH) are
+// pre-cached by UpdateProjection; only a few multiplications and one division
+// are needed here.
+func (c *Camera) Project(v Vector3D) Vector2D {
+	// Camera sits at z = -Zoom; shift so depth is measured from the camera.
 	z := v.Z + c.Zoom
 
-	// Handle cases where z is too small or negative (behind camera)
+	// Clip vertices that are at or behind the camera plane.
 	if z <= 0.1 {
 		if c.logger != nil {
-			c.logger.Printf("Warning: z=%.2f is too small or negative. Skipping projection.", z)
+			c.logger.Printf("Warning: z=%.2f is behind camera, skipping projection.", z)
 		}
 		return Vector2D{X: math.NaN(), Y: math.NaN()}
 	}
 
-	x := (v.X * fovRad * aspectRatio) / z
-	y := (v.Y * fovRad) / z
+	x := (v.X * fovRadFactor * c.aspectRatio) / z
+	y := (v.Y * fovRadFactor) / z
 
-	// Scale, correct for tall terminal characters, and center
-	x = (x * c.Scale) + float64(c.Width)/2
-	y = (-y * c.Scale * terminalCellAspect) + float64(c.Height)/2 // invert Y; correct for char aspect
+	// Apply scale, correct for tall terminal glyphs, and translate to screen centre.
+	x = (x * c.Scale) + c.halfW
+	y = (-y * c.Scale * terminalCellAspect) + c.halfH
 
 	return Vector2D{X: x, Y: y}
 }
 
-// AdjustScale adjusts the camera scale based on the model's dimensions.
+// AdjustScale sets the camera scale so the model fits within the viewport.
 func (c *Camera) AdjustScale(model *Model) {
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
@@ -104,10 +126,10 @@ func (c *Camera) AdjustScale(model *Model) {
 	modelWidth := maxX - minX
 	modelHeight := maxY - minY
 
-	// Determine the required scale to fit the model within the canvas
+	// Choose the tighter of the two axes and leave a small margin.
 	scaleX := float64(c.Width) / modelWidth
 	scaleY := float64(c.Height) / modelHeight
-	c.Scale = clampFloat(math.Min(scaleX, scaleY)*0.8, 5.0, 100.0) // Apply a padding factor and clamp
+	c.Scale = clampFloat(math.Min(scaleX, scaleY)*0.8, 5.0, 100.0)
 
 	if c.logger != nil {
 		c.logger.Printf("Adjusted camera scale to %.2f", c.Scale)

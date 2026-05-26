@@ -145,10 +145,12 @@ func CreateOctahedron(position Vector3D, size float64) *Model {
 	})
 }
 
+// createMarker builds a single marker model at the provided position.
 func createMarker(position Vector3D, size float64, char rune) *Model {
 	return CreateCube(position, size, char)
 }
 
+// createLine converts consecutive coordinates into line faces.
 func createLine(coords []Vector3D, char rune) *Model {
 	model := NewModel()
 	for i := 0; i < len(coords)-1; i++ {
@@ -160,6 +162,7 @@ func createLine(coords []Vector3D, char rune) *Model {
 	return model
 }
 
+// createPolygon converts coordinates into one filled polygon face.
 func createPolygon(coords []Vector3D, char rune) *Model {
 	model := NewModel()
 	if len(coords) < 3 {
@@ -169,6 +172,7 @@ func createPolygon(coords []Vector3D, char rune) *Model {
 	return model
 }
 
+// facesModel wraps raw faces in a Model and computes their normals.
 func facesModel(faces []Face) *Model {
 	model := NewModel()
 	for _, face := range faces {

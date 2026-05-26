@@ -19,12 +19,11 @@ import (
 	"testing"
 
 	"github.com/mum4k/termdash/cell"
-	"github.com/mum4k/termdash/widgets/threed"
 )
 
 // TestSceneCatalogTextHighlightsActive verifies the scene list emphasizes the active scene.
 func TestSceneCatalogTextHighlightsActive(t *testing.T) {
-	lines := sceneCatalogText(threed.BuildShowcaseScenes(false), 1, false)
+	lines := sceneCatalogText(buildShowcaseScenes(false), 1, false)
 	if got := lines[1].line; got != "▶ 2. Shape Board" {
 		t.Fatalf("active line = %q, want highlighted Shape Board", got)
 	}
@@ -35,7 +34,7 @@ func TestSceneCatalogTextHighlightsActive(t *testing.T) {
 
 // TestSceneDetailsTextIncludesFeatures verifies the details panel copy exposes metadata.
 func TestSceneDetailsTextIncludesFeatures(t *testing.T) {
-	scene := threed.BuildShowcaseScenes(true)[3]
+	scene := buildShowcaseScenes(true)[3]
 	details := sceneDetailsText(scene, 12, true, "/tmp/example.png")
 	if !strings.Contains(details, "Scene: Image Relief") {
 		t.Fatalf("details = %q, want scene heading", details)

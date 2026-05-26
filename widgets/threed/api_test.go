@@ -116,3 +116,14 @@ func TestModelCompositionHelpers(t *testing.T) {
 		t.Fatal("Clone()/Move() mutated the original model")
 	}
 }
+
+// TestSpectrumAnalyzerBuildsBars verifies the reusable analyzer helper creates geometry.
+func TestSpectrumAnalyzerBuildsBars(t *testing.T) {
+	model := SpectrumAnalyzer([]float64{0.1, 0.5, 0.9}, ModelSize(2))
+	if model == nil || len(model.Faces) == 0 {
+		t.Fatalf("SpectrumAnalyzer() returned no geometry")
+	}
+	if got, wantMin := len(model.Faces), 3+2; got < wantMin {
+		t.Fatalf("SpectrumAnalyzer() faces = %d, want at least %d", got, wantMin)
+	}
+}

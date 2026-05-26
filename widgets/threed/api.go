@@ -44,6 +44,7 @@ type ModelOption interface {
 
 type modelOptionFunc func(*modelOptions)
 
+// setModelOption applies modelOptionFunc to modelOptions.
 func (f modelOptionFunc) setModelOption(opts *modelOptions) {
 	f(opts)
 }
@@ -61,6 +62,7 @@ type modelOptions struct {
 	centered   bool
 }
 
+// newModelOptions returns model helper defaults with overrides applied.
 func newModelOptions(opts ...ModelOption) modelOptions {
 	cfg := modelOptions{
 		size:       1,
@@ -196,7 +198,7 @@ func Glyph(text string, opts ...ModelOption) *Model {
 		color = terminalBoardColor(RenderableRune(text, cfg.char))
 	}
 	model := NewModel()
-	addGlyphBillboard(model, cfg.position, cfg.size, RenderableRune(text, cfg.char), color)
+	AddGlyphBillboard(model, cfg.position, cfg.size, RenderableRune(text, cfg.char), color)
 	return model
 }
 
@@ -248,6 +250,7 @@ func BarChart(data []float64, opts ...ModelOption) *Model {
 	return applyOutputOptions(GenerateBarChartModel(data), newModelOptions(opts...))
 }
 
+// applyOutputOptions applies common model transformations after helper conversion.
 func applyOutputOptions(model *Model, cfg modelOptions) *Model {
 	if model == nil {
 		return nil
@@ -264,6 +267,7 @@ func applyOutputOptions(model *Model, cfg modelOptions) *Model {
 	return model
 }
 
+// quietLogger returns a discarded logger for helper APIs that do not expose logging.
 func quietLogger() *log.Logger {
 	return log.New(io.Discard, "", 0)
 }

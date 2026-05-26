@@ -39,24 +39,31 @@ func GameBoard(rows []string, opts ...ModelOption) *Model {
 	return rowsToModel(rows, cfg, gameBoardColor)
 }
 
+// rowsToModel dispatches text rows through centered or origin-based layout.
 func rowsToModel(rows []string, cfg modelOptions, colorFor glyphColorFunc) *Model {
 	if cfg.centered {
-		return createCenteredGlyphRows(cfg.position, rows, cfg.cellWidth, cfg.cellHeight, colorFor)
+		return CenteredGlyphBoard(cfg.position, rows, cfg.cellWidth, cfg.cellHeight, colorFor)
 	}
-	return createGlyphRows(cfg.position, rows, cfg.cellWidth, cfg.cellHeight, colorFor)
+	return GlyphBoard(cfg.position, rows, cfg.cellWidth, cfg.cellHeight, colorFor)
 }
 
-func createGlyphRows(origin Vector3D, rows []string, cellWidth, cellHeight float64, colorFor glyphColorFunc) *Model {
+// GlyphBoard places each non-space rune from rows as a glyph billboard,
+// starting at origin and stepping right/down by cellWidth/cellHeight.
+// colorFn maps each rune to its face color; pass nil to use a neutral grey.
+func GlyphBoard(origin Vector3D, rows []string, cellWidth, cellHeight float64, colorFn func(rune) Color) *Model {
+	if colorFn == nil {
+		colorFn = func(rune) Color { return Color{R: 0.86, G: 0.88, B: 0.90} }
+	}
 	model := NewModel()
 	for row, line := range rows {
 		col := 0
 		for _, r := range line {
 			if r != ' ' {
-				addGlyphBillboard(model, Vector3D{
+				AddGlyphBillboard(model, Vector3D{
 					X: origin.X + float64(col)*cellWidth,
 					Y: origin.Y - float64(row)*cellHeight,
 					Z: origin.Z,
-				}, cellWidth*1.65, r, colorFor(r))
+				}, cellWidth*1.65, r, colorFn(r))
 			}
 			col++
 		}
@@ -64,7 +71,8 @@ func createGlyphRows(origin Vector3D, rows []string, cellWidth, cellHeight float
 	return model
 }
 
-func createCenteredGlyphRows(center Vector3D, rows []string, cellWidth, cellHeight float64, colorFor glyphColorFunc) *Model {
+// CenteredGlyphBoard centers all rows around center and then calls GlyphBoard.
+func CenteredGlyphBoard(center Vector3D, rows []string, cellWidth, cellHeight float64, colorFn func(rune) Color) *Model {
 	maxCols := 0
 	for _, row := range rows {
 		if cols := len([]rune(row)); cols > maxCols {
@@ -76,9 +84,28 @@ func createCenteredGlyphRows(center Vector3D, rows []string, cellWidth, cellHeig
 		Y: center.Y,
 		Z: center.Z,
 	}
-	return createGlyphRows(origin, rows, cellWidth, cellHeight, colorFor)
+	return GlyphBoard(origin, rows, cellWidth, cellHeight, colorFn)
 }
 
+// AddGlyphBillboard appends a square glyph face centered at a 3D position to model.
+// size controls the face half-extent; color is applied to the face.
+func AddGlyphBillboard(model *Model, center Vector3D, size float64, glyph rune, color Color) {
+	half := size / 2
+	model.AddFace(Face{
+		Vertices: []Vector3D{
+			{X: center.X - half, Y: center.Y - half, Z: center.Z},
+			{X: center.X - half, Y: center.Y + half, Z: center.Z},
+			{X: center.X + half, Y: center.Y + half, Z: center.Z},
+			{X: center.X + half, Y: center.Y - half, Z: center.Z},
+		},
+		Char:       glyph,
+		RenderMode: FaceRenderGlyph,
+		Color:      color,
+		HasColor:   true,
+	})
+}
+
+// terminalBoardColor maps general terminal glyphs to readable board colors.
 func terminalBoardColor(r rune) Color {
 	switch {
 	case strings.ContainsRune("┌┐└┘─│├┤┬┴┼╭╮╰╯╦╩═║╔╗╚╝", r):
@@ -94,6 +121,7 @@ func terminalBoardColor(r rune) Color {
 	}
 }
 
+// logicBoardColor maps circuit-board glyphs to a technical neon palette.
 func logicBoardColor(r rune) Color {
 	switch {
 	case strings.ContainsRune("┌┐└┘─│├┤┬┴┼╭╮╰╯╦╩═║╔╗╚╝", r):
@@ -109,6 +137,7 @@ func logicBoardColor(r rune) Color {
 	}
 }
 
+// gameBoardColor maps game-board glyphs to readable accent colors.
 func gameBoardColor(r rune) Color {
 	switch r {
 	case '#', '█', '▓', '▒', '░':

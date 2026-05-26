@@ -76,10 +76,13 @@ func (c Color) Modulate(other Color) Color {
 	}
 }
 
-// ToCellColor converts the Color to a cell.Color.
+// ToCellColor converts the Color to a cell.Color using full 24-bit true-color
+// encoding.  Unlike ColorRGB24 (which quantises to 6 levels per channel),
+// ColorTrueRGB preserves all 256 levels so Phong shading gradients remain
+// smooth across the full dynamic range.
 func (c Color) ToCellColor() cell.Color {
 	r := int(clampFloat(c.R*255, 0, 255))
 	g := int(clampFloat(c.G*255, 0, 255))
 	b := int(clampFloat(c.B*255, 0, 255))
-	return cell.ColorRGB24(r, g, b)
+	return cell.ColorTrueRGB(r, g, b)
 }

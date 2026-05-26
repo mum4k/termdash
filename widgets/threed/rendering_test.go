@@ -200,7 +200,7 @@ func TestSubcellSceneProducesBrailleDetail(t *testing.T) {
 		{X: 1.75, Y: 0.25},
 		{X: 1.10, Y: 0.90},
 		{X: 0.25, Y: 1.40},
-	}, Color{R: 1, G: 0.8, B: 0.2})
+	}, Color{R: 1, G: 0.8, B: 0.2}, 0)
 	if err := scene.CopyTo(cvs); err != nil {
 		t.Fatalf("scene.CopyTo() => unexpected error: %v", err)
 	}
@@ -223,6 +223,110 @@ func TestSubcellSceneProducesBrailleDetail(t *testing.T) {
 	}
 	if !sawBraille {
 		t.Fatal("scene rendered no braille detail, want a braille-resolved fill")
+	}
+}
+
+func TestPolygonCoverageSamplesPartialSubcell(t *testing.T) {
+	halfCell := []Vector2D{
+		{X: 0, Y: 0},
+		{X: 0.5, Y: 0},
+		{X: 0.5, Y: 1},
+		{X: 0, Y: 1},
+	}
+
+	got := polygonCoverage(0, 0, halfCell, 2)
+	if math.Abs(got-0.5) > 1e-12 {
+		t.Fatalf("polygonCoverage() = %f, want 0.5", got)
+	}
+}
+
+func TestSubcellCoveredKeepsDitheredEdgesLight(t *testing.T) {
+	if !subcellCovered(0.25, 0, 0) {
+		t.Fatal("subcellCovered() dropped a lightly covered low-threshold edge dot")
+	}
+	if subcellCovered(0.25, 1, 0) {
+		t.Fatal("subcellCovered() kept every lightly covered edge dot, want ordered dither")
+	}
+	if !subcellCovered(0.5, 1, 0) {
+		t.Fatal("subcellCovered() dropped a half-covered dot, want solid coverage to render")
+	}
+}
+
+func TestSubcellSceneClearOnlyDirtyBounds(t *testing.T) {
+	scene := newSubcellScene(image.Rect(0, 0, 8, 8))
+	scene.FillPolygon([]Vector2D{
+		{X: 1, Y: 1},
+		{X: 5, Y: 1},
+		{X: 5, Y: 5},
+		{X: 1, Y: 5},
+	}, Color{R: 1, G: 1, B: 1}, 0)
+	if !scene.dirty {
+		t.Fatal("FillPolygon did not mark dirty bounds")
+	}
+	scene.Clear()
+	if scene.dirty {
+		t.Fatal("Clear left dirty bounds active")
+	}
+	for i, filled := range scene.filled {
+		if filled {
+			t.Fatalf("filled[%d] = true after Clear, want false", i)
+		}
+	}
+}
+
+func TestSpectrumRailsDoNotCrossFilledBars(t *testing.T) {
+	tests := []struct {
+		name  string
+		model *Model
+	}{
+		{name: "audio", model: SpectrumAnalyzer([]float64{1, 0.8, 0.5}, ModelSize(3))},
+		{name: "network", model: NetworkSpectrum([]float64{1, 0.8, 0.5}, []float64{0.2, 0.3, 0.4}, ModelSize(3))},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			minFillY := math.Inf(1)
+			type yRange struct {
+				min float64
+				max float64
+			}
+			var fillRanges []yRange
+			var railYs []float64
+			for _, face := range tc.model.Faces {
+				if len(face.Vertices) == 2 {
+					railYs = append(railYs, face.Vertices[0].Y)
+					continue
+				}
+				if face.RenderMode != FaceRenderFill {
+					continue
+				}
+				rng := yRange{min: math.Inf(1), max: math.Inf(-1)}
+				for _, vertex := range face.Vertices {
+					if vertex.Y < minFillY {
+						minFillY = vertex.Y
+					}
+					if vertex.Y < rng.min {
+						rng.min = vertex.Y
+					}
+					if vertex.Y > rng.max {
+						rng.max = vertex.Y
+					}
+				}
+				fillRanges = append(fillRanges, rng)
+			}
+			if len(railYs) == 0 {
+				t.Fatal("spectrum model has no rail line faces")
+			}
+			if len(fillRanges) == 0 || math.IsInf(minFillY, 1) {
+				t.Fatal("spectrum model has no filled bar faces")
+			}
+			for _, y := range railYs {
+				for _, rng := range fillRanges {
+					if y >= rng.min && y <= rng.max {
+						t.Fatalf("rail y=%f crosses filled bar range [%f,%f]", y, rng.min, rng.max)
+					}
+				}
+			}
+		})
 	}
 }
 

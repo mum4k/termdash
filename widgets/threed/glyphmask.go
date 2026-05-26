@@ -588,29 +588,12 @@ func brailleDotBit(px, py int) byte {
 	return brailleDotBits[px][py]
 }
 
+// maxInt returns the larger integer.
 func maxInt(a, b int) int {
 	if a > b {
 		return a
 	}
 	return b
-}
-
-// darkenColor scales a color down for side and back shading.
-func darkenColor(color Color, factor float64) Color {
-	return Color{
-		R: clampFloat(color.R*factor, 0, 1),
-		G: clampFloat(color.G*factor, 0, 1),
-		B: clampFloat(color.B*factor, 0, 1),
-	}
-}
-
-// brightenColor scales a color up by the given factor, clamping at 1.0.
-func brightenColor(color Color, factor float64) Color {
-	return Color{
-		R: clampFloat(color.R*factor, 0, 1),
-		G: clampFloat(color.G*factor, 0, 1),
-		B: clampFloat(color.B*factor, 0, 1),
-	}
 }
 
 // blendColor mixes a base color with an accent color by the given weight.

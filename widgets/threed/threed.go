@@ -118,9 +118,13 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 		return err
 	}
 
-	// Update camera dimensions and base scale.
-	t.camera.Width = width
-	t.camera.Height = height
+	// Update camera dimensions and recompute cached projection constants
+	// (aspect ratio, screen centre) only when the canvas size changes.
+	if t.camera.Width != width || t.camera.Height != height {
+		t.camera.Width = width
+		t.camera.Height = height
+		t.camera.UpdateProjection()
+	}
 
 	// Base scale from canvas size.
 	baseScale := float64(height) / 2.5
@@ -249,7 +253,7 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 	// sizes.
 	for _, pf := range t.projected {
 		if len(pf.Points) > 2 && pf.RenderMode == FaceRenderFill {
-			t.fillScene.FillPolygon(pf.Points, pf.ShadeColor)
+			t.fillScene.FillPolygon(pf.Points, pf.ShadeColor, pf.Depth)
 		}
 	}
 	if err := t.fillScene.CopyTo(t.doubleBuffer); err != nil {

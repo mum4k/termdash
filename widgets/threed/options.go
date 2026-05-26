@@ -37,10 +37,12 @@ type Option interface {
 
 type optionFunc func(*Options)
 
+// set applies optionFunc to Options.
 func (f optionFunc) set(o *Options) {
 	f(o)
 }
 
+// defaultOptions returns the baseline ThreeD widget options.
 func defaultOptions() *Options {
 	return &Options{
 		RotationStep:    0.1,

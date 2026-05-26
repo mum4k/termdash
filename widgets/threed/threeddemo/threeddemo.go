@@ -62,8 +62,8 @@ func (s *demoState) setScene(index int) {
 	if index < 0 {
 		index = 0
 	}
-	if index >= threed.ShowcaseSceneCount {
-		index = threed.ShowcaseSceneCount - 1
+	if index >= showcaseSceneCount {
+		index = showcaseSceneCount - 1
 	}
 	s.scene = index
 }
@@ -127,7 +127,7 @@ func main() {
 	}
 
 	assetModel, assetLoaded := loadOptionalAsset(*imagePath)
-	scenes := threed.BuildShowcaseScenes(assetLoaded)
+	scenes := buildShowcaseScenes(assetLoaded)
 	state := &demoState{assetPath: *imagePath}
 	stage.SetModel(scenes[0].Build(0, assetModel))
 
@@ -198,18 +198,30 @@ func main() {
 		log.Fatalf("failed to create root container: %v", err)
 	}
 
-	go animateScenes(ctx, stage, catalog, details, scenes, assetModel, assetLoaded, state)
-
-	if err := termdash.Run(
-		ctx,
+	ctrl, err := termdash.NewController(
 		term,
 		root,
-		termdash.RedrawInterval(sceneTick),
 		termdash.KeyboardSubscriber(func(k *terminalapi.Keyboard) {
 			handleKeyboard(k, cancel, state)
 		}),
-	); err != nil {
-		log.Fatalf("termdash terminated with error: %v", err)
+	)
+	if err != nil {
+		log.Fatalf("failed to create termdash controller: %v", err)
+	}
+	defer ctrl.Close()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- animateScenes(ctx, stage, catalog, details, scenes, assetModel, assetLoaded, state, ctrl.Redraw)
+	}()
+
+	select {
+	case <-ctx.Done():
+	case err := <-errCh:
+		if err != nil {
+			cancel()
+			log.Fatalf("animation loop failed: %v", err)
+		}
 	}
 }
 
@@ -271,11 +283,12 @@ func animateScenes(
 	stage *threed.ThreeD,
 	catalog *text.Text,
 	details *text.Text,
-	scenes []threed.ShowcaseScene,
+	scenes []showcaseScene,
 	assetModel *threed.Model,
 	assetLoaded bool,
 	state *demoState,
-) {
+	redraw func() error,
+) error {
 	ticker := time.NewTicker(sceneTick)
 	defer ticker.Stop()
 
@@ -285,19 +298,24 @@ func animateScenes(
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		case <-ticker.C:
 			sceneIndex := state.sceneIndex()
 			paused := state.pauseState()
 			scene := scenes[sceneIndex]
+			sceneChanged := sceneIndex != lastScene
+			needsRedraw := false
 
-			if !paused {
+			if !paused || sceneChanged {
 				stage.SetModel(scene.Build(step, assetModel))
-				stage.Rotate(scene.Orbit)
-				step++
+				needsRedraw = true
+				if !paused {
+					stage.Rotate(scene.Orbit)
+					step++
+				}
 			}
 
-			if sceneIndex != lastScene || step%4 == 0 {
+			if sceneChanged || step%4 == 0 {
 				if err := renderSceneCatalog(catalog, scenes, sceneIndex, assetLoaded); err != nil {
 					log.Printf("failed to update scene catalog: %v", err)
 				}
@@ -305,13 +323,20 @@ func animateScenes(
 					log.Printf("failed to update scene details: %v", err)
 				}
 				lastScene = sceneIndex
+				needsRedraw = true
+			}
+
+			if needsRedraw && redraw != nil {
+				if err := redraw(); err != nil {
+					return err
+				}
 			}
 		}
 	}
 }
 
 // sceneCatalogText returns the catalog copy for the current scene list.
-func sceneCatalogText(scenes []threed.ShowcaseScene, active int, assetLoaded bool) []struct {
+func sceneCatalogText(scenes []showcaseScene, active int, assetLoaded bool) []struct {
 	line  string
 	color cell.Color
 	bold  bool
@@ -354,7 +379,7 @@ func sceneCatalogText(scenes []threed.ShowcaseScene, active int, assetLoaded boo
 }
 
 // renderSceneCatalog writes the available scene list and highlights the active scene.
-func renderSceneCatalog(w *text.Text, scenes []threed.ShowcaseScene, active int, assetLoaded bool) error {
+func renderSceneCatalog(w *text.Text, scenes []showcaseScene, active int, assetLoaded bool) error {
 	w.Reset()
 	for _, line := range sceneCatalogText(scenes, active, assetLoaded) {
 		opts := []text.WriteOption{text.WriteCellOpts(cell.FgColor(line.color))}
@@ -369,7 +394,7 @@ func renderSceneCatalog(w *text.Text, scenes []threed.ShowcaseScene, active int,
 }
 
 // sceneDetailsText builds the detail panel copy for the active scene.
-func sceneDetailsText(scene threed.ShowcaseScene, step int, assetLoaded bool, assetPath string) string {
+func sceneDetailsText(scene showcaseScene, step int, assetLoaded bool, assetPath string) string {
 	var b strings.Builder
 	b.WriteString("Scene: ")
 	b.WriteString(scene.Name)
@@ -395,7 +420,7 @@ func sceneDetailsText(scene threed.ShowcaseScene, step int, assetLoaded bool, as
 }
 
 // renderSceneDetails writes the active scene summary and feature highlights.
-func renderSceneDetails(w *text.Text, scene threed.ShowcaseScene, step int, assetLoaded bool, assetPath string) error {
+func renderSceneDetails(w *text.Text, scene showcaseScene, step int, assetLoaded bool, assetPath string) error {
 	w.Reset()
 	if err := w.Write("Scene: ", text.WriteReplace(), text.WriteCellOpts(cell.FgColor(cell.ColorNumber(245)))); err != nil {
 		return err

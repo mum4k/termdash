@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Binary termdashdemo showcases every termdash widget across four themed tabs.
-// Navigate with ←/→ arrow keys or Tab. Press q or Esc to quit.
+// Binary termdashdemo showcases every termdash widget across themed tabs.
+// Navigate with ←/→ arrow keys or Tab; on ThreeD, arrows orbit the scene.
+// Press q or Esc to quit.
 package main
 
 import (
@@ -69,8 +70,12 @@ import (
 	"github.com/mum4k/termdash/widgets/treeview"
 )
 
-// redrawInterval is how often termdash redraws the screen.
-const redrawInterval = 250 * time.Millisecond
+const (
+	// redrawInterval is how often termdash redraws the screen.
+	redrawInterval = 50 * time.Millisecond
+	// chartUpdateInterval keeps non-frame-critical chart data at the old pace.
+	chartUpdateInterval = 250 * time.Millisecond / 3
+)
 
 // Container IDs used by the tab system and borderfx.
 const (
@@ -98,17 +103,23 @@ const (
 	idCtrlStatus  = "demo-ctrl-status"
 
 	// Tab 3 – Visualize
-	idVizModal   = "demo-viz-modal"
-	idVizHeatmap = "demo-viz-heatmap"
-	idVizPie     = "demo-viz-pie"
-	idVizStatus  = "demo-viz-status"
+	idVizModal    = "demo-viz-modal"
+	idVizHeatmap  = "demo-viz-heatmap"
+	idVizHeatmap2 = "demo-viz-heatmap2"
+	idVizPie      = "demo-viz-pie"
+	idVizStatus   = "demo-viz-status"
 
 	// Tab 4 – Explorer
-	idExplTree = "demo-expl-tree"
-	idExplTime = "demo-expl-timeline"
-	idExplPick = "demo-expl-picker"
-	idExplPrev = "demo-expl-preview"
-	idExplSpin = "demo-expl-spin"
+	idExplTree  = "demo-expl-tree"
+	idExplTime  = "demo-expl-timeline"
+	idExplPick  = "demo-expl-picker"
+	idExplPrev  = "demo-expl-preview"
+	idExplSpin  = "demo-expl-spin"
+	idExplPrevA = "demo-expl-preview-a"
+	idExplPrevB = "demo-expl-preview-b"
+	idExplPrevC = "demo-expl-preview-c"
+	idExplPrevD = "demo-expl-preview-d"
+	idExplPrevE = "demo-expl-preview-e"
 
 	// Tab 5 – ThreeD
 	idThreeDStage = "demo-threed-stage"
@@ -121,8 +132,8 @@ var animatedPaneIDs = []string{
 	idDashLC, idDashBar, idDashDonut, idDashSine,
 	idCtrlSeg, idCtrlInput, idCtrlSlider, idCtrlCheck,
 	idCtrlDrop, idCtrlRadio, idCtrlActions, idCtrlStatus,
-	idVizModal, idVizHeatmap, idVizPie, idVizStatus,
-	idExplTree, idExplTime, idExplPick, idExplPrev, idExplSpin,
+	idVizModal, idVizHeatmap, idVizHeatmap2, idVizPie, idVizStatus,
+	idExplTree, idExplTime, idExplPrev, idExplSpin,
 	idThreeDStage, idThreeDInfo,
 }
 
@@ -310,7 +321,7 @@ func newDashboardTab(ctx context.Context, t terminalapi.Terminal) (*dashWidgets,
 		return nil, nil, err
 	}
 	hbStep := 0
-	go periodic(ctx, redrawInterval/3, func() error {
+	go periodic(ctx, chartUpdateInterval, func() error {
 		hbStep = (hbStep + 1) % len(hbInputs)
 		return heartLC.Series("heartbeat", rotateFloats(hbInputs, hbStep),
 			linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(87))),
@@ -377,7 +388,7 @@ func newDashboardTab(ctx context.Context, t terminalapi.Terminal) (*dashWidgets,
 	}
 	sineStep := 0
 	sineDist := &distance{v: 100}
-	go periodic(ctx, redrawInterval/3, func() error {
+	go periodic(ctx, chartUpdateInterval, func() error {
 		sineStep = (sineStep + 1) % len(sineInputs)
 		if err := sineLC.Series("first", rotateFloats(sineInputs, sineStep),
 			linechart.SeriesCellOpts(cell.FgColor(cell.ColorNumber(33))),
@@ -970,6 +981,7 @@ type vizWidgets struct {
 	donut2  *donut.Donut
 	lineW   *linechart.LineChart
 	heatW   *heatmap.HeatMap
+	heatW2  *heatmap.HeatMap
 	pieW    *pie.Pie
 	statusW *text.Text
 	modalW  *modal.Modal
@@ -1050,7 +1062,7 @@ func newVisualizeTab(ctx context.Context) (*vizWidgets, *tab.Tab, error) {
 
 	modalW := modal.NewModal("viz-modal", []*modal.DraggableWidget{radarDW, donutDW, lcDW}, nil)
 
-	// ── Heatmap ──────────────────────────────────────────────────────────────
+	// ── Heatmap (primary – cool blue) ────────────────────────────────────────
 	heatW, err := heatmap.New(
 		heatmap.AxisCellOpts(cell.FgColor(cell.ColorNumber(242))),
 		heatmap.XLabelCellOpts(cell.FgColor(cell.ColorNumber(244))),
@@ -1060,6 +1072,22 @@ func newVisualizeTab(ctx context.Context) (*vizWidgets, *tab.Tab, error) {
 			cell.ColorNumber(24), cell.ColorNumber(31),
 			cell.ColorNumber(38), cell.ColorNumber(45),
 			cell.ColorNumber(81),
+		),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// ── Heatmap 2 (secondary – warm infrared) ────────────────────────────────
+	heatW2, err := heatmap.New(
+		heatmap.AxisCellOpts(cell.FgColor(cell.ColorNumber(242))),
+		heatmap.XLabelCellOpts(cell.FgColor(cell.ColorNumber(220))),
+		heatmap.YLabelCellOpts(cell.FgColor(cell.ColorNumber(203))),
+		heatmap.Palette(
+			cell.ColorNumber(235), cell.ColorNumber(52),
+			cell.ColorNumber(88), cell.ColorNumber(124),
+			cell.ColorNumber(160), cell.ColorNumber(196),
+			cell.ColorNumber(220),
 		),
 	)
 	if err != nil {
@@ -1090,15 +1118,19 @@ func newVisualizeTab(ctx context.Context) (*vizWidgets, *tab.Tab, error) {
 		return nil, nil, err
 	}
 
-	// Seed heatmap
+	// Seed heatmaps
 	xl, yl, hv := vizHeatmapFrame(0)
 	if err := heatW.Values(xl, yl, hv); err != nil {
+		return nil, nil, err
+	}
+	xl2, yl2, hv2 := vizHeatmap2Frame(0)
+	if err := heatW2.Values(xl2, yl2, hv2); err != nil {
 		return nil, nil, err
 	}
 
 	w := &vizWidgets{
 		radarW: rdr, donut2: don2, lineW: lineW,
-		heatW: heatW, pieW: pieW, statusW: statusW, modalW: modalW,
+		heatW: heatW, heatW2: heatW2, pieW: pieW, statusW: statusW, modalW: modalW,
 	}
 
 	// ── Layout ───────────────────────────────────────────────────────────────
@@ -1112,14 +1144,23 @@ func newVisualizeTab(ctx context.Context) (*vizWidgets, *tab.Tab, error) {
 				container.Right(
 					container.SplitHorizontal(
 						container.Top(
-							paneOpts(idVizHeatmap, "Thermal Heatmap",
-								container.PlaceWidget(heatW))...,
+							container.SplitVertical(
+								container.Left(
+									paneOpts(idVizHeatmap, "Thermal",
+										container.PlaceWidget(heatW))...,
+								),
+								container.Right(
+									paneOpts(idVizHeatmap2, "Infrared",
+										container.PlaceWidget(heatW2))...,
+								),
+								container.SplitPercent(50),
+							),
 						),
 						container.Bottom(
 							paneOpts(idVizPie, "Band Distribution",
 								container.PlaceWidget(pieW))...,
 						),
-						container.SplitPercent(60),
+						container.SplitPercent(44),
 					),
 				),
 				container.SplitPercent(60),
@@ -1161,6 +1202,66 @@ func vizHeatmapFrame(phase float64) ([]string, []string, [][]float64) {
 			wave := 0.5 + 0.5*math.Sin(phase*0.4+stack*2.5+band*5.0)
 			ripple := 0.4 + 0.35*math.Cos(phase*0.8-band*3.2+stack*1.9)
 			values[r][c] = 20 + (wave+ripple)*130
+		}
+	}
+	return xLabels, yLabels, values
+}
+
+// vizHeatmap2Frame generates an animated "infrared" heatmap with a smaller
+// 9×6 grid and a warm crimson→amber→yellow palette – visually distinct from
+// the cool-blue primary heatmap.
+func vizHeatmap2Frame(phase float64) ([]string, []string, [][]float64) {
+	const cols, rows = 9, 6
+	xLabels := make([]string, cols)
+	for i := range xLabels {
+		if i%3 == 0 {
+			xLabels[i] = fmt.Sprintf("%c", 'A'+i/3)
+		}
+	}
+	yLabels := make([]string, rows)
+	for i := range yLabels {
+		if i%2 == 0 {
+			yLabels[i] = fmt.Sprintf("%02d", i+1)
+		}
+	}
+	values := make([][]float64, rows)
+	for r := range values {
+		values[r] = make([]float64, cols)
+		for c := range values[r] {
+			band := float64(c) / float64(cols-1)
+			stack := float64(r) / float64(rows-1)
+			core := 0.5 + 0.5*math.Cos(phase*0.6+stack*3.2-band*4.0)
+			edge := 0.4 + 0.3*math.Sin(phase*0.9+band*5.5+stack*2.1)
+			values[r][c] = 8 + (core+edge)*110
+		}
+	}
+	return xLabels, yLabels, values
+}
+
+// explorerHeatmapFrame generates a denser 2x heatmap for the Explorer preview.
+func explorerHeatmapFrame(phase float64) ([]string, []string, [][]float64) {
+	const cols, rows = 28, 20
+	xLabels := make([]string, cols)
+	for i := range xLabels {
+		if i%6 == 0 {
+			xLabels[i] = fmt.Sprintf("%c", 'A'+i/6)
+		}
+	}
+	yLabels := make([]string, rows)
+	for i := range yLabels {
+		if i%4 == 0 {
+			yLabels[i] = fmt.Sprintf("%02d", i+1)
+		}
+	}
+	values := make([][]float64, rows)
+	for r := range values {
+		values[r] = make([]float64, cols)
+		for c := range values[r] {
+			band := float64(c) / float64(cols-1)
+			stack := float64(r) / float64(rows-1)
+			wave := 0.5 + 0.5*math.Sin(phase*0.35+stack*3.4+band*6.8)
+			ripple := 0.5 + 0.45*math.Cos(phase*0.65-band*4.6+stack*2.2)
+			values[r][c] = 16 + (wave*0.62+ripple*0.38)*150
 		}
 	}
 	return xLabels, yLabels, values
@@ -1210,14 +1311,23 @@ type explWidgets struct {
 	pie      *pie.Pie
 	heat     *heatmap.HeatMap
 	gauge    *gauge.Gauge
+	gauge2   *gauge.Gauge
+	gauge3   *gauge.Gauge
 	radar    *radar.Radar
+	radar2   *radar.Radar
 	spectrum *spectrum.Spectrum
 	timeLine *timeline.Timeline
 	picker   *timeline.TimeRangePicker
 	prevTime *timeline.Timeline
 	prevPick *timeline.TimeRangePicker
 	spinW    *text.Text
+	toastS   *toast.Surface
+	borderFX *borderfx.Animator
 	previews map[string]func() []container.Option
+	// ThreeD preview shapes – each rotates independently in animateExplorer.
+	threedCube   *threed.ThreeD
+	threedSphere *threed.ThreeD
+	threedOcta   *threed.ThreeD
 }
 
 // newExplorerTab creates all Explorer widgets and returns the tab.
@@ -1289,30 +1399,21 @@ func newExplorerTab(ctx context.Context) (*explWidgets, *tab.Tab, error) {
 						container.PlaceWidget(w.line))...,
 				),
 				container.Bottom(
-					container.SplitHorizontal(
-						container.Top(
-							paneOpts(idExplPick, "Timeline Range Picker",
-								container.PlaceWidget(w.picker))...,
+					container.SplitVertical(
+						container.Left(
+							paneOpts(idExplTime, "Live Event Stream",
+								container.PlaceWidget(w.timeLine))...,
 						),
-						container.Bottom(
-							container.SplitVertical(
-								container.Left(
-									paneOpts(idExplTime, "Live Event Stream",
-										container.PlaceWidget(w.timeLine))...,
-								),
-								container.Right(
-									paneOpts(idExplSpin, "System Status",
-										container.PaddingLeft(1),
-										container.PaddingTop(1),
-										container.PlaceWidget(w.spinW))...,
-								),
-								container.SplitPercent(64),
-							),
+						container.Right(
+							paneOpts(idExplSpin, "System Status",
+								container.PaddingLeft(1),
+								container.PaddingTop(1),
+								container.PlaceWidget(w.spinW))...,
 						),
-						container.SplitPercent(36),
+						container.SplitPercent(64),
 					),
 				),
-				container.SplitPercent(62),
+				container.SplitPercent(72),
 			),
 		),
 		container.SplitPercent(32),
@@ -1328,6 +1429,13 @@ func (w *explWidgets) setRoot(root *container.Container) {
 	w.root = root
 }
 
+// setBorderFX allows Explorer controls to re-profile the focused pane border.
+func (w *explWidgets) setBorderFX(fx *borderfx.Animator) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.borderFX = fx
+}
+
 // selectCatalogItem swaps the right-hand preview pane to the selected widget.
 func (w *explWidgets) selectCatalogItem(name string) error {
 	w.mu.Lock()
@@ -1337,7 +1445,49 @@ func (w *explWidgets) selectCatalogItem(name string) error {
 	if root == nil || buildPreview == nil {
 		return nil
 	}
+	if name == "Toast" {
+		if err := w.showExplorerTTLToast("Tree selection", "Toast preview opened from the widget catalog."); err != nil {
+			return err
+		}
+	}
 	return root.Update(idExplPrev, buildPreview()...)
+}
+
+// applyFocusedBorderFXProfile applies a named BorderFX profile to the active pane.
+func (w *explWidgets) applyFocusedBorderFXProfile(label string) error {
+	w.mu.Lock()
+	root := w.root
+	fx := w.borderFX
+	w.mu.Unlock()
+	if root == nil || fx == nil {
+		return nil
+	}
+	id := root.ActiveID()
+	if id == "" {
+		id = idExplPrev
+	}
+	effect := explorerBorderEffect(label)
+	if effect == nil {
+		return nil
+	}
+	fx.Register(id, effect)
+	return w.showExplorerTTLToast("BorderFX: "+label, "Applied to focused pane "+id+".")
+}
+
+// showExplorerTTLToast pushes a short-lived toast into the Explorer toast surface.
+func (w *explWidgets) showExplorerTTLToast(title, message string) error {
+	w.mu.Lock()
+	surface := w.toastS
+	w.mu.Unlock()
+	if surface == nil {
+		return nil
+	}
+	surface.Notify(title, message,
+		toast.WithSeverity(toast.SeverityInfo),
+		toast.WithTTL(7*time.Second),
+		toast.WithProgress(1),
+	)
+	return nil
 }
 
 // newExplorerWidgets creates every live visualization used by the Explorer catalog.
@@ -1392,11 +1542,37 @@ func newExplorerWidgets() (*explWidgets, error) {
 	if err != nil {
 		return nil, err
 	}
+	hx, hy, hv := explorerHeatmapFrame(0)
+	if err := heatW.Values(hx, hy, hv); err != nil {
+		return nil, err
+	}
 	gaugeW, err := gauge.New(
 		gauge.Height(3),
 		gauge.Color(cell.ColorNumber(75)),
 		gauge.TextLabel(" throughput"),
 		gauge.Threshold(82, linestyle.Light, cell.FgColor(cell.ColorNumber(203))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Gauge 2 – amber warm tone
+	gauge2W, err := gauge.New(
+		gauge.Height(3),
+		gauge.Color(cell.ColorNumber(214)),
+		gauge.FilledTextColor(cell.ColorNumber(16)),
+		gauge.EmptyTextColor(cell.ColorNumber(245)),
+		gauge.TextLabel(" capacity"),
+		gauge.Threshold(90, linestyle.Light, cell.FgColor(cell.ColorNumber(196))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Gauge 3 – danger red, no text, tall
+	gauge3W, err := gauge.New(
+		gauge.Height(4),
+		gauge.Color(cell.ColorNumber(196)),
+		gauge.HideTextProgress(),
+		gauge.Char('▓'),
 	)
 	if err != nil {
 		return nil, err
@@ -1410,15 +1586,42 @@ func newExplorerWidgets() (*explWidgets, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Radar 2 – slow sector scan, blue beam
+	radar2W, err := radar.New(
+		radar.SweepSpeed(22),
+		radar.BeamWidth(18.0),
+		radar.BeamColor(60, 140, 255),
+		radar.ContactColor(220, 100, 255),
+		radar.ContactChar('◇'),
+		radar.RangeRings(5),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := radar2W.SetContacts([]*radar.Contact{
+		{Angle: 55.0, Distance: 0.45, Label: "X1"},
+		{Angle: 200.0, Distance: 0.72, Label: "Y2"},
+	}); err != nil {
+		return nil, err
+	}
 	spectrumW, err := spectrum.New(
 		spectrum.Stereo(),
 		spectrum.ChannelLabels("LEFT", "RIGHT"),
 		spectrum.MaxValue(100),
-		spectrum.Gradient(cell.ColorNumber(24), cell.ColorNumber(75), cell.ColorNumber(159), cell.ColorNumber(220), cell.ColorNumber(203)),
-		spectrum.AxisCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		spectrum.Gradient(
+			cell.ColorTrueRGB(38, 130, 255),
+			cell.ColorTrueRGB(73, 226, 176),
+			cell.ColorTrueRGB(190, 255, 112),
+			cell.ColorTrueRGB(255, 210, 70),
+			cell.ColorTrueRGB(255, 98, 132),
+		),
+		spectrum.PrimaryRunes('⡀', '⣀', '⣤', '⣶', '⣿'),
+		spectrum.SecondaryRunes('⠈', '⠉', '⠛', '⠿', '⣿'),
+		spectrum.PeakRunes('⣿', '⣿'),
+		spectrum.AxisCellOpts(cell.FgColor(cell.ColorTrueRGB(58, 70, 84))),
 		spectrum.Threshold(78),
-		spectrum.ThresholdLineColor(cell.ColorNumber(203)),
-		spectrum.AlertColor(cell.ColorNumber(203)),
+		spectrum.ThresholdLineColor(cell.ColorTrueRGB(255, 98, 132)),
+		spectrum.AlertColor(cell.ColorTrueRGB(255, 98, 132)),
 	)
 	if err != nil {
 		return nil, err
@@ -1455,80 +1658,31 @@ func newExplorerWidgets() (*explWidgets, error) {
 	if err != nil {
 		return nil, err
 	}
-	buttonW, err := button.New("Run Action", func() error {
-		return writeExplorerStatus(spinW, "Button press received")
-	},
-		button.Width(18),
-		button.Height(3),
-		button.FillColor(cell.ColorNumber(75)),
-		button.FocusedFillColor(cell.ColorNumber(159)),
-		button.PressedFillColor(cell.ColorNumber(118)),
-		button.TextColor(cell.ColorBlack),
-	)
+	buttonPreview, err := explorerButtonVariants(spinW)
 	if err != nil {
 		return nil, err
 	}
-	inputW, err := textinput.New(
-		textinput.Label("Query", cell.FgColor(cell.ColorNumber(245))),
-		textinput.DefaultText("termdash widgets"),
-		textinput.PlaceHolder("type here"),
-		textinput.FillColor(cell.ColorNumber(234)),
-		textinput.TextColor(cell.ColorNumber(231)),
-		textinput.CursorColor(cell.ColorNumber(159)),
-		textinput.Border(linestyle.Light),
-		textinput.BorderColor(cell.ColorNumber(75)),
-		textinput.MaxWidthCells(36),
-	)
+	inputPreview, err := explorerInputVariants()
 	if err != nil {
 		return nil, err
 	}
-	checkW, err := checkbox.New("Enable alerts",
-		checkbox.Checked(true),
-		checkbox.UseIndicatorSet(checkbox.IndicatorSets.Heavy),
-		checkbox.CellOpts(cell.FgColor(cell.ColorNumber(245))),
-		checkbox.FocusedCellOpts(cell.FgColor(cell.ColorNumber(159))),
-		checkbox.CheckedCellOpts(cell.FgColor(cell.ColorNumber(118))),
-	)
+	checkPreview, err := explorerCheckboxVariants()
 	if err != nil {
 		return nil, err
 	}
-	radioW, err := radio.New([]radio.Item{
-		{Label: "Low"},
-		{Label: "Balanced"},
-		{Label: "High"},
-	},
-		radio.Selected(1),
-		radio.UseIndicatorSet(radio.IndicatorSets.Diamond),
-	)
+	radioPreview, err := explorerRadioVariants()
 	if err != nil {
 		return nil, err
 	}
-	sliderW, err := slider.New(
-		slider.Width(34),
-		slider.Value(64),
-		slider.Step(5),
-		slider.SegmentedBlocksStyle(),
-		slider.FillCellOpts(cell.FgColor(cell.ColorNumber(75))),
-		slider.TrackCellOpts(cell.FgColor(cell.ColorNumber(238))),
-		slider.KnobCellOpts(cell.FgColor(cell.ColorNumber(231))),
-		slider.FocusedKnobCellOpts(cell.FgColor(cell.ColorNumber(159))),
-	)
+	sliderPreview, err := explorerSliderVariants()
 	if err != nil {
 		return nil, err
 	}
-	dropdownW, err := dropdown.New([]string{"Telemetry", "Operations", "Charts", "Controls"},
-		dropdown.Selected(1),
-		dropdown.Width(24),
-		dropdown.GlyphSet(dropdown.GlyphProfiles.Minimal),
-		dropdown.CellOpts(cell.FgColor(cell.ColorNumber(245)), cell.BgColor(cell.ColorNumber(234))),
-		dropdown.FocusedCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.BgColor(cell.ColorNumber(236))),
-		dropdown.SelectedCellOpts(cell.FgColor(cell.ColorNumber(159)), cell.BgColor(cell.ColorNumber(236))),
-		dropdown.BorderCellOpts(cell.FgColor(cell.ColorNumber(75))),
-	)
+	dropdownPreview, err := explorerDropdownVariants()
 	if err != nil {
 		return nil, err
 	}
-	textW, err := explorerText("Text widget\n\nRich terminal copy with word wrapping, color, and scroll handling.", cell.ColorNumber(245))
+	textPreview, err := explorerTextVariants()
 	if err != nil {
 		return nil, err
 	}
@@ -1536,11 +1690,50 @@ func newExplorerWidgets() (*explWidgets, error) {
 	if err != nil {
 		return nil, err
 	}
-	threedW, err := explorerThreeD()
+	// ── Three separate ThreeD preview stages (rotate in animateExplorer) ────────
+	cubeStage, err := threed.New(
+		threed.ShowAxes(false),
+		threed.EnableLogging(false),
+		threed.BackfaceCulling(true),
+		threed.ZoomScale(18.0),
+		threed.AmbientColor(threed.Color{R: 0.35, G: 0.35, B: 0.35}),
+		threed.DiffuseColor(threed.Color{R: 1.0, G: 1.0, B: 1.0}),
+	)
 	if err != nil {
 		return nil, err
 	}
-	treePreview, err := explorerTreeView()
+	cubeStage.SetModel(threed.Cube(threed.ModelSize(1.4), threed.ModelRune('█'), threed.ModelColor(threed.NeonCyan)))
+	cubeStage.Rotate(threed.Vector3D{X: 0.50, Y: 0.40, Z: 0.10})
+
+	sphereStage, err := threed.New(
+		threed.ShowAxes(false),
+		threed.EnableLogging(false),
+		threed.BackfaceCulling(false),
+		threed.ZoomScale(18.0),
+		threed.AmbientColor(threed.Color{R: 0.35, G: 0.35, B: 0.35}),
+		threed.DiffuseColor(threed.Color{R: 1.0, G: 1.0, B: 1.0}),
+	)
+	if err != nil {
+		return nil, err
+	}
+	sphereStage.SetModel(threed.Sphere(threed.ModelSize(1.2), threed.ModelSegments(8, 14), threed.ModelRune('█'), threed.ModelColor(threed.Amber)))
+	sphereStage.Rotate(threed.Vector3D{X: 0.30, Y: 0.65, Z: 0.00})
+
+	octaStage, err := threed.New(
+		threed.ShowAxes(false),
+		threed.EnableLogging(false),
+		threed.BackfaceCulling(false),
+		threed.ZoomScale(16.0),
+		threed.AmbientColor(threed.Color{R: 0.35, G: 0.35, B: 0.35}),
+		threed.DiffuseColor(threed.Color{R: 1.0, G: 1.0, B: 1.0}),
+	)
+	if err != nil {
+		return nil, err
+	}
+	octaStage.SetModel(threed.Octahedron(threed.ModelSize(1.5), threed.ModelColor(threed.NeonGreen)))
+	octaStage.Rotate(threed.Vector3D{X: 0.45, Y: 0.35, Z: 0.20})
+
+	treePreview, err := explorerTreeViewVariants()
 	if err != nil {
 		return nil, err
 	}
@@ -1552,15 +1745,20 @@ func newExplorerWidgets() (*explWidgets, error) {
 	if err != nil {
 		return nil, err
 	}
-	borderPreview, err := explorerText("BorderFX preview\n\nFocus this pane and watch the registered border animation render around the selected preview.", cell.ColorNumber(159))
+	var w *explWidgets
+	borderPreview, err := explorerBorderFXPreview(func(label string) error {
+		return w.applyFocusedBorderFXProfile(label)
+	})
 	if err != nil {
 		return nil, err
 	}
 	tabPreview := newExplorerTabPreview()
-	w := &explWidgets{
+	w = &explWidgets{
 		line: lineW, bar: barW, sparkA: sparkW, donut: donutW, pie: pieW,
-		heat: heatW, gauge: gaugeW, radar: radarW, spectrum: spectrumW,
-		timeLine: timelineW, picker: pickerW, prevTime: timelinePreview, prevPick: pickerPreview, spinW: spinW,
+		heat: heatW, gauge: gaugeW, gauge2: gauge2W, gauge3: gauge3W,
+		radar: radarW, radar2: radar2W, spectrum: spectrumW,
+		timeLine: timelineW, picker: pickerW, prevTime: timelinePreview, prevPick: pickerPreview, spinW: spinW, toastS: toastPreview,
+		threedCube: cubeStage, threedSphere: sphereStage, threedOcta: octaStage,
 	}
 	w.previews = map[string]func() []container.Option{
 		"LineChart":               explorerWidgetPreview("LineChart", lineW),
@@ -1569,24 +1767,24 @@ func newExplorerWidgets() (*explWidgets, error) {
 		"Donut":                   explorerWidgetPreview("Donut", donutW),
 		"Pie":                     explorerWidgetPreview("Pie", pieW),
 		"HeatMap":                 explorerWidgetPreview("HeatMap", heatW),
-		"Gauge":                   explorerWidgetPreview("Gauge", gaugeW),
-		"Radar":                   explorerWidgetPreview("Radar", radarW),
+		"Gauge":                   explorerGaugeVariants(gaugeW, gauge2W, gauge3W),
+		"Radar":                   explorerRadarVariants(radarW, radar2W),
 		"Spectrum":                explorerWidgetPreview("Spectrum", spectrumW),
 		"Timeline":                explorerWidgetPreview("Timeline", timelinePreview),
-		"TimeRangePicker":         explorerWidgetPreview("TimeRangePicker", pickerPreview),
-		"Button":                  explorerControlPreview("Button", buttonW),
-		"TextInput":               explorerControlPreview("TextInput", inputW),
-		"Checkbox":                explorerControlPreview("Checkbox", checkW),
-		"Radio":                   explorerControlPreview("Radio", radioW),
-		"Slider":                  explorerControlPreview("Slider", sliderW),
-		"Dropdown":                explorerControlPreview("Dropdown", dropdownW),
-		"Text":                    explorerWidgetPreview("Text", textW),
+		"TimeRangePicker":         explorerTimelinePickerPreview(pickerPreview, timelinePreview),
+		"Button":                  buttonPreview,
+		"TextInput":               inputPreview,
+		"Checkbox":                checkPreview,
+		"Radio":                   radioPreview,
+		"Slider":                  sliderPreview,
+		"Dropdown":                dropdownPreview,
+		"Text":                    textPreview,
 		"SegmentDisplay":          explorerWidgetPreview("SegmentDisplay", segmentW),
-		"ThreeD":                  explorerWidgetPreview("ThreeD", threedW),
+		"ThreeD":                  explorerThreeDVariants(cubeStage, sphereStage, octaStage),
 		"Modal":                   explorerWidgetPreview("Modal", modalPreview),
 		"Toast":                   explorerWidgetPreview("Toast", toastPreview),
-		"TreeView ← you are here": explorerWidgetPreview("TreeView", treePreview),
-		"BorderFX":                explorerWidgetPreview("BorderFX", borderPreview),
+		"TreeView ← you are here": treePreview,
+		"BorderFX":                borderPreview,
 		"Tab":                     explorerWidgetPreview("Tab", tabPreview),
 	}
 	seedExplorerTimeline(timelineW, pickerW)
@@ -1595,6 +1793,52 @@ func newExplorerWidgets() (*explWidgets, error) {
 		return nil, err
 	}
 	return w, nil
+}
+
+// previewPane wraps a widget in the demo's compact preview styling.
+func previewPane(id, title string, widget widgetapi.Widget, extras ...container.Option) []container.Option {
+	opts := append([]container.Option{}, extras...)
+	opts = append(opts, container.PlaceWidget(widget))
+	return paneOpts(id, title, opts...)
+}
+
+// previewLayout wraps a composite preview in the selected preview pane.
+func previewLayout(title string, opts ...container.Option) []container.Option {
+	return paneOpts(idExplPrev, title+" Preview", opts...)
+}
+
+// stackPreviewRows lays out preview panes in evenly-sized vertical rows.
+func stackPreviewRows(rows ...[]container.Option) []container.Option {
+	if len(rows) == 0 {
+		return nil
+	}
+	if len(rows) == 1 {
+		return rows[0]
+	}
+	return []container.Option{
+		container.SplitHorizontal(
+			container.Top(rows[0]...),
+			container.Bottom(stackPreviewRows(rows[1:]...)...),
+			container.SplitPercent(100/len(rows)),
+		),
+	}
+}
+
+// stackPreviewColumns lays out preview panes in evenly-sized columns.
+func stackPreviewColumns(cols ...[]container.Option) []container.Option {
+	if len(cols) == 0 {
+		return nil
+	}
+	if len(cols) == 1 {
+		return cols[0]
+	}
+	return []container.Option{
+		container.SplitVertical(
+			container.Left(cols[0]...),
+			container.Right(stackPreviewColumns(cols[1:]...)...),
+			container.SplitPercent(100/len(cols)),
+		),
+	}
 }
 
 // explorerWidgetPreview returns a standard preview pane for one catalog item.
@@ -1611,6 +1855,206 @@ func explorerControlPreview(title string, widget widgetapi.Widget) func() []cont
 			container.PaddingLeft(2),
 			container.PaddingTop(2),
 			container.PlaceWidget(widget),
+		)
+	}
+}
+
+// explorerButtonVariants shows three distinct button treatments.
+func explorerButtonVariants(status *text.Text) (func() []container.Option, error) {
+	primary, err := button.New("Deploy", func() error {
+		return writeExplorerStatus(status, "Primary button pressed")
+	},
+		button.Width(18),
+		button.Height(3),
+		button.FillColor(cell.ColorNumber(75)),
+		button.FocusedFillColor(cell.ColorNumber(159)),
+		button.PressedFillColor(cell.ColorNumber(118)),
+		button.TextColor(cell.ColorBlack),
+	)
+	if err != nil {
+		return nil, err
+	}
+	ghost, err := button.New("Trace", func() error {
+		return writeExplorerStatus(status, "Ghost button pressed")
+	},
+		button.Width(18),
+		button.Height(1),
+		button.FillColor(cell.ColorNumber(236)),
+		button.FocusedFillColor(cell.ColorNumber(24)),
+		button.PressedFillColor(cell.ColorNumber(75)),
+		button.TextColor(cell.ColorNumber(159)),
+		button.DisableShadow(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	danger, err := button.New("Abort", func() error {
+		return writeExplorerStatus(status, "Alert button pressed")
+	},
+		button.Width(18),
+		button.Height(3),
+		button.FillColor(cell.ColorNumber(203)),
+		button.FocusedFillColor(cell.ColorNumber(199)),
+		button.PressedFillColor(cell.ColorNumber(160)),
+		button.TextColor(cell.ColorWhite),
+		button.ShadowColor(cell.ColorNumber(52)),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("Button", stackPreviewColumns(
+			previewPane(idExplPrevA, "Primary", primary, container.PaddingLeft(2), container.PaddingTop(2)),
+			previewPane(idExplPrevB, "Flat / Compact", ghost, container.PaddingLeft(2), container.PaddingTop(3)),
+			previewPane(idExplPrevC, "Alert", danger, container.PaddingLeft(2), container.PaddingTop(2)),
+		)...)
+	}, nil
+}
+
+// explorerCheckboxVariants shows classic, heavy, and rounded checkbox styles.
+func explorerCheckboxVariants() (func() []container.Option, error) {
+	classic, err := checkbox.New("Classic selection",
+		checkbox.Checked(true),
+		checkbox.UseIndicatorSet(checkbox.IndicatorSets.Classic),
+		checkbox.CellOpts(cell.FgColor(cell.ColorNumber(245))),
+		checkbox.CheckedCellOpts(cell.FgColor(cell.ColorNumber(75))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	heavy, err := checkbox.New("Heavy status",
+		checkbox.Checked(true),
+		checkbox.UseIndicatorSet(checkbox.IndicatorSets.Heavy),
+		checkbox.CellOpts(cell.FgColor(cell.ColorNumber(245))),
+		checkbox.FocusedCellOpts(cell.FgColor(cell.ColorNumber(159))),
+		checkbox.CheckedCellOpts(cell.FgColor(cell.ColorNumber(118))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	rounded, err := checkbox.New("Rounded monitor",
+		checkbox.Checked(false),
+		checkbox.UseIndicatorSet(checkbox.IndicatorSets.Rounded),
+		checkbox.CellOpts(cell.FgColor(cell.ColorNumber(245))),
+		checkbox.CheckedCellOpts(cell.FgColor(cell.ColorNumber(220))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("Checkbox", stackPreviewRows(
+			previewPane(idExplPrevA, "Classic", classic, container.PaddingLeft(2), container.PaddingTop(1)),
+			previewPane(idExplPrevB, "Heavy", heavy, container.PaddingLeft(2), container.PaddingTop(1)),
+			previewPane(idExplPrevC, "Rounded", rounded, container.PaddingLeft(2), container.PaddingTop(1)),
+		)...)
+	}, nil
+}
+
+// explorerSliderVariants shows five slider styles, including a vertical slider.
+func explorerSliderVariants() (func() []container.Option, error) {
+	bar, err := slider.New(slider.Width(28), slider.Value(72), slider.BarStyle(),
+		slider.FillCellOpts(cell.FgColor(cell.ColorNumber(75))),
+		slider.TrackCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		slider.KnobCellOpts(cell.FgColor(cell.ColorNumber(231))))
+	if err != nil {
+		return nil, err
+	}
+	dots, err := slider.New(slider.Width(28), slider.Value(46), slider.DotsStyle(),
+		slider.FillCellOpts(cell.FgColor(cell.ColorNumber(118))),
+		slider.TrackCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		slider.KnobCellOpts(cell.FgColor(cell.ColorNumber(220))))
+	if err != nil {
+		return nil, err
+	}
+	blocks, err := slider.New(slider.Width(28), slider.Value(64), slider.SegmentedBlocksStyle(),
+		slider.FillCellOpts(cell.FgColor(cell.ColorNumber(159))),
+		slider.TrackCellOpts(cell.FgColor(cell.ColorNumber(236))),
+		slider.KnobCellOpts(cell.FgColor(cell.ColorNumber(231))))
+	if err != nil {
+		return nil, err
+	}
+	stars, err := slider.New(slider.Width(28), slider.Value(38), slider.StarsStyle(),
+		slider.FillCellOpts(cell.FgColor(cell.ColorNumber(220))),
+		slider.TrackCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		slider.KnobCellOpts(cell.FgColor(cell.ColorNumber(231))))
+	if err != nil {
+		return nil, err
+	}
+	vertical, err := slider.New(slider.Height(12), slider.Value(58), slider.Orientation(slider.OrientationVertical),
+		slider.SegmentedSquaresStyle(),
+		slider.AlignHorizontal(align.HorizontalCenter),
+		slider.AlignVertical(align.VerticalMiddle),
+		slider.FillCellOpts(cell.FgColor(cell.ColorNumber(203))),
+		slider.TrackCellOpts(cell.FgColor(cell.ColorNumber(238))),
+		slider.KnobCellOpts(cell.FgColor(cell.ColorNumber(231))))
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("Slider",
+			container.SplitVertical(
+				container.Left(stackPreviewRows(
+					previewPane(idExplPrevA, "Bar", bar, container.PaddingLeft(2), container.PaddingTop(1)),
+					previewPane(idExplPrevB, "Dots", dots, container.PaddingLeft(2), container.PaddingTop(1)),
+					previewPane(idExplPrevC, "Segmented Blocks", blocks, container.PaddingLeft(2), container.PaddingTop(1)),
+					previewPane(idExplPrevD, "Stars", stars, container.PaddingLeft(2), container.PaddingTop(1)),
+				)...),
+				container.Right(previewPane(idExplPrevE, "Vertical", vertical, container.PaddingTop(1))...),
+				container.SplitPercent(76),
+			),
+		)
+	}, nil
+}
+
+// explorerDropdownVariants shows five dropdown glyph and color profiles.
+func explorerDropdownVariants() (func() []container.Option, error) {
+	items := []string{"Telemetry", "Operations", "Charts", "Controls"}
+	minimal, err := dropdown.New(items, dropdown.Selected(1), dropdown.Width(24), dropdown.GlyphSet(dropdown.GlyphProfiles.Minimal),
+		dropdown.CellOpts(cell.FgColor(cell.ColorNumber(245)), cell.BgColor(cell.ColorNumber(16))),
+		dropdown.FocusedCellOpts(cell.FgColor(cell.ColorNumber(75)), cell.BgColor(cell.ColorNumber(236))),
+		dropdown.SelectedCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.BgColor(cell.ColorNumber(24))),
+		dropdown.BorderCellOpts(cell.FgColor(cell.ColorNumber(159))))
+	if err != nil {
+		return nil, err
+	}
+	chevron, err := dropdown.New(items, dropdown.Selected(2), dropdown.Width(24),
+		dropdown.Arrows('▸', '▾'),
+		dropdown.RowPrefixes("◆", "·"),
+		dropdown.CellOpts(cell.FgColor(cell.ColorNumber(118)), cell.BgColor(cell.ColorNumber(234))),
+		dropdown.FocusedCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.BgColor(cell.ColorNumber(28))),
+		dropdown.SelectedCellOpts(cell.FgColor(cell.ColorNumber(118)), cell.BgColor(cell.ColorNumber(236))),
+		dropdown.BorderCellOpts(cell.FgColor(cell.ColorNumber(118))))
+	if err != nil {
+		return nil, err
+	}
+	compact, err := dropdown.New(items, dropdown.Selected(0), dropdown.Width(20),
+		dropdown.Arrows('⌄', '⌃'),
+		dropdown.RowPrefixes("•", " "),
+		dropdown.CellOpts(cell.FgColor(cell.ColorNumber(203)), cell.BgColor(cell.ColorNumber(234))),
+		dropdown.FocusedCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.BgColor(cell.ColorNumber(52))),
+		dropdown.SelectedCellOpts(cell.FgColor(cell.ColorNumber(203)), cell.BgColor(cell.ColorNumber(236))),
+		dropdown.BorderCellOpts(cell.FgColor(cell.ColorNumber(203))))
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("Dropdown", stackPreviewRows(
+			previewPane(idExplPrevA, "Minimal", minimal, container.PaddingLeft(2), container.PaddingTop(1)),
+			previewPane(idExplPrevB, "Signal", chevron, container.PaddingLeft(2), container.PaddingTop(1)),
+			previewPane(idExplPrevC, "Compact", compact, container.PaddingLeft(2), container.PaddingTop(1)),
+		)...)
+	}, nil
+}
+
+// explorerTimelinePickerPreview keeps the picker tight and gives the timeline the spare room.
+func explorerTimelinePickerPreview(picker *timeline.TimeRangePicker, tl *timeline.Timeline) func() []container.Option {
+	return func() []container.Option {
+		return previewLayout("TimeRangePicker",
+			container.SplitHorizontal(
+				container.Top(previewPane(idExplPrevA, "Range Picker", picker)...),
+				container.Bottom(previewPane(idExplPrevB, "Filtered Timeline", tl)...),
+				container.SplitPercent(52),
+			),
 		)
 	}
 }
@@ -1690,21 +2134,33 @@ func explorerTreeView() (*treeview.TreeView, error) {
 	)
 }
 
-// explorerModalPreview creates a draggable modal widget preview.
+// explorerModalPreview creates a three-window draggable modal preview.
 func explorerModalPreview() (*modal.Modal, error) {
-	body, err := explorerText("Drag me by the title bar.\nClick - to minimize and restore.", cell.ColorNumber(245))
+	body, err := explorerText("Drag me by the title bar.\nClick - to minimize and restore.\n\nPanels can overlap freely and snap back when dragged off-screen.", cell.ColorNumber(245))
 	if err != nil {
 		return nil, err
 	}
-	logW, err := explorerText("Modal child window\nsame border/minimize behavior", cell.ColorNumber(159))
+	logW, err := explorerText("12:08:01  deploy started\n12:08:04  cache warmed\n12:08:07  health checks green\n12:08:10  traffic shifted", cell.ColorNumber(159))
 	if err != nil {
 		return nil, err
 	}
-	main := modal.NewDraggableWidget("explorer-modal-main", body, 4, 2, 34, 8, nil)
-	main.Title = "Modal Window"
-	aux := modal.NewDraggableWidget("explorer-modal-log", logW, 26, 10, 32, 7, nil)
-	aux.Title = "Compact Log"
-	return modal.NewModal("explorer-modal-preview", []*modal.DraggableWidget{main, aux}, nil), nil
+	statsW, err := explorerText("CPU     38%\nMemory  61%\nDisk    44%\nNetwork ↑2.4G ↓1.1G", cell.ColorNumber(118))
+	if err != nil {
+		return nil, err
+	}
+	main := modal.NewDraggableWidget("explorer-modal-main", body, 2, 1, 36, 10, nil)
+	main.Title = "Event Detail"
+	main.Border = true
+	main.Minimizable = true
+	aux := modal.NewDraggableWidget("explorer-modal-log", logW, 30, 2, 32, 8, nil)
+	aux.Title = "Deploy Log"
+	aux.Border = true
+	aux.Minimizable = true
+	stats := modal.NewDraggableWidget("explorer-modal-stats", statsW, 14, 12, 28, 8, nil)
+	stats.Title = "System Stats"
+	stats.Border = true
+	stats.Minimizable = true
+	return modal.NewModal("explorer-modal-preview", []*modal.DraggableWidget{main, aux, stats}, nil), nil
 }
 
 // explorerToastPreview creates a live toast notification surface preview.
@@ -1716,6 +2172,7 @@ func explorerToastPreview(status *text.Text) (*toast.Surface, error) {
 			toast.MinWidth(18),
 			toast.MaxWidth(40),
 			toast.MaxVisible(3),
+			toast.DefaultTTL(8*time.Second),
 			toast.Margin(2, 1),
 			toast.AnimationMode(toast.AnimationSlide),
 			toast.AnimationDuration(420*time.Millisecond),
@@ -1755,15 +2212,390 @@ func explorerToastPreview(status *text.Text) (*toast.Surface, error) {
 	return surface, nil
 }
 
+// explorerInputVariants shows three distinct TextInput styles.
+func explorerInputVariants() (func() []container.Option, error) {
+	// Style 1 – Standard: round border + label
+	standard, err := textinput.New(
+		textinput.Label("Username", cell.FgColor(cell.ColorNumber(75))),
+		textinput.PlaceHolder("enter username"),
+		textinput.PlaceHolderColor(cell.ColorNumber(240)),
+		textinput.Border(linestyle.Round),
+		textinput.BorderColor(cell.ColorNumber(75)),
+		textinput.TextColor(cell.ColorNumber(231)),
+		textinput.CursorColor(cell.ColorNumber(159)),
+		textinput.MaxWidthCells(32),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Style 2 – Filled terminal: dark fill, no border
+	filled, err := textinput.New(
+		textinput.Label("Search  ", cell.FgColor(cell.ColorNumber(245))),
+		textinput.DefaultText("termdash widgets"),
+		textinput.PlaceHolder("type to filter…"),
+		textinput.PlaceHolderColor(cell.ColorNumber(238)),
+		textinput.FillColor(cell.ColorNumber(234)),
+		textinput.TextColor(cell.ColorNumber(220)),
+		textinput.CursorColor(cell.ColorNumber(220)),
+		textinput.MaxWidthCells(32),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Style 3 – Secure: password mask + warning-red border
+	secure, err := textinput.New(
+		textinput.Label("Password", cell.FgColor(cell.ColorNumber(203))),
+		textinput.HideTextWith('•'),
+		textinput.PlaceHolder("enter passphrase"),
+		textinput.PlaceHolderColor(cell.ColorNumber(240)),
+		textinput.Border(linestyle.Light),
+		textinput.BorderColor(cell.ColorNumber(203)),
+		textinput.FillColor(cell.ColorNumber(233)),
+		textinput.TextColor(cell.ColorNumber(231)),
+		textinput.CursorColor(cell.ColorNumber(203)),
+		textinput.MaxWidthCells(32),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("TextInput", stackPreviewRows(
+			previewPane(idExplPrevA, "Standard – border + label", standard,
+				container.PaddingLeft(2), container.PaddingTop(2)),
+			previewPane(idExplPrevB, "Filled – no border", filled,
+				container.PaddingLeft(2), container.PaddingTop(2)),
+			previewPane(idExplPrevC, "Secure – masked input", secure,
+				container.PaddingLeft(2), container.PaddingTop(2)),
+		)...)
+	}, nil
+}
+
+// explorerRadioVariants shows three radio indicator styles.
+func explorerRadioVariants() (func() []container.Option, error) {
+	items := []radio.Item{
+		{Label: "Low", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(75))}},
+		{Label: "Medium", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(220))}},
+		{Label: "High", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(203))}},
+	}
+	// Style 1 – Circle (default, cyan selection)
+	circleR, err := radio.New(items,
+		radio.Selected(1),
+		radio.UseIndicatorSet(radio.IndicatorSets.Circle),
+		radio.Gap(1),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Style 2 – Diamond with green accent
+	diamondItems := []radio.Item{
+		{Label: "SCAN", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(118))}},
+		{Label: "BOOST", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(220))}},
+		{Label: "STEALTH", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(159))}},
+	}
+	diamondR, err := radio.New(diamondItems,
+		radio.Selected(0),
+		radio.UseIndicatorSet(radio.IndicatorSets.Diamond),
+		radio.Gap(1),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Style 3 – Target (◎/·) with amber accent
+	targetItems := []radio.Item{
+		{Label: "Alpha", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(214))}},
+		{Label: "Beta", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(214))}},
+		{Label: "Gamma", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(214))}},
+		{Label: "Delta", SelectedCellOpts: []cell.Option{cell.FgColor(cell.ColorNumber(214))}},
+	}
+	targetR, err := radio.New(targetItems,
+		radio.Selected(2),
+		radio.UseIndicatorSet(radio.IndicatorSets.Target),
+		radio.Gap(1),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("Radio", stackPreviewRows(
+			previewPane(idExplPrevA, "Circle – priority", circleR,
+				container.PaddingLeft(2), container.PaddingTop(1)),
+			previewPane(idExplPrevB, "Diamond – mode", diamondR,
+				container.PaddingLeft(2), container.PaddingTop(1)),
+			previewPane(idExplPrevC, "Target – channel", targetR,
+				container.PaddingLeft(2), container.PaddingTop(1)),
+		)...)
+	}, nil
+}
+
+// explorerTextVariants shows three distinct text widget styles.
+func explorerTextVariants() (func() []container.Option, error) {
+	// Style 1 – Plain monochrome wrapped prose
+	plainW, err := text.New(text.WrapAtWords())
+	if err != nil {
+		return nil, err
+	}
+	if err := plainW.Write(
+		"termdash · text widget\n\nA general-purpose text surface with word-wrap, "+
+			"scroll, and per-character color options.\n\nUse it for logs, help copy, "+
+			"status panels, or any flowing content that shouldn't require a custom widget.",
+		text.WriteCellOpts(cell.FgColor(cell.ColorNumber(252))),
+	); err != nil {
+		return nil, err
+	}
+	// Style 2 – Colored key-value status lines
+	kvW, err := text.New(text.WrapAtWords())
+	if err != nil {
+		return nil, err
+	}
+	kvPairs := []struct{ k, v string }{
+		{"Status   ", "ONLINE"},
+		{"Latency  ", "42 ms"},
+		{"Uptime   ", "14d 06h 22m"},
+		{"Requests ", "1,847,392"},
+		{"Errors   ", "0"},
+		{"Region   ", "us-east-1"},
+	}
+	for i, p := range kvPairs {
+		vc := cell.ColorNumber(252)
+		if i == 4 {
+			vc = cell.ColorNumber(118) // Errors=0 green
+		}
+		if err := kvW.Write(p.k, text.WriteCellOpts(cell.FgColor(cell.ColorNumber(245)))); err != nil {
+			return nil, err
+		}
+		nl := "\n"
+		if i == len(kvPairs)-1 {
+			nl = ""
+		}
+		if err := kvW.Write(p.v+nl, text.WriteCellOpts(cell.FgColor(vc))); err != nil {
+			return nil, err
+		}
+	}
+	// Style 3 – Bold headline + indented detail lines
+	headlineW, err := text.New(text.WrapAtWords())
+	if err != nil {
+		return nil, err
+	}
+	sections := []struct {
+		heading string
+		detail  string
+	}{
+		{"NETWORK", "  ↑ 2.4 Gbps  ↓ 1.1 Gbps  packets: 48k/s\n"},
+		{"STORAGE", "  nvme0: 94%  nvme1: 61%  raid: clean\n"},
+		{"COMPUTE", "  cpu: 38%  mem: 6.2/32 GB  gpu: idle\n"},
+	}
+	for _, s := range sections {
+		if err := headlineW.Write(s.heading+"\n",
+			text.WriteCellOpts(cell.FgColor(cell.ColorNumber(75)), cell.Bold())); err != nil {
+			return nil, err
+		}
+		if err := headlineW.Write(s.detail,
+			text.WriteCellOpts(cell.FgColor(cell.ColorNumber(245)))); err != nil {
+			return nil, err
+		}
+	}
+	return func() []container.Option {
+		return previewLayout("Text", stackPreviewRows(
+			previewPane(idExplPrevA, "Plain prose", plainW,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+			previewPane(idExplPrevB, "Key-value status", kvW,
+				container.PaddingLeft(2), container.PaddingTop(1)),
+			previewPane(idExplPrevC, "Headline + detail", headlineW,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+		)...)
+	}, nil
+}
+
+// explorerThreeDVariants shows three rotating 3-D shapes side by side.
+func explorerThreeDVariants(cube, sphere, octa *threed.ThreeD) func() []container.Option {
+	return func() []container.Option {
+		return previewLayout("ThreeD", stackPreviewColumns(
+			previewPane(idExplPrevA, "Cube", cube),
+			previewPane(idExplPrevB, "Sphere", sphere),
+			previewPane(idExplPrevC, "Octahedron", octa),
+		)...)
+	}
+}
+
+// explorerGaugeVariants shows three gauge styles.
+func explorerGaugeVariants(g1, g2, g3 *gauge.Gauge) func() []container.Option {
+	return func() []container.Option {
+		return previewLayout("Gauge", stackPreviewRows(
+			previewPane(idExplPrevA, "Standard – blue threshold", g1,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+			previewPane(idExplPrevB, "Amber – warm tone", g2,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+			previewPane(idExplPrevC, "Danger – red no text", g3,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+		)...)
+	}
+}
+
+// explorerRadarVariants shows two radar styles.
+func explorerRadarVariants(r1, r2 *radar.Radar) func() []container.Option {
+	return func() []container.Option {
+		return previewLayout("Radar", stackPreviewColumns(
+			previewPane(idExplPrevA, "Standard sweep", r1),
+			previewPane(idExplPrevB, "Sector scan", r2),
+		)...)
+	}
+}
+
+// explorerTreeViewVariants shows three treeview styling approaches.
+func explorerTreeViewVariants() (func() []container.Option, error) {
+	nodes := func() []*treeview.TreeNode {
+		return []*treeview.TreeNode{
+			{Label: "Dashboard", ExpandedState: true, Children: []*treeview.TreeNode{
+				{Label: "Metrics"}, {Label: "Alerts"}, {Label: "Logs"},
+			}},
+			{Label: "Settings", Children: []*treeview.TreeNode{
+				{Label: "Network"}, {Label: "Security"},
+			}},
+		}
+	}
+	// Style 1 – Unicode (▼/▶/·)
+	unicodeTV, err := treeview.New(
+		treeview.Nodes(nodes()...),
+		treeview.LabelColor(cell.ColorNumber(252)),
+		treeview.ExpandedIcon("▼"),
+		treeview.CollapsedIcon("▶"),
+		treeview.LeafIcon("·"),
+		treeview.IndentationPerLevel(2),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Style 2 – ASCII (- / + / *)
+	asciiTV, err := treeview.New(
+		treeview.Nodes(nodes()...),
+		treeview.LabelColor(cell.ColorNumber(118)),
+		treeview.ExpandedIcon("-"),
+		treeview.CollapsedIcon("+"),
+		treeview.LeafIcon("*"),
+		treeview.IndentationPerLevel(3),
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Style 3 – Heavy rounded (⊟/⊞/◦)
+	heavyTV, err := treeview.New(
+		treeview.Nodes(nodes()...),
+		treeview.LabelColor(cell.ColorNumber(159)),
+		treeview.ExpandedIcon("⊟"),
+		treeview.CollapsedIcon("⊞"),
+		treeview.LeafIcon("◦"),
+		treeview.IndentationPerLevel(2),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("TreeView", stackPreviewColumns(
+			previewPane(idExplPrevA, "Unicode", unicodeTV,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+			previewPane(idExplPrevB, "ASCII", asciiTV,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+			previewPane(idExplPrevC, "Heavy rounded", heavyTV,
+				container.PaddingLeft(1), container.PaddingTop(1)),
+		)...)
+	}, nil
+}
+
+// explorerBorderFXPreview creates a focused-pane BorderFX profile selector.
+func explorerBorderFXPreview(onSelect func(label string) error) (func() []container.Option, error) {
+	profileDrop, err := dropdown.New(explorerBorderProfileLabels(),
+		dropdown.Selected(0),
+		dropdown.Width(28),
+		dropdown.GlyphSet(dropdown.GlyphProfiles.Minimal),
+		dropdown.CellOpts(cell.FgColor(cell.ColorNumber(245)), cell.BgColor(cell.ColorNumber(234))),
+		dropdown.FocusedCellOpts(cell.FgColor(cell.ColorNumber(231)), cell.BgColor(cell.ColorNumber(24))),
+		dropdown.SelectedCellOpts(cell.FgColor(cell.ColorNumber(159)), cell.BgColor(cell.ColorNumber(236))),
+		dropdown.BorderCellOpts(cell.FgColor(cell.ColorNumber(75))),
+		dropdown.OnSelect(func(_ int, label string) error {
+			return onSelect(label)
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+	copyW, err := explorerText("Choose a BorderFX profile, then focus any pane.\n\nThe selected profile is applied to the currently focused window while inactive panes keep the shared dim style.", cell.ColorNumber(159))
+	if err != nil {
+		return nil, err
+	}
+	return func() []container.Option {
+		return previewLayout("BorderFX",
+			container.SplitHorizontal(
+				container.Top(previewPane(idExplPrevA, "Focused BorderFX Profile", profileDrop, container.PaddingLeft(2), container.PaddingTop(1))...),
+				container.Bottom(previewPane(idExplPrevB, "Profile Notes", copyW, container.PaddingLeft(1), container.PaddingTop(1))...),
+				container.SplitPercent(82),
+			),
+		)
+	}, nil
+}
+
+// explorerBorderProfileLabels returns the display names shown in the profile dropdown.
+func explorerBorderProfileLabels() []string {
+	return []string{
+		// Built-in named profiles
+		"Futuristic Sweep", "Gradient Arc", "Loading Sweep", "Neon Pulse", "Amber Telemetry",
+		// Custom profiles built from primitives
+		"Dual Arc", "Synthwave", "Matrix Rain", "Braided Scanner", "Ice Crystal",
+	}
+}
+
+// explorerBorderEffect resolves a dropdown label to a live BorderFX effect.
+// Returns nil when the label is unknown.
+func explorerBorderEffect(label string) *borderfx.Effect {
+	switch label {
+	// ── Named profiles (delegate to Profile.New) ──────────────────────────────
+	case "Futuristic Sweep":
+		return borderfx.Profiles.FuturisticSweep.New()
+	case "Gradient Arc":
+		return borderfx.Profiles.GradientArc.New()
+	case "Loading Sweep":
+		return borderfx.Profiles.LoadingSweepWhite.New()
+	case "Neon Pulse":
+		return borderfx.Profiles.NeonPulse.New()
+	case "Amber Telemetry":
+		return borderfx.Profiles.AmberTelemetry.New()
+
+	// ── Custom effects ────────────────────────────────────────────────────────
+	case "Dual Arc":
+		// Two counter-rotating gradient arcs: violet → electric blue.
+		return borderfx.DualGradientArc(
+			cell.ColorNumber(129), cell.ColorNumber(63), cell.ColorNumber(236), 0.38)
+	case "Synthwave":
+		// Hot-pink/purple retro sweep.
+		return borderfx.Synthwave()
+	case "Matrix Rain":
+		// Classic green-on-dark matrix scanner.
+		return borderfx.Matrix()
+	case "Braided Scanner":
+		// Interleaved double-thread scanner in teal.
+		return borderfx.BraidedScanner(
+			cell.ColorNumber(51), cell.ColorNumber(30), cell.ColorNumber(236))
+	case "Ice Crystal":
+		// Cool white-to-sky-blue gradient arc.
+		return borderfx.GradientArcN([]cell.Color{
+			cell.ColorNumber(231), cell.ColorNumber(195),
+			cell.ColorNumber(159), cell.ColorNumber(117),
+			cell.ColorNumber(75),
+		}, cell.ColorNumber(236), 0.32)
+
+	default:
+		return nil
+	}
+}
+
 type explorerTabPreview struct {
 	mu     sync.Mutex
 	active int
-	frame  int
+	start  time.Time // anchors animation to wall-clock time
 	rects  []image.Rectangle
 }
 
 func newExplorerTabPreview() *explorerTabPreview {
-	return &explorerTabPreview{}
+	return &explorerTabPreview{start: time.Now()}
 }
 
 func (p *explorerTabPreview) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
@@ -1772,7 +2604,12 @@ func (p *explorerTabPreview) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) erro
 	defer p.mu.Unlock()
 
 	ar := cvs.Area()
-	p.frame++
+	// Derive the animation frame from elapsed wall-clock time (one step every
+	// 80ms) so the sweep speed is constant regardless of how often Draw is
+	// called.  The old p.frame++ approach incremented on every redraw, which
+	// made the animation run faster when the mouse was moving (more redraws)
+	// and slower when the mouse was stationary.
+	frame := int(time.Since(p.start) / (80 * time.Millisecond))
 	p.rects = p.rects[:0]
 
 	x := ar.Min.X
@@ -1797,7 +2634,7 @@ func (p *explorerTabPreview) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) erro
 
 		marker := strings.Repeat("─", width)
 		if i == p.active {
-			marker = explorerTabSweep(width, p.frame)
+			marker = explorerTabSweep(width, frame)
 		}
 		if err := draw.Text(cvs, marker, image.Point{X: x, Y: ar.Min.Y + 1},
 			draw.TextCellOpts(cell.FgColor(explorerTabUnderlineColor(i == p.active))),
@@ -2007,10 +2844,14 @@ func animateVisualize(ctx context.Context, w *vizWidgets) {
 				log.Printf("linechart: %v", err)
 			}
 
-			// Heatmap
+			// Heatmaps
 			xl, yl, hv := vizHeatmapFrame(phase)
 			if err := w.heatW.Values(xl, yl, hv); err != nil {
 				log.Printf("heatmap: %v", err)
+			}
+			xl2, yl2, hv2 := vizHeatmap2Frame(phase)
+			if err := w.heatW2.Values(xl2, yl2, hv2); err != nil {
+				log.Printf("heatmap2: %v", err)
 			}
 
 			// Pie – 5 segments derived from sine phase
@@ -2092,6 +2933,11 @@ func animateExplorer(ctx context.Context, w *explWidgets) {
 			w.picker.AddPickerEvent(event)
 			w.prevTime.AddEvent(event)
 			w.prevPick.AddPickerEvent(event)
+			if eventIdx%3 == 0 {
+				if err := w.showExplorerTTLToast("TTL sample", e.title+" expires automatically."); err != nil {
+					log.Printf("explorer toast: %v", err)
+				}
+			}
 
 		case <-activityTicker.C:
 			phase := float64(spinStep) * 0.18
@@ -2129,7 +2975,7 @@ func animateExplorer(ctx context.Context, w *explWidgets) {
 			}); err != nil {
 				log.Printf("explorer pie: %v", err)
 			}
-			xl, yl, hv := vizHeatmapFrame(phase)
+			xl, yl, hv := explorerHeatmapFrame(phase)
 			if err := w.heat.Values(xl, yl, hv); err != nil {
 				log.Printf("explorer heatmap: %v", err)
 			}
@@ -2147,6 +2993,29 @@ func animateExplorer(ctx context.Context, w *explWidgets) {
 			primary, secondary := explorerSpectrumFrame(phase, 64)
 			if err := w.spectrum.SetStereo(primary, secondary); err != nil {
 				log.Printf("explorer spectrum: %v", err)
+			}
+
+			// Rotate the three ThreeD preview shapes at different speeds.
+			w.threedCube.Rotate(threed.Vector3D{X: 0.008, Y: 0.018, Z: 0.000})
+			w.threedSphere.Rotate(threed.Vector3D{X: 0.014, Y: 0.010, Z: 0.005})
+			w.threedOcta.Rotate(threed.Vector3D{X: 0.012, Y: 0.020, Z: 0.008})
+
+			// Rotate radar 2 contacts
+			if err := w.radar2.SetContacts([]*radar.Contact{
+				{Angle: math.Mod(float64(spinStep)*2.8+55, 360), Distance: 0.45, Label: "X1"},
+				{Angle: math.Mod(float64(spinStep)*1.4+200, 360), Distance: 0.72, Label: "Y2"},
+			}); err != nil {
+				log.Printf("explorer radar2: %v", err)
+			}
+
+			// Feed gauge 2 + gauge 3
+			load2 := clampInt(int(70+20*math.Cos(phase*0.7)), 4, 98)
+			load3 := clampInt(int(85+12*math.Sin(phase*1.1+1.2)), 4, 98)
+			if err := w.gauge2.Percent(load2); err != nil {
+				log.Printf("explorer gauge2: %v", err)
+			}
+			if err := w.gauge3.Percent(load3); err != nil {
+				log.Printf("explorer gauge3: %v", err)
 			}
 
 		case <-spinTicker.C:
@@ -2267,8 +3136,9 @@ func newThreeDTab() (*threedWidgets, *tab.Tab, error) {
 	}
 
 	stage.SetModel(buildMobiusScene(0))
-	// Set an initial tilt so the Möbius twist and all three riders are visible.
-	stage.Rotate(threed.Vector3D{X: 0.55, Y: 0.40, Z: 0.00})
+	// Tilt forward so the ocean plane is visible below the Möbius strip.
+	// X: ~37° down-pitch reveals the wave surface; Y: slight yaw for perspective.
+	stage.Rotate(threed.Vector3D{X: 0.65, Y: 0.35, Z: 0.00})
 	if err := renderThreeDInfo(infoW, 0); err != nil {
 		return nil, nil, err
 	}
@@ -2277,7 +3147,7 @@ func newThreeDTab() (*threedWidgets, *tab.Tab, error) {
 
 	content := container.SplitVertical(
 		container.Left(
-			paneOpts(idThreeDStage, "Möbius Riders · 3D",
+			paneOpts(idThreeDStage, "Möbius Riders · Ocean · 3D",
 				container.PlaceWidget(stage))...,
 		),
 		container.Right(
@@ -2298,16 +3168,17 @@ func renderThreeDInfo(w *text.Text, step int) error {
 	lbl := cell.FgColor(cell.ColorNumber(245))
 	type row struct{ k, v string }
 	rows := []row{
-		{"Scene    ", "Möbius Riders"},
+		{"Scene    ", "Möbius Riders + Ocean"},
 		{"Strip    ", "blue · light-blue twist"},
 		{"Sphere   ", "RGB latitude bands"},
 		{"Cube     ", "6 per-face colors"},
 		{"Pyramid  ", "4 per-face colors"},
+		{"Ocean    ", "animated wave plane"},
 		{"Frame    ", fmt.Sprintf("%04d", step)},
 		{"", ""},
 		{"↑↓←→    ", "orbit camera"},
 		{"scroll   ", "zoom in / out"},
-		{"Tab / →  ", "next tab"},
+		{"Tab      ", "next tab"},
 	}
 	for i, r := range rows {
 		if r.k == "" && r.v == "" {
@@ -2332,7 +3203,7 @@ func renderThreeDInfo(w *text.Text, step int) error {
 
 // animateThreeD advances the Möbius Riders scene each tick.
 func animateThreeD(ctx context.Context, w *threedWidgets) {
-	ticker := time.NewTicker(80 * time.Millisecond)
+	ticker := time.NewTicker(redrawInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -2347,6 +3218,26 @@ func animateThreeD(ctx context.Context, w *threedWidgets) {
 			w.stage.Rotate(threed.Vector3D{X: 0.006, Y: 0.014, Z: 0.000})
 			_ = renderThreeDInfo(w.info, step)
 		}
+	}
+}
+
+type keyboardWidget interface {
+	Keyboard(*terminalapi.Keyboard, *widgetapi.EventMeta) error
+}
+
+// handleThreeDArrowKey sends arrow keys to the ThreeD stage while its tab is active.
+func handleThreeDArrowKey(k *terminalapi.Keyboard, tm *tab.Manager, threeDTab *tab.Tab, stage keyboardWidget) (bool, error) {
+	if k == nil || tm == nil || threeDTab == nil || stage == nil {
+		return false, nil
+	}
+	if tm.GetActiveTab() != threeDTab {
+		return false, nil
+	}
+	switch k.Key {
+	case keyboard.KeyArrowUp, keyboard.KeyArrowDown, keyboard.KeyArrowLeft, keyboard.KeyArrowRight:
+		return true, stage.Keyboard(k, &widgetapi.EventMeta{})
+	default:
+		return false, nil
 	}
 }
 
@@ -2540,7 +3431,106 @@ func buildMobiusScene(step int) *threed.Model {
 		}
 		strip = mergeThreed(strip, r.build(objCenter))
 	}
-	return strip
+	// Merge the animated ocean plane below the Möbius strip.
+	return mergeThreed(strip, buildOceanPlane(step))
+}
+
+// ── Ocean wave geometry ──────────────────────────────────────────────────────
+
+// waveY returns the Y displacement of the animated ocean surface at world-space
+// coordinate (x, z) for animation time t.  It sums four sine/cosine waves with
+// different frequencies and phase speeds to mimic open-water chop:
+//
+//	primary swell   – long diagonal rollers moving NE
+//	secondary chop  – shorter waves crossing the swell at an angle
+//	cross-chop      – orthogonal ripples for surface texture
+//	fine ripples    – short fast-moving Z-axis detail
+func waveY(x, z, t float64) float64 {
+	return 0.14*math.Sin(1.8*x+t*0.90)*math.Cos(1.3*z+t*0.70) +
+		0.09*math.Sin(2.8*x-1.5*z+t*1.20) +
+		0.06*math.Cos(2.5*x+3.0*z-t*0.85) +
+		0.04*math.Sin(5.0*z-t*1.60)
+}
+
+// oceanFaceColor maps a wave-height displacement h (roughly ±0.33 around zero)
+// to a 6-stop color gradient that runs from midnight-blue troughs through
+// ocean-blue to bright cyan foam at the crests.
+func oceanFaceColor(h float64) threed.Color {
+	type stop struct {
+		at  float64
+		clr threed.Color
+	}
+	stops := []stop{
+		{-0.33, threed.Color{R: 0.00, G: 0.06, B: 0.30}}, // midnight blue – deep trough
+		{-0.14, threed.Color{R: 0.02, G: 0.22, B: 0.58}}, // ocean blue    – below surface
+		{0.00, threed.Color{R: 0.04, G: 0.50, B: 0.78}},  // bright blue   – mean surface
+		{0.14, threed.Color{R: 0.10, G: 0.68, B: 0.88}},  // teal          – rising crest
+		{0.25, threed.Color{R: 0.48, G: 0.88, B: 0.96}},  // light cyan    – near crest
+		{0.33, threed.Color{R: 0.88, G: 0.97, B: 1.00}},  // foam white    – peak
+	}
+	if h <= stops[0].at {
+		return stops[0].clr
+	}
+	if h >= stops[len(stops)-1].at {
+		return stops[len(stops)-1].clr
+	}
+	for i := 0; i < len(stops)-1; i++ {
+		if h <= stops[i+1].at {
+			f := (h - stops[i].at) / (stops[i+1].at - stops[i].at)
+			a, b := stops[i].clr, stops[i+1].clr
+			return threed.Color{
+				R: a.R + (b.R-a.R)*f,
+				G: a.G + (b.G-a.G)*f,
+				B: a.B + (b.B-a.B)*f,
+			}
+		}
+	}
+	return stops[len(stops)-1].clr
+}
+
+// buildOceanPlane returns a 20×20 quad mesh that represents an animated ocean
+// surface sitting below the Möbius strip scene.  The plane is centred at
+// y = oceanBase and spans ±gridHalf in X and Z.  Each quad is individually
+// coloured by its average wave height so the gradient ripples as the waves move.
+func buildOceanPlane(step int) *threed.Model {
+	const (
+		gridHalf  = 4.2  // half-extent in world units
+		gridN     = 20   // quads per axis (20×20 = 400 faces total)
+		oceanBase = -1.6 // Y level of the calm mean surface
+	)
+	t := float64(step) * 0.04
+	cellSize := 2 * gridHalf / float64(gridN)
+	model := threed.NewModel()
+	for i := 0; i < gridN; i++ {
+		x0 := -gridHalf + float64(i)*cellSize
+		x1 := x0 + cellSize
+		for j := 0; j < gridN; j++ {
+			z0 := -gridHalf + float64(j)*cellSize
+			z1 := z0 + cellSize
+
+			y00 := oceanBase + waveY(x0, z0, t)
+			y10 := oceanBase + waveY(x1, z0, t)
+			y11 := oceanBase + waveY(x1, z1, t)
+			y01 := oceanBase + waveY(x0, z1, t)
+
+			// Colour by average displacement so neighbouring quads blend smoothly.
+			avgH := (waveY(x0, z0, t) + waveY(x1, z0, t) +
+				waveY(x1, z1, t) + waveY(x0, z1, t)) * 0.25
+
+			model.AddFace(threed.Face{
+				Vertices: []threed.Vector3D{
+					{X: x0, Y: y00, Z: z0},
+					{X: x1, Y: y10, Z: z0},
+					{X: x1, Y: y11, Z: z1},
+					{X: x0, Y: y01, Z: z1},
+				},
+				Char:     '█',
+				Color:    oceanFaceColor(avgH),
+				HasColor: true,
+			})
+		}
+	}
+	return model
 }
 
 // accentPalette returns the shared accent palette for all panes.
@@ -2630,7 +3620,7 @@ func main() {
 		log.Fatalf("instructions: %v", err)
 	}
 	pairs := []struct{ key, desc string }{
-		{"←/→", "switch tabs  "},
+		{"←/→", "tabs; 3D orbit  "},
 		{"Tab", "next tab  "},
 		{"l/r", "shift sine  "},
 		{"q/Esc", "quit"},
@@ -2700,6 +3690,7 @@ func main() {
 
 	// ── BorderFX ──────────────────────────────────────────────────────────────
 	fx := configureBorderFX(root)
+	explW.setBorderFX(fx)
 	go func() { _ = fx.Run(ctx) }()
 
 	// ── Animation goroutines ──────────────────────────────────────────────────
@@ -2718,6 +3709,12 @@ func main() {
 		ctx, t, root,
 		termdash.KeyboardSubscriber(func(k *terminalapi.Keyboard) {
 			quitter(k)
+			if handled, err := handleThreeDArrowKey(k, tabManager, threedTab, threedW.stage); handled {
+				if err != nil {
+					log.Printf("threed keyboard: %v", err)
+				}
+				return
+			}
 			eventHandler.HandleKeyboard(k)
 		}),
 		termdash.MouseSubscriber(eventHandler.HandleMouse),

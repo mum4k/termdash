@@ -16,6 +16,8 @@ package timeline
 
 import (
 	"image"
+	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -73,6 +75,32 @@ func drawToString(t *testing.T, tl *Timeline, w, h int) string {
 	return sb.String()
 }
 
+// captureStdout captures stdout written by fn.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe() => unexpected error: %v", err)
+	}
+	os.Stdout = w
+	defer func() {
+		os.Stdout = old
+	}()
+	fn()
+	if err := w.Close(); err != nil {
+		t.Fatalf("pipe close => unexpected error: %v", err)
+	}
+	out, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatalf("read captured stdout => unexpected error: %v", err)
+	}
+	if err := r.Close(); err != nil {
+		t.Fatalf("pipe read close => unexpected error: %v", err)
+	}
+	return string(out)
+}
+
 // TestNew verifies that New returns a non-nil widget.
 func TestNew(t *testing.T) {
 	tl, err := New()
@@ -96,6 +124,32 @@ func TestSetEventsAndAddEvent(t *testing.T) {
 
 	if got != 6 {
 		t.Fatalf("len(events) = %d, want 6", got)
+	}
+}
+
+// TestCriticalEventBellIsOptIn verifies critical rows stay visual-only unless
+// the caller explicitly enables the terminal bell.
+func TestCriticalEventBellIsOptIn(t *testing.T) {
+	tl, err := New()
+	if err != nil {
+		t.Fatalf("New() => unexpected error: %v", err)
+	}
+	got := captureStdout(t, func() {
+		tl.AddEvent(Event{Severity: SeverityCritical})
+	})
+	if got != "" {
+		t.Fatalf("default critical event wrote %q, want no terminal bell", got)
+	}
+
+	tl, err = New(CriticalBell(true))
+	if err != nil {
+		t.Fatalf("New(CriticalBell) => unexpected error: %v", err)
+	}
+	got = captureStdout(t, func() {
+		tl.AddEvent(Event{Severity: SeverityCritical})
+	})
+	if got != "\a" {
+		t.Fatalf("critical event wrote %q, want terminal bell", got)
 	}
 }
 

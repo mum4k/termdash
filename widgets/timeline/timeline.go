@@ -60,7 +60,8 @@ const (
 	SeverityWarn
 	// SeverityError indicates a failure that needs investigation.
 	SeverityError
-	// SeverityCritical is the highest tier — rings the terminal bell on arrival.
+	// SeverityCritical is the highest tier. The terminal bell is sounded on
+	// arrival only when CriticalBell(true) is configured on the widget.
 	SeverityCritical
 )
 
@@ -165,8 +166,9 @@ func (o option) set(opts *timelineOpts) { o(opts) }
 
 // timelineOpts holds the values set by Option instances.
 type timelineOpts struct {
-	followTail bool
-	maxEvents  int
+	followTail     bool
+	maxEvents      int
+	bellOnCritical bool
 }
 
 func newTimelineOpts(opts []Option) timelineOpts {
@@ -195,23 +197,35 @@ func MaxEvents(n int) Option {
 	})
 }
 
+// CriticalBell sets whether SeverityCritical events ring the terminal bell.
+//
+// The default is false so dashboards and demos can show critical events without
+// unexpectedly triggering an audible terminal alert. Enable this when the
+// timeline is acting as an operator-facing alarm feed.
+func CriticalBell(enable bool) Option {
+	return option(func(o *timelineOpts) {
+		o.bellOnCritical = enable
+	})
+}
+
 // ── Widget struct ─────────────────────────────────────────────────────────────
 
 // Timeline displays a scrollable list of timestamped events.
 // It implements widgetapi.Widget and can be placed directly in any container.
 type Timeline struct {
-	mu            sync.Mutex
-	events        []Event // all events ever appended (capped to maxEvents when set)
-	displayed     []Event // events currently visible (filtered or same as events)
-	scrollOffset  int     // index of the first visible row in displayed
-	selectedIndex int     // -1 means no selection; index into displayed
-	canvasHeight  int     // updated each Draw call; used by Keyboard/Mouse for bounds
-	canvasWidth   int     // updated each Draw call; used for bounds checking
-	followTail    bool    // when true, Draw always pins the view to the last event
-	maxEvents     int     // 0 = unlimited; >0 caps the events ring buffer
-	filterActive  bool
-	filterStart   time.Time
-	filterEnd     time.Time
+	mu             sync.Mutex
+	events         []Event // all events ever appended (capped to maxEvents when set)
+	displayed      []Event // events currently visible (filtered or same as events)
+	scrollOffset   int     // index of the first visible row in displayed
+	selectedIndex  int     // -1 means no selection; index into displayed
+	canvasHeight   int     // updated each Draw call; used by Keyboard/Mouse for bounds
+	canvasWidth    int     // updated each Draw call; used for bounds checking
+	followTail     bool    // when true, Draw always pins the view to the last event
+	maxEvents      int     // 0 = unlimited; >0 caps the events ring buffer
+	bellOnCritical bool    // when true, critical events ring the terminal bell
+	filterActive   bool
+	filterStart    time.Time
+	filterEnd      time.Time
 	// drag state for click-and-drag scrolling
 	dragActive   bool
 	dragStartY   int // widget-relative Y where the drag started
@@ -227,9 +241,10 @@ type Timeline struct {
 func New(opts ...Option) (*Timeline, error) {
 	o := newTimelineOpts(opts)
 	return &Timeline{
-		selectedIndex: -1,
-		followTail:    o.followTail,
-		maxEvents:     o.maxEvents,
+		selectedIndex:  -1,
+		followTail:     o.followTail,
+		maxEvents:      o.maxEvents,
+		bellOnCritical: o.bellOnCritical,
 	}, nil
 }
 
@@ -312,7 +327,8 @@ func (t *Timeline) rebuildDisplayed() {
 
 // AddEvent appends a single event.
 //
-// If the event has SeverityCritical the terminal bell (\a) is sounded.
+// If CriticalBell(true) is configured and the event has SeverityCritical, the
+// terminal bell (\a) is sounded.
 // If FollowTail or SetFollowTail(true) is active the scroll offset is advanced
 // so the new event will be visible on the next Draw (exact clamping happens in
 // Draw because only Draw knows the current canvas height).
@@ -333,7 +349,7 @@ func (t *Timeline) AddEvent(e Event) {
 		t.displayed = append(t.displayed, e)
 	}
 
-	if e.Severity == SeverityCritical {
+	if e.Severity == SeverityCritical && t.bellOnCritical {
 		fmt.Print("\a") // ring the terminal bell
 	}
 	if t.followTail {

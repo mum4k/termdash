@@ -15,7 +15,11 @@
 // Package tab provides configuration options for the tabbed interface.
 package tab
 
-import "github.com/mum4k/termdash/cell"
+import (
+	"io"
+
+	"github.com/mum4k/termdash/cell"
+)
 
 // Option represents a configuration option for the Tab.
 type Option interface {
@@ -38,7 +42,7 @@ type Options struct {
 	AnimatedActiveTab   bool       // Enables a moving accent marker in the active tab underline row.
 	SweepTextColor      cell.Color // Text color used under the active sweep.
 	SweepAccentColor    cell.Color // Accent color used for the moving underline marker.
-	EnableLogging       bool       // Enables logging for debugging.
+	LogWriter           io.Writer  // Destination for debug logs; nil disables logging.
 	FollowNotifications bool       // Whether to follow notifications automatically.
 }
 
@@ -60,7 +64,7 @@ func NewOptions(opts ...Option) *Options {
 		AnimatedActiveTab:   false,
 		SweepTextColor:      cell.ColorNumber(245),
 		SweepAccentColor:    cell.ColorNumber(87),
-		EnableLogging:       false,
+		LogWriter:           nil,
 		FollowNotifications: false,
 	}
 	for _, opt := range opts {
@@ -174,11 +178,20 @@ func SweepAccentColor(color cell.Color) Option {
 	})
 }
 
-// EnableLogging enables or disables logging for debugging.
-func EnableLogging(enable bool) Option {
+// LogWriter directs debug log output to w.  Pass io.Discard (or omit the
+// option) to silence all output.  NewEventHandler never opens files.
+func LogWriter(w io.Writer) Option {
 	return option(func(o *Options) {
-		o.EnableLogging = enable
+		o.LogWriter = w
 	})
+}
+
+// EnableLogging is a no-op kept for backward compatibility.
+// Use LogWriter(w) to capture debug output instead.
+//
+// Deprecated: use LogWriter.
+func EnableLogging(_ bool) Option {
+	return option(func(*Options) {})
 }
 
 // FollowNotifications sets whether the app should follow notifications automatically.

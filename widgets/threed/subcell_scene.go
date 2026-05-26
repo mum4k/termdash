@@ -115,6 +115,12 @@ func (s *subcellScene) Clear() {
 // already stored for that dot, so later-drawn polygons only win if they are
 // genuinely in front.
 func (s *subcellScene) FillPolygon(points []Vector2D, clr Color, faceDepth float64) {
+	s.FillPolygonWithDepths(points, nil, clr, faceDepth)
+}
+
+// FillPolygonWithDepths rasterizes the projected polygon into braille subcells
+// using per-vertex depths when provided.
+func (s *subcellScene) FillPolygonWithDepths(points []Vector2D, depths []float64, clr Color, faceDepth float64) {
 	if len(points) < 3 || s.width == 0 || s.height == 0 {
 		return
 	}
@@ -163,14 +169,15 @@ func (s *subcellScene) FillPolygon(points []Vector2D, clr Color, faceDepth float
 				continue
 			}
 			idx := y*s.width + x
+			dotDepth := polygonDepth(float64(x), float64(y), scaled, depths, faceDepth)
 			// Per-dot depth test: only paint if this face is closer than
 			// whatever polygon last touched this dot.
-			if faceDepth >= s.depth[idx] {
+			if dotDepth >= s.depth[idx] {
 				continue
 			}
 			s.filled[idx] = true
 			s.colors[idx] = clr
-			s.depth[idx] = faceDepth
+			s.depth[idx] = dotDepth
 			s.markDirty(x, y)
 		}
 	}
@@ -269,6 +276,75 @@ func polygonCoverage(x, y float64, polygon []Vector2D, samples int) float64 {
 	return float64(covered) / float64(samples*samples)
 }
 
+// polygonDepth estimates the polygon depth at a covered braille dot.
+func polygonDepth(x, y float64, polygon []Vector2D, depths []float64, fallback float64) float64 {
+	if len(depths) != len(polygon) {
+		return fallback
+	}
+
+	px, py := x+0.5, y+0.5
+	if !pointInPolygon(px, py, polygon) {
+		var ok bool
+		px, py, ok = firstCoveredSample(x, y, polygon, subcellCoverageSamples)
+		if !ok {
+			return fallback
+		}
+	}
+
+	for i := 1; i < len(polygon)-1; i++ {
+		if depth, ok := triangleDepth(
+			Vector2D{X: px, Y: py},
+			polygon[0], polygon[i], polygon[i+1],
+			depths[0], depths[i], depths[i+1],
+		); ok {
+			return depth
+		}
+	}
+	return fallback
+}
+
+func firstCoveredSample(x, y float64, polygon []Vector2D, samples int) (float64, float64, bool) {
+	if samples <= 0 {
+		samples = 1
+	}
+	step := 1.0 / float64(samples)
+	for sy := 0; sy < samples; sy++ {
+		py := y + (float64(sy)+0.5)*step
+		for sx := 0; sx < samples; sx++ {
+			px := x + (float64(sx)+0.5)*step
+			if pointInPolygon(px, py, polygon) {
+				return px, py, true
+			}
+		}
+	}
+	return 0, 0, false
+}
+
+func triangleDepth(p, a, b, c Vector2D, da, db, dc float64) (float64, bool) {
+	v0x, v0y := b.X-a.X, b.Y-a.Y
+	v1x, v1y := c.X-a.X, c.Y-a.Y
+	v2x, v2y := p.X-a.X, p.Y-a.Y
+
+	d00 := v0x*v0x + v0y*v0y
+	d01 := v0x*v1x + v0y*v1y
+	d11 := v1x*v1x + v1y*v1y
+	d20 := v2x*v0x + v2y*v0y
+	d21 := v2x*v1x + v2y*v1y
+	denom := d00*d11 - d01*d01
+	if math.Abs(denom) < 1e-12 {
+		return 0, false
+	}
+
+	v := (d11*d20 - d01*d21) / denom
+	w := (d00*d21 - d01*d20) / denom
+	u := 1 - v - w
+	const epsilon = 1e-9
+	if u < -epsilon || v < -epsilon || w < -epsilon {
+		return 0, false
+	}
+	return u*da + v*db + w*dc, true
+}
+
 // subcellCovered converts fractional coverage into a braille-dot on/off
 // decision. The ordered dither keeps partial edge samples visible without
 // turning every shallow diagonal into a heavy blur.
@@ -334,6 +410,27 @@ func (s *subcellScene) CopyTo(dst *canvas.Canvas) error {
 	}
 
 	return nil
+}
+
+// hasFill reports whether p's terminal cell contains any filled subcell.
+func (s *subcellScene) hasFill(p image.Point) bool {
+	if s == nil || s.width == 0 || s.height == 0 || !p.In(s.cellArea) {
+		return false
+	}
+
+	baseX := p.X * braille.ColMult
+	baseY := p.Y * braille.RowMult
+	for py := 0; py < braille.RowMult; py++ {
+		for px := 0; px < braille.ColMult; px++ {
+			x := baseX + px
+			y := baseY + py
+			idx := y*s.width + x
+			if s.filled[idx] {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // minInt returns the smaller integer.

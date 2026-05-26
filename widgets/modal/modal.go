@@ -91,27 +91,29 @@ func NewModal(id string, items []*DraggableWidget, opts *Options) *Modal {
 
 // Draw renders the draggable child widgets into the provided canvas.
 func (m *Modal) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
 	area := cvs.Area()
+
+	m.mutex.Lock()
 	m.currentWidth = area.Dx()
 	m.currentHeight = area.Dy()
 
 	if m.currentWidth < m.Opts.MinimumSize.X || m.currentHeight < m.Opts.MinimumSize.Y {
+		m.mutex.Unlock()
 		return draw.ResizeNeeded(cvs)
 	}
 
 	m.layoutMinimizedLocked()
-
 	items := m.sortedItems()
+	m.dirty = false
+	m.mutex.Unlock()
+
+	// Draw each item without holding m.mutex to avoid lock-order inversion
+	// with dw.mutex inside handleMouse (which acquires m.mutex then dw.mutex).
 	for _, item := range items {
 		if err := m.drawItem(cvs, meta, item); err != nil {
 			return err
 		}
 	}
-
-	m.dirty = false
 	return nil
 }
 

@@ -188,6 +188,126 @@ func TestDrawUsesFaceLineColor(t *testing.T) {
 	}
 }
 
+func TestDrawDoesNotLetLineBehindFillOverwriteBraille(t *testing.T) {
+	widget, err := New(
+		ShowAxes(false),
+		BackfaceCulling(false),
+		AmbientColor(Color{R: 1, G: 1, B: 1}),
+		DiffuseColor(Color{}),
+		SpecularColor(Color{}),
+	)
+	if err != nil {
+		t.Fatalf("New() => unexpected error: %v", err)
+	}
+
+	model := NewModel()
+	model.AddFace(Face{
+		Vertices: []Vector3D{
+			{X: -1.2, Y: -0.5, Z: 0},
+			{X: -1.2, Y: 0.5, Z: 0},
+			{X: 1.2, Y: 0.5, Z: 0},
+			{X: 1.2, Y: -0.5, Z: 0},
+		},
+		Char:       '█',
+		RenderMode: FaceRenderFill,
+		Color:      Color{R: 0.2, G: 0.9, B: 0.7},
+		HasColor:   true,
+	})
+	model.AddFace(Face{
+		Vertices: []Vector3D{
+			{X: -0.8, Y: 0, Z: 1},
+			{X: 0.8, Y: 0, Z: 1},
+		},
+		Char:     '─',
+		Color:    Color{R: 1, G: 0.2, B: 0.2},
+		HasColor: true,
+	})
+	widget.SetModel(model)
+
+	cvs, err := canvas.New(image.Rect(0, 0, 40, 20))
+	if err != nil {
+		t.Fatalf("canvas.New() => unexpected error: %v", err)
+	}
+	if err := widget.Draw(cvs, nil); err != nil {
+		t.Fatalf("Draw() => unexpected error: %v", err)
+	}
+
+	var sawBraille bool
+	for y := 0; y < cvs.Area().Dy(); y++ {
+		for x := 0; x < cvs.Area().Dx(); x++ {
+			got, err := cvs.Cell(image.Point{X: x, Y: y})
+			if err != nil {
+				t.Fatalf("cvs.Cell() => unexpected error: %v", err)
+			}
+			if got.Rune == '─' {
+				t.Fatalf("line behind fill overwrote cell at %v", image.Point{X: x, Y: y})
+			}
+			if got.Rune >= 0x2800 && got.Rune <= 0x28FF {
+				sawBraille = true
+			}
+		}
+	}
+	if !sawBraille {
+		t.Fatal("filled face rendered no braille cells")
+	}
+}
+
+func TestRotatedSpectrumKeepsBottomRightFill(t *testing.T) {
+	widget, err := New(
+		ShowAxes(false),
+		ZoomScale(44.0),
+		UprightOnly(true),
+		BackfaceCulling(false),
+	)
+	if err != nil {
+		t.Fatalf("New() => unexpected error: %v", err)
+	}
+	widget.SetModel(SpectrumAnalyzer(
+		[]float64{0.9, 0.8, 0.55, 0.62, 0.5, 0.58, 0.52, 0.86, 0.55, 0.45, 0.58},
+		ModelSize(2.85),
+	))
+	widget.Rotate(Vector3D{Y: -0.22})
+
+	cvs, err := canvas.New(image.Rect(0, 0, 130, 30))
+	if err != nil {
+		t.Fatalf("canvas.New() => unexpected error: %v", err)
+	}
+	if err := widget.Draw(cvs, nil); err != nil {
+		t.Fatalf("Draw() => unexpected error: %v", err)
+	}
+
+	bottomFillY := -1
+	for y := 0; y < cvs.Area().Dy(); y++ {
+		for x := 0; x < cvs.Area().Dx(); x++ {
+			got, err := cvs.Cell(image.Point{X: x, Y: y})
+			if err != nil {
+				t.Fatalf("cvs.Cell() => unexpected error: %v", err)
+			}
+			if isBrailleRune(got.Rune) {
+				bottomFillY = y
+			}
+		}
+	}
+	if bottomFillY < 0 {
+		t.Fatal("rotated spectrum rendered no filled braille cells")
+	}
+
+	rightThirdStart := cvs.Area().Dx() * 2 / 3
+	var rightBottomFill int
+	for x := rightThirdStart; x < cvs.Area().Dx(); x++ {
+		got, err := cvs.Cell(image.Point{X: x, Y: bottomFillY})
+		if err != nil {
+			t.Fatalf("cvs.Cell() => unexpected error: %v", err)
+		}
+		if isBrailleRune(got.Rune) {
+			rightBottomFill++
+		}
+	}
+	if rightBottomFill < 10 {
+		t.Fatalf("rotated spectrum bottom-right fill cells = %d, want at least 10", rightBottomFill)
+	}
+}
+
 func TestSubcellSceneProducesBrailleDetail(t *testing.T) {
 	cvs, err := canvas.New(image.Rect(0, 0, 4, 4))
 	if err != nil {
@@ -224,6 +344,10 @@ func TestSubcellSceneProducesBrailleDetail(t *testing.T) {
 	if !sawBraille {
 		t.Fatal("scene rendered no braille detail, want a braille-resolved fill")
 	}
+}
+
+func isBrailleRune(r rune) bool {
+	return r >= 0x2800 && r <= 0x28FF
 }
 
 func TestPolygonCoverageSamplesPartialSubcell(t *testing.T) {

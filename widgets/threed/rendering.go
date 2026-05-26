@@ -28,6 +28,7 @@ import (
 // ProjectedFace represents a face projected onto 2D space.
 type ProjectedFace struct {
 	Points     []Vector2D // Projected 2D points
+	Depths     []float64  // Per-point transformed Z values used for depth tests
 	Normal     Vector3D   // Normal vector of the face
 	Brightness float64    // Brightness for shading
 	Depth      float64    // Average depth for sorting
@@ -233,6 +234,12 @@ func pointInPolygon(x, y float64, polygon []Vector2D) bool {
 
 // drawLine draws a line between p1 and p2 using Bresenham's algorithm.
 func drawLine(cvs *canvas.Canvas, p1, p2 Vector2D, char rune, opts ...cell.Option) {
+	drawLineFiltered(cvs, p1, p2, char, nil, opts...)
+}
+
+// drawLineFiltered draws a line between p1 and p2, skipping cells rejected by
+// shouldSkip.
+func drawLineFiltered(cvs *canvas.Canvas, p1, p2 Vector2D, char rune, shouldSkip func(image.Point) bool, opts ...cell.Option) {
 	x1, y1 := int(math.Round(p1.X)), int(math.Round(p1.Y))
 	x2, y2 := int(math.Round(p2.X)), int(math.Round(p2.Y))
 
@@ -254,7 +261,10 @@ func drawLine(cvs *canvas.Canvas, p1, p2 Vector2D, char rune, opts ...cell.Optio
 
 	for {
 		if x1 >= 0 && x1 < cvsW && y1 >= 0 && y1 < cvsH {
-			_, _ = cvs.SetCell(image.Point{X: x1, Y: y1}, char, opts...)
+			p := image.Point{X: x1, Y: y1}
+			if shouldSkip == nil || !shouldSkip(p) {
+				_, _ = cvs.SetCell(p, char, opts...)
+			}
 		}
 		if x1 == x2 && y1 == y2 {
 			break

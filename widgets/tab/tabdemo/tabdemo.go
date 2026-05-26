@@ -38,7 +38,6 @@ import (
 	"github.com/mum4k/termdash/widgets/checkbox"
 	"github.com/mum4k/termdash/widgets/donut"
 	"github.com/mum4k/termdash/widgets/dropdown"
-	"github.com/mum4k/termdash/widgets/emojikeyboard"
 	"github.com/mum4k/termdash/widgets/gauge"
 	"github.com/mum4k/termdash/widgets/heatmap"
 	"github.com/mum4k/termdash/widgets/linechart"
@@ -64,8 +63,6 @@ const (
 	heatmapGridSize = 15
 	// alertTabIndex is the zero-based tab index used by the notification-follow demo.
 	alertTabIndex = 4
-	// symbolDemoFrame is the emoji used by the animated border demo, chosen for its visual complexity and Unicode width of 2.
-	symbolDemoFrame = "👌"
 )
 
 const (
@@ -92,9 +89,9 @@ const (
 	idAlertsPie       = "tabdemo-alerts-pie"
 	idAlertsDonut     = "tabdemo-alerts-donut"
 	idAlertsStatus    = "tabdemo-alerts-status"
-	idThreeDStage     = "tabdemo-threed-stage"
-	idThreeDStatus    = "tabdemo-threed-status"
-	idThreeDEmojis    = "tabdemo-threed-emojis"
+	idThreeDStage   = "tabdemo-threed-stage"
+	idThreeDStatus  = "tabdemo-threed-status"
+	idThreeDPyramid = "tabdemo-threed-pyramid"
 )
 
 // animatedPaneIDs lists the pane borders that participate in focus sweeps.
@@ -123,7 +120,7 @@ var animatedPaneIDs = []string{
 	idAlertsStatus,
 	idThreeDStage,
 	idThreeDStatus,
-	idThreeDEmojis,
+	idThreeDPyramid,
 }
 
 // controlPanelState stores the selections shown on the controls tab.
@@ -176,11 +173,9 @@ type telemetryWidgets struct {
 
 // threeDWidgets groups the widgets used by the 3D showcase tab.
 type threeDWidgets struct {
-	mu          sync.Mutex
-	stage       *threed.ThreeD
-	status      *text.Text
-	emojiKbd    *emojikeyboard.EmojiKeyboard
-	activeEmoji string
+	stage   *threed.ThreeD
+	pyramid *threed.ThreeD
+	status  *text.Text
 }
 
 // telemetryModel stores the rolling telemetry series shown in the signals tab.
@@ -956,57 +951,52 @@ func newTelemetryTabs() (*telemetryWidgets, *tab.Tab, *tab.Tab, *tab.Tab, error)
 func newThreeDTab() (*threeDWidgets, *tab.Tab, error) {
 	stage, err := threed.New(
 		threed.ShowAxes(false),
-		threed.EnableLogging(false),
 		threed.BackfaceCulling(false),
 		threed.RotationStep(0.08),
 		threed.UprightOnly(true),
 		threed.ZoomScale(38.0),
-		// Emoji faces carry pre-lit 2D artwork, so the ambient floor must be
-		// high (0.85) to preserve the original PNG colors.  Without this, a
-		// 0.5 ambient floor halves every channel before diffuse even contributes,
-		// making a vivid red appear dark maroon.  Low diffuse (0.35) keeps a
-		// subtle orientation cue (front brighter than sides) without crushing
-		// the tonal range, and the low specular avoids white hotspots.
-		threed.AmbientColor(threed.Color{R: 0.85, G: 0.85, B: 0.85}),
-		threed.DiffuseColor(threed.Color{R: 0.35, G: 0.35, B: 0.35}),
-		threed.SpecularColor(threed.Color{R: 0.15, G: 0.15, B: 0.15}),
-		threed.Shininess(8),
+		threed.AmbientColor(threed.Color{R: 0.6, G: 0.6, B: 0.6}),
+		threed.DiffuseColor(threed.Color{R: 0.8, G: 0.8, B: 0.8}),
+		threed.SpecularColor(threed.Color{R: 0.4, G: 0.4, B: 0.4}),
+		threed.Shininess(24),
 	)
 	if err != nil {
 		return nil, nil, err
 	}
-	stage.SetModel(threed.NewAnimatedSymbolSpinner(symbolDemoFrame, 0))
+	stage.SetModel(threed.CreateCube(threed.Vector3D{}, 1.0, '█'))
+
+	pyramid, err := threed.New(
+		threed.ShowAxes(false),
+		threed.BackfaceCulling(false),
+		threed.RotationStep(0.06),
+		threed.UprightOnly(false),
+		threed.ZoomScale(34.0),
+		threed.AmbientColor(threed.Color{R: 0.5, G: 0.5, B: 0.5}),
+		threed.DiffuseColor(threed.Color{R: 0.9, G: 0.9, B: 0.9}),
+		threed.SpecularColor(threed.Color{R: 0.6, G: 0.6, B: 0.6}),
+		threed.Shininess(32),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	pyramid.SetModel(threed.CreatePyramid(threed.Vector3D{}, 1.0, '▲'))
 
 	status, err := text.New(text.WrapAtWords())
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := renderThreeDStatus(status); err != nil {
+	if err := renderThreeDStatus(status, 0); err != nil {
 		return nil, nil, err
 	}
 
 	widgets := &threeDWidgets{
-		stage:       stage,
-		status:      status,
-		activeEmoji: symbolDemoFrame,
+		stage:   stage,
+		pyramid: pyramid,
+		status:  status,
 	}
 
-	emojiKbd := emojikeyboard.New(
-		emojikeyboard.OnSelectFunc(func(emoji string) {
-			widgets.mu.Lock()
-			widgets.activeEmoji = emoji
-			widgets.mu.Unlock()
-			stage.SetModel(threed.NewAnimatedSymbolSpinner(emoji, 0))
-		}),
-		emojikeyboard.UseColorProfile(emojikeyboard.ColorProfiles.Ice),
-		emojikeyboard.UseSelectionGlyphSet(emojikeyboard.SelectionGlyphSets.Block),
-		emojikeyboard.UsePaginationGlyphSet(emojikeyboard.PaginationGlyphSets.Minimal),
-		emojikeyboard.InitialSelection(symbolDemoFrame),
-	)
-	widgets.emojiKbd = emojiKbd
-
-	// Layout: left side = stage (75%) over render notes (25%),
-	//         right side = emoji keyboard.
+	// Layout: left side = main stage (75%) over render notes (25%),
+	//         right side = pyramid demo.
 	content := container.SplitVertical(
 		container.Left(
 			container.SplitHorizontal(
@@ -1026,8 +1016,8 @@ func newThreeDTab() (*threeDWidgets, *tab.Tab, error) {
 			),
 		),
 		container.Right(
-			paneOptions(idThreeDEmojis, "Emoji Keyboard", false,
-				container.PlaceWidget(emojiKbd),
+			paneOptions(idThreeDPyramid, "Pyramid Demo", false,
+				container.PlaceWidget(pyramid),
 			)...,
 		),
 		container.SplitPercent(60),
@@ -1258,56 +1248,33 @@ func renderAlertStatus(w *text.Text, count int, headline, detail string) error {
 }
 
 // renderThreeDStatus rewrites the threed tab sidecar copy.
-func renderThreeDStatus(w *text.Text, activeEmoji ...string) error {
+func renderThreeDStatus(w *text.Text, step int) error {
 	w.Reset()
-
-	emoji := symbolDemoFrame
-	if len(activeEmoji) > 0 && activeEmoji[0] != "" {
-		emoji = activeEmoji[0]
-	}
 
 	labelColor := cell.FgColor(cell.ColorNumber(245))
 	valueColor := cell.FgColor(cell.ColorNumber(252))
-	if err := w.Write("Source: ", text.WriteReplace(), text.WriteCellOpts(labelColor)); err != nil {
+	if err := w.Write("Stage: ", text.WriteReplace(), text.WriteCellOpts(labelColor)); err != nil {
 		return err
 	}
-	if err := w.Write("symbol.emoji\n", text.WriteCellOpts(valueColor)); err != nil {
+	if err := w.Write("cube  Y-axis orbit\n", text.WriteCellOpts(valueColor)); err != nil {
+		return err
+	}
+	if err := w.Write("Pyramid: ", text.WriteCellOpts(labelColor)); err != nil {
+		return err
+	}
+	if err := w.Write("square base  XY orbit\n", text.WriteCellOpts(valueColor)); err != nil {
+		return err
+	}
+	if err := w.Write("Zoom: ", text.WriteCellOpts(labelColor)); err != nil {
+		return err
+	}
+	if err := w.Write("mouse wheel\n", text.WriteCellOpts(valueColor)); err != nil {
 		return err
 	}
 	if err := w.Write("Frame: ", text.WriteCellOpts(labelColor)); err != nil {
 		return err
 	}
-	brailleLines := threed.EmojiToBrailleLines(emoji, 8, 4)
-	if len(brailleLines) > 0 {
-		if err := w.Write(brailleLines[0]+"\n", text.WriteCellOpts(cell.Bold(), cell.FgColor(cell.ColorNumber(75)))); err != nil {
-			return err
-		}
-		for _, line := range brailleLines[1:] {
-			if err := w.Write("        "+line+"\n", text.WriteCellOpts(cell.Bold(), cell.FgColor(cell.ColorNumber(75)))); err != nil {
-				return err
-			}
-		}
-	} else {
-		if err := w.Write(emoji+"\n", text.WriteCellOpts(cell.Bold(), cell.FgColor(cell.ColorNumber(75)))); err != nil {
-			return err
-		}
-	}
-	if err := w.Write("Stage: ", text.WriteCellOpts(labelColor)); err != nil {
-		return err
-	}
-	if err := w.Write("30×30\n", text.WriteCellOpts(valueColor)); err != nil {
-		return err
-	}
-	if err := w.Write("Mesh: ", text.WriteCellOpts(labelColor)); err != nil {
-		return err
-	}
-	if err := w.Write("500% refinement\n", text.WriteCellOpts(valueColor)); err != nil {
-		return err
-	}
-	if err := w.Write("Motion: ", text.WriteCellOpts(labelColor)); err != nil {
-		return err
-	}
-	return w.Write("slow upright Y-axis orbit", text.WriteCellOpts(valueColor))
+	return w.Write(fmt.Sprintf("%04d\n", step), text.WriteCellOpts(cell.FgColor(cell.ColorNumber(75))))
 }
 
 // telemetryHeatmapFrame generates the animated heatmap frame for the signals tab.
@@ -1489,32 +1456,20 @@ func animateTelemetry(ctx context.Context, widgets *telemetryWidgets) {
 	}
 }
 
-// animateThreeD keeps the emoji rotating while cycling the spinner rune.
+// animateThreeD rotates the main stage cube and the pyramid demo each tick.
 func animateThreeD(ctx context.Context, widgets *threeDWidgets) {
 	ticker := time.NewTicker(redrawInterval)
 	defer ticker.Stop()
 
 	step := 0
-	var lastEmoji string // track the previous emoji to skip redundant SetModel calls
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			widgets.mu.Lock()
-			emoji := widgets.activeEmoji
-			widgets.mu.Unlock()
-
-			// SetModel only when the emoji changes. The underlying *Model is
-			// cached in glyphModelCache so repeated calls with the same emoji
-			// return the identical pointer every time — no need to re-set it.
-			if emoji != lastEmoji {
-				widgets.stage.SetModel(threed.NewAnimatedSymbolSpinner(emoji, step))
-				lastEmoji = emoji
-			}
-
 			widgets.stage.Rotate(threed.Vector3D{Y: 0.015})
-			if err := renderThreeDStatus(widgets.status, emoji); err != nil {
+			widgets.pyramid.Rotate(threed.Vector3D{X: 0.010, Y: 0.018})
+			if err := renderThreeDStatus(widgets.status, step); err != nil {
 				log.Printf("failed to update 3D status: %v", err)
 			}
 			step++
@@ -1623,7 +1578,7 @@ func configureBorderChrome(c *container.Container) *borderfx.Animator {
 	// ThreeD tab panes get a title sweep effect for a polished active look.
 	fx.Register(idThreeDStage, borderfx.TextSweep(cell.ColorWhite, cell.ColorNumber(236)))
 	fx.Register(idThreeDStatus, borderfx.TextSweep(cell.ColorWhite, cell.ColorNumber(236)))
-	fx.Register(idThreeDEmojis, borderfx.TextSweep(cell.ColorWhite, cell.ColorNumber(236)))
+	fx.Register(idThreeDPyramid, borderfx.TextSweep(cell.ColorWhite, cell.ColorNumber(236)))
 	return fx
 }
 

@@ -15,59 +15,31 @@
 package threed
 
 import (
-	"embed"
-	"fmt"
 	"image"
-	_ "image/png" // register PNG decoder for embedded emoji assets
 	"math"
 	"strings"
-	"sync"
-	"unicode"
 )
-
-// rasterMaskResult caches the outcome of one rasterizeSymbolMask call so the
-// animation loop does not re-rasterize the same emoji on every frame tick.
-type rasterMaskResult struct {
-	mask  glyphMask
-	valid bool
-}
-
-// rasterMaskCache maps a UTF-8 emoji string to its cached rasterMaskResult.
-var rasterMaskCache sync.Map
-
-// brailleLineCache maps a UTF-8 emoji string to a pre-computed []string of
-// braille-encoded lines (the EmojiToBrailleLines output).  A nil slice value
-// means rasterization was attempted but produced no usable mask.
-var brailleLineCache sync.Map
-
-// glyphModelCache maps a UTF-8 emoji string to its fully-built *Model. The
-// stored model is read-only after construction so concurrent reads are safe.
-var glyphModelCache sync.Map
 
 const (
 	// defaultSymbolMaskResolution is the pixel resolution used when rendering
-	// emoji masks for the braille status-panel preview (EmojiToBrailleLines).
-	// High resolution preserves detail in the 2-D braille preview.
+	// image masks for braille previews. High resolution preserves detail in the
+	// 2-D braille preview.
 	defaultSymbolMaskResolution = 256
 
 	// defaultSymbolModelResolution is the pixel resolution used when building
-	// the 3-D extruded model (newGlyphMaskModel).  At 40 each mask cell
-	// projects to roughly 1.0–1.2 terminal columns at the default zoom,
-	// giving fine detail while staying at or above the minimum braille
-	// subcell size so every cell is individually renderable.
+	// 3-D extruded image models. At 40 each mask cell projects to roughly
+	// 1.0–1.2 terminal columns at the default zoom, giving fine detail while
+	// staying at or above the minimum braille subcell size.
 	defaultSymbolModelResolution = 40
 
 	// defaultSymbolDepthScale is the half-depth expressed as a fraction of the
 	// total model extent (defaultSymbolExtent).  Using an extent-based value
 	// keeps the shape visually thick regardless of how many mask pixels there
-	// are, matching the depth of the braille-disc fallback.
+	// are.
 	defaultSymbolDepthScale = 0.08
 
 	defaultSymbolExtent = 2.6
 )
-
-//go:embed assets/openmoji/*.png
-var bundledEmojiAssets embed.FS
 
 // glyphMask is a compact binary raster used to build extruded symbol meshes.
 type glyphMask struct {
@@ -96,68 +68,15 @@ func (m glyphMask) ColorAt(x, y int) Color {
 	return m.Colors[y*m.Width+x]
 }
 
-// newGlyphMaskModel rasterizes a symbol and extrudes the resulting mask into a
-// solid model. It returns nil when rasterization is unavailable or empty.
-//
-// The fully-built *Model is stored in glyphModelCache so the animation loop
-// (which calls this on every frame) pays the construction cost only once per
-// unique emoji string. The stored model is treated as read-only after caching.
-func newGlyphMaskModel(frame string, step int) *Model {
-	// Fast path: model already cached.
-	if v, hit := glyphModelCache.Load(frame); hit {
-		if m, ok := v.(*Model); ok {
-			return m
-		}
-		return nil
-	}
-
-	// Build the model exactly once, then cache it.
-	var model *Model
-	if mask, ok := bundledSymbolMask(frame, defaultSymbolModelResolution); ok {
-		if trimmed, ok := trimGlyphMask(mask); ok {
-			model = buildGlyphMaskModel(trimmed)
-		}
-	}
-
-	if model == nil {
-		// Check the raster cache before calling the (potentially expensive)
-		// rasterizeSymbolMask implementation.
-		if v, hit := rasterMaskCache.Load(frame); hit {
-			entry := v.(rasterMaskResult)
-			if entry.valid {
-				model = buildGlyphMaskModel(entry.mask)
-			}
-		} else {
-			mask, err := rasterizeSymbolMask(frame, defaultSymbolModelResolution)
-			var entry rasterMaskResult
-			if err == nil {
-				trimmed, ok := trimGlyphMask(mask)
-				if ok {
-					entry = rasterMaskResult{mask: trimmed, valid: true}
-				}
-			}
-			rasterMaskCache.Store(frame, entry)
-			if entry.valid {
-				model = buildGlyphMaskModel(entry.mask)
-			}
-		}
-	}
-
-	// Cache result (nil is stored as (*Model)(nil) wrapped in interface{}).
-	glyphModelCache.Store(frame, model)
-	return model
-}
-
 // buildGlyphMaskModel converts a filled binary mask into an extruded mesh.
 //
 // Each filled cell becomes its own front and back face, preserving the
-// per-pixel color sampled from the source PNG.  This keeps internal emoji
-// features (eyes, mouth, etc.) visually distinct from the surrounding face
-// color rather than averaging them away into a uniform hue.
+// per-pixel color sampled from the source image rather than averaging detailed
+// artwork into a uniform face color.
 //
 // The side color is fixed (rather than varying with a step parameter) because
 // the per-frame variation is imperceptible (≤3% per channel) and fixity allows
-// the resulting model to be cached across frames.
+// callers to cache the resulting model across frames.
 func buildGlyphMaskModel(mask glyphMask) *Model {
 	sideColor := Color{R: 0.46, G: 0.68, B: 0.94}
 	model := NewModel()
@@ -229,46 +148,6 @@ func addGlyphCellFaces(model *Model, left, top, cellSize, halfDepth float64, x, 
 		Color:      color,
 		HasColor:   true,
 	})
-}
-
-// bundledSymbolMask resolves a bundled emoji PNG asset and converts its alpha
-// channel into a compact binary raster mask.
-func bundledSymbolMask(frame string, resolution int) (glyphMask, bool) {
-	if resolution <= 0 {
-		return glyphMask{}, false
-	}
-	name := bundledEmojiAssetName(frame)
-	if name == "" {
-		return glyphMask{}, false
-	}
-	f, err := bundledEmojiAssets.Open("assets/openmoji/" + name + ".png")
-	if err != nil {
-		return glyphMask{}, false
-	}
-	defer f.Close()
-
-	img, _, err := image.Decode(f)
-	if err != nil {
-		return glyphMask{}, false
-	}
-	return rasterImageMask(img, resolution), true
-}
-
-// bundledEmojiAssetName converts a UTF-8 symbol into the bundled asset naming
-// convention used by the OpenMoji-derived demo assets.
-func bundledEmojiAssetName(frame string) string {
-	rs := []rune(frame)
-	if len(rs) == 0 {
-		return ""
-	}
-	parts := make([]string, 0, len(rs))
-	for _, r := range rs {
-		if unicode.IsMark(r) {
-			continue
-		}
-		parts = append(parts, fmt.Sprintf("%X", r))
-	}
-	return strings.Join(parts, "-")
 }
 
 // rasterImageMask downsamples an alpha-backed image into a square binary mask.
@@ -471,61 +350,6 @@ func addGlyphSideFace(model *Model, a, b, c, d Vector3D, color Color) {
 		Color:      color,
 		HasColor:   true,
 	})
-}
-
-// EmojiToBrailleLines converts an emoji string into a slice of braille-encoded
-// text lines that form a small pixel-art preview of the emoji's glyph mask.
-//
-// cols and rows specify how many braille character columns and rows to produce.
-// Each braille character encodes a 2×4 pixel cell, so the preview is rendered
-// at cols*2 × rows*4 pixels resolution.
-//
-// Results are cached so the function is safe to call on every render frame
-// without triggering repeated CDN fetches.
-//
-// The function returns nil when no glyph mask is available for the frame.
-func EmojiToBrailleLines(frame string, cols, rows int) []string {
-	if cols <= 0 || rows <= 0 {
-		return nil
-	}
-
-	// Return the cached result if this emoji has been processed before.
-	// A stored nil value means rasterization failed and should not be retried.
-	if v, hit := brailleLineCache.Load(frame); hit {
-		if lines, ok := v.([]string); ok {
-			return lines
-		}
-		return nil
-	}
-
-	lines := computeBrailleLines(frame, cols, rows)
-	// Store nil explicitly so we don't re-attempt failed fetches on every frame.
-	var cacheVal interface{}
-	if lines != nil {
-		cacheVal = lines
-	}
-	brailleLineCache.Store(frame, cacheVal)
-	return lines
-}
-
-// computeBrailleLines is the uncached implementation of EmojiToBrailleLines.
-func computeBrailleLines(frame string, cols, rows int) []string {
-	var mask glyphMask
-	var ok bool
-
-	if mask, ok = bundledSymbolMask(frame, defaultSymbolMaskResolution); !ok {
-		var err error
-		if mask, err = rasterizeSymbolMask(frame, defaultSymbolMaskResolution); err != nil {
-			return nil
-		}
-	}
-
-	mask, ok = trimGlyphMask(mask)
-	if !ok {
-		return nil
-	}
-
-	return maskToBrailleLines(mask, cols, rows)
 }
 
 // maskToBrailleLines encodes a glyphMask into cols×rows braille Unicode lines.

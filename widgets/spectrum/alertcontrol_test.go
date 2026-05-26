@@ -151,13 +151,17 @@ func TestAlertControlAlertState(t *testing.T) {
 
 	ft := faketerm.MustNew(image.Point{X: 100, Y: 32})
 	pane := image.Rect(0, 10, 100, 32)
-	control.DrawAlert(ft, pane, true)
+	if err := control.DrawAlert(ft, pane, true); err != nil {
+		t.Fatalf("DrawAlert => unexpected error: %v", err)
+	}
 	if rendered := ft.String(); !strings.Contains(rendered, "Warning: data exceeds 500 threshold") {
 		t.Fatalf("DrawAlert output = %q, want centered warning", rendered)
 	}
 
 	ft = faketerm.MustNew(image.Point{X: 100, Y: 32})
-	control.DrawAlert(ft, pane, false)
+	if err := control.DrawAlert(ft, pane, false); err != nil {
+		t.Fatalf("DrawAlert (unfocused) => unexpected error: %v", err)
+	}
 	if rendered := ft.String(); strings.Contains(rendered, "Warning: data exceeds 500 threshold") {
 		t.Fatalf("DrawAlert unfocused output = %q, want no warning", rendered)
 	}

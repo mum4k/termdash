@@ -20,7 +20,6 @@ import (
 	"image"
 	"io"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -48,23 +47,14 @@ type EventHandler struct {
 
 // NewEventHandler initializes a new EventHandler.
 func NewEventHandler(ctx context.Context, term terminalapi.Terminal, tm *Manager, th *Header, tc *Content, cont *container.Container, cancel context.CancelFunc, opts *Options) *EventHandler {
-	var logger *log.Logger
-	var logFile io.Closer
-
-	// Only create the log file if EnableLogging is true.
-	if opts.EnableLogging {
-		file, err := os.OpenFile("tab_demo.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			log.Printf("failed to open log file: %v", err)
-			logger = log.New(io.Discard, "", 0) // Discard logging if file creation fails.
-		} else {
-			logger = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-			logFile = file
-		}
-	} else {
-		// Discard logs if logging is disabled, and do not create the file.
-		logger = log.New(io.Discard, "", 0)
+	// Logger writes to the caller-supplied writer; NewEventHandler never
+	// opens files.  A nil LogWriter silently discards all output.
+	logDest := io.Writer(io.Discard)
+	if opts.LogWriter != nil {
+		logDest = opts.LogWriter
 	}
+	logger := log.New(logDest, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	var logFile io.Closer // retained for backward-compat close goroutine below
 
 	eh := &EventHandler{
 		term:      term,

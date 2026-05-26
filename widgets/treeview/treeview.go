@@ -20,7 +20,6 @@ import (
 	"image"
 	"io"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -88,6 +87,13 @@ func (tn *TreeNode) IncrementSpinner(totalIcons int) {
 	tn.SpinnerIndex = (tn.SpinnerIndex + 1) % totalIcons
 }
 
+// GetSpinnerIndex safely retrieves the current SpinnerIndex.
+func (tn *TreeNode) GetSpinnerIndex() int {
+	tn.mu.Lock()
+	defer tn.mu.Unlock()
+	return tn.SpinnerIndex
+}
+
 // IsRoot checks if the node is a root node.
 func (tn *TreeNode) IsRoot() bool {
 	return tn.Parent == nil
@@ -121,10 +127,6 @@ type TreeView struct {
 	visibleNodes []*TreeNode
 	// logger logs debugging information.
 	logger *log.Logger
-	// spinnerTicker updates spinner indices periodically.
-	spinnerTicker *time.Ticker
-	// stopSpinner signals the spinner goroutine to stop.
-	stopSpinner chan struct{}
 	// expandedIcon is the icon used for expanded nodes.
 	expandedIcon string
 	// collapsedIcon is the icon used for collapsed nodes.
@@ -143,25 +145,30 @@ type TreeView struct {
 	totalContentHeight int
 	// waitingIcons are the icons used for the spinner.
 	waitingIcons []string
+	// lastSpinnerAdvance is when the spinner was last ticked, used to advance
+	// spinner state in Draw() without a background goroutine.
+	lastSpinnerAdvance time.Time
 	// lastClickTime is the timestamp of the last handled click.
 	lastClickTime time.Time
 	// lastKeyTime is the timestamp for debouncing the enter key.
 	lastKeyTime time.Time
 }
 
+// spinnerInterval is how often the spinner icons advance when waitingIcons are
+// configured.  Advancement is driven by Draw() rather than a background
+// goroutine, so no goroutines are spawned by New().
+const spinnerInterval = 200 * time.Millisecond
+
 // New creates a new TreeView instance.
 func New(opts ...Option) (*TreeView, error) {
 	options := newOptions()
 	for _, opt := range opts {
-		opt(options)
+		opt.set(options)
 	}
 
-	// Set default leaf icon if not provided
 	if options.leafIcon == "" {
 		options.leafIcon = "→"
 	}
-
-	// Set default indentation if not provided
 	if options.indentation == 0 {
 		options.indentation = 2
 	}
@@ -170,23 +177,17 @@ func New(opts ...Option) (*TreeView, error) {
 		setParentsAndAssignIDs(node, nil, 0, "")
 	}
 
-	// Create a logger to log debugging information to a file if logging is enabled
-	var logger *log.Logger
-	if options.enableLogging {
-		file, err := os.OpenFile("treeview_debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			return nil, fmt.Errorf("failed to open log file: %v", err)
-		}
-		logger = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-	} else {
-		// Create a dummy logger that discards all logs
-		logger = log.New(io.Discard, "", 0)
+	// Logger writes to the caller-supplied writer; default is io.Discard.
+	// New() never opens files.
+	logDest := io.Writer(io.Discard)
+	if options.logWriter != nil {
+		logDest = options.logWriter
 	}
+	logger := log.New(logDest, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	tv := &TreeView{
 		opts:                options,
 		logger:              logger,
-		stopSpinner:         make(chan struct{}),
 		expandedIcon:        options.expandedIcon,
 		collapsedIcon:       options.collapsedIcon,
 		leafIcon:            options.leafIcon,
@@ -195,15 +196,9 @@ func New(opts ...Option) (*TreeView, error) {
 		waitingIcons:        options.waitingIcons,
 	}
 
-	setInitialExpandedState(tv, true) // Expand root nodes by default
-
-	if len(options.waitingIcons) > 0 {
-		tv.spinnerTicker = time.NewTicker(200 * time.Millisecond)
-		go tv.runSpinner()
-	}
+	setInitialExpandedState(tv, true)
 	tv.updateTotalHeight()
 
-	// Set selectedNode to the first visible node
 	visibleNodes := tv.getVisibleNodesList()
 	if len(visibleNodes) > 0 {
 		tv.selectedNode = visibleNodes[0]
@@ -231,33 +226,34 @@ func setParentsAndAssignIDs(tn *TreeNode, parent *TreeNode, level int, path stri
 	}
 }
 
-// runSpinner updates spinner indices periodically.
-func (tv *TreeView) runSpinner() {
-	for {
-		select {
-		case <-tv.spinnerTicker.C:
-			tv.mu.Lock()
-			visibleNodes := tv.getVisibleNodesList()
-			tv.mu.Unlock() // Release the TreeView lock before operating on individual nodes
-			for _, tn := range visibleNodes {
-				if tn.GetShowSpinner() && len(tv.waitingIcons) > 0 {
-					tn.IncrementSpinner(len(tv.waitingIcons))
-					tv.logger.Printf("Spinner updated for node: %s (SpinnerIndex: %d)", tn.Label, tn.SpinnerIndex)
-				}
-			}
-		case <-tv.stopSpinner:
-			return
+// advanceSpinners ticks the spinner icons for all nodes that have one active.
+// It is called at the top of Draw() and is driven by the termdash run-loop
+// instead of a background goroutine, eliminating the goroutine leak that
+// existed when New() was called with default options.
+func (tv *TreeView) advanceSpinners(now time.Time) {
+	if len(tv.waitingIcons) == 0 {
+		return
+	}
+	if tv.lastSpinnerAdvance.IsZero() {
+		tv.lastSpinnerAdvance = now
+		return
+	}
+	if now.Sub(tv.lastSpinnerAdvance) < spinnerInterval {
+		return
+	}
+	tv.lastSpinnerAdvance = now
+	for _, tn := range tv.visibleNodes {
+		if tn.GetShowSpinner() {
+			tn.IncrementSpinner(len(tv.waitingIcons))
+			spinnerIdx := tn.GetSpinnerIndex()
+			tv.logger.Printf("Spinner advanced for node: %s (SpinnerIndex: %d)", tn.Label, spinnerIdx)
 		}
 	}
 }
 
-// StopSpinnerTicker stops the spinner ticker.
-func (tv *TreeView) StopSpinnerTicker() {
-	if tv.spinnerTicker != nil {
-		tv.spinnerTicker.Stop()
-		close(tv.stopSpinner)
-	}
-}
+// StopSpinnerTicker is a no-op kept for backward compatibility.
+// The spinner is now driven by Draw() rather than a background goroutine.
+func (tv *TreeView) StopSpinnerTicker() {}
 
 // setInitialExpandedState sets the initial expanded state for root nodes.
 func setInitialExpandedState(tv *TreeView, expandRoot bool) {
@@ -623,6 +619,7 @@ func (tv *TreeView) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	tv.mu.Lock()
 	defer tv.mu.Unlock()
 	tv.updateVisibleNodes()
+	tv.advanceSpinners(time.Now())
 	visibleNodes := tv.visibleNodes
 	totalHeight := len(visibleNodes)
 	width := cvs.Area().Dx()

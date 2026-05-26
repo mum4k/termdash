@@ -50,9 +50,9 @@ func LoadImageModel(path string) (*Model, error) {
 // ImageToModel converts any image.Image into an extruded 3D model suitable for
 // the ThreeD widget spinner.
 //
-// The model resolution is defaultSymbolModelResolution so it matches the detail
-// level used by the emoji-based spinner.  Pixel colors from the source image are
-// preserved on the face geometry.
+// The model resolution is defaultSymbolModelResolution, preserving enough
+// detail for terminal-sized 3D rendering. Pixel colors from the source image
+// are preserved on the face geometry.
 //
 // Returns nil when the image contains no renderable pixels.
 func ImageToModel(img image.Image) *Model {
@@ -87,9 +87,9 @@ func ImageToBrailleLines(img image.Image, cols, rows int) []string {
 // smartImageMask builds a glyphMask from an image by auto-detecting whether to
 // use alpha-channel transparency or luminance-based thresholding.
 //
-// Images that contain at least one semi-transparent pixel use alpha thresholding
-// (same path as the emoji pipeline).  Fully-opaque images fall back to
-// luminance thresholding so dark logos on white backgrounds are handled cleanly.
+// Images that contain at least one semi-transparent pixel use alpha
+// thresholding. Fully-opaque images fall back to luminance thresholding so dark
+// logos on white backgrounds are handled cleanly.
 func smartImageMask(img image.Image, resolution int) glyphMask {
 	if imageHasTransparency(img) {
 		return rasterImageMask(img, resolution)

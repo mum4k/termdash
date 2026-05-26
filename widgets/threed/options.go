@@ -16,18 +16,20 @@
 
 package threed
 
+import "io"
+
 // Options represents configuration options for the ThreeD widget.
 type Options struct {
-	RotationStep    float64 // Rotation step size in radians
-	ZoomScale       float64 // Initial zoom scale for the camera
-	UprightOnly     bool    // Whether to lock the model upright and rotate only around Y
-	ShowAxes        bool    // Whether to display axes
-	AmbientColor    Color   // Ambient light color
-	DiffuseColor    Color   // Diffuse light color
-	SpecularColor   Color   // Specular light color
-	Shininess       float64 // Shininess factor for specular reflection
-	EnableLogging   bool    // Whether to enable logging
-	BackfaceCulling bool    // Whether to skip faces pointed away from the camera
+	RotationStep    float64   // Rotation step size in radians
+	ZoomScale       float64   // Initial zoom scale for the camera
+	UprightOnly     bool      // Whether to lock the model upright and rotate only around Y
+	ShowAxes        bool      // Whether to display axes
+	AmbientColor    Color     // Ambient light color
+	DiffuseColor    Color     // Diffuse light color
+	SpecularColor   Color     // Specular light color
+	Shininess       float64   // Shininess factor for specular reflection
+	LogWriter       io.Writer // Destination for debug logs; nil disables logging.
+	BackfaceCulling bool      // Whether to skip faces pointed away from the camera
 }
 
 // Option represents a configuration option.
@@ -53,7 +55,7 @@ func defaultOptions() *Options {
 		DiffuseColor:    Color{R: 0.7, G: 0.7, B: 0.7},
 		SpecularColor:   Color{R: 1.0, G: 1.0, B: 1.0},
 		Shininess:       32.0,
-		EnableLogging:   false,
+		LogWriter:       nil, // nil → io.Discard; set via LogWriter() option
 		BackfaceCulling: true,
 	}
 }
@@ -114,10 +116,11 @@ func Shininess(shininess float64) Option {
 	})
 }
 
-// EnableLogging sets whether to enable logging.
-func EnableLogging(enable bool) Option {
+// LogWriter directs debug logs to w.  Pass io.Discard (or omit the option)
+// to silence all logging.  New() never opens files; callers supply the writer.
+func LogWriter(w io.Writer) Option {
 	return optionFunc(func(o *Options) {
-		o.EnableLogging = enable
+		o.LogWriter = w
 	})
 }
 

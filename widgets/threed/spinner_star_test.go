@@ -24,8 +24,8 @@ func TestRenderableRune(t *testing.T) {
 		want     rune
 	}{
 		{name: "single cell", frame: "✶", fallback: '*', want: '✶'},
-		{name: "variation selector frame", frame: "✈️", fallback: '*', want: '✈'},
-		{name: "wide emoji survives", frame: "👌", fallback: '*', want: '👌'},
+		{name: "combining mark frame", frame: "a\u0301", fallback: '*', want: 'a'},
+		{name: "wide glyph survives", frame: "界", fallback: '*', want: '界'},
 		{name: "empty falls back", frame: "", fallback: '*', want: '*'},
 	}
 
@@ -37,7 +37,7 @@ func TestRenderableRune(t *testing.T) {
 }
 
 func TestNewAnimatedSpinnerStarPrism(t *testing.T) {
-	model := NewAnimatedSpinnerStarPrism("✈️", 3)
+	model := NewAnimatedSpinnerStarPrism("✶", 3)
 	if model == nil {
 		t.Fatal("NewAnimatedSpinnerStarPrism() => nil model")
 	}
@@ -47,7 +47,7 @@ func TestNewAnimatedSpinnerStarPrism(t *testing.T) {
 	if got, want := len(model.Faces[0].Vertices), 50; got != want {
 		t.Fatalf("len(model.Faces[0].Vertices) = %d, want %d", got, want)
 	}
-	if got, want := model.Faces[0].Char, '✈'; got != want {
+	if got, want := model.Faces[0].Char, '✶'; got != want {
 		t.Fatalf("model.Faces[0].Char = %q, want %q", got, want)
 	}
 	for i, face := range model.Faces {
@@ -65,58 +65,15 @@ func TestNewAnimatedSymbolSpinner(t *testing.T) {
 	if model == nil {
 		t.Fatal("NewAnimatedSymbolSpinner() => nil model")
 	}
-	if got, want := len(model.Faces), 2; got != want {
-		t.Fatalf("len(model.Faces) = %d, want %d", got, want)
+	if got, wantMin := len(model.Faces), 52; got < wantMin {
+		t.Fatalf("len(model.Faces) = %d, want at least %d", got, wantMin)
 	}
 	for i, face := range model.Faces {
 		if got, want := face.Char, 'A'; got != want {
 			t.Fatalf("face %d char = %q, want %q", i, got, want)
 		}
-		if got, want := face.RenderMode, FaceRenderGlyph; got != want {
-			t.Fatalf("face %d RenderMode = %v, want %v", i, got, want)
-		}
-		if len(face.Vertices) != 4 {
-			t.Fatalf("face %d has %d vertices, want 4", i, len(face.Vertices))
-		}
-	}
-	frontNormal := computeFaceNormal(model.Faces[0].Vertices)
-	backNormal := computeFaceNormal(model.Faces[1].Vertices)
-	if frontNormal.Dot(backNormal) > -0.99 {
-		t.Fatalf("billboard normals should oppose each other, got dot=%f", frontNormal.Dot(backNormal))
-	}
-}
-
-func TestNewAnimatedSymbolSpinnerEmojiAsset(t *testing.T) {
-	model := NewAnimatedSymbolSpinner("👌", 2)
-	if model == nil {
-		t.Fatal("NewAnimatedSymbolSpinner() => nil model")
-	}
-	if got := len(model.Faces); got <= 300 {
-		t.Fatalf("len(model.Faces) = %d, want high-resolution asset-backed extrusion", got)
-	}
-	if got, want := model.Faces[0].RenderMode, FaceRenderFill; got != want {
-		t.Fatalf("model.Faces[0].RenderMode = %v, want %v", got, want)
-	}
-	if got, want := model.Faces[0].Char, '█'; got != want {
-		t.Fatalf("model.Faces[0].Char = %q, want %q", got, want)
-	}
-	if clr := model.Faces[0].Color; !(clr.R > clr.B && clr.G > clr.B) {
-		t.Fatalf("front face color = %+v, want warm source-derived color", clr)
-	}
-}
-
-func TestBundledEmojiAssetName(t *testing.T) {
-	tests := []struct {
-		frame string
-		want  string
-	}{
-		{frame: "👌", want: "1F44C"},
-		{frame: "✈️", want: "2708"},
-		{frame: "", want: ""},
-	}
-	for _, tc := range tests {
-		if got := bundledEmojiAssetName(tc.frame); got != tc.want {
-			t.Fatalf("bundledEmojiAssetName(%q) = %q, want %q", tc.frame, got, tc.want)
+		if len(face.Vertices) < 3 {
+			t.Fatalf("face %d has %d vertices, want at least 3", i, len(face.Vertices))
 		}
 	}
 }
@@ -125,8 +82,8 @@ func TestShouldFillFaceBackground(t *testing.T) {
 	if !shouldFillFaceBackground('█') {
 		t.Fatal("shouldFillFaceBackground('█') = false, want true")
 	}
-	if shouldFillFaceBackground('👌') {
-		t.Fatal("shouldFillFaceBackground('👌') = true, want false")
+	if shouldFillFaceBackground('A') {
+		t.Fatal("shouldFillFaceBackground('A') = true, want false")
 	}
 }
 

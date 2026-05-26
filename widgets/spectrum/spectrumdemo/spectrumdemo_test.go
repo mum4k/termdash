@@ -422,12 +422,16 @@ func TestAlertControlAlarmToggleAndBanner(t *testing.T) {
 	}
 
 	ft := faketerm.MustNew(image.Point{X: 100, Y: 32})
-	control.DrawAlert(ft, spectrumPaneRects(ft.Size())[idSubspace], true)
+	if err := control.DrawAlert(ft, spectrumPaneRects(ft.Size())[idSubspace], true); err != nil {
+		t.Fatalf("DrawAlert => unexpected error: %v", err)
+	}
 	if rendered := ft.String(); !strings.Contains(rendered, "Warning: data exceeds 500 threshold") {
 		t.Fatalf("drawAlert output = %q, want warning banner", rendered)
 	}
 	ft = faketerm.MustNew(image.Point{X: 100, Y: 32})
-	control.DrawAlert(ft, spectrumPaneRects(ft.Size())[idSubspace], false)
+	if err := control.DrawAlert(ft, spectrumPaneRects(ft.Size())[idSubspace], false); err != nil {
+		t.Fatalf("DrawAlert (unfocused) => unexpected error: %v", err)
+	}
 	if rendered := ft.String(); strings.Contains(rendered, "Warning: data exceeds 500 threshold") {
 		t.Fatalf("drawAlert for unfocused pane = %q, want no warning banner", rendered)
 	}

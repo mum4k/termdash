@@ -62,16 +62,24 @@ func (p *Pie) Values(values []int, opts ...Option) error {
 		opt.set(p.opts)
 	}
 
-	p.values = values
-	p.total = 0
-	if len(p.colors) == 0 {
-		p.colors = DefaultColors
-	}
+	// Validate all values before mutating any state so a partial-update
+	// bug cannot leave p.values in a corrupted state on error return.
+	total := 0
 	for _, v := range values {
 		if v < 0 {
 			return errors.New("all values must be non-negative")
 		}
-		p.total += v
+		total += v
+	}
+
+	// Defensive copy: the caller retains ownership of the original slice and
+	// may mutate it after this call returns.
+	cp := make([]int, len(values))
+	copy(cp, values)
+	p.values = cp
+	p.total = total
+	if len(p.colors) == 0 {
+		p.colors = DefaultColors
 	}
 
 	return nil

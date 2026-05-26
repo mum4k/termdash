@@ -142,9 +142,9 @@ func TestNew(t *testing.T) {
 		t.Errorf("Expected truncate to be true")
 	}
 
-	// Verify EnableLogging
-	if tv.opts.enableLogging {
-		t.Errorf("Expected enableLogging to be false")
+	// Verify EnableLogging(false) remains a compatibility no-op.
+	if tv.opts.logWriter != nil {
+		t.Errorf("Expected logWriter to remain nil")
 	}
 }
 
@@ -472,7 +472,7 @@ func TestKeyboardNonArrowKeys(t *testing.T) {
 	}
 }
 
-// TestRunSpinner tests the runSpinner method.
+// TestRunSpinner verifies spinner advancement is driven by Draw.
 func TestRunSpinner(t *testing.T) {
 	root := []*TreeNode{
 		{
@@ -493,9 +493,9 @@ func TestRunSpinner(t *testing.T) {
 
 	// Start spinner on "Child1"
 	root[0].Children[0].SetShowSpinner(true)
-
-	// Wait to allow spinner to update
-	time.Sleep(500 * time.Millisecond)
+	tv.updateVisibleNodes()
+	tv.lastSpinnerAdvance = time.Now().Add(-spinnerInterval)
+	tv.advanceSpinners(time.Now())
 
 	// Check that SpinnerIndex has incremented
 	root[0].Children[0].mu.Lock()
@@ -505,9 +505,6 @@ func TestRunSpinner(t *testing.T) {
 	if spinnerIndex == 0 {
 		t.Errorf("Expected SpinnerIndex to have incremented, got %d", spinnerIndex)
 	}
-
-	// Stop the spinner ticker
-	tv.StopSpinnerTicker()
 }
 
 // TestHandleNodeClick tests the handleNodeClick method.
@@ -562,10 +559,20 @@ func TestHandleNodeClick(t *testing.T) {
 		t.Errorf("OnClick was not called within the expected time")
 	}
 
-	// Verify that the spinner has been reset.
-	if tv.selectedNode.GetShowSpinner() {
+	if !eventually(func() bool { return !tv.selectedNode.GetShowSpinner() }, time.Second) {
 		t.Errorf("Expected spinner to be false after OnClick execution")
 	}
+}
+
+func eventually(check func() bool, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if check() {
+			return true
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return check()
 }
 
 // TestTruncateString tests the truncateString function.

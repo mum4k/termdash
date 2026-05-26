@@ -202,7 +202,7 @@ func Glyph(text string, opts ...ModelOption) *Model {
 	return model
 }
 
-// SymbolSpinner converts a UTF-8 string or bundled emoji into an animated model.
+// SymbolSpinner converts a UTF-8 string into an animated symbol model.
 func SymbolSpinner(text string, step int) *Model {
 	return NewAnimatedSymbolSpinner(text, step)
 }

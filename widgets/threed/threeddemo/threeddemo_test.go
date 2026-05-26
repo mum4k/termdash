@@ -23,7 +23,7 @@ import (
 
 // TestSceneCatalogTextHighlightsActive verifies the scene list emphasizes the active scene.
 func TestSceneCatalogTextHighlightsActive(t *testing.T) {
-	lines := sceneCatalogText(buildShowcaseScenes(false), 1, false)
+	lines := sceneCatalogText(buildDemoScenes(false), 1, false)
 	if got := lines[1].line; got != "▶ 2. Shape Board" {
 		t.Fatalf("active line = %q, want highlighted Shape Board", got)
 	}
@@ -34,7 +34,7 @@ func TestSceneCatalogTextHighlightsActive(t *testing.T) {
 
 // TestSceneDetailsTextIncludesFeatures verifies the details panel copy exposes metadata.
 func TestSceneDetailsTextIncludesFeatures(t *testing.T) {
-	scene := buildShowcaseScenes(true)[3]
+	scene := buildDemoScenes(true)[3]
 	details := sceneDetailsText(scene, 12, true, "/tmp/example.png")
 	if !strings.Contains(details, "Scene: Image Relief") {
 		t.Fatalf("details = %q, want scene heading", details)
@@ -59,9 +59,9 @@ func TestControlSummaryLinesIncludesAssetState(t *testing.T) {
 	}
 }
 
-func TestControlSummaryLinesIncludesNineSelections(t *testing.T) {
+func TestControlSummaryLinesIncludesSceneSelectionRange(t *testing.T) {
 	lines := controlSummaryLines(false)
-	if got, want := lines[0].value, "1-9 scene select"; got != want {
+	if got, want := lines[0].value, "1-4 scene select"; got != want {
 		t.Fatalf("keys summary = %q, want %q", got, want)
 	}
 }

@@ -322,7 +322,7 @@ func (st *spectrumTerminal) Flush() error {
 	if st.threshold != nil {
 		graphArea := networkWidgetArea(st.Size())
 		_ = st.threshold.Draw(st.Terminal, graphArea, networkPrimaryLabel(st.profiles))
-		st.threshold.DrawAlert(st.Terminal, spectrumPaneRects(st.Size())[idSubspace], st.activePaneID() == idSubspace)
+		_ = st.threshold.DrawAlert(st.Terminal, spectrumPaneRects(st.Size())[idSubspace], st.activePaneID() == idSubspace)
 	}
 	if st.tooltip != nil {
 		st.tooltip.draw(st.Terminal)

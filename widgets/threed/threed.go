@@ -21,7 +21,6 @@ import (
 	"io"
 	"log"
 	"math"
-	"os"
 	"sync"
 
 	"github.com/mum4k/termdash/cell"
@@ -49,6 +48,7 @@ type ThreeD struct {
 	fillScene    *subcellScene // Reused braille fill scene; re-cleared each frame.
 	transformBuf []Vector3D    // Scratch space for per-face rotated vertices.
 	pointsBuf    []Vector2D    // Backing store for all ProjectedFace.Points slices.
+	depthsBuf    []float64     // Backing store for all ProjectedFace.Depths slices.
 	pointsIdx    int           // Write cursor into pointsBuf for the current frame.
 }
 
@@ -59,20 +59,13 @@ func New(opts ...Option) (*ThreeD, error) {
 		opt.set(options)
 	}
 
-	// Initialize the logger.
-	var logger *log.Logger
-	if options.EnableLogging {
-		file, err := os.OpenFile("threed_demo.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			log.Printf("failed to open log file: %v", err)
-			logger = log.New(os.Stdout, "", log.LstdFlags)
-		} else {
-			logger = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-		}
-	} else {
-		// Discard logs if logging is disabled.
-		logger = log.New(io.Discard, "", 0)
+	// Initialize the logger.  New() never opens files; callers supply a
+	// writer via LogWriter().  A nil writer silently discards all output.
+	logDest := io.Writer(io.Discard)
+	if options.LogWriter != nil {
+		logDest = options.LogWriter
 	}
+	logger := log.New(logDest, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	zoomHandler := NewZoomHandler()
 	if options.ZoomScale > 0 {
@@ -148,6 +141,11 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 	} else {
 		t.pointsBuf = t.pointsBuf[:totalVerts]
 	}
+	if cap(t.depthsBuf) < totalVerts {
+		t.depthsBuf = make([]float64, totalVerts)
+	} else {
+		t.depthsBuf = t.depthsBuf[:totalVerts]
+	}
 	t.pointsIdx = 0
 
 	// Apply transformations and project vertices.
@@ -195,6 +193,7 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 		// Initialize ProjectedFace with the rotated normal.
 		pf := ProjectedFace{
 			Points:     t.pointsBuf[start:t.pointsIdx:t.pointsIdx],
+			Depths:     t.depthsBuf[start:t.pointsIdx:t.pointsIdx],
 			Normal:     normal,
 			Depth:      0,
 			Char:       face.Char,
@@ -213,6 +212,7 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 				break
 			}
 			pf.Points[i] = projected
+			pf.Depths[i] = vertex.Z
 			depthSum += vertex.Z
 		}
 
@@ -253,7 +253,7 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 	// sizes.
 	for _, pf := range t.projected {
 		if len(pf.Points) > 2 && pf.RenderMode == FaceRenderFill {
-			t.fillScene.FillPolygon(pf.Points, pf.ShadeColor, pf.Depth)
+			t.fillScene.FillPolygonWithDepths(pf.Points, pf.Depths, pf.ShadeColor, pf.Depth)
 		}
 	}
 	if err := t.fillScene.CopyTo(t.doubleBuffer); err != nil {
@@ -267,7 +267,7 @@ func (t *ThreeD) Draw(cvs *canvas.Canvas, _ *widgetapi.Meta) error {
 			if char == 0 {
 				char = '─'
 			}
-			drawLine(t.doubleBuffer, pf.Points[0], pf.Points[1], char, cell.FgColor(pf.ShadeColor.ToCellColor()))
+			drawLineFiltered(t.doubleBuffer, pf.Points[0], pf.Points[1], char, t.fillScene.hasFill, cell.FgColor(pf.ShadeColor.ToCellColor()))
 			continue
 		}
 		if len(pf.Points) > 2 && pf.RenderMode != FaceRenderFill {
@@ -367,11 +367,6 @@ func (t *ThreeD) Options() widgetapi.Options {
 		WantKeyboard: widgetapi.KeyScopeGlobal,
 		WantMouse:    widgetapi.MouseScopeWidget,
 	}
-}
-
-// Logger returns the logger associated with the widget.
-func (t *ThreeD) Logger() *log.Logger {
-	return t.logger
 }
 
 // Ensure ThreeD implements widgetapi.Widget interface.

@@ -198,7 +198,9 @@ func (ac *AlertControl) Draw(t terminalapi.Terminal, graphArea image.Rectangle, 
 		return nil
 	}
 
-	drawAlertText(t, layout.alarmLabel, "ALARM", cell.FgColor(cell.ColorNumber(245)))
+	if err := drawAlertText(t, layout.alarmLabel, "ALARM", cell.FgColor(cell.ColorNumber(245))); err != nil {
+		return err
+	}
 
 	checkCanvas, err := canvas.New(layout.checkbox)
 	if err == nil && ac.toggle != nil {
@@ -207,7 +209,9 @@ func (ac *AlertControl) Draw(t terminalapi.Terminal, graphArea image.Rectangle, 
 		}
 	}
 
-	drawAlertText(t, layout.valueLabel, "Y", cell.FgColor(cell.ColorNumber(245)))
+	if err := drawAlertText(t, layout.valueLabel, "Y", cell.FgColor(cell.ColorNumber(245))); err != nil {
+		return err
+	}
 
 	menuCanvas, err := canvas.New(layout.menu)
 	if err != nil {
@@ -243,23 +247,23 @@ func (ac *AlertControl) HandleMouse(pos image.Point, graphArea image.Rectangle, 
 }
 
 // DrawAlert renders the warning banner centered inside pane when focused.
-func (ac *AlertControl) DrawAlert(t terminalapi.Terminal, pane image.Rectangle, focused bool) {
+func (ac *AlertControl) DrawAlert(t terminalapi.Terminal, pane image.Rectangle, focused bool) error {
 	message := ac.AlertMessage()
 	if message == "" || !focused {
-		return
+		return nil
 	}
 	width := len([]rune(message))
 	if width == 0 || pane.Empty() || width > pane.Dx()-2 {
-		return
+		return nil
 	}
 	innerMinX := pane.Min.X + 1
 	innerWidth := pane.Dx() - 2
 	x := innerMinX + (innerWidth-width)/2
 	y := pane.Min.Y + 1
 	if y >= pane.Max.Y {
-		return
+		return nil
 	}
-	drawAlertText(t, image.Point{X: x, Y: y}, message,
+	return drawAlertText(t, image.Point{X: x, Y: y}, message,
 		cell.FgColor(cell.ColorYellow),
 		cell.BgColor(cell.ColorNumber(52)),
 	)
@@ -369,13 +373,25 @@ func nearestThresholdIndex(values []int, selected int) int {
 	return best
 }
 
-// drawAlertText writes overlay text directly to the terminal.
-func drawAlertText(t terminalapi.Terminal, pos image.Point, text string, opts ...cell.Option) {
-	cur := pos
-	for _, r := range text {
-		_ = t.SetCell(cur, r, opts...)
-		cur.X++
+// drawAlertText writes overlay text via a canvas sub-region so that all cell
+// writes go through the canvas abstraction (bounds-checked, double-buffered)
+// rather than calling Terminal.SetCell directly.
+func drawAlertText(t terminalapi.Terminal, pos image.Point, text string, opts ...cell.Option) error {
+	runes := []rune(text)
+	if len(runes) == 0 {
+		return nil
 	}
+	area := image.Rect(pos.X, pos.Y, pos.X+len(runes), pos.Y+1)
+	cvs, err := canvas.New(area)
+	if err != nil {
+		return err
+	}
+	for i, r := range runes {
+		if _, err := cvs.SetCell(image.Point{X: i, Y: 0}, r, opts...); err != nil {
+			return err
+		}
+	}
+	return cvs.Apply(t)
 }
 
 // absInt returns the absolute value of v.

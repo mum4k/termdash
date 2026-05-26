@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -38,7 +39,18 @@ import (
 const (
 	// sceneTick controls how frequently the animated showcase refreshes.
 	sceneTick = 40 * time.Millisecond
+	// demoSceneCount is the number of scenes addressable by keyboard shortcuts.
+	demoSceneCount = 4
 )
+
+// demoScene describes one interactive scene in the standalone demo.
+type demoScene struct {
+	Name     string
+	Summary  string
+	Features []string
+	Orbit    threed.Vector3D
+	Build    func(step int, assetModel *threed.Model) *threed.Model
+}
 
 // demoState stores the interactive scene state for the showcase.
 type demoState struct {
@@ -62,8 +74,8 @@ func (s *demoState) setScene(index int) {
 	if index < 0 {
 		index = 0
 	}
-	if index >= showcaseSceneCount {
-		index = showcaseSceneCount - 1
+	if index >= demoSceneCount {
+		index = demoSceneCount - 1
 	}
 	s.scene = index
 }
@@ -99,7 +111,6 @@ func main() {
 
 	stage, err := threed.New(
 		threed.ShowAxes(false),
-		threed.EnableLogging(false),
 		threed.BackfaceCulling(false),
 		threed.RotationStep(0.08),
 		threed.ZoomScale(30.0),
@@ -127,7 +138,7 @@ func main() {
 	}
 
 	assetModel, assetLoaded := loadOptionalAsset(*imagePath)
-	scenes := buildShowcaseScenes(assetLoaded)
+	scenes := buildDemoScenes(assetLoaded)
 	state := &demoState{assetPath: *imagePath}
 	stage.SetModel(scenes[0].Build(0, assetModel))
 
@@ -242,7 +253,7 @@ func mustFooter() *text.Text {
 		log.Fatalf("failed to create footer widget: %v", err)
 	}
 	if err := footer.Write(
-		"1-9 switch scenes   Space pause/resume   Arrow keys orbit   Mouse wheel zoom   q / Esc quit",
+		fmt.Sprintf("1-%d switch scenes   Space pause/resume   Arrow keys orbit   Mouse wheel zoom   q / Esc quit", demoSceneCount),
 		text.WriteCellOpts(cell.FgColor(cell.ColorNumber(114))),
 	); err != nil {
 		log.Fatalf("failed to write footer: %v", err)
@@ -283,7 +294,7 @@ func animateScenes(
 	stage *threed.ThreeD,
 	catalog *text.Text,
 	details *text.Text,
-	scenes []showcaseScene,
+	scenes []demoScene,
 	assetModel *threed.Model,
 	assetLoaded bool,
 	state *demoState,
@@ -335,8 +346,156 @@ func animateScenes(
 	}
 }
 
+// buildDemoScenes returns the scene list used by this single-file demo.
+func buildDemoScenes(assetLoaded bool) []demoScene {
+	imageSummary := "Uses the optional image asset as an extruded relief when supplied."
+	if !assetLoaded {
+		imageSummary = "Uses a procedural fallback relief until an image asset is supplied."
+	}
+	return []demoScene{
+		{
+			Name:    "Spectrum Analyzer",
+			Summary: "Animated 3D audio bars exercise filled faces, bottom caps, and guide rails.",
+			Features: []string{
+				"animated SpectrumAnalyzer bars",
+				"filled front, side, top, and bottom faces",
+				"color ramp across band intensity",
+			},
+			Orbit: threed.Vector3D{Y: 0.012},
+			Build: func(step int, _ *threed.Model) *threed.Model {
+				return threed.SpectrumAnalyzer(audioBands(step), threed.ModelSize(3.8))
+			},
+		},
+		{
+			Name:    "Shape Board",
+			Summary: "Primitive models share a stage so lighting, ordering, and rotation stay visible.",
+			Features: []string{
+				"cube, pyramid, sphere, and glyph primitives",
+				"per-face model colors",
+				"slow orbit across mixed geometry",
+			},
+			Orbit: threed.Vector3D{X: 0.006, Y: 0.014},
+			Build: func(step int, _ *threed.Model) *threed.Model {
+				return shapeBoardModel(step)
+			},
+		},
+		{
+			Name:    "Network Spectrum",
+			Summary: "Mirrored download and upload bars make the depth buffer work across dense rows.",
+			Features: []string{
+				"split download and upload bands",
+				"independent cyan and rose palettes",
+				"thin guide rails behind filled bars",
+			},
+			Orbit: threed.Vector3D{Y: -0.01},
+			Build: func(step int, _ *threed.Model) *threed.Model {
+				down, up := networkBands(step)
+				return threed.NetworkSpectrum(down, up, threed.ModelSize(3.9))
+			},
+		},
+		{
+			Name:    "Image Relief",
+			Summary: imageSummary,
+			Features: []string{
+				"image extrusion via LoadImageModel",
+				"procedural fallback when no image is passed",
+				"asset path shown in render notes",
+			},
+			Orbit: threed.Vector3D{X: 0.004, Y: 0.012},
+			Build: func(step int, assetModel *threed.Model) *threed.Model {
+				if assetModel != nil {
+					model := assetModel.Clone()
+					model.Scale(1.8)
+					return model
+				}
+				return reliefFallbackModel(step)
+			},
+		},
+	}
+}
+
+// audioBands produces smooth analyzer heights for the demo spectrum.
+func audioBands(step int) []float64 {
+	bands := make([]float64, 18)
+	for i := range bands {
+		phase := float64(step)*0.16 + float64(i)*0.58
+		secondary := float64(step)*0.07 - float64(i)*0.31
+		bands[i] = 0.24 + 0.56*(0.5+0.5*math.Sin(phase)) + 0.20*(0.5+0.5*math.Sin(secondary))
+	}
+	return bands
+}
+
+// networkBands produces paired download and upload values for the split scene.
+func networkBands(step int) ([]float64, []float64) {
+	const count = 24
+	down := make([]float64, count)
+	up := make([]float64, count)
+	for i := 0; i < count; i++ {
+		x := float64(i)
+		down[i] = 0.16 + 0.42*(0.5+0.5*math.Sin(float64(step)*0.10+x*0.34))
+		up[i] = 0.10 + 0.36*(0.5+0.5*math.Sin(float64(step)*0.13-x*0.28))
+		if i%9 == step%9 {
+			down[i] += 0.36
+		}
+		if (i+4)%11 == step%11 {
+			up[i] += 0.30
+		}
+	}
+	return down, up
+}
+
+// shapeBoardModel combines public threed primitives into one compact scene.
+func shapeBoardModel(step int) *threed.Model {
+	model := threed.NewModel()
+	model.Append(
+		threed.Cube(
+			threed.ModelPosition(threed.Vector3D{X: -1.35, Y: -0.12, Z: 0}),
+			threed.ModelSize(0.62),
+			threed.ModelRune('█'),
+			threed.ModelColor(threed.NeonCyan),
+		),
+		threed.Pyramid(
+			threed.ModelPosition(threed.Vector3D{X: -0.35, Y: -0.10, Z: 0.05}),
+			threed.ModelSize(0.78),
+			threed.ModelRune('▓'),
+			threed.ModelColor(threed.Amber),
+		),
+		threed.Sphere(
+			threed.ModelPosition(threed.Vector3D{X: 0.75, Y: -0.02, Z: 0}),
+			threed.ModelSize(0.54+0.04*math.Sin(float64(step)*0.08)),
+			threed.ModelRune('▒'),
+			threed.ModelColor(threed.NeonGreen),
+			threed.ModelSegments(8, 14),
+		),
+		threed.Glyph(
+			"*",
+			threed.ModelPosition(threed.Vector3D{X: 1.55, Y: 0.0, Z: 0.02}),
+			threed.ModelSize(0.46),
+			threed.ModelColor(threed.Rose),
+		),
+	)
+	return model
+}
+
+// reliefFallbackModel gives the image scene a stable model without an asset.
+func reliefFallbackModel(step int) *threed.Model {
+	rows := []string{
+		"  TERMDASH  ",
+		" 3D RELIEF  ",
+		"  ▄▄  ▄▄   ",
+		" ▀  ▀▀  ▀  ",
+	}
+	model := threed.TextBoard(
+		rows,
+		threed.ModelCellSize(0.09, 0.18),
+		threed.ModelPosition(threed.Vector3D{X: 0, Y: -0.08, Z: 0}),
+	)
+	model.Append(threed.SymbolSpinner("✦", step))
+	return model
+}
+
 // sceneCatalogText returns the catalog copy for the current scene list.
-func sceneCatalogText(scenes []showcaseScene, active int, assetLoaded bool) []struct {
+func sceneCatalogText(scenes []demoScene, active int, assetLoaded bool) []struct {
 	line  string
 	color cell.Color
 	bold  bool
@@ -379,7 +538,7 @@ func sceneCatalogText(scenes []showcaseScene, active int, assetLoaded bool) []st
 }
 
 // renderSceneCatalog writes the available scene list and highlights the active scene.
-func renderSceneCatalog(w *text.Text, scenes []showcaseScene, active int, assetLoaded bool) error {
+func renderSceneCatalog(w *text.Text, scenes []demoScene, active int, assetLoaded bool) error {
 	w.Reset()
 	for _, line := range sceneCatalogText(scenes, active, assetLoaded) {
 		opts := []text.WriteOption{text.WriteCellOpts(cell.FgColor(line.color))}
@@ -394,7 +553,7 @@ func renderSceneCatalog(w *text.Text, scenes []showcaseScene, active int, assetL
 }
 
 // sceneDetailsText builds the detail panel copy for the active scene.
-func sceneDetailsText(scene showcaseScene, step int, assetLoaded bool, assetPath string) string {
+func sceneDetailsText(scene demoScene, step int, assetLoaded bool, assetPath string) string {
 	var b strings.Builder
 	b.WriteString("Scene: ")
 	b.WriteString(scene.Name)
@@ -420,7 +579,7 @@ func sceneDetailsText(scene showcaseScene, step int, assetLoaded bool, assetPath
 }
 
 // renderSceneDetails writes the active scene summary and feature highlights.
-func renderSceneDetails(w *text.Text, scene showcaseScene, step int, assetLoaded bool, assetPath string) error {
+func renderSceneDetails(w *text.Text, scene demoScene, step int, assetLoaded bool, assetPath string) error {
 	w.Reset()
 	if err := w.Write("Scene: ", text.WriteReplace(), text.WriteCellOpts(cell.FgColor(cell.ColorNumber(245)))); err != nil {
 		return err
@@ -468,7 +627,7 @@ func controlSummaryLines(assetLoaded bool) []struct {
 		value string
 		color cell.Color
 	}{
-		{"Keys", "1-9 scene select", cell.ColorNumber(252)},
+		{"Keys", fmt.Sprintf("1-%d scene select", demoSceneCount), cell.ColorNumber(252)},
 		{"Orbit", "Arrow keys or slow auto orbit", cell.ColorNumber(252)},
 		{"Zoom", "Mouse wheel", cell.ColorNumber(252)},
 		{"Pause", "Space toggles animation", cell.ColorNumber(252)},

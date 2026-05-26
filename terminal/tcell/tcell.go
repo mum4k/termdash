@@ -114,9 +114,11 @@ func (t *Terminal) EnableMouse() {
 	t.mouseOn = true
 }
 
-// EnableMouseMotion enables mouse capture including hover/motion events.
+// EnableMouseMotion enables mouse capture including click and drag events.
+// Standalone hover motion isn't enabled because Termdash represents tcell's
+// ButtonNone event as a release, which would prematurely cancel drag gestures.
 func (t *Terminal) EnableMouseMotion() {
-	t.screen.EnableMouse(tcell.MouseButtonEvents | tcell.MouseMotionEvents)
+	t.screen.EnableMouse(tcell.MouseButtonEvents | tcell.MouseDragEvents)
 	t.mouseOn = true
 }
 
@@ -146,7 +148,7 @@ func New(opts ...Option) (*Terminal, error) {
 	}
 
 	clearStyle := cellOptsToStyle(t.clearStyle, t.colorMode)
-	t.screen.EnableMouse(tcell.MouseButtonEvents)
+	t.screen.EnableMouse(tcell.MouseButtonEvents | tcell.MouseDragEvents)
 	t.mouseOn = true
 	t.screen.SetStyle(clearStyle)
 

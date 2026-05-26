@@ -100,7 +100,7 @@ func TestEnableMouseUsesButtonEventsOnly(t *testing.T) {
 	}
 }
 
-func TestEnableMouseMotionIncludesMotionEvents(t *testing.T) {
+func TestEnableMouseMotionIncludesDragEvents(t *testing.T) {
 	screen := newMouseRecordingScreen()
 	term := &Terminal{screen: screen}
 
@@ -109,7 +109,7 @@ func TestEnableMouseMotionIncludesMotionEvents(t *testing.T) {
 	if len(screen.enableMouseCalls) != 1 {
 		t.Fatalf("EnableMouse calls = %d, want 1", len(screen.enableMouseCalls))
 	}
-	want := []tcell.MouseFlags{tcell.MouseButtonEvents | tcell.MouseMotionEvents}
+	want := []tcell.MouseFlags{tcell.MouseButtonEvents | tcell.MouseDragEvents}
 	if got := screen.enableMouseCalls[0]; !sameMouseFlags(got, want) {
 		t.Fatalf("EnableMouse flags = %v, want %v", got, want)
 	}
@@ -118,7 +118,7 @@ func TestEnableMouseMotionIncludesMotionEvents(t *testing.T) {
 	}
 }
 
-func TestNewEnablesButtonMouseEventsOnly(t *testing.T) {
+func TestNewEnablesButtonAndDragMouseEvents(t *testing.T) {
 	screen := newMouseRecordingScreen()
 	originalNewScreen := tcellNewScreen
 	tcellNewScreen = func() (tcell.Screen, error) { return screen, nil }
@@ -133,7 +133,7 @@ func TestNewEnablesButtonMouseEventsOnly(t *testing.T) {
 	if len(screen.enableMouseCalls) != 1 {
 		t.Fatalf("EnableMouse calls = %d, want 1", len(screen.enableMouseCalls))
 	}
-	if got, want := screen.enableMouseCalls[0], []tcell.MouseFlags{tcell.MouseButtonEvents}; !sameMouseFlags(got, want) {
+	if got, want := screen.enableMouseCalls[0], []tcell.MouseFlags{tcell.MouseButtonEvents | tcell.MouseDragEvents}; !sameMouseFlags(got, want) {
 		t.Fatalf("EnableMouse flags = %v, want %v", got, want)
 	}
 	if !term.MouseEnabled() {

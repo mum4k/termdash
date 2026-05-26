@@ -853,9 +853,9 @@ func main() {
 		_ = fx.Run(ctx)
 	}()
 	go runBootSequence(ctx, c, fx, styles, graphProfiles, ship, t, logW, statusW, eventsW, helpW, bootDone)
-	go borderfx.NewTitleController(c, fx, panelTitles, func(id string) *borderfx.Effect {
+	go newTitleController(c, fx, panelTitles, func(id string) *borderfx.Effect {
 		return themedStyle(styles.get(id))
-	}).Run(ctx, bootDone)
+	}).run(ctx, bootDone)
 	go trackStatusPanel(ctx, c, statusW, ship, bootDone)
 
 	go feedLog(ctx, logW, bootDone)
@@ -2431,4 +2431,187 @@ func feedEvents(ctx context.Context, w *text.Text, bootDone <-chan struct{}) {
 			i++
 		}
 	}
+}
+
+// ── Loading overlay helpers ───────────────────────────────────────────────────
+//
+// These helpers were previously part of the borderfx widget package.  They are
+// demo-specific: loadingText contains ready-made boot-screen copy, and
+// applyInterlacedLoadingContent is a two-line convenience wrapper that wires
+// the FuturisticSweep profile and shows the overlay in one call.  Applications
+// that want a custom loading experience should call ApplyProfile and Show
+// directly.
+
+// loadingText provides ready-made boot-screen text templates for use with
+// borderfx.LoadingOverlay.SetContent.  Each template is multi-line copy that
+// fits comfortably inside a typical bordered panel.
+//
+// Example:
+//
+//	lo.SetContent("sensors", loadingText.BootSequence)
+//	lo.SetContent("db",      loadingText.DataSync)
+var loadingText = struct {
+	// BootSequence mimics an RF carrier-lock + telemetry initialisation.
+	// Good for sensor, signal, or graph panels.
+	BootSequence string
+
+	// DataSync shows a database / schema hydration sequence.
+	// Good for panels that load data from a backend.
+	DataSync string
+
+	// Initializing shows a generic component-wiring startup sequence.
+	// Good for catch-all or secondary panels.
+	Initializing string
+
+	// Standby shows a minimal "waiting for signal" state.
+	// Good for panels that depend on an upstream source not yet ready.
+	Standby string
+
+	// NetworkBoot shows a network stack initialization sequence.
+	// Good for panels that require connectivity.
+	NetworkBoot string
+}{
+	BootSequence: "" +
+		"  :: carrier lock ::\n\n" +
+		"  preparing window .............\n\n" +
+		"  signal lattice ...............\n\n" +
+		"  telemetry uplink .............\n",
+
+	DataSync: "" +
+		"  :: data sync ::\n\n" +
+		"  connecting .....................\n\n" +
+		"  fetching schema ................\n\n" +
+		"  hydrating cache ................\n",
+
+	Initializing: "" +
+		"  :: initializing ::\n\n" +
+		"  loading components .............\n\n" +
+		"  wiring dependencies ............\n\n" +
+		"  ready check ....................\n",
+
+	Standby: "" +
+		"  :: standby ::\n\n" +
+		"  waiting for signal .............\n\n" +
+		"  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  \n\n" +
+		"  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  \n",
+
+	NetworkBoot: "" +
+		"  :: network boot ::\n\n" +
+		"  resolving address ..............\n\n" +
+		"  establishing link ..............\n\n" +
+		"  syncing clock ..................\n",
+}
+
+// applyInterlacedLoadingContent wires the FuturisticSweep border profile to
+// each of the given container IDs and activates the interlaced loading overlay.
+// It is the single call that makes panels look like the borderfx demo boot
+// screen: animated braille-interlaced cyan borders with a striped background.
+//
+// Callers should call lo.Hide() once the application has finished loading.
+func applyInterlacedLoadingContent(a *borderfx.Animator, lo *borderfx.LoadingOverlay, ids ...string) {
+	a.ApplyProfile(borderfx.Profiles.FuturisticSweep, ids...)
+	lo.Show()
+}
+
+// ── Title animation controller ────────────────────────────────────────────────
+
+// titleController manages border title reveal and spinner animation for focused panes.
+// It is demo-internal: the borderfx package exposes the TitleSpec primitives
+// (Scrambled, Decorated, HasSpinners) and this controller wires them into the
+// demo's container focus loop.
+type titleController struct {
+	container    *container.Container
+	animator     *borderfx.Animator
+	titles       map[string]borderfx.TitleSpec
+	effectFor    func(string) *borderfx.Effect
+	pollInterval time.Duration
+	revealDelay  time.Duration
+}
+
+// newTitleController builds a reusable title animation controller around the
+// low-level title and effect hooks provided by container and borderfx.
+func newTitleController(c *container.Container, a *borderfx.Animator, titles map[string]borderfx.TitleSpec, effectFor func(string) *borderfx.Effect) *titleController {
+	return &titleController{
+		container:    c,
+		animator:     a,
+		titles:       titles,
+		effectFor:    effectFor,
+		pollInterval: 35 * time.Millisecond,
+		revealDelay:  38 * time.Millisecond,
+	}
+}
+
+// run starts the focus-title update loop and exits when the context is done.
+func (tc *titleController) run(ctx context.Context, ready <-chan struct{}) {
+	if tc == nil || tc.container == nil {
+		<-ctx.Done()
+		return
+	}
+	if ready != nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ready:
+		}
+	}
+
+	lastID := ""
+	titleFrame := 0
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		activeID := tc.container.ActiveID()
+		if activeID != "" && activeID != lastID {
+			if tc.animator != nil && tc.effectFor != nil {
+				tc.animator.Register(activeID, tc.effectFor(activeID))
+			}
+			tc.resetInactiveTitles(activeID)
+			if spec, ok := tc.titles[activeID]; ok {
+				tc.animateReveal(ctx, activeID, spec)
+			}
+			lastID = activeID
+			titleFrame = 0
+		}
+		if activeID != "" {
+			if spec, ok := tc.titles[activeID]; ok {
+				if !spec.HasSpinners() {
+					time.Sleep(tc.pollInterval)
+					continue
+				}
+				_ = tc.container.Update(activeID, container.BorderTitle(spec.Decorated(titleFrame)))
+				titleFrame++
+			}
+		}
+		time.Sleep(tc.pollInterval)
+	}
+}
+
+func (tc *titleController) resetInactiveTitles(activeID string) {
+	for id, spec := range tc.titles {
+		if id == activeID {
+			continue
+		}
+		_ = tc.container.Update(id, container.BorderTitle(spec.Plain()))
+	}
+}
+
+func (tc *titleController) animateReveal(ctx context.Context, id string, spec borderfx.TitleSpec) {
+	runes := []rune(spec.Base)
+	for step := 0; step <= len(runes); step++ {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		if tc.container.ActiveID() != id {
+			return
+		}
+		_ = tc.container.Update(id, container.BorderTitle(spec.Scrambled(step)))
+		time.Sleep(tc.revealDelay)
+	}
+	_ = tc.container.Update(id, container.BorderTitle(spec.Plain()))
 }

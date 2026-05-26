@@ -15,9 +15,7 @@
 package borderfx
 
 import (
-	"context"
 	"testing"
-	"time"
 
 	spin "github.com/mum4k/termdash/widgets/spinner"
 )
@@ -113,23 +111,5 @@ func TestTitleSpecLegacySpinnerPlacementStillWorks(t *testing.T) {
 
 	if got := spec.Decorated(2); got != " Comms ◑" {
 		t.Fatalf("Decorated(2) = %q", got)
-	}
-}
-
-func TestTitleControllerRunHandlesNilContainer(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	tc := NewTitleController(nil, nil, nil, nil)
-	tc.Run(ctx, nil)
-}
-
-func TestNewTitleControllerDefaults(t *testing.T) {
-	tc := NewTitleController(nil, nil, nil, nil)
-	if got := tc.pollInterval; got != 35*time.Millisecond {
-		t.Fatalf("pollInterval = %v, want 35ms", got)
-	}
-	if got := tc.revealDelay; got != 38*time.Millisecond {
-		t.Fatalf("revealDelay = %v, want 38ms", got)
 	}
 }

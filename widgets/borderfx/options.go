@@ -153,10 +153,10 @@ type PanelRectFunc func(termSize image.Point, id string) image.Rectangle
 //     return outer.Inset(1)                  // strip the 1-cell border
 //     })
 //
-//  2. Set loading content and wire the animator (one call does both):
+//  2. Set loading content and show the overlay:
 //
-//     lo.SetContent("sensors", borderfx.LoadingText.BootSequence)
-//     fx.ApplyInterlacedLoadingContent(lo, "sensors", "comms")
+//     lo.SetContent("sensors", "  :: carrier lock ::\n\n  preparing .......\n")
+//     lo.Show()
 //
 //  3. Hide when boot is done:
 //
@@ -193,19 +193,13 @@ func WrapWithLoading(t terminalapi.Terminal, rectFn PanelRectFunc) *LoadingOverl
 // SetContent sets the loading text displayed inside a named panel.
 // Call before Show() to pre-populate panels, or at any time during the loading
 // phase to update the copy.  Use "\n" to separate lines.
-//
-// The LoadingText variable provides ready-made templates:
-//
-//	lo.SetContent("sensors", borderfx.LoadingText.BootSequence)
 func (lo *LoadingOverlay) SetContent(id, text string) {
 	lo.mu.Lock()
 	lo.frames[id] = text
 	lo.mu.Unlock()
 }
 
-// Show makes the loading overlay visible.  It is called automatically by
-// Animator.ApplyInterlacedLoadingContent — you only need to call it directly
-// if you are managing the overlay lifecycle manually.
+// Show makes the loading overlay visible.
 func (lo *LoadingOverlay) Show() {
 	lo.mu.Lock()
 	lo.visible = true
@@ -249,66 +243,4 @@ func (lo *LoadingOverlay) Flush() error {
 		}
 	}
 	return nil
-}
-
-// ── LoadingText ───────────────────────────────────────────────────────────────
-
-// LoadingText provides ready-made boot-screen text templates for use with
-// LoadingOverlay.SetContent.  Each template is multi-line copy that fits
-// comfortably inside a typical bordered panel.
-//
-// Example:
-//
-//	lo.SetContent("sensors", borderfx.LoadingText.BootSequence)
-//	lo.SetContent("db",      borderfx.LoadingText.DataSync)
-var LoadingText = struct {
-	// BootSequence mimics an RF carrier-lock + telemetry initialisation.
-	// Good for sensor, signal, or graph panels.
-	BootSequence string
-
-	// DataSync shows a database / schema hydration sequence.
-	// Good for panels that load data from a backend.
-	DataSync string
-
-	// Initializing shows a generic component-wiring startup sequence.
-	// Good for catch-all or secondary panels.
-	Initializing string
-
-	// Standby shows a minimal "waiting for signal" state.
-	// Good for panels that depend on an upstream source not yet ready.
-	Standby string
-
-	// NetworkBoot shows a network stack initialization sequence.
-	// Good for panels that require connectivity.
-	NetworkBoot string
-}{
-	BootSequence: "" +
-		"  :: carrier lock ::\n\n" +
-		"  preparing window .............\n\n" +
-		"  signal lattice ...............\n\n" +
-		"  telemetry uplink .............\n",
-
-	DataSync: "" +
-		"  :: data sync ::\n\n" +
-		"  connecting .....................\n\n" +
-		"  fetching schema ................\n\n" +
-		"  hydrating cache ................\n",
-
-	Initializing: "" +
-		"  :: initializing ::\n\n" +
-		"  loading components .............\n\n" +
-		"  wiring dependencies ............\n\n" +
-		"  ready check ....................\n",
-
-	Standby: "" +
-		"  :: standby ::\n\n" +
-		"  waiting for signal .............\n\n" +
-		"  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  \n\n" +
-		"  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  \n",
-
-	NetworkBoot: "" +
-		"  :: network boot ::\n\n" +
-		"  resolving address ..............\n\n" +
-		"  establishing link ..............\n\n" +
-		"  syncing clock ..................\n",
 }

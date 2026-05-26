@@ -15,11 +15,8 @@
 package borderfx
 
 import (
-	"context"
 	"strings"
-	"time"
 
-	"github.com/mum4k/termdash/container"
 	spin "github.com/mum4k/termdash/widgets/spinner"
 )
 
@@ -159,101 +156,8 @@ func (s TitleSpec) resolvedSpinners() (spin.Spinner, spin.Spinner) {
 	return left, right
 }
 
-// TitleController manages border title reveal and spinner animation for focused panes.
-type TitleController struct {
-	container    *container.Container
-	animator     *Animator
-	titles       map[string]TitleSpec
-	effectFor    func(string) *Effect
-	pollInterval time.Duration
-	revealDelay  time.Duration
-}
-
-// NewTitleController builds a reusable title animation controller around the
-// low-level title and effect hooks already provided by container and borderfx.
-func NewTitleController(c *container.Container, a *Animator, titles map[string]TitleSpec, effectFor func(string) *Effect) *TitleController {
-	return &TitleController{
-		container:    c,
-		animator:     a,
-		titles:       titles,
-		effectFor:    effectFor,
-		pollInterval: 35 * time.Millisecond,
-		revealDelay:  38 * time.Millisecond,
-	}
-}
-
-// Run starts the focus-title update loop and exits when the context is done.
-func (tc *TitleController) Run(ctx context.Context, ready <-chan struct{}) {
-	if tc == nil || tc.container == nil {
-		<-ctx.Done()
-		return
-	}
-	if ready != nil {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ready:
-		}
-	}
-
-	lastID := ""
-	titleFrame := 0
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
-		activeID := tc.container.ActiveID()
-		if activeID != "" && activeID != lastID {
-			if tc.animator != nil && tc.effectFor != nil {
-				tc.animator.Register(activeID, tc.effectFor(activeID))
-			}
-			tc.resetInactiveTitles(activeID)
-			if spec, ok := tc.titles[activeID]; ok {
-				tc.animateReveal(ctx, activeID, spec)
-			}
-			lastID = activeID
-			titleFrame = 0
-		}
-		if activeID != "" {
-			if spec, ok := tc.titles[activeID]; ok {
-				left, right := spec.resolvedSpinners()
-				if len(left.Frames()) == 0 && len(right.Frames()) == 0 {
-					time.Sleep(tc.pollInterval)
-					continue
-				}
-				_ = tc.container.Update(activeID, container.BorderTitle(spec.Decorated(titleFrame)))
-				titleFrame++
-			}
-		}
-		time.Sleep(tc.pollInterval)
-	}
-}
-
-func (tc *TitleController) resetInactiveTitles(activeID string) {
-	for id, spec := range tc.titles {
-		if id == activeID {
-			continue
-		}
-		_ = tc.container.Update(id, container.BorderTitle(spec.Plain()))
-	}
-}
-
-func (tc *TitleController) animateReveal(ctx context.Context, id string, spec TitleSpec) {
-	runes := []rune(spec.Base)
-	for step := 0; step <= len(runes); step++ {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-		if tc.container.ActiveID() != id {
-			return
-		}
-		_ = tc.container.Update(id, container.BorderTitle(spec.Scrambled(step)))
-		time.Sleep(tc.revealDelay)
-	}
-	_ = tc.container.Update(id, container.BorderTitle(spec.Plain()))
+// HasSpinners reports whether the spec has any spinner configured.
+func (s TitleSpec) HasSpinners() bool {
+	left, right := s.resolvedSpinners()
+	return len(left.Frames()) > 0 || len(right.Frames()) > 0
 }

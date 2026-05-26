@@ -31,25 +31,6 @@
 //	NeonPulse          – magenta neon-sign flicker
 //	AmberTelemetry     – amber tick telemetry (professional ops look)
 //
-// # Tier 1 — Loading overlay (simplest)
-//
-// ApplyInterlacedLoadingContent shows the interlaced boot-screen from the
-// borderfx demo with one call, and hides it when your app is ready:
-//
-//	lo := borderfx.WrapWithLoading(t, func(size image.Point, id string) image.Rectangle {
-//	    return panelRects(size)[id].Inset(1) // inner content area
-//	})
-//	lo.SetContent("sensors", borderfx.LoadingText.BootSequence)
-//	lo.SetContent("data",    borderfx.LoadingText.DataSync)
-//
-//	fx := borderfx.NewAnimator(cont)
-//	fx.ApplyInterlacedLoadingContent(lo, "sensors", "data")
-//
-//	cont, _ = container.New(lo, ...)  // pass lo in place of the raw terminal
-//	go fx.Run(ctx)
-//	// ... when boot completes:
-//	lo.Hide()
-//
 // # Tier 2 — Macro + Palette (intermediate)
 //
 // For fine-grained color control, combine a Macro with a Palette:
@@ -467,7 +448,8 @@ func NewAnimator(root *container.Container) *Animator {
 	}
 }
 
-// SetTickRate changes animation speed.
+// SetTickRate sets the animation tick interval. Must be called before Run();
+// changes made after Run() has started have no effect.
 func (a *Animator) SetTickRate(d time.Duration) {
 	a.mu.Lock()
 	a.tickRate = d
@@ -519,36 +501,6 @@ func (a *Animator) ApplyProfile(p Profile, ids ...string) {
 	})
 }
 
-// ApplyInterlacedLoadingContent wires the FuturisticSweep border profile to
-// each of the given container IDs and activates the interlaced loading overlay.
-//
-// This is the single call that makes a panel look like the borderfxdemo boot
-// screen — animated braille-interlaced cyan borders with a striped background
-// and loading copy text inside the panel content area.
-//
-// Typical usage:
-//
-//	t, _ := tcell.New()
-//	lo := borderfx.WrapWithLoading(t, func(size image.Point, id string) image.Rectangle {
-//	    return panelBorderRects(size)[id].Inset(1)
-//	})
-//	lo.SetContent("sensors", borderfx.LoadingText.BootSequence)
-//	lo.SetContent("data",    borderfx.LoadingText.DataSync)
-//
-//	fx := borderfx.NewAnimator(cont)
-//	fx.ApplyInterlacedLoadingContent(lo, "sensors", "data", "sidebar")
-//
-//	cont, _ = container.New(lo, ...)  // pass lo as the terminal
-//	go fx.Run(ctx)
-//	go termdash.Run(ctx, lo, cont, ...)
-//
-//	// When your app finishes loading:
-//	lo.Hide()
-func (a *Animator) ApplyInterlacedLoadingContent(lo *LoadingOverlay, ids ...string) {
-	a.ApplyProfile(Profiles.FuturisticSweep, ids...)
-	lo.Show()
-}
-
 // SetInactiveStyle sets a styler applied to unfocused registered windows.
 func (a *Animator) SetInactiveStyle(styler func(id string, bc container.BorderCell) container.BorderCellStyle) {
 	a.mu.Lock()
@@ -567,19 +519,26 @@ func (a *Animator) SetAlwaysActive(v bool) {
 }
 
 // Run starts the animation loop. Blocks until ctx is done.
+//
+// A single ticker is created once and reused for the lifetime of the loop.
+// The previous pattern of creating a new ticker on every iteration caused the
+// effective tick interval to be 64ms + tick_duration instead of a steady 64ms,
+// making the animation speed vary with system load (e.g. faster when the mouse
+// was moving because tick() completed sooner). A persistent ticker fires on a
+// wall-clock schedule regardless of how long tick() takes.
 func (a *Animator) Run(ctx context.Context) error {
-	for {
-		a.mu.RLock()
-		rate := a.tickRate
-		a.mu.RUnlock()
-		ticker := time.NewTicker(rate)
+	a.mu.RLock()
+	rate := a.tickRate
+	a.mu.RUnlock()
 
+	ticker := time.NewTicker(rate)
+	defer ticker.Stop()
+
+	for {
 		select {
 		case <-ctx.Done():
-			ticker.Stop()
 			return ctx.Err()
 		case <-ticker.C:
-			ticker.Stop()
 			a.tick()
 		}
 	}
@@ -640,6 +599,14 @@ func (e *Effect) nextStyler() container.BorderCellStyler {
 		}
 		return styler(frame, bc)
 	}
+}
+
+// NextStyler advances one frame and returns a per-border-cell styler.
+func (e *Effect) NextStyler() container.BorderCellStyler {
+	if e == nil {
+		return nil
+	}
+	return e.nextStyler()
 }
 
 // Next advances one frame and returns the effect's primary color.

@@ -89,9 +89,9 @@ const (
 	idAlertsPie       = "tabdemo-alerts-pie"
 	idAlertsDonut     = "tabdemo-alerts-donut"
 	idAlertsStatus    = "tabdemo-alerts-status"
-	idThreeDStage   = "tabdemo-threed-stage"
-	idThreeDStatus  = "tabdemo-threed-status"
-	idThreeDPyramid = "tabdemo-threed-pyramid"
+	idThreeDStage     = "tabdemo-threed-stage"
+	idThreeDStatus    = "tabdemo-threed-status"
+	idThreeDPyramid   = "tabdemo-threed-pyramid"
 )
 
 // animatedPaneIDs lists the pane borders that participate in focus sweeps.

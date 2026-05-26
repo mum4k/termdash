@@ -26,6 +26,7 @@ import (
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/mouse"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/text"
 )
@@ -147,6 +148,38 @@ func TestHeaderAdvanceKeepsClickTargetsStable(t *testing.T) {
 	}
 	if got := header.GetClickedTab(image.Point{X: target.Min.X + 1, Y: 0}); got != 0 {
 		t.Fatalf("GetClickedTab() after Advance = %d, want 0", got)
+	}
+}
+
+// TestHeaderSweepUsesFixedCycle verifies the active sweep wraps on a fixed
+// cadence instead of wrapping faster on short tab titles.
+func TestHeaderSweepUsesFixedCycle(t *testing.T) {
+	tm := NewManager(newTestTab(t, "I/O"), newTestTab(t, "Diagnostics"))
+	header, err := NewHeader(tm, NewOptions(AnimatedActiveTab(true)))
+	if err != nil {
+		t.Fatalf("NewHeader() => unexpected error: %v", err)
+	}
+
+	shortWidth := runewidth.StringWidth(" ◆ I/O ")
+	longWidth := runewidth.StringWidth(" ◆ Diagnostics ")
+	for _, frame := range []int{0, sweepCycleFrames / 4, sweepCycleFrames / 2, sweepCycleFrames - 1} {
+		header.frame = frame
+		shortHead := header.sweepHead(shortWidth)
+		longHead := header.sweepHead(longWidth)
+		if shortHead < 0 || shortHead >= shortWidth {
+			t.Fatalf("short head at frame %d = %d, want inside width %d", frame, shortHead, shortWidth)
+		}
+		if longHead < 0 || longHead >= longWidth {
+			t.Fatalf("long head at frame %d = %d, want inside width %d", frame, longHead, longWidth)
+		}
+	}
+
+	header.frame = sweepCycleFrames
+	if got := header.sweepHead(shortWidth); got != 0 {
+		t.Fatalf("short sweep wrapped at fixed cycle to %d, want 0", got)
+	}
+	if got := header.sweepHead(longWidth); got != 0 {
+		t.Fatalf("long sweep wrapped at fixed cycle to %d, want 0", got)
 	}
 }
 

@@ -1491,7 +1491,7 @@ func animateTelemetry(ctx context.Context, widgets *telemetryWidgets) {
 
 // animateThreeD keeps the emoji rotating while cycling the spinner rune.
 func animateThreeD(ctx context.Context, widgets *threeDWidgets) {
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(redrawInterval)
 	defer ticker.Stop()
 
 	step := 0

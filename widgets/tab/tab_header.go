@@ -20,10 +20,16 @@ import (
 	"image"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/widgets/text"
+)
+
+const (
+	sweepAdvanceEvery = 120 * time.Millisecond
+	sweepCycleFrames  = 28
 )
 
 // Header displays the tab names and highlights the active tab.
@@ -35,6 +41,7 @@ type Header struct {
 	height        int               // Stores the height of the Header.
 	opts          *Options          // Configuration options for the Header.
 	frame         int               // Animation frame for the active tab sweep.
+	lastAdvance   time.Time         // Last time the active tab sweep advanced.
 }
 
 // NewHeader creates a new Header.
@@ -151,7 +158,14 @@ func (h *Header) Update() error {
 // Advance moves the active-tab sweep forward by one frame and redraws the header.
 func (h *Header) Advance() error {
 	h.mu.Lock()
-	h.frame++
+	now := time.Now()
+	if h.lastAdvance.IsZero() {
+		h.lastAdvance = now
+	} else if elapsed := now.Sub(h.lastAdvance); elapsed >= sweepAdvanceEvery {
+		steps := int(elapsed / sweepAdvanceEvery)
+		h.frame = (h.frame + steps) % sweepCycleFrames
+		h.lastAdvance = h.lastAdvance.Add(time.Duration(steps) * sweepAdvanceEvery)
+	}
 	h.mu.Unlock()
 	return h.Update()
 }
@@ -178,7 +192,7 @@ func (h *Header) writeActiveLabel(label string) error {
 		return h.widget.Write(label, text.WriteCellOpts(cell.Bold(), cell.FgColor(h.opts.ActiveTextColor), cell.BgColor(h.opts.ActiveTabColor)))
 	}
 
-	head := h.frame % max(1, runewidth.StringWidth(label))
+	head := h.sweepHead(runewidth.StringWidth(label))
 	cur := 0
 	for _, r := range label {
 		width := runewidth.RuneWidth(r)
@@ -203,7 +217,7 @@ func (h *Header) activeIndicator(width int) string {
 		return strings.Repeat("⎺", width)
 	}
 
-	head := h.frame % width
+	head := h.sweepHead(width)
 	runes := make([]rune, 0, width)
 	for i := 0; i < width; i++ {
 		switch {
@@ -216,6 +230,15 @@ func (h *Header) activeIndicator(width int) string {
 		}
 	}
 	return string(runes)
+}
+
+// sweepHead maps the global sweep frame onto a tab-local width.
+func (h *Header) sweepHead(width int) int {
+	if width <= 0 {
+		return 0
+	}
+	frame := h.frame % sweepCycleFrames
+	return min(width-1, frame*width/sweepCycleFrames)
 }
 
 // writeAnimatedIndicator recolors the active sweep segment in the underline row.
@@ -283,6 +306,14 @@ func distance(a, b int) int {
 // max returns the larger of a or b.
 func max(a, b int) int {
 	if a > b {
+		return a
+	}
+	return b
+}
+
+// min returns the smaller of a or b.
+func min(a, b int) int {
+	if a < b {
 		return a
 	}
 	return b

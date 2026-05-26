@@ -233,7 +233,7 @@ func TestStateSettersAndOptions(t *testing.T) {
 	if got, want := opts.WantKeyboard, widgetapi.KeyScopeFocused; got != want {
 		t.Fatalf("Options.WantKeyboard = %v, want %v", got, want)
 	}
-	if got, want := opts.WantMouse, widgetapi.MouseScopeWidget; got != want {
+	if got, want := opts.WantMouse, widgetapi.MouseScopeContainer; got != want {
 		t.Fatalf("Options.WantMouse = %v, want %v", got, want)
 	}
 

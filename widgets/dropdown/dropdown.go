@@ -375,10 +375,15 @@ func (d *Dropdown) Options() widgetapi.Options {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
+	minH := 1
+	if d.open {
+		// trigger(1) + top-border(1) + items + bottom-border(1)
+		minH = len(d.items) + 3
+	}
 	return widgetapi.Options{
-		MinimumSize:  image.Point{X: d.opts.width, Y: 1},
+		MinimumSize:  image.Point{X: d.opts.width, Y: minH},
 		WantKeyboard: widgetapi.KeyScopeFocused,
-		WantMouse:    widgetapi.MouseScopeWidget,
+		WantMouse:    widgetapi.MouseScopeContainer,
 	}
 }
 

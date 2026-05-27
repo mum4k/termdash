@@ -169,7 +169,12 @@ func (s *subcellScene) FillPolygonWithDepths(points []Vector2D, depths []float64
 				continue
 			}
 			idx := y*s.width + x
-			dotDepth := polygonDepth(float64(x), float64(y), scaled, depths, faceDepth)
+			// When coverage == 1.0 the fast-path in polygonCoverage confirmed
+			// all five sample points are inside the polygon, which guarantees
+			// the centre sample (x+0.5, y+0.5) is inside too.  Pass that
+			// knowledge to polygonDepth so it can skip its own redundant PIP
+			// call for the majority of interior dots.
+			dotDepth := polygonDepth(float64(x), float64(y), scaled, depths, faceDepth, coverage >= 1.0)
 			// Per-dot depth test: only paint if this face is closer than
 			// whatever polygon last touched this dot.
 			if dotDepth >= s.depth[idx] {
@@ -277,13 +282,16 @@ func polygonCoverage(x, y float64, polygon []Vector2D, samples int) float64 {
 }
 
 // polygonDepth estimates the polygon depth at a covered braille dot.
-func polygonDepth(x, y float64, polygon []Vector2D, depths []float64, fallback float64) float64 {
+// centerInside should be true when the caller already knows the dot centre
+// (x+0.5, y+0.5) lies inside the polygon; this skips the redundant PIP call
+// that would otherwise be performed for the majority of interior dots.
+func polygonDepth(x, y float64, polygon []Vector2D, depths []float64, fallback float64, centerInside bool) float64 {
 	if len(depths) != len(polygon) {
 		return fallback
 	}
 
 	px, py := x+0.5, y+0.5
-	if !pointInPolygon(px, py, polygon) {
+	if !centerInside && !pointInPolygon(px, py, polygon) {
 		var ok bool
 		px, py, ok = firstCoveredSample(x, y, polygon, subcellCoverageSamples)
 		if !ok {

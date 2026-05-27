@@ -50,10 +50,35 @@ func computeFaceNormal(vertices []Vector3D) Vector3D {
 	return edge1.Cross(edge2).Normalize()
 }
 
+// insertionSortThreshold is the maximum face count for which the inline
+// insertion sort is used instead of sort.SliceStable.  Insertion sort is
+// stable, allocation-free, and faster than the standard library sort for
+// small slices.  Most models have far fewer than 32 faces, so this path is
+// hit almost exclusively in practice.
+const insertionSortThreshold = 32
+
 // sortFacesByDepth sorts faces back-to-front (farthest first) for the
-// Painter's Algorithm. SliceStable is used so coplanar faces don't flicker
-// between frames due to a non-deterministic sort order.
+// Painter's Algorithm.  Stability is required so coplanar faces don't
+// flicker between frames due to a non-deterministic sort order.
 func sortFacesByDepth(faces []ProjectedFace) {
+	n := len(faces)
+	if n < 2 {
+		return
+	}
+	if n <= insertionSortThreshold {
+		// Insertion sort: O(n²) but stable, allocation-free, and cache-
+		// friendly for the small N that characterises typical 3-D models.
+		for i := 1; i < n; i++ {
+			key := faces[i]
+			j := i - 1
+			for j >= 0 && faces[j].Depth < key.Depth {
+				faces[j+1] = faces[j]
+				j--
+			}
+			faces[j+1] = key
+		}
+		return
+	}
 	sort.SliceStable(faces, func(i, j int) bool {
 		return faces[i].Depth > faces[j].Depth
 	})
@@ -134,11 +159,16 @@ func drawFillFace(cvs *canvas.Canvas, points []Vector2D, clr Color, char rune, m
 
 	// Build the cell options once outside the loop — block chars need both
 	// fg and bg set for solid fill; symbol chars use fg only.
+	// A fixed-size array keeps the backing storage on the stack and avoids a
+	// heap allocation for the slice literal on every call.
+	var optBuf [2]cell.Option
+	optBuf[0] = cell.FgColor(cellColor)
 	var opts []cell.Option
 	if shouldFillFaceBackground(char) {
-		opts = []cell.Option{cell.FgColor(cellColor), cell.BgColor(cellColor)}
+		optBuf[1] = cell.BgColor(cellColor)
+		opts = optBuf[:]
 	} else {
-		opts = []cell.Option{cell.FgColor(cellColor)}
+		opts = optBuf[:1]
 	}
 
 	// Bounding box of the projected polygon.

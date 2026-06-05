@@ -7,7 +7,6 @@ on:
   push:
     branches: [ "master", "devel" ]
   pull_request:
-    branches: [ "master", "devel" ]
 
 jobs:
 
@@ -29,8 +28,6 @@ jobs:
       run: |
         go install golang.org/x/tools/cmd/cover@latest
         go install github.com/mattn/goveralls@latest
-        go install golang.org/x/lint/golint@latest
-        go get -t ./...
 
     - name: Test
       run: go test -v -covermode=count -coverprofile=coverage.out ./...
@@ -42,4 +39,4 @@ jobs:
       run: diff -u <(echo -n) <(gofmt -d -s .)
 
     - name: Lint
-      run: diff -u <(echo -n) <(golint ./...)
+      run: go vet ./...

@@ -17,8 +17,10 @@ package axes
 // label.go contains code that calculates the positions of labels on the axes.
 
 import (
-	"errors"
+	"fmt"
 	"image"
+
+	"github.com/mum4k/termdash/private/runewidth"
 )
 
 // Label is one text label on an axis.
@@ -37,20 +39,105 @@ type Label struct {
 // Labels are returned with Y coordinates in ascending order.
 // Y coordinates grow down.
 func yLabels(graphHeight, labelWidth int, labels []string) ([]*Label, error) {
-	return nil, errors.New("not implemented")
+	if graphHeight < 0 {
+		return nil, fmt.Errorf("invalid graphHeight %d, want graphHeight >= 0", graphHeight)
+	}
+	if labelWidth < 0 {
+		return nil, fmt.Errorf("invalid labelWidth %d, want labelWidth >= 0", labelWidth)
+	}
+	if len(labels) != graphHeight {
+		return nil, fmt.Errorf("invalid label count %d, want %d", len(labels), graphHeight)
+	}
+
+	out := make([]*Label, 0, len(labels))
+	for row, label := range labels {
+		l, err := rowLabel(row, label, labelWidth)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, l)
+	}
+	return out, nil
 }
 
 // rowLabel returns one label for the specified row.
 // The row is the Y coordinate of the row, Y coordinates grow down.
 func rowLabel(row int, label string, labelWidth int) (*Label, error) {
-	return nil, errors.New("not implemented")
+	if row < 0 {
+		return nil, fmt.Errorf("invalid row %d, want row >= 0", row)
+	}
+	if labelWidth < 0 {
+		return nil, fmt.Errorf("invalid labelWidth %d, want labelWidth >= 0", labelWidth)
+	}
+	width := runewidth.StringWidth(label)
+	if width > labelWidth {
+		return nil, fmt.Errorf("label %q width %d exceeds label width %d", label, width, labelWidth)
+	}
+	return &Label{
+		Text: label,
+		Pos:  image.Point{X: labelWidth - width, Y: row},
+	}, nil
 }
 
 // xLabels returns labels that should be placed under the cells.
 // Labels are returned with X coordinates in ascending order.
 // X coordinates grow right.
 func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) ([]*Label, error) {
-	return nil, errors.New("not implemented")
+	if yEnd.Y < 0 {
+		return nil, fmt.Errorf("invalid yEnd %v, want non-negative Y coordinate", yEnd)
+	}
+	if graphWidth < 0 {
+		return nil, fmt.Errorf("invalid graphWidth %d, want graphWidth >= 0", graphWidth)
+	}
+	if cellWidth <= 0 {
+		return nil, fmt.Errorf("invalid cellWidth %d, want cellWidth > 0", cellWidth)
+	}
+	if len(labels) == 0 || graphWidth == 0 {
+		return nil, nil
+	}
+
+	longest := 0
+	for _, label := range labels {
+		if width := runewidth.StringWidth(label); width > longest {
+			longest = width
+		}
+	}
+
+	padded, index := paddedLabelLength(graphWidth, longest, cellWidth)
+	groupCells := 1
+	if padded > 0 {
+		groupCells = padded / cellWidth
+	}
+	if groupCells < 1 {
+		groupCells = 1
+	}
+
+	out := []*Label{}
+	for i, label := range labels {
+		if i%groupCells != index {
+			continue
+		}
+		width := runewidth.StringWidth(label)
+		groupStart := i * cellWidth
+		if groupCells > 1 {
+			groupStart = (i - index) * cellWidth
+			if groupStart < 0 {
+				groupStart = 0
+			}
+		}
+		posX := yEnd.X + 1 + groupStart + maxInt(0, (padded-width)/2)
+		if posX+width > yEnd.X+1+graphWidth {
+			posX = yEnd.X + 1 + graphWidth - width
+		}
+		if posX < yEnd.X+1 {
+			posX = yEnd.X + 1
+		}
+		out = append(out, &Label{
+			Text: label,
+			Pos:  image.Point{X: posX, Y: yEnd.Y + 1},
+		})
+	}
+	return out, nil
 }
 
 // paddedLabelLength calculates the length of the padded X label and
@@ -60,5 +147,24 @@ func xLabels(yEnd image.Point, graphWidth int, labels []string, cellWidth int) (
 // the X label belongs to the middle column of the three columns,
 // and the padded length is 3*3 (cellWidth multiplies the number of columns), which is 9.
 func paddedLabelLength(graphWidth, longest, cellWidth int) (l, index int) {
-	return
+	if graphWidth <= 0 || longest <= 0 || cellWidth <= 0 {
+		return 0, 0
+	}
+	groupCells := (longest + cellWidth - 1) / cellWidth
+	if groupCells < 1 {
+		groupCells = 1
+	}
+	padded := groupCells * cellWidth
+	if padded > graphWidth {
+		padded = graphWidth
+		groupCells = maxInt(1, padded/cellWidth)
+	}
+	return padded, groupCells / 2
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

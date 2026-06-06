@@ -42,12 +42,19 @@ type options struct {
 	labelCellOpts []cell.Option
 	height        int
 	color         cell.Color
+	threshold     int
+	thresholdLine cell.Color
+	alertColor    cell.Color
+	sparkRunes    []rune
 }
 
 // newOptions returns options with the default values set.
 func newOptions() *options {
 	return &options{
-		color: DefaultColor,
+		color:         DefaultColor,
+		thresholdLine: cell.ColorRed,
+		alertColor:    cell.ColorRed,
+		sparkRunes:    append([]rune(nil), sparks...),
 	}
 }
 
@@ -55,6 +62,9 @@ func newOptions() *options {
 func (o *options) validate() error {
 	if got, min := o.height, 0; got < min {
 		return fmt.Errorf("invalid Height %d, must be %d <= Height", got, min)
+	}
+	if err := validateSparkRunes(o.sparkRunes); err != nil {
+		return err
 	}
 	return nil
 }
@@ -84,5 +94,43 @@ const DefaultColor = cell.ColorGreen
 func Color(c cell.Color) Option {
 	return option(func(opts *options) {
 		opts.color = c
+	})
+}
+
+// Threshold sets the alarm threshold value for the SparkLine. Values at or
+// above the threshold can be highlighted during drawing. Zero disables the
+// threshold overlay.
+func Threshold(v int) Option {
+	return option(func(opts *options) {
+		opts.threshold = v
+	})
+}
+
+// ThresholdLineColor sets the color used to draw the threshold indicator line.
+func ThresholdLineColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.thresholdLine = c
+	})
+}
+
+// AlertColor sets the color used to draw portions of bars that exceed the
+// configured threshold.
+func AlertColor(c cell.Color) Option {
+	return option(func(opts *options) {
+		opts.alertColor = c
+	})
+}
+
+// SparkRunes sets the runes used to render bar heights from low to high.
+// All runes must occupy exactly one cell.
+//
+// Calling SparkRunes with no arguments restores the default spark rune set.
+func SparkRunes(runes ...rune) Option {
+	return option(func(opts *options) {
+		if len(runes) == 0 {
+			opts.sparkRunes = append([]rune(nil), sparks...)
+			return
+		}
+		opts.sparkRunes = append([]rune(nil), runes...)
 	})
 }

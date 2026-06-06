@@ -37,10 +37,13 @@ type options struct {
 	xLabelCellOpts      []cell.Option
 	xLabelOrientation   axes.LabelOrientation
 	yLabelCellOpts      []cell.Option
+	thresholdLine       *thresholdLine
+	brailleOnly         bool
 	xAxisUnscaled       bool
 	yAxisMode           axes.YScaleMode
 	yAxisCustomScale    *customScale
 	yAxisValueFormatter ValueFormatter
+	downsampler         downsamplerMode
 	zoomHightlightColor cell.Color
 	zoomStepPercent     int
 }
@@ -137,6 +140,22 @@ type customScale struct {
 	min, max float64
 }
 
+// thresholdLine stores the horizontal guide rendered across the chart.
+type thresholdLine struct {
+	value    float64
+	cellOpts []cell.Option
+}
+
+// downsamplerMode determines how line series are reduced before drawing.
+type downsamplerMode int
+
+const (
+	// downsamplerModeNone keeps every point in the visible series.
+	downsamplerModeNone downsamplerMode = iota
+	// downsamplerModeLTTB uses Largest-Triangle-Three-Buckets downsampling.
+	downsamplerModeLTTB
+)
+
 // YAxisCustomScale when provided, the scale of the Y axis will be based on the
 // specified minimum and maximum value instead of determining those from the
 // LineChart series. Useful to visually stabilize the Y axis for LineChart
@@ -174,6 +193,42 @@ func YAxisCustomScale(min, max float64) Option {
 func XAxisUnscaled() Option {
 	return option(func(opts *options) {
 		opts.xAxisUnscaled = true
+	})
+}
+
+// BrailleOnly makes the LineChart dedicate the full widget area to the
+// braille plot, skipping the rendered X/Y axes and their labels.
+//
+// This maximizes the drawable resolution and is useful for dense telemetry
+// displays where the surrounding container already provides context.
+func BrailleOnly() Option {
+	return option(func(opts *options) {
+		opts.brailleOnly = true
+	})
+}
+
+// ThresholdLine draws a horizontal guide across the plotted area at the
+// provided Y value.
+//
+// This is useful for alarm and watermark displays where callers want a stable
+// visual threshold without managing a second synthetic series.
+func ThresholdLine(value float64, co ...cell.Option) Option {
+	return option(func(opts *options) {
+		opts.thresholdLine = &thresholdLine{
+			value:    value,
+			cellOpts: co,
+		}
+	})
+}
+
+// DownsampleLTTB enables Largest-Triangle-Three-Buckets downsampling for
+// visible series that exceed the current braille pixel capacity.
+//
+// When enabled, the LineChart preserves peaks and overall shape more
+// accurately than naive point dropping while still drawing efficiently.
+func DownsampleLTTB() Option {
+	return option(func(opts *options) {
+		opts.downsampler = downsamplerModeLTTB
 	})
 }
 

@@ -204,6 +204,160 @@ go run widgets/treeview/treeviewdemo/treeviewdemo.go
 
 [<img src="./doc/images/treeviewdemo.gif" alt="treeviewdemo" type="image/gif">](widgets/treeview/treeviewdemo/treeviewdemo.go)
 
+## The Checkbox
+
+Allows users to toggle a single boolean value. Run the
+[checkboxdemo](widgets/checkbox/checkboxdemo/checkboxdemo.go).
+
+```go
+go run widgets/checkbox/checkboxdemo/checkboxdemo.go
+```
+
+## The Dropdown
+
+Allows users to select one value from a fixed list of items. Run the
+[dropdowndemo](widgets/dropdown/dropdowndemo/dropdowndemo.go).
+
+```go
+go run widgets/dropdown/dropdowndemo/dropdowndemo.go
+```
+
+## The Radio
+
+Allows users to select one item from a group of radio options. Run the
+[radiodemo](widgets/radio/radiodemo/radiodemo.go).
+
+```go
+go run widgets/radio/radiodemo/radiodemo.go
+```
+
+## The Slider
+
+Allows users to choose a numeric value from a bounded range. Run the
+[sliderdemo](widgets/slider/sliderdemo/sliderdemo.go).
+
+```go
+go run widgets/slider/sliderdemo/sliderdemo.go
+```
+
+## The Tab
+
+Displays tabbed interfaces with keyboard and mouse navigation, notifications
+and dynamically updated content. Run the
+[tabdemo](widgets/tab/tabdemo/tabdemo.go).
+
+```go
+go run widgets/tab/tabdemo/tabdemo.go
+```
+
+## The Modal
+
+Displays modal overlays that can host and move draggable child widgets. Run the
+[modaldemo](widgets/modal/modaldemo/modaldemo.go).
+
+```go
+go run widgets/modal/modaldemo/modaldemo.go
+```
+
+## The Timeline
+
+Displays a scrollable event log with severity markers and time range filtering.
+Run the
+[timelinedemo](widgets/timeline/timelinedemo/timelinedemo.go).
+
+```go
+go run widgets/timeline/timelinedemo/timelinedemo.go
+```
+
+## The HeatMap
+
+Displays heat maps with labeled axes and configurable cell colors. Run the
+[heatmapdemo](widgets/heatmap/heatmapdemo/heatmapdemo.go).
+
+```go
+go run widgets/heatmap/heatmapdemo/heatmapdemo.go
+```
+
+## The Spectrum
+
+Displays audio-style spectrum analyzer data with configurable bars, colors and
+threshold controls. Run the
+[spectrumdemo](widgets/spectrum/spectrumdemo/spectrumdemo.go).
+
+```go
+go run widgets/spectrum/spectrumdemo/spectrumdemo.go
+```
+
+## The Radar
+
+Displays an animated radar sweep with contacts and range rings. Run the
+[radardemo](widgets/radar/radardemo/radardemo.go).
+
+```go
+go run widgets/radar/radardemo/radardemo.go
+```
+
+## The ThreeD
+
+Displays rotating 3D models, symbols and image-derived glyphs in the terminal.
+Run the
+[threeddemo](widgets/threed/threeddemo/threeddemo.go).
+
+```go
+go run widgets/threed/threeddemo/threeddemo.go
+```
+
+## The FX
+
+Wraps widgets with animated effects such as fade, sweep, scramble and framed
+canvas rendering. Run the
+[fxdemo](widgets/fx/fxdemo/fxdemo.go).
+
+```go
+go run widgets/fx/fxdemo/fxdemo.go
+```
+
+## The BorderFX
+
+Provides animated border and title effects for containers. Run the
+[borderfxdemo](widgets/borderfx/borderfxdemo/borderfxdemo.go).
+
+```go
+go run widgets/borderfx/borderfxdemo/borderfxdemo.go
+```
+
+## The Toast
+
+Displays configurable toast notifications in normal containers and modal
+windows, with placement, animation, progress and action callbacks. Run the
+[toastdemo](widgets/toast/toastdemo/toastdemo.go).
+
+```go
+go run widgets/toast/toastdemo/toastdemo.go
+```
+
+## The HUD
+
+Displays a drop-down modal HUD overlay with live OS values, compact in/out
+sparklines, a disk pie, a 3D spectrum analyzer, a telemetry treeview,
+double-Escape toggling, animated borderfx framing, embedded toast notifications
+and action controls. Run the
+[huddemo](widgets/hud/huddemo/huddemo.go).
+
+```go
+go run widgets/hud/huddemo/huddemo.go
+```
+
+## The EmojiKeyboard
+
+Displays a paginated emoji grid for keyboard and mouse selection. It is
+demonstrated in the
+[tabdemo](widgets/tab/tabdemo/tabdemo.go).
+
+```go
+go run widgets/tab/tabdemo/tabdemo.go
+```
+
 # Contributing
 
 If you are willing to contribute, improve the infrastructure or develop a
@@ -243,4 +397,3 @@ Termdash uses [this branching model](https://nvie.com/posts/a-successful-git-bra
 # Disclaimer
 
 This is not an official Google product.
-

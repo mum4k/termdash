@@ -16,7 +16,7 @@
 package axes
 
 import (
-	"errors"
+	"fmt"
 	"image"
 
 	"github.com/mum4k/termdash/private/runewidth"
@@ -52,7 +52,32 @@ func RequiredWidth(ls string) int {
 // NewYDetails retrieves details about the Y axis required
 // to draw it on a canvas of the provided area.
 func NewYDetails(labels []string) (*YDetails, error) {
-	return nil, errors.New("not implemented")
+	if len(labels) == 0 {
+		return &YDetails{}, nil
+	}
+
+	longest := ""
+	longestWidth := 0
+	for _, label := range labels {
+		if width := runewidth.StringWidth(label); width > longestWidth {
+			longest = label
+			longestWidth = width
+		}
+	}
+
+	width := RequiredWidth(longest)
+	yAxisX := width - axisWidth
+	lbs, err := yLabels(len(labels), yAxisX, labels)
+	if err != nil {
+		return nil, err
+	}
+
+	return &YDetails{
+		Width:  width,
+		Start:  image.Point{X: yAxisX, Y: 0},
+		End:    image.Point{X: yAxisX, Y: len(labels) - 1},
+		Labels: lbs,
+	}, nil
 }
 
 // LongestString returns the length of the longest string in the string array.
@@ -83,5 +108,40 @@ type XDetails struct {
 // of the provided area.
 // The yEnd is the point where the Y axis ends.
 func NewXDetails(cvsAr image.Rectangle, yEnd image.Point, labels []string, cellWidth int) (*XDetails, error) {
-	return nil, errors.New("not implemented")
+	if yEnd.Y < 0 {
+		return nil, fmt.Errorf("invalid yEnd %v, want non-negative Y coordinate", yEnd)
+	}
+	if cellWidth <= 0 {
+		return nil, fmt.Errorf("invalid cellWidth %d, want cellWidth > 0", cellWidth)
+	}
+	if len(labels) == 0 {
+		return &XDetails{
+			Start: image.Point{X: yEnd.X + 1, Y: yEnd.Y + 1},
+			End:   image.Point{X: yEnd.X + 1, Y: yEnd.Y + 1},
+		}, nil
+	}
+
+	graphWidth := len(labels) * cellWidth
+	lbs, err := xLabels(yEnd, graphWidth, labels, cellWidth)
+	if err != nil {
+		return nil, err
+	}
+
+	start := image.Point{X: yEnd.X + 1, Y: yEnd.Y + 1}
+	if start.X < 0 {
+		start.X = 0
+	}
+	end := image.Point{X: start.X + graphWidth - 1, Y: start.Y}
+	if start.X > cvsAr.Max.X {
+		start.X = cvsAr.Max.X
+	}
+	if end.X > cvsAr.Max.X-1 {
+		end.X = cvsAr.Max.X - 1
+	}
+
+	return &XDetails{
+		Start:  start,
+		End:    end,
+		Labels: lbs,
+	}, nil
 }

@@ -25,6 +25,11 @@ func cellColor(c cell.Color) tcell.Color {
 	if c == cell.ColorDefault {
 		return tcell.ColorDefault
 	}
+	// True-color values (created by cell.ColorTrueRGB) bypass the indexed
+	// palette entirely and are emitted as 24-bit RGB escape sequences.
+	if r, g, b, ok := cell.ColorTrueComponents(c); ok {
+		return tcell.NewRGBColor(int32(r), int32(g), int32(b))
+	}
 	// Subtract one, because cell.ColorBlack has value one instead of zero.
 	// Zero is used for cell.ColorDefault instead.
 	return tcell.Color(c-1) + tcell.ColorValid
@@ -33,6 +38,10 @@ func cellColor(c cell.Color) tcell.Color {
 // colorToMode adjusts the color to the color mode.
 func colorToMode(c cell.Color, colorMode terminalapi.ColorMode) cell.Color {
 	if c == cell.ColorDefault {
+		return c
+	}
+	// True-color values are self-contained; skip palette quantisation.
+	if cell.IsTrueColor(c) {
 		return c
 	}
 	switch colorMode {

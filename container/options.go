@@ -126,6 +126,7 @@ type options struct {
 	border            linestyle.LineStyle
 	borderTitle       string
 	borderTitleHAlign align.Horizontal
+	borderCellStyler  BorderCellStyler
 
 	// padding is a space reserved between the outer edge of the container and
 	// its content (the widget or other sub-containers).
@@ -200,6 +201,25 @@ type inherited struct {
 	// titleFocusedColor is the color used for the title when focused.
 	titleFocusedColor *cell.Color
 }
+
+// BorderCell contains metadata about one cell on a container border.
+type BorderCell struct {
+	Point  image.Point
+	Border image.Rectangle
+	Rune   rune
+	Index  int
+	Length int
+	Title  bool
+}
+
+// BorderCellStyle contains overrides for one border cell.
+type BorderCellStyle struct {
+	Rune     rune
+	CellOpts []cell.Option
+}
+
+// BorderCellStyler returns style overrides for one border cell.
+type BorderCellStyler func(BorderCell) BorderCellStyle
 
 // focusGroups maps focus group numbers that have the same key assigned.
 // The value is always true for all the keys.
@@ -786,6 +806,14 @@ func BorderTitleAlignRight() Option {
 func BorderColor(color cell.Color) Option {
 	return option(func(c *Container) error {
 		c.opts.inherited.borderColor = color
+		return nil
+	})
+}
+
+// BorderCellStyleFunc sets a function that can override each border cell.
+func BorderCellStyleFunc(styler BorderCellStyler) Option {
+	return option(func(c *Container) error {
+		c.opts.borderCellStyler = styler
 		return nil
 	})
 }

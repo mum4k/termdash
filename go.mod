@@ -1,6 +1,6 @@
 module github.com/mum4k/termdash
 
-go 1.21
+go 1.20
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.4
@@ -15,5 +15,5 @@ require (
 	github.com/rivo/uniseg v0.4.3 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 )

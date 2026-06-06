@@ -23,6 +23,21 @@ import (
 	"github.com/mum4k/termdash/terminal/terminalapi"
 )
 
+type mouseRecordingScreen struct {
+	tcell.SimulationScreen
+	enableMouseCalls [][]tcell.MouseFlags
+}
+
+func newMouseRecordingScreen() *mouseRecordingScreen {
+	return &mouseRecordingScreen{
+		SimulationScreen: tcell.NewSimulationScreen("UTF-8"),
+	}
+}
+
+func (s *mouseRecordingScreen) EnableMouse(flags ...tcell.MouseFlags) {
+	s.enableMouseCalls = append(s.enableMouseCalls, append([]tcell.MouseFlags(nil), flags...))
+}
+
 func TestNewTerminalColorMode(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -66,6 +81,76 @@ func TestNewTerminalColorMode(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEnableMouseUsesButtonEventsOnly(t *testing.T) {
+	screen := newMouseRecordingScreen()
+	term := &Terminal{screen: screen}
+
+	term.EnableMouse()
+
+	if len(screen.enableMouseCalls) != 1 {
+		t.Fatalf("EnableMouse calls = %d, want 1", len(screen.enableMouseCalls))
+	}
+	if got, want := screen.enableMouseCalls[0], []tcell.MouseFlags{tcell.MouseButtonEvents}; !sameMouseFlags(got, want) {
+		t.Fatalf("EnableMouse flags = %v, want %v", got, want)
+	}
+	if !term.MouseEnabled() {
+		t.Fatal("MouseEnabled = false, want true")
+	}
+}
+
+func TestEnableMouseMotionIncludesDragEvents(t *testing.T) {
+	screen := newMouseRecordingScreen()
+	term := &Terminal{screen: screen}
+
+	term.EnableMouseMotion()
+
+	if len(screen.enableMouseCalls) != 1 {
+		t.Fatalf("EnableMouse calls = %d, want 1", len(screen.enableMouseCalls))
+	}
+	want := []tcell.MouseFlags{tcell.MouseButtonEvents | tcell.MouseDragEvents}
+	if got := screen.enableMouseCalls[0]; !sameMouseFlags(got, want) {
+		t.Fatalf("EnableMouse flags = %v, want %v", got, want)
+	}
+	if !term.MouseEnabled() {
+		t.Fatal("MouseEnabled = false, want true")
+	}
+}
+
+func TestNewEnablesButtonAndDragMouseEvents(t *testing.T) {
+	screen := newMouseRecordingScreen()
+	originalNewScreen := tcellNewScreen
+	tcellNewScreen = func() (tcell.Screen, error) { return screen, nil }
+	defer func() { tcellNewScreen = originalNewScreen }()
+
+	term, err := New()
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	defer term.Close()
+
+	if len(screen.enableMouseCalls) != 1 {
+		t.Fatalf("EnableMouse calls = %d, want 1", len(screen.enableMouseCalls))
+	}
+	if got, want := screen.enableMouseCalls[0], []tcell.MouseFlags{tcell.MouseButtonEvents | tcell.MouseDragEvents}; !sameMouseFlags(got, want) {
+		t.Fatalf("EnableMouse flags = %v, want %v", got, want)
+	}
+	if !term.MouseEnabled() {
+		t.Fatal("MouseEnabled = false, want true")
+	}
+}
+
+func sameMouseFlags(a, b []tcell.MouseFlags) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func TestNewTerminalClearStyle(t *testing.T) {

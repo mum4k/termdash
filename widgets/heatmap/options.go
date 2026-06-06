@@ -16,6 +16,7 @@ package heatmap
 
 import (
 	"errors"
+
 	"github.com/mum4k/termdash/cell"
 )
 
@@ -33,11 +34,16 @@ type options struct {
 	cellWidth      int
 	xLabelCellOpts []cell.Option
 	yLabelCellOpts []cell.Option
+	axisCellOpts   []cell.Option
+	palette        []cell.Color
 }
 
 // validate validates the provided options.
 func (o *options) validate() error {
-	return errors.New("not implemented")
+	if o.cellWidth < 1 {
+		return errors.New("cell width must be >= 1")
+	}
+	return nil
 }
 
 // newOptions returns a new options instance.
@@ -67,6 +73,13 @@ func CellWidth(w int) Option {
 	})
 }
 
+// SquareCells configures each heatmap value to use two terminal columns, which
+// reads closer to a square cell on typical terminals where character cells are
+// taller than they are wide.
+func SquareCells() Option {
+	return CellWidth(2)
+}
+
 // XLabelCellOpts set the cell options for the labels on the X axis.
 func XLabelCellOpts(co ...cell.Option) Option {
 	return option(func(opts *options) {
@@ -78,5 +91,24 @@ func XLabelCellOpts(co ...cell.Option) Option {
 func YLabelCellOpts(co ...cell.Option) Option {
 	return option(func(opts *options) {
 		opts.yLabelCellOpts = co
+	})
+}
+
+// AxisCellOpts sets the cell options for the Y-axis rule drawn beside the cells.
+func AxisCellOpts(co ...cell.Option) Option {
+	return option(func(opts *options) {
+		opts.axisCellOpts = co
+	})
+}
+
+// Palette sets a custom low-to-high color palette for heatmap cells.
+//
+// When Palette isn't provided, the widget uses the original grayscale mapping.
+// When colors are provided, lower values use earlier colors and higher values
+// use later colors, preserving backward compatibility while allowing a more
+// expressive look.
+func Palette(colors ...cell.Color) Option {
+	return option(func(opts *options) {
+		opts.palette = append([]cell.Color(nil), colors...)
 	})
 }

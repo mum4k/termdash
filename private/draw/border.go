@@ -36,12 +36,32 @@ type BorderOption interface {
 // borderOptions stores the provided options.
 type borderOptions struct {
 	cellOpts      []cell.Option
+	cellStyler    BorderCellStyler
 	lineStyle     linestyle.LineStyle
 	title         string
 	titleOM       OverrunMode
 	titleCellOpts []cell.Option
 	titleHAlign   align.Horizontal
 }
+
+// BorderCell contains metadata about one cell on a border.
+type BorderCell struct {
+	Point  image.Point
+	Border image.Rectangle
+	Rune   rune
+	Index  int
+	Length int
+	Title  bool
+}
+
+// BorderCellStyle contains overrides for one border cell.
+type BorderCellStyle struct {
+	Rune     rune
+	CellOpts []cell.Option
+}
+
+// BorderCellStyler returns style overrides for one border cell.
+type BorderCellStyler func(BorderCell) BorderCellStyle
 
 // borderOption implements BorderOption.
 type borderOption func(bOpts *borderOptions)
@@ -65,6 +85,13 @@ func BorderLineStyle(ls linestyle.LineStyle) BorderOption {
 func BorderCellOpts(opts ...cell.Option) BorderOption {
 	return borderOption(func(bOpts *borderOptions) {
 		bOpts.cellOpts = opts
+	})
+}
+
+// BorderCellStyleFunc sets a function that can override each border cell.
+func BorderCellStyleFunc(styler BorderCellStyler) BorderOption {
+	return borderOption(func(bOpts *borderOptions) {
+		bOpts.cellStyler = styler
 	})
 }
 
@@ -105,6 +132,22 @@ func borderChar(p image.Point, border image.Rectangle, parts map[linePart]rune) 
 	return -1
 }
 
+func borderIndex(p image.Point, border image.Rectangle) (int, int) {
+	width := border.Dx()
+	height := border.Dy()
+	length := 2*width + 2*height - 4
+	switch {
+	case p.Y == border.Min.Y:
+		return p.X - border.Min.X, length
+	case p.X == border.Max.X-1:
+		return width + p.Y - border.Min.Y - 1, length
+	case p.Y == border.Max.Y-1:
+		return width + height - 2 + border.Max.X - 1 - p.X, length
+	default:
+		return width*2 + height - 3 + border.Max.Y - 1 - p.Y, length
+	}
+}
+
 // drawTitle draws a text title at the top of the border.
 func drawTitle(c *canvas.Canvas, border image.Rectangle, opt *borderOptions) error {
 	// Don't attempt to draw the title if there isn't space for at least one rune.
@@ -126,12 +169,37 @@ func drawTitle(c *canvas.Canvas, border image.Rectangle, opt *borderOptions) err
 		return err
 	}
 
-	return Text(
-		c, opt.title, start,
-		TextCellOpts(opt.titleCellOpts...),
-		TextOverrunMode(opt.titleOM),
-		TextMaxX(available.Max.X),
-	)
+	maxCells := available.Max.X - start.X
+	trimmed, err := TrimText(opt.title, maxCells, opt.titleOM)
+	if err != nil {
+		return err
+	}
+
+	cur := start
+	for _, r := range trimmed {
+		cellOpts := opt.titleCellOpts
+		if opt.cellStyler != nil {
+			idx, length := borderIndex(cur, border)
+			style := opt.cellStyler(BorderCell{
+				Point:  cur,
+				Border: border,
+				Rune:   r,
+				Index:  idx,
+				Length: length,
+				Title:  true,
+			})
+			if style.CellOpts != nil {
+				cellOpts = append(append([]cell.Option{}, opt.titleCellOpts...), style.CellOpts...)
+			}
+		}
+
+		cells, err := c.SetCell(cur, r, cellOpts...)
+		if err != nil {
+			return err
+		}
+		cur = image.Point{X: cur.X + cells, Y: cur.Y}
+	}
+	return nil
 }
 
 // Border draws a border on the canvas.
@@ -165,7 +233,25 @@ func Border(c *canvas.Canvas, border image.Rectangle, opts ...BorderOption) erro
 				continue
 			}
 
-			cells, err := c.SetCell(p, r, opt.cellOpts...)
+			cOpts := opt.cellOpts
+			if opt.cellStyler != nil {
+				idx, length := borderIndex(p, border)
+				style := opt.cellStyler(BorderCell{
+					Point:  p,
+					Border: border,
+					Rune:   r,
+					Index:  idx,
+					Length: length,
+				})
+				if style.Rune != 0 {
+					r = style.Rune
+				}
+				if style.CellOpts != nil {
+					cOpts = style.CellOpts
+				}
+			}
+
+			cells, err := c.SetCell(p, r, cOpts...)
 			if err != nil {
 				return err
 			}

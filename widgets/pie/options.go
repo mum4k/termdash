@@ -1,0 +1,71 @@
+// Copyright 2026 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package pie
+
+import (
+	"github.com/mum4k/termdash/cell"
+)
+
+// Option defines a function that sets a specific option for the Pie widget.
+type Option interface {
+	// set sets the provided option.
+	set(*options)
+}
+
+// option implements Option.
+type option func(*options)
+
+// set implements Option.set.
+func (o option) set(opts *options) {
+	o(opts)
+}
+
+// options stores the provided options.
+type options struct {
+	colors []cell.Color
+}
+
+// validates the provided options
+// at the moment no validation is performed cause options are not required
+func (o *options) validate() error {
+	return nil
+}
+
+// ColorOption sets custom colors for the pie chart segments.
+func ColorOption(colors []cell.Color) Option {
+	return option(func(opts *options) {
+		opts.colors = colors
+	})
+}
+
+// newOptions creates a new options instance.
+func newOptions() *options {
+	return &options{
+		colors: DefaultColors,
+	}
+}
+
+// DefaultColors defines a default set of colors used for rendering pie chart segments.
+// These colors are chosen from the predefined cell.Color constants and include a variety
+// of primary and secondary colors to ensure visual distinction between segments.
+var DefaultColors = []cell.Color{
+	cell.ColorRed,
+	cell.ColorGreen,
+	cell.ColorBlue,
+	cell.ColorYellow,
+	cell.ColorMagenta,
+	cell.ColorCyan,
+	cell.ColorWhite,
+}

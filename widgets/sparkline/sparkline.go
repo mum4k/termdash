@@ -81,6 +81,9 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 
 	ar := sl.area(cvs)
 	visible, max := visibleMax(sl.data, ar.Dx())
+	sparkSet := sl.sparkRunes()
+	sparkCount := len(sparkSet)
+	thresholdElements := sl.thresholdElements(max, ar.Dy())
 	var curX int
 	if len(visible) < ar.Dx() {
 		curX = ar.Max.X - len(visible)
@@ -89,13 +92,17 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 	}
 
 	for _, v := range visible {
-		blocks := toBlocks(v, max, ar.Dy())
+		blocks := toBlocksWithSparks(v, max, ar.Dy(), sparkSet)
 		curY := ar.Max.Y - 1
 		for i := 0; i < blocks.full; i++ {
+			color := sl.opts.color
+			if thresholdElements > 0 && (i+1)*sparkCount > thresholdElements {
+				color = sl.opts.alertColor
+			}
 			if _, err := cvs.SetCell(
 				image.Point{curX, curY},
-				sparks[len(sparks)-1], // Last spark represents full cell.
-				cell.FgColor(sl.opts.color),
+				sparkSet[sparkCount-1], // Last spark represents full cell.
+				cell.FgColor(color),
 			); err != nil {
 				return err
 			}
@@ -104,16 +111,31 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		}
 
 		if blocks.partSpark != 0 {
+			color := sl.opts.color
+			if thresholdElements > 0 && blocks.full*sparkCount+sparkIndexIn(blocks.partSpark, sparkSet)+1 > thresholdElements {
+				color = sl.opts.alertColor
+			}
 			if _, err := cvs.SetCell(
 				image.Point{curX, curY},
 				blocks.partSpark,
-				cell.FgColor(sl.opts.color),
+				cell.FgColor(color),
 			); err != nil {
 				return err
 			}
 		}
 
 		curX++
+	}
+
+	if sl.opts.threshold > 0 && max > 0 {
+		y := sl.thresholdY(ar, max)
+		if y >= ar.Min.Y && y < ar.Max.Y {
+			for x := ar.Min.X; x < ar.Max.X; x++ {
+				if _, err := cvs.SetCell(image.Point{X: x, Y: y}, '─', cell.FgColor(sl.opts.thresholdLine)); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	if sl.opts.label != "" {
@@ -127,6 +149,50 @@ func (sl *SparkLine) Draw(cvs *canvas.Canvas, meta *widgetapi.Meta) error {
 		}
 	}
 	return nil
+}
+
+func (sl *SparkLine) thresholdElements(max, vertCells int) int {
+	if sl.opts.threshold <= 0 || max <= 0 || vertCells <= 0 {
+		return 0
+	}
+	sparkSet := sl.sparkRunes()
+	elements := toBlocksWithSparks(sl.opts.threshold, max, vertCells, sparkSet)
+	part := sparkIndexIn(elements.partSpark, sparkSet) + 1
+	if elements.partSpark == 0 {
+		part = 0
+	}
+	return elements.full*len(sparkSet) + part
+}
+
+func (sl *SparkLine) thresholdY(ar image.Rectangle, max int) int {
+	threshold := sl.thresholdElements(max, ar.Dy())
+	if threshold <= 0 {
+		return ar.Max.Y
+	}
+	cellsAboveBottom := (threshold - 1) / len(sl.sparkRunes())
+	return ar.Max.Y - 1 - cellsAboveBottom
+}
+
+func sparkIndex(r rune) int {
+	return sparkIndexIn(r, sparks)
+}
+
+func sparkIndexIn(r rune, sparkSet []rune) int {
+	for i, spark := range sparkSet {
+		if spark == r {
+			return i
+		}
+	}
+	return -1
+}
+
+// sparkRunes returns a validated spark set and falls back to defaults if the
+// configured one is invalid.
+func (sl *SparkLine) sparkRunes() []rune {
+	if err := validateSparkRunes(sl.opts.sparkRunes); err != nil {
+		return sparks
+	}
+	return sl.opts.sparkRunes
 }
 
 // ValueCapacity returns the number of values that can fit into the canvas.

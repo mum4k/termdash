@@ -121,3 +121,40 @@ func ColorRGB24(r, g, b int) Color {
 	}
 	return ColorRGB6(r/51, g/51, b/51)
 }
+
+// colorTrueFlag is the sentinel bit used to distinguish ColorTrueRGB values
+// from indexed-color values.  Indexed colors top out at ~257, so any value
+// at or above 1<<24 (16 777 216) is unambiguously a true-color token.
+const colorTrueFlag = Color(1 << 24)
+
+// ColorTrueRGB encodes a full 24-bit RGB color that is emitted as a true-color
+// (ISO 8613-3 / "truecolor") escape sequence when the terminal backend
+// supports it.  The provided values (r, g, b) must be in the range 0–255;
+// out-of-range values return ColorDefault.
+//
+// Unlike ColorRGB24, which quantises to 216 colors, ColorTrueRGB preserves
+// all 16 777 216 possible colors.  It is detected automatically by the tcell
+// backend and bypasses the ColorMode quantisation path.
+func ColorTrueRGB(r, g, b int) Color {
+	for _, c := range []int{r, g, b} {
+		if c < 0 || c > 255 {
+			return ColorDefault
+		}
+	}
+	return colorTrueFlag | Color(r<<16|g<<8|b)
+}
+
+// IsTrueColor reports whether c was created by ColorTrueRGB.
+func IsTrueColor(c Color) bool {
+	return c&colorTrueFlag != 0
+}
+
+// ColorTrueComponents decodes a ColorTrueRGB value into its r, g, b
+// components.  ok is false if c is not a true-color value.
+func ColorTrueComponents(c Color) (r, g, b uint8, ok bool) {
+	if !IsTrueColor(c) {
+		return 0, 0, 0, false
+	}
+	v := int(c &^ colorTrueFlag)
+	return uint8(v >> 16), uint8((v >> 8) & 0xFF), uint8(v & 0xFF), true
+}

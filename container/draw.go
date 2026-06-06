@@ -106,6 +106,23 @@ func drawBorder(c *Container) error {
 		draw.BorderTitle(c.opts.borderTitle, draw.OverrunModeThreeDot, titleCOpts...),
 		draw.BorderTitleAlign(c.opts.borderTitleHAlign),
 		draw.BorderCellOpts(cOpts...),
+		draw.BorderCellStyleFunc(func(dc draw.BorderCell) draw.BorderCellStyle {
+			if c.opts.borderCellStyler == nil {
+				return draw.BorderCellStyle{}
+			}
+			style := c.opts.borderCellStyler(BorderCell{
+				Point:  dc.Point,
+				Border: dc.Border,
+				Rune:   dc.Rune,
+				Index:  dc.Index,
+				Length: dc.Length,
+				Title:  dc.Title,
+			})
+			return draw.BorderCellStyle{
+				Rune:     style.Rune,
+				CellOpts: style.CellOpts,
+			}
+		}),
 	); err != nil {
 		return err
 	}

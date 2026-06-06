@@ -1896,6 +1896,129 @@ func TestLineChartDraws(t *testing.T) {
 	}
 }
 
+func TestThresholdLineDrawsAndClears(t *testing.T) {
+	lc, err := New(
+		BrailleOnly(),
+		ThresholdLine(50, cell.FgColor(cell.ColorRed)),
+	)
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := lc.Series("first", []float64{0, 100}); err != nil {
+		t.Fatalf("Series => unexpected error: %v", err)
+	}
+
+	cvs := testcanvas.MustNew(image.Rect(0, 0, 8, 4))
+	if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
+		t.Fatalf("Draw with threshold => unexpected error: %v", err)
+	}
+
+	withThreshold := faketerm.MustNew(cvs.Size())
+	if err := cvs.Apply(withThreshold); err != nil {
+		t.Fatalf("cvs.Apply => unexpected error: %v", err)
+	}
+	if got := countCellsWithFGColor(withThreshold, cell.ColorRed); got == 0 {
+		t.Fatal("threshold line drew zero red cells, want visible guide")
+	}
+
+	lc.ClearThresholdLine()
+	cvs = testcanvas.MustNew(image.Rect(0, 0, 8, 4))
+	if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
+		t.Fatalf("Draw after ClearThresholdLine => unexpected error: %v", err)
+	}
+
+	cleared := faketerm.MustNew(cvs.Size())
+	if err := cvs.Apply(cleared); err != nil {
+		t.Fatalf("cvs.Apply after ClearThresholdLine => unexpected error: %v", err)
+	}
+	if got := countCellsWithFGColor(cleared, cell.ColorRed); got != 0 {
+		t.Fatalf("threshold line left %d red cells after clear, want 0", got)
+	}
+}
+
+func countCellsWithFGColor(ft *faketerm.Terminal, want cell.Color) int {
+	count := 0
+	buffer := ft.BackBuffer()
+	for x := range buffer {
+		for y := range buffer[x] {
+			if buffer[x][y].Opts.FgColor == want {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func TestValueAtOnlyHitsRenderedLineAndDoesNotBlockScroll(t *testing.T) {
+	lc, err := New(BrailleOnly(), XAxisUnscaled())
+	if err != nil {
+		t.Fatalf("New => unexpected error: %v", err)
+	}
+	if err := lc.Series("series", []float64{120, 240, 180, 320, 260, 420, 300, 500}); err != nil {
+		t.Fatalf("Series => unexpected error: %v", err)
+	}
+
+	cvs := testcanvas.MustNew(image.Rect(0, 0, 10, 4))
+	if err := lc.Draw(cvs, &widgetapi.Meta{}); err != nil {
+		t.Fatalf("Draw => unexpected error: %v", err)
+	}
+
+	ft := faketerm.MustNew(cvs.Size())
+	if err := cvs.Apply(ft); err != nil {
+		t.Fatalf("cvs.Apply => unexpected error: %v", err)
+	}
+
+	hit, sample, ok := firstHoverableCell(lc, cvs.Size())
+	if !ok {
+		t.Fatal("firstHoverableCell => none, want visible plotted cell")
+	}
+	if sample.X < 1 || sample.Y <= 0 {
+		t.Fatalf("ValueAt(rendered cell) = %+v, want positive sample", sample)
+	}
+
+	miss, ok := firstEmptyCell(ft)
+	if !ok {
+		t.Fatal("firstEmptyCell => none, want unused graph cell")
+	}
+	if _, ok := lc.ValueAt(cvs.Size(), miss); ok {
+		t.Fatalf("ValueAt(empty cell %v) = ok, want !ok", miss)
+	}
+
+	if err := lc.Mouse(&terminalapi.Mouse{
+		Button:   mouse.ButtonWheelUp,
+		Position: hit,
+	}, &widgetapi.EventMeta{}); err != nil {
+		t.Fatalf("Mouse(wheel up) => unexpected error: %v", err)
+	}
+	if lc.zoom == nil || lc.zoom.Zoom() == nil {
+		t.Fatal("wheel scroll did not update zoom after hover hit-testing")
+	}
+}
+
+func firstHoverableCell(lc *LineChart, size image.Point) (image.Point, Sample, bool) {
+	for y := 0; y < size.Y; y++ {
+		for x := 0; x < size.X; x++ {
+			pos := image.Point{X: x, Y: y}
+			if sample, ok := lc.ValueAt(size, pos); ok {
+				return pos, sample, true
+			}
+		}
+	}
+	return image.Point{}, Sample{}, false
+}
+
+func firstEmptyCell(ft *faketerm.Terminal) (image.Point, bool) {
+	buffer := ft.BackBuffer()
+	for y := 0; y < len(buffer[0]); y++ {
+		for x := 0; x < len(buffer); x++ {
+			if buffer[x][y].Rune == 0 || buffer[x][y].Rune == ' ' {
+				return image.Point{X: x, Y: y}, true
+			}
+		}
+	}
+	return image.Point{}, false
+}
+
 func TestKeyboard(t *testing.T) {
 	lc, err := New()
 	if err != nil {

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 06-Jun-2026
+
+### Added
+
+- **BorderFX API**: A new per-cell callback API enabling animated and styled border effects.
+- **10+ New Widgets**: Including `borderfx`, `tab`, `radar`, `checkbox`, `radio`, `slider`, `spinner`, `dropdown`, `timeline`, `spectrum`, and `threed`.
+- **Pie Widget**: A new pie chart widget for visualizing multi-value data.
+- **Treeview Widget**: A hierarchical tree view widget for displaying nested data.
+- AI agent rules setup for standardized development workflow.
+
+### Changed
+
+- Extensive enhancements to existing `heatmap`, `linechart`, and `sparkline` widgets.
+- Updated GitHub Actions workflow to run on all PRs and modernized Go linting.
+- Bumped `github.com/mattn/go-runewidth` to `0.0.16`.
+- Bumped `golang.org/x/text` to `v0.22.0` and added `golang.org/x/image v0.24.0`.
+
 ## [0.20.0] - 10-Mar-2024
 
 ### Added
@@ -543,7 +560,8 @@ identifiers shouldn't be used externally.
 - The Gauge widget.
 - The Text widget.
 
-[unreleased]: https://github.com/mum4k/termdash/compare/v0.20.0...devel
+[unreleased]: https://github.com/mum4k/termdash/compare/v0.21.0...devel
+[0.21.0]: https://github.com/mum4k/termdash/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/mum4k/termdash/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/mum4k/termdash/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/mum4k/termdash/compare/v0.17.0...v0.18.0

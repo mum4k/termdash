@@ -15,7 +15,6 @@
 package buffer
 
 import (
-	"fmt"
 	"image"
 	"testing"
 
@@ -126,7 +125,7 @@ func TestNewCell(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			got := NewCell(tc.r, tc.opts...)
-			t.Logf(fmt.Sprintf("%v", got))
+			t.Logf("%v", got)
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("NewCell => unexpected diff (-want, +got):\n%s", diff)
 			}

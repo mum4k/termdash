@@ -664,7 +664,7 @@ func TestCells(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			t.Logf(fmt.Sprintf("Mode: %v", tc.mode))
+			t.Logf("Mode: %v", tc.mode)
 			got, err := Cells(tc.cells, tc.width, tc.mode)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Cells => unexpected error %v, wantErr %v", err, tc.wantErr)

@@ -15,7 +15,6 @@
 package button
 
 import (
-	"fmt"
 	"image"
 	"testing"
 
@@ -297,7 +296,7 @@ func TestFSM(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(fmt.Sprintf(tc.desc), func(t *testing.T) {
+		t.Run(tc.desc, func(t *testing.T) {
 			fsm := NewFSM(tc.button, tc.area)
 			for _, etc := range tc.eventCases {
 				if etc.area != nil {

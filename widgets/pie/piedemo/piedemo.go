@@ -16,13 +16,14 @@ package main
 
 import (
 	"context"
+	"time"
+
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/pie"
-	"time"
 )
 
 func playPie(ctx context.Context, p *pie.Pie, values [][]int, delay time.Duration) {

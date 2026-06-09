@@ -257,7 +257,7 @@ func TestKeyboardKeys(t *testing.T) {
 		{key: tcell.KeyCtrlBackslash, want: keyboard.KeyCtrl4},
 		{key: tcell.KeyCtrlRightSq, want: keyboard.KeyCtrl5},
 		{key: tcell.KeyCtrlUnderscore, want: keyboard.KeyCtrlUnderscore},
-		{key: tcell.KeyBackspace2, want: keyboard.KeyBackspace2},
+		{key: tcell.KeyBackspace2, want: keyboard.KeyBackspace},
 	}
 
 	for _, tc := range tests {

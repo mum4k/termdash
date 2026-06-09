@@ -15,7 +15,6 @@
 package cell
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -49,7 +48,7 @@ func TestColorNumber(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			t.Logf(fmt.Sprintf("color: %v", tc.want))
+			t.Logf("color: %v", tc.want)
 			got := ColorNumber(tc.number)
 			if got != tc.want {
 				t.Errorf("ColorNumber(%v) => %v, want %v", tc.number, got, tc.want)

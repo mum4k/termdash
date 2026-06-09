@@ -17,14 +17,15 @@ package pie
 import (
 	"errors"
 	"fmt"
+	"image"
+	"sync"
+
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/private/canvas"
 	"github.com/mum4k/termdash/private/canvas/braille"
 	"github.com/mum4k/termdash/private/draw"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
-	"image"
-	"sync"
 )
 
 // Pie is the widget that displays a pie chart.

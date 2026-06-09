@@ -15,7 +15,6 @@
 package textinput
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
@@ -86,7 +85,7 @@ func TestData(t *testing.T) {
 			if tc.ops != nil {
 				tc.ops(&got)
 			}
-			t.Logf(fmt.Sprintf("got: %s", got))
+			t.Logf("got: %s", got)
 			if diff := pretty.Compare(tc.want, got); diff != "" {
 				t.Errorf("fieldData => unexpected diff (-want, +got):\n%s\n got: %q\nwant: %q", diff, got, tc.want)
 			}

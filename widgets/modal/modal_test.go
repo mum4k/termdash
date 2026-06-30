@@ -27,6 +27,7 @@ import (
 	"github.com/mum4k/termdash/private/canvas"
 	"github.com/mum4k/termdash/private/canvas/testcanvas"
 	"github.com/mum4k/termdash/private/faketerm"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -211,6 +212,89 @@ func TestMinimizedDockShowsCompactTitle(t *testing.T) {
 	dockLine := strings.Split(ft.String(), "\n")[item.Y]
 	if !strings.Contains(dockLine, "Observability") || !strings.Contains(dockLine, "...") {
 		t.Fatalf("docked title line = %q, want compact title with ellipsis", dockLine)
+	}
+}
+
+// TestDockedWidthMeasuresDisplayWidth verifies a minimized window is docked at a
+// width derived from the title's display width. Wide runes (e.g. CJK) occupy two
+// terminal columns, so a rune count would under-size the dock and clip the title
+// that drawTitleBar renders by display width.
+func TestDockedWidthMeasuresDisplayWidth(t *testing.T) {
+	tests := []struct {
+		desc        string
+		title       string
+		minimizable bool
+		available   int
+		want        int
+	}{
+		{
+			desc:      "ascii title sized by character count",
+			title:     "Settings Panel",
+			available: 0,
+			want:      16, // " Settings Panel "
+		},
+		{
+			desc:      "wide title counts each rune as two columns",
+			title:     "データベース管理", // 8 runes, 16 columns
+			available: 0,
+			want:      18, // " データベース管理 " = 1 + 16 + 1
+		},
+		{
+			desc:        "wide title leaves room for the minimize control",
+			title:       "データベース管理",
+			minimizable: true,
+			available:   0,
+			want:        20, // 18 + 2 for the control
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			if got := dockedWidth(tc.title, tc.minimizable, tc.available); got != tc.want {
+				t.Errorf("dockedWidth(%q, %v, %d) => %d, want %d", tc.title, tc.minimizable, tc.available, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestCompactDockTitleFitsDisplayWidth verifies the compact dock label never
+// exceeds the requested display width, including for wide (CJK) titles where a
+// rune count would overflow the dock and get clipped by drawTitleBar.
+func TestCompactDockTitleFitsDisplayWidth(t *testing.T) {
+	tests := []struct {
+		desc  string
+		title string
+		width int
+		want  string
+	}{
+		{
+			desc:  "ascii title truncated by character count",
+			title: "Observability Dashboard",
+			width: 12,
+			want:  " Observab...",
+		},
+		{
+			desc:  "wide title kept whole when it fits",
+			title: "ログ", // 2 runes, 4 columns
+			width: 8,
+			want:  " ログ ", // 1 + 4 + 1 = 6
+		},
+		{
+			desc:  "wide title truncated by display width",
+			title: "データベース管理ツール", // 11 runes, 22 columns
+			width: 12,
+			want:  " データベ...", // 1 + 8 + 3 = 12
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := compactDockTitle(tc.title, tc.width)
+			if got != tc.want {
+				t.Errorf("compactDockTitle(%q, %d) => %q, want %q", tc.title, tc.width, got, tc.want)
+			}
+			if w := runewidth.StringWidth(got); w > tc.width {
+				t.Errorf("compactDockTitle(%q, %d) display width = %d, want <= %d", tc.title, tc.width, w, tc.width)
+			}
+		})
 	}
 }
 

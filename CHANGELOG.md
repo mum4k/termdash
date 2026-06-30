@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The `modal` widget now measures minimized dock titles by display width instead
+  of rune count, so windows with wide (e.g. CJK) titles are docked at the correct
+  width and their compact labels are not clipped.
+
 ## [0.22.0] - 09-Jun-2026
 
 ### Changed

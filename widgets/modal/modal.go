@@ -24,6 +24,7 @@ import (
 	"github.com/mum4k/termdash/mouse"
 	"github.com/mum4k/termdash/private/canvas"
 	"github.com/mum4k/termdash/private/draw"
+	"github.com/mum4k/termdash/private/runewidth"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgetapi"
 )
@@ -434,7 +435,7 @@ func (dw *DraggableWidget) restoreLocked(canvasWidth, canvasHeight int) {
 
 // dockedWidth returns the docked width for a minimized window title.
 func dockedWidth(title string, minimizable bool, available int) int {
-	width := len([]rune(" " + title + " "))
+	width := runewidth.StringWidth(" " + title + " ")
 	if minimizable {
 		width += 2
 	}
@@ -456,24 +457,34 @@ func compactDockTitle(title string, width int) string {
 		title = "Window"
 	}
 
-	full := []rune(" " + title + " ")
-	if len(full) <= width {
-		return string(full)
+	full := " " + title + " "
+	if runewidth.StringWidth(full) <= width {
+		return full
 	}
 	if width <= 4 {
 		return string([]rune("...")[:minInt(width, 3)])
 	}
 
-	ellipsis := []rune("...")
+	// Reserve display columns for the leading space and trailing ellipsis, then
+	// keep as many leading title runes as fit the remaining width. Wide runes
+	// (e.g. CJK) occupy two columns, so measure by display width rather than
+	// rune count to stay consistent with how draw.Text renders the title.
+	const ellipsis = "..."
 	availableTitle := width - len(ellipsis) - 1
 	if availableTitle < 1 {
 		availableTitle = 1
 	}
-	titleRunes := []rune(title)
-	if len(titleRunes) > availableTitle {
-		titleRunes = titleRunes[:availableTitle]
+	truncated := ""
+	used := 0
+	for _, r := range title {
+		rw := runewidth.RuneWidth(r)
+		if used+rw > availableTitle {
+			break
+		}
+		truncated += string(r)
+		used += rw
 	}
-	return " " + string(titleRunes) + "..."
+	return " " + truncated + ellipsis
 }
 
 // dockedHeight returns the window height while docked in minimized form.

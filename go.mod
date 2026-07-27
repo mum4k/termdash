@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/gdamore/tcell/v2 v2.13.10
 	github.com/kylelemons/godebug v1.1.0
-	github.com/mattn/go-runewidth v0.0.24
+	github.com/mattn/go-runewidth v0.0.27
 	github.com/nsf/termbox-go v1.1.1
 )
 
